@@ -1,0 +1,13 @@
+{
+  "name": "@env-hopper/source",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {},
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {
+    "@nx/js": "19.0.4",
+    "@nx/workspace": "19.0.4",
+    "nx": "19.0.4"
+  }
+}

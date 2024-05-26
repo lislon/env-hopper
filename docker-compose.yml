@@ -1,0 +1,10 @@
+name: 'env-hopper'
+services:
+#  env-hopper-db:
+#    image: postgres:latest
+#    restart: unless-stopped
+#    ports:
+#      - "5440:5432"
+#    container_name: env-hopper-db
+#    environment:
+#      POSTGRES_PASSWORD: postgres

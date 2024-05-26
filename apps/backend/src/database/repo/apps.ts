@@ -1,0 +1,35 @@
+import { EhAppDb } from '../../backend-types';
+import prisma from '../prisma';
+import { Reader, Writer } from '../mappers';
+import { EhApp } from '@env-hopper/types';
+
+export async function dbAppsSet(dataRaw: EhApp[]): Promise<void> {
+  await prisma.$transaction([
+    prisma.application.deleteMany({}),
+    prisma.application.createMany({ data: dataRaw.map(Writer.ehApp) })
+  ]);
+}
+
+export async function dbAppsGet(): Promise<EhApp[]> {
+  const rows = await prisma.application.findMany();
+  return rows.map(Reader.ehApp);
+}
+
+//
+// export async function dbAddEnv(env: string) {
+//   try {
+//     await prisma.environment.create({
+//       data: {
+//         name: env
+//       }
+//     })
+//   } catch (e) {
+//     if (e instanceof PrismaClientKnownRequestError) {
+//       if (e.code === 'P2002') {
+//         // duplicate key
+//         return;
+//       }
+//     }
+//     console.log(e)
+//   }
+// }

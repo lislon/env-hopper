@@ -9,9 +9,9 @@ on:
   pull_request:
 
 
-#env:
-#  REGISTRY: ghcr.io
-#  IMAGE_NAME: ${{ github.repository }}
+env:
+  REGISTRY: lislon
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   main:

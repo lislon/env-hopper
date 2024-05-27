@@ -10,8 +10,8 @@ on:
 
 
 env:
-  REGISTRY: docker.io
-  IMAGE_NAME: index.docker.io/${{ github.repository }}
+  REGISTRY: index.docker.io/lislon
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   main:
@@ -39,7 +39,7 @@ jobs:
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
-      - run: npx nx run-many -t lint test build -p backend frontend
+      - run: npx nx run-many -t lint test build -p backend frontend --maxWorkers=1 --verbose
   push_to_registry:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest

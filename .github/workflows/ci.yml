@@ -28,11 +28,11 @@ jobs:
       # Cache node_modules
       - uses: actions/setup-node@v3
         with:
-          node-version: 21
+          node-version: 20
           cache: 'npm'
       - run: npm ci
       - uses: nrwl/nx-set-shas@v4
 
       # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
       # - run: npx nx-cloud record -- echo Hello World
-      - run: npx nx affected --base=main --head=HEAD -t lint test build
+      - run: npx nx affected --base=origin/main --head=HEAD -t lint test build

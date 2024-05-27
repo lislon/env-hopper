@@ -11,7 +11,7 @@ on:
 
 env:
   REGISTRY: lislon
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: index.docker.io/${{ github.repository }}
 
 jobs:
   main:

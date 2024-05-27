@@ -15,7 +15,7 @@
     ],
     "sharedGlobals": []
   },
-  "nxCloudAccessToken": "MmY0MTQ4ODEtNDExMi00YzMxLThkMGItZjEzYzc2OGI5OWNjfHJlYWQtd3JpdGU=",
+  "nxCloudAccessToken": "YTViMWM1MjUtYjUzNS00ZDI3LWFiNzctYjFlN2U5ZDFmMDQ3fHJlYWQtd3JpdGU=",
   "plugins": [
     {
       "plugin": "@nx/webpack/plugin",

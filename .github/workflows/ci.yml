@@ -10,7 +10,7 @@ on:
 
 
 env:
-  REGISTRY: index.docker.io/lislon
+  REGISTRY: lislon
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:

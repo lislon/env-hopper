@@ -13,8 +13,8 @@ const app = express();
 const assets = process.env.ASSETS_DIR || path.join(__dirname, 'assets');
 app.use('/', express.static(assets));
 
-app.get('/api', (req, res) => {
-  res.send({ message: 'Welcome to backend 2!' +  assets });
+app.get('/health', (req, res) => {
+  res.send('ok');
 });
 
 app.use(publicApi);

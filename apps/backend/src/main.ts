@@ -10,14 +10,13 @@ import { publicApi } from './api/public-api';
 
 const app = express();
 
-const assets = process.env.ASSETS_DIR || path.join(__dirname, 'assets');
-app.use('/', express.static(assets));
-
 app.get('/health', (req, res) => {
   res.send('ok');
 });
-
 app.use(publicApi);
+
+const assets = process.env.ASSETS_DIR || path.join(__dirname, 'assets');
+app.use('/', express.static(assets));
 
 const port = process.env.PORT || 4001;
 const server = app.listen(port, () => {

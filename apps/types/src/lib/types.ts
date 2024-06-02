@@ -8,11 +8,12 @@ export interface EhApp {
   urlPerEnv: Record<string, string>
 }
 
-
-export interface EhSubstitution {
+export interface EhSubstitutionType {
     name: string
     title: string
 }
+
+export type EhSubstitutionValue = string;
 
 export type EhEnvId = string;
 export type EhAppId = string;
@@ -22,5 +23,5 @@ export type EhSubstitutionId = string;
 export interface EhClientConfig {
   envs: EhEnv[]
   apps: EhApp[]
-  substitutions: EhSubstitution[]
+  substitutions: EhSubstitutionType[]
 }

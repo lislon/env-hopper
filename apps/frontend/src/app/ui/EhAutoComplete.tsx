@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useCombobox } from 'downshift';
 import cn from 'classnames';
-import { EhSubstitution } from '@env-hopper/types';
+import { EhSubstitutionType } from '@env-hopper/types';
+import { JumpUrl } from './JumpUrl';
 
 
 export interface Item {
@@ -11,7 +12,11 @@ export interface Item {
 
 export type EhAutoCompleteFilter = (inputValue: string) => (item: Item) => boolean;
 
-export type OnSelectedItemChange = (item: string | null) => void;
+export type OnSelectedItemChange = (item: string | undefined) => void;
+
+export type ShortcutJump = { link: string };
+export type ShortcutPickSubstitution = { substitutionTitle: string };
+export type ShortcutAction = ShortcutJump | ShortcutPickSubstitution;
 
 export interface AutoCompleteProps {
   items: Item[];
@@ -19,21 +24,24 @@ export interface AutoCompleteProps {
   label?: string;
   filter: EhAutoCompleteFilter;
   onSelectedItemChange: OnSelectedItemChange;
-  selectedItem: Item | null;
-  itemMetaGenerator?: (id: string) => { link: string } | { substitutionTitle: string} | null;
+  selectedItem: Item | undefined;
+  shortcutAction?: (id: string) => ShortcutAction | undefined;
   onClick?: (id: string) => void;
 }
 
-function generateLink(props: AutoCompleteProps, item: Item) {
-  const meta = props.itemMetaGenerator?.(item.id) || null;
-  if (meta === null) {
-    return null
+function ShortcutLink(props: AutoCompleteProps & { item: Item}) {
+  const shortcutAction = props.shortcutAction?.(props.item.id);
+  if (shortcutAction === undefined) {
+    return undefined
   }
 
-  if ('link' in meta) {
-    return <a href={meta.link}
+  if ('link' in shortcutAction) {
+    return <a href={shortcutAction.link}
               className="content-center p-1 hover:cursor-pointer"
-              onClick={() => props.onClick?.(item.id)}
+              onClick={(event) => {
+                event.preventDefault();
+                return props.onClick?.(props.item.id);
+              }}
     >
       <img
         src="/grasshopper-lsn.svg"
@@ -44,7 +52,7 @@ function generateLink(props: AutoCompleteProps, item: Item) {
     </a>;
   } else {
     return <button className="content-center p-1 hover:cursor-pointer">
-      {`#${meta.substitutionTitle}`}
+      {`#${shortcutAction.substitutionTitle}`}
     </button>;
   }
 
@@ -67,11 +75,11 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     onInputValueChange({ inputValue }) {
       setItems(props.items.filter(props.filter(inputValue)));
       if (inputValue === '') {
-        props.onSelectedItemChange(null);
+        props.onSelectedItemChange(undefined);
       }
     },
     onSelectedItemChange({ selectedItem }) {
-      props.onSelectedItemChange(selectedItem?.id || null);
+      props.onSelectedItemChange(selectedItem?.id || undefined);
     },
     selectedItem: props.selectedItem,
     items,
@@ -79,7 +87,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
       return item ? item.title : '';
     }
   });
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = React.createRef<HTMLInputElement>();
 
   function preselectAndShowAllOptions() {
     inputRef.current?.select();
@@ -144,7 +152,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
                   {...getItemProps({ item, index })}
                 >
                   <span className="content-center">{item.title}</span>
-                  {generateLink(props, item)}
+                  <ShortcutLink {...props} item={item} />
                 </li>
               );
             })}

@@ -1,5 +1,5 @@
 import { EhAppDb, EhEnvDb, EhSubstitutionDb } from '../backend-types';
-import { EhApp, EhEnv, EhSubstitution } from '@env-hopper/types';
+import { EhApp, EhEnv, EhSubstitutionType } from '@env-hopper/types';
 
 export type Jsonify<T, K extends keyof T> = {
   [P in keyof T]: P extends K ? string : T[P];
@@ -38,7 +38,7 @@ export class Writer {
     return jsonify(data, ['meta']);
   }
 
-  public static ehSubstitution(data: EhSubstitution): EhSubstitutionDb {
+  public static ehSubstitution(data: EhSubstitutionType): EhSubstitutionDb {
     return data;
   }
 
@@ -53,7 +53,7 @@ export class Reader {
     return dejsonify(data, ['meta']);
   }
 
-  public static ehSubstitution(data: EhSubstitutionDb): EhSubstitution {
+  public static ehSubstitution(data: EhSubstitutionDb): EhSubstitutionType {
     return data;
   }
 }

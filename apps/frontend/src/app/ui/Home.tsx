@@ -7,6 +7,8 @@ import { EhContextProvider } from '../context/EhContext';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getConfig } from '../api';
+import { JumpMainButton } from './JumpMainButton';
+import { ShowContext } from './ShowContext';
 
 
 export function Home() {
@@ -42,12 +44,13 @@ export function Home() {
             </Link>
 
           </div>
-
         </div>
         <div className="flex gap-16 flex-col">
           <EnvList />
           <AppList />
           <SubstitutionList />
+          <JumpMainButton />
+          <ShowContext />
         </div>
       </div>
     </div>

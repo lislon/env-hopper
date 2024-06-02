@@ -19,20 +19,20 @@ datasource db {
 }
 
 model Environment {
-  id   Int    @id @default(autoincrement())
+  name Int    @id @default(autoincrement())
   name String @unique
   meta String
 }
 
 model Application {
-  id        Int    @id @default(autoincrement())
+  name      Int    @id @default(autoincrement())
   name      String @unique
   url       String
   urlPerEnv String
 }
 
 model Substitution {
-  id    Int    @id @default(autoincrement())
+  name  Int    @id @default(autoincrement())
   name  String @unique
   title String
 }

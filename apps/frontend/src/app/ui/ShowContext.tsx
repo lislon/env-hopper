@@ -3,8 +3,8 @@ import React from "react";
 import { useEhContext } from '../context/EhContext';
 
 export function ShowContext() {
-    const props = useEhContext();
+    const { app, env, substitution, substitutionType, recentJumps } = useEhContext();
     return (<pre>
-       {JSON.stringify(props, null, 2)}
+       {JSON.stringify({ app, env, substitution, substitutionType, recentJumps }, undefined, 2)}
    </pre>)
 }

@@ -1,18 +1,18 @@
 import { EhApp, EhAppId, EhEnv, EhEnvId, EhSubstitutionId } from '@env-hopper/types';
 
 export interface EhSubstitutionValue {
-  id: EhSubstitutionId;
+  name: EhSubstitutionId;
   value: string;
 }
 
 export interface EhJumpHistory {
-  app: EhAppId;
-  env: EhEnvId;
-  substitution?: EhSubstitutionValue;
+  app?: EhAppId;
+  env?: EhEnvId;
+  substitution?: string;
 }
 
 export interface EhJumpParams {
-  app: EhApp;
-  env: EhEnv;
+  app?: EhApp;
+  env?: EhEnv;
   substitution?: EhSubstitutionValue;
 }

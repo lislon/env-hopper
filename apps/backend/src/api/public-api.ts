@@ -1,6 +1,6 @@
 import express, { Request, Response, Router } from 'express';
 import { dbEnvsGet, dbEnvsSet } from '../database/repo/envs';
-import { EhApp, EhClientConfig, EhEnv, EhSubstitution } from '@env-hopper/types';
+import { EhApp, EhClientConfig, EhEnv, EhSubstitutionType } from '@env-hopper/types';
 
 import { dbAppsGet, dbAppsSet } from '../database/repo/apps';
 import { dbSubstitutionsGet, dbSubstitutionsSet } from '../database/repo/substitutions';
@@ -36,11 +36,11 @@ publicApi.post('/api/apps', async (req: Request<EhApp[]>, res: Response<'OK'>) =
   res.send('OK');
 });
 
-publicApi.get('/api/substitutions', async (req: Request, res: Response<EhSubstitution[]>) => {
+publicApi.get('/api/substitutions', async (req: Request, res: Response<EhSubstitutionType[]>) => {
   res.send(await dbSubstitutionsGet());
 });
 
-publicApi.post('/api/substitutions', async (req: Request<EhSubstitution[]>, res: Response<'OK'>) => {
+publicApi.post('/api/substitutions', async (req: Request<EhSubstitutionType[]>, res: Response<'OK'>) => {
   await dbSubstitutionsSet(req.body);
   res.send('OK');
 });

@@ -1,33 +1,39 @@
 'use client';
-import React from 'react';
+import React, { useMemo } from 'react';
 import cn from 'classnames';
 import { useEhContext } from '../context/EhContext';
-import { EhAutoComplete } from './EhAutoComplete';
+import { EhAutoComplete, Item } from './EhAutoComplete';
 import { autoCompleteFilter } from '../lib/autoCompleteFilter';
-import { EhEnv } from '@env-hopper/types';
+import { EhEnv, EhEnvId } from '@env-hopper/types';
 
 
-function mapToAutoCompleteItem(env: EhEnv) {
-  return { id: env.name, title: env.name };
+function mapToAutoCompleteItem(env: EhEnv, favorites: Set<EhEnvId>): Item {
+  return { id: env.name, title: env.name, favorite: favorites.has(env.name) };
 }
 
-export function EnvList() {
-  const { setEnv, listEnvs, listFavoriteEnvs, env, getEnvById } = useEhContext();
+export interface EnvListProps {
+  onOpenChange?: (isOpen: boolean) => void;
+}
+export function EnvList({ onOpenChange }: EnvListProps) {
+  const { setEnv, listEnvs, listFavoriteEnvs, env, getEnvById, listFavoriteApps } = useEhContext();
 
-  return <div>
-    <EhAutoComplete items={listEnvs.map(env => mapToAutoCompleteItem(env))} filter={autoCompleteFilter}
-                    label="What env to hop on?"
-                    selectedItem={env ? mapToAutoCompleteItem(env) : undefined}
-                    onSelectedItemChange={(envId) => setEnv(getEnvById(envId))} />
-    <div className="flex gap-2 my-2">
-      <span aria-label="Favorites">⭐</span>
-      <ul className="inline-flex gap-2">
-        {listFavoriteEnvs.map(envId => <li key={envId}
-                                           className={cn('border px-2 rounded-lg hover:bg-gray-500 hover:cursor-pointer hover:border-solid',
-                                       envId === env?.name ? 'border-solid border-amber-300 text-amber-300' : 'border-dashed border-gray-300 ')}
-                                           onClick={() => setEnv(getEnvById(envId === env?.name ? undefined : envId))}>{envId}</li>)}
-      </ul>
-    </div>
-  </div>;
+  const items = useMemo(() => {
+    let favSet = new Set(listFavoriteEnvs);
+    return listEnvs.map(env => mapToAutoCompleteItem(env, favSet))
+  }, [listEnvs, listFavoriteEnvs])
+
+  return <EhAutoComplete itemsAll={items} filter={autoCompleteFilter}
+                         onOpenChange={onOpenChange}
+                         selectedItem={env ? mapToAutoCompleteItem(env, new Set()) : undefined}
+                         onSelectedItemChange={(envId) => setEnv(getEnvById(envId))} />
+    {/*<div className="flex gap-2 my-2">*/}
+    {/*  <span aria-label="Favorites">⭐</span>*/}
+    {/*  <ul className="inline-flex gap-2">*/}
+    {/*    {listFavoriteEnvs.map(envId => <li key={envId}*/}
+    {/*                                       className={cn('border px-2 rounded-lg hover:bg-gray-500 hover:cursor-pointer hover:border-solid',*/}
+    {/*                                   envId === env?.name ? 'border-solid border-amber-300 text-amber-300' : 'border-dashed border-gray-300 ')}*/}
+    {/*                                       onClick={() => setEnv(getEnvById(envId === env?.name ? undefined : envId))}>{envId}</li>)}*/}
+    {/*  </ul>*/}
+    {/*</div>*/}
 
 }

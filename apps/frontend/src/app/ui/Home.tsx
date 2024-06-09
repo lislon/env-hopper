@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getConfig } from '../api';
 import { JumpMainButton } from './JumpMainButton';
 import { ShowContext } from './ShowContext';
+import { UrlBar } from './UrlBar';
 
 
 export function Home() {
@@ -33,23 +34,15 @@ export function Home() {
             Env hopper
           </div>
           <div className="m-4">
-            <Link to="/">
-              <img
-                src="/grasshopper-lsn.svg"
-                // className="dark:invert"
-                alt={'Grasshopper Logo'}
-                width={100}
-                height={24}
-              />
-            </Link>
 
           </div>
         </div>
         <div className="flex gap-16 flex-col">
-          <EnvList />
-          <AppList />
-          <SubstitutionList />
-          <JumpMainButton />
+          <UrlBar />
+          {/*<EnvList />*/}
+          {/*<AppList />*/}
+          {/*<SubstitutionList />*/}
+          {/*<JumpMainButton />*/}
           <ShowContext />
         </div>
       </div>

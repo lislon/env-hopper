@@ -66,7 +66,7 @@ export function AppList() {
     return shortcutUniversal({ app, env, substitution, listSubstitutions });
   };
   return <div>
-    <EhAutoComplete items={listApps.map(app => mapToAutoCompleteItemApp(app.name))} filter={autoCompleteFilter}
+    <EhAutoComplete itemsAll={listApps.map(app => mapToAutoCompleteItemApp(app.name))} filter={autoCompleteFilter}
                     label="What app to hop on?"
                     selectedItem={app ? mapToAutoCompleteItemApp(app.name) : undefined}
                     shortcutAction={shortcutActionForApp}

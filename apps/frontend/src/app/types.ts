@@ -16,3 +16,5 @@ export interface EhJumpParams {
   env?: EhEnv;
   substitution?: EhSubstitutionValue;
 }
+
+export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }

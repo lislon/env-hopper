@@ -2,8 +2,8 @@
 // export function isAppHasVars(app: EhApp, urlVars: EhUrlVar[]) {
 
 
-import { EhApp, EhEnv, EhSubstitutionType } from '@env-hopper/types';
-import { EhJumpParams, EhSubstitutionValue } from '../types';
+import { EhApp, EhAppId, EhEnv, EhSubstitutionType } from '@env-hopper/types';
+import { EhJumpParams, EhSubstitutionValue, WithRequired } from '../types';
 
 export function findSubstitutionIdByUrl(url: string|undefined) {
   if (!url) {
@@ -42,8 +42,25 @@ export interface JumpDataParams {
   substitution: EhSubstitutionValue | undefined;
 }
 
+export interface JumpDataParamsForce extends JumpDataParams{
+  app: EhApp;
+}
+
 export function hasSubstitution(app: EhApp) {
   return app.url.replace('{env}', '').includes('{');
+}
+
+export function getJumpUrlEvenNotComplete({ app, env, substitution }: JumpDataParamsForce) {
+  let url = app.url;
+  if (env !== undefined) {
+    url = url.replace('{env}', env.name);
+  }
+
+  if (substitution !== undefined) {
+    url = url.replace(substitution.name, substitution.value);
+  }
+
+  return url;
 }
 
 export function getJumpUrl({ app, env, substitution }: JumpDataParams) {
@@ -56,13 +73,9 @@ export function getJumpUrl({ app, env, substitution }: JumpDataParams) {
   if (substitution === undefined && hasSubstitution(app)) {
     return undefined;
   }
+  return getJumpUrlEvenNotComplete({ app, env, substitution });
+}
 
-
-  let url = app.url.replace('{env}', env.name);
-
-  if (substitution !== undefined) {
-    url = url.replace(substitution.name, substitution.value);
-  }
-
-  return url;
+export function cutDomain(fullUrl: string) {
+  return fullUrl.split('/')[2];
 }

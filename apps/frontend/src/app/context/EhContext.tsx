@@ -3,7 +3,13 @@ import { EhApp, EhAppId, EhClientConfig, EhEnv, EhEnvId, EhSubstitutionType } fr
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import { EhJumpHistory, EhJumpParams, EhSubstitutionValue } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { findSubstitutionIdByUrl, getEnvSpecificAppUrl, getJumpUrl } from '../lib/utils';
+import {
+  cutDomain,
+  findSubstitutionIdByUrl,
+  getEnvSpecificAppUrl,
+  getJumpUrl,
+  getJumpUrlEvenNotComplete
+} from '../lib/utils';
 
 function sortByPopularity(list: string[]): string[] {
   const counts = list.reduce((acc, item) => {
@@ -35,6 +41,7 @@ export interface EhContextProps {
 
   recentJumps: EhJumpHistory[];
   reset: () => void;
+  domainPart: string;
 }
 
 //  createContext is not supported in Server Components
@@ -56,11 +63,11 @@ type RecordJumpParams = {
   substitution: EhSubstitutionValue | undefined
 };
 
-function getAppById(id?: string, ehApps: EhApp[]) {
+function getAppById(id: string | undefined, ehApps: EhApp[]) {
   return ehApps.find(app => app.name === id) || undefined;
 }
 
-function getEnvById(id?: string, ehEnvs: EhEnv[]) {
+function getEnvById(id: string | undefined, ehEnvs: EhEnv[]) {
   return ehEnvs.find(env => env.name === id) || undefined;
 }
 
@@ -76,6 +83,17 @@ export function EhContextProvider({ children, data }: { children: React.ReactNod
     const substitutionName = findSubstitutionIdByUrl(app ? getEnvSpecificAppUrl(app, env) : undefined);
 
     const substitutionType = data.substitutions.find(s => s.name === substitutionName || undefined);
+
+
+    let env2 = env ? env : (data.envs.length > 0 ? data.envs[0] : undefined);
+    let app1 = app ? app : data.apps.length > 0 ? data.apps[0] : undefined;
+    console.log('env2', env2);
+    const domainPart = cutDomain(app1 && getJumpUrlEvenNotComplete({
+      app: app1,
+      env: env2,
+      substitution: substitution
+    }) || 'https://no-env');
+
     return {
       setEnv: env1 => {
         setEnv(data.envs.find(env => env === env1) || undefined);
@@ -113,6 +131,7 @@ export function EhContextProvider({ children, data }: { children: React.ReactNod
         setSubstitution(undefined);
         setRecentJumps([]);
       },
+      domainPart,
       recentJumps: recentJumps
     };
   }, [env, app, data, recentJumps, setRecentJumps, substitution]);

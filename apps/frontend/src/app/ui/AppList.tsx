@@ -47,7 +47,12 @@ function shortcutUniversal({
 }
 
 
-export function AppList() {
+export interface AppListProps {
+  onOpenChange?: (isOpen: boolean) => void;
+}
+
+
+export function AppList({ onOpenChange }: AppListProps) {
   const {
     env,
     app,
@@ -65,9 +70,9 @@ export function AppList() {
     const app = listApps.find(app => app.name === appId);
     return shortcutUniversal({ app, env, substitution, listSubstitutions });
   };
-  return <div>
-    <EhAutoComplete itemsAll={listApps.map(app => mapToAutoCompleteItemApp(app.name))} filter={autoCompleteFilter}
-                    label="What app to hop on?"
+  return <EhAutoComplete itemsAll={listApps.map(app => mapToAutoCompleteItemApp(app.name))}
+                         filter={autoCompleteFilter}
+                         onOpenChange={onOpenChange}
                     selectedItem={app ? mapToAutoCompleteItemApp(app.name) : undefined}
                     shortcutAction={shortcutActionForApp}
                     onClick={(appId) => {
@@ -89,15 +94,14 @@ export function AppList() {
                       //     } : undefined
                       //   });
                       // }
-                    }} />
-    <div className="flex gap-2 my-2">
-      <span aria-label="Favorites">⭐</span>
-      <ul className="inline-flex gap-2">
-        {listFavoriteApps.map(appId => <li key={appId}
-                                           className={cn('border px-2 rounded-lg hover:bg-gray-500 hover:cursor-pointer hover:border-solid',
-                                             appId === app?.name ? 'border-solid border-amber-300 text-amber-300' : 'border-dashed border-gray-300 ')}
-                                           onClick={() => setApp(getAppById(appId === app?.name ? undefined : appId))}>{appId}</li>)}
-      </ul>
-    </div>
-  </div>;
+                    }} />;
+    {/*<div className="flex gap-2 my-2">*/}
+    {/*  <span aria-label="Favorites">⭐</span>*/}
+    {/*  <ul className="inline-flex gap-2">*/}
+    {/*    {listFavoriteApps.map(appId => <li key={appId}*/}
+    {/*                                       className={cn('border px-2 rounded-lg hover:bg-gray-500 hover:cursor-pointer hover:border-solid',*/}
+    {/*                                         appId === app?.name ? 'border-solid border-amber-300 text-amber-300' : 'border-dashed border-gray-300 ')}*/}
+    {/*                                       onClick={() => setApp(getAppById(appId === app?.name ? undefined : appId))}>{appId}</li>)}*/}
+    {/*  </ul>*/}
+    {/*</div>*/}
 }

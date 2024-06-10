@@ -1,11 +1,10 @@
-
 // export function isAppHasVars(app: EhApp, urlVars: EhUrlVar[]) {
 
 
-import { EhApp, EhAppId, EhEnv, EhSubstitutionType } from '@env-hopper/types';
-import { EhJumpParams, EhSubstitutionValue, WithRequired } from '../types';
+import { EhApp, EhEnv, EhSubstitutionType } from '@env-hopper/types';
+import { EhJumpParams, EhSubstitutionValue } from '../types';
 
-export function findSubstitutionIdByUrl(url: string|undefined) {
+export function findSubstitutionIdByUrl(url: string | undefined) {
   if (!url) {
     return undefined;
   }
@@ -16,18 +15,18 @@ export function findSubstitutionIdByUrl(url: string|undefined) {
 }
 
 export function findSubstitutionTypeInApp(app: EhApp | undefined, listSubstitutions: EhSubstitutionType[]): EhSubstitutionType | undefined {
-    if (app) {
-      const match = findSubstitutionIdByUrl(app.url);
-      if (match) {
-            return listSubstitutions.find(v => v.name === match[1]) || undefined;
-        }
+  if (app) {
+    const match = findSubstitutionIdByUrl(app.url);
+    if (match) {
+      return listSubstitutions.find(v => v.name === match[1]) || undefined;
     }
-    return undefined;
+  }
+  return undefined;
 }
 
-export function getEnvSpecificAppUrl(app: EhApp, env: EhEnv|undefined) {
+export function getEnvSpecificAppUrl(app: EhApp, env: EhEnv | undefined) {
   if (env !== undefined && app.urlPerEnv[env.name] !== undefined) {
-    return app.urlPerEnv[env.name]
+    return app.urlPerEnv[env.name];
   }
   return app.url;
 }
@@ -42,7 +41,7 @@ export interface JumpDataParams {
   substitution: EhSubstitutionValue | undefined;
 }
 
-export interface JumpDataParamsForce extends JumpDataParams{
+export interface JumpDataParamsForce extends JumpDataParams {
   app: EhApp;
 }
 
@@ -53,7 +52,9 @@ export function hasSubstitution(app: EhApp) {
 export function getJumpUrlEvenNotComplete({ app, env, substitution }: JumpDataParamsForce) {
   let url = app.url;
   if (env !== undefined) {
-    url = url.replace('{env}', env.name);
+    Object.entries(env.meta).forEach(([key, value]) => {
+      url = url.replace('{' + key + '}', value);
+    });
   }
 
   if (substitution !== undefined) {
@@ -78,4 +79,7 @@ export function getJumpUrl({ app, env, substitution }: JumpDataParams) {
 
 export function cutDomain(fullUrl: string) {
   return fullUrl.split('/')[2];
+}
+export function cutApp(fullUrl: string) {
+  return fullUrl.split('/').slice(3).join('/');
 }

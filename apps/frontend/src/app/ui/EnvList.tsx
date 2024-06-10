@@ -7,25 +7,28 @@ import { autoCompleteFilter } from '../lib/autoCompleteFilter';
 import { EhEnv, EhEnvId } from '@env-hopper/types';
 
 
-function mapToAutoCompleteItem(env: EhEnv, favorites: Set<EhEnvId>): Item {
-  return { id: env.name, title: env.name, favorite: favorites.has(env.name) };
+function mapToAutoCompleteItem(env: EhEnv, favorites: Set<EhEnvId>, recents: Set<EhEnvId>): Item {
+  return { id: env.name, title: env.name, favorite: favorites.has(env.name), recent: recents.has(env.name) };
 }
 
 export interface EnvListProps {
   onOpenChange?: (isOpen: boolean) => void;
 }
 export function EnvList({ onOpenChange }: EnvListProps) {
-  const { setEnv, listEnvs, listFavoriteEnvs, env, getEnvById, listFavoriteApps } = useEhContext();
+  const { setEnv, listEnvs, listFavoriteEnvs, env, getEnvById, toggleFavoriteEnv, recentJumps } = useEhContext();
 
   const items = useMemo(() => {
-    let favSet = new Set(listFavoriteEnvs);
-    return listEnvs.map(env => mapToAutoCompleteItem(env, favSet))
-  }, [listEnvs, listFavoriteEnvs])
+    const favSet = new Set(listFavoriteEnvs);
+    const recentSet = new Set(recentJumps.slice(0, 2).map(jump => jump.env || '').filter(Boolean));
+    return listEnvs.map(env => mapToAutoCompleteItem(env, favSet, recentSet))
+  }, [listEnvs, listFavoriteEnvs, recentJumps])
 
   return <EhAutoComplete itemsAll={items} filter={autoCompleteFilter}
                          onOpenChange={onOpenChange}
-                         selectedItem={env ? mapToAutoCompleteItem(env, new Set()) : undefined}
-                         onSelectedItemChange={(envId) => setEnv(getEnvById(envId))} />
+                         selectedItem={env ? mapToAutoCompleteItem(env, new Set(), new Set()) : undefined}
+                         onSelectedItemChange={(envId) => setEnv(getEnvById(envId))}
+                         onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
+  />
     {/*<div className="flex gap-2 my-2">*/}
     {/*  <span aria-label="Favorites">⭐</span>*/}
     {/*  <ul className="inline-flex gap-2">*/}

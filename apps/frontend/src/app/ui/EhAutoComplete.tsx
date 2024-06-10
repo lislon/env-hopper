@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { useCombobox, UseComboboxPropGetters } from 'downshift';
 import cn from 'classnames';
 
@@ -7,6 +7,7 @@ export interface Item {
   id: string;
   title: string;
   favorite?: boolean;
+  recent?: boolean;
 }
 
 export type EhAutoCompleteFilter = (inputValue: string) => (item: Item) => boolean;
@@ -28,6 +29,7 @@ export interface AutoCompleteProps {
   selectedItem: Item | undefined;
   shortcutAction?: (id: string) => ShortcutAction | undefined;
   onClick?: (id: string) => void;
+  onFavoriteToggle?: (item: Item, isOn: boolean) => void;
   onOpenChange?: (isOpen: boolean) => void;
 }
 
@@ -68,7 +70,6 @@ export interface ItemPrinterProps {
   selectedItem?: Item;
   getItemProps: UseComboboxPropGetters<Item>['getItemProps'];
   autoCompleteProps: AutoCompleteProps;
-
 }
 
 function ItemPrinter({
@@ -79,19 +80,32 @@ function ItemPrinter({
                        getItemProps,
                        autoCompleteProps
                      }: ItemPrinterProps) {
+  const onClick: MouseEventHandler = event => {
+    event.stopPropagation();
+    event.preventDefault();
+    autoCompleteProps.onFavoriteToggle?.(item, !item.favorite);
+  };
   return (
-    <li
+    <div
       className={cn(
         highlightedIndex === index && 'bg-gray-700',
         selectedItem === item && 'font-bold',
-        `${height} py-2 px-3 shadow-sm flex flex-row justify-between`,
-        'grayscale hover:grayscale-0'
+        `${height} py-2 px-1 shadow-sm`,
+        // 'grayscale hover:grayscale-0',
+        'before:content-[\'\']'
       )}
       {...getItemProps({ item, index })}
     >
-      <span className="content-center">{item.title}</span>
+      <div className="flex">
+        <span
+          className={cn('content-center min-w-2em text-amber-400 hover:text-amber-400', item.favorite ? 'text-amber-400' : 'text-gray-900')}
+          onClick={onClick}>
+          ★
+        </span>
+        <div>{item.title}</div>
+      </div>
       <ShortcutLink {...autoCompleteProps} item={item} />
-    </li>
+    </div>
   );
 
 }
@@ -105,30 +119,44 @@ export interface ItemsSectionProps {
 }
 
 
-function ItemsSection({ items, highlightedIndex, selectedItem, getItemProps, autoCompleteProps }: ItemsSectionProps) {
-
-  const itemsWithIndex = items.map((item, index) => ({ ...item, index }));
-
-  const favSlice = itemsWithIndex.filter(item => item.favorite);
-  const regularSlice = itemsWithIndex.filter(item => !item.favorite);
-
-  return (<>
-    {favSlice.map((item) =>
-      <ItemPrinter index={item.index} item={item} highlightedIndex={highlightedIndex} getItemProps={getItemProps}
-                   autoCompleteProps={autoCompleteProps} />
-    )}
+function Section({ children, title }: { children: React.ReactNode, title: string }) {
+  return <section>
     <div
       className={cn('flex items-center text-center text-sm',
         'before:content-[\'\'] before:flex-1 before:border-b before:border-white before:mr-0.5',
-        'after:content-[\'\'] after:flex-1 after:border-b after:border-white after:ml-0.5',
-      )}>⭐
-      Favorites
+        'after:content-[\'\'] after:flex-1 after:border-b after:border-white after:ml-0.5'
+      )}>{title}
     </div>
+    {children}
+  </section>
 
-    {regularSlice.map((item) =>
-      <ItemPrinter index={item.index} item={item} highlightedIndex={highlightedIndex} getItemProps={getItemProps}
-                   autoCompleteProps={autoCompleteProps} />
-    )}
+}
+
+function ItemsSections({ items, selectedItem, ...rest }: ItemsSectionProps) {
+
+  const itemsWithIndex = items.map((item, index) => ({ ...item, index }));
+
+  const recentSlice = itemsWithIndex.filter(item => item.recent && !item.favorite);
+  const favSlice = itemsWithIndex.filter(item => item.favorite);
+  const regularSlice = itemsWithIndex.filter(item => !item.favorite && !item.recent)
+
+  return (<>
+
+    {recentSlice.length > 0 && <Section title={"🕒 Recent"}>
+      {recentSlice.map((item) =>
+        <ItemPrinter key={item.index} index={item.index} item={item} {...rest} />
+      )}
+    </Section>}
+    {favSlice.length > 0 && <Section title={"⭐ Favorites"}>
+      {favSlice.map((item) =>
+        <ItemPrinter key={item.index} index={item.index} item={item} {...rest} />
+      )}
+    </Section>}
+    <Section title={"🗂️ All"}>
+      {regularSlice.map((item) =>
+        <ItemPrinter key={item.index} index={item.index} item={item} {...rest} />
+      )}
+    </Section>
   </>);
 }
 
@@ -191,16 +219,16 @@ export function EhAutoComplete(props: AutoCompleteProps) {
           />
         </div>
       </div>
-      {isOpen && <div className="relative w-full">
-        <ul
+      {<div className="relative w-full">
+        <div
           className={cn(`w-full bg-gray-900 mt-1 shadow-md p-0 z-10 absolute max-h-80 overflow-y-scroll min-w-[800px]`,
             !(isOpen && items.length) && 'hidden')}
           {...getMenuProps()}
         >
-          {isOpen && <ItemsSection items={items} highlightedIndex={highlightedIndex} getItemProps={getItemProps}
+          {isOpen && <ItemsSections items={items} highlightedIndex={highlightedIndex} getItemProps={getItemProps}
                                    selectedItem={selectedItem}
                                    autoCompleteProps={props} />}
-        </ul>
+        </div>
       </div>}
     </>
   );

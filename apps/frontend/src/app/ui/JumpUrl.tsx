@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
-import { useEhContext } from '../context/EhContext';
 import { getJumpUrl, jump } from '../lib/utils';
 import { EhApp, EhEnv } from '@env-hopper/types';
 import { EhSubstitutionValue } from '../types';
+import { useEhContext } from '../context/EhContext';
 
 export interface JumpUrlParams {
   children: ReactNode;
@@ -13,23 +13,24 @@ export interface JumpUrlParams {
 }
 
 export function JumpUrl({ children, app, env, substitution, className }: JumpUrlParams) {
+  const { recordJump } = useEhContext();
 
   const onClick = () => {
     if (!app || !env) {
       return;
     }
-    jump({
+    recordJump({
       app: app,
       env: env,
       substitution
-    });
+    })
   };
 
   const jumpUrl = getJumpUrl({ app, env, substitution });
   if (!jumpUrl) {
     return undefined;
   }
-  return <a href={jumpUrl} onClick={() => onClick()} className={className}>
+  return <a href={jumpUrl} onClick={onClick} onAuxClick={onClick}  className={className}>
     {children}
   </a>;
 }

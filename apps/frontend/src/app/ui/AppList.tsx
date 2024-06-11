@@ -1,8 +1,7 @@
 'use client';
-import React from 'react';
-import cn from 'classnames';
+import React, { useMemo } from 'react';
 import { useEhContext } from '../context/EhContext';
-import { EhAutoComplete, ShortcutAction } from './EhAutoComplete';
+import { EhAutoComplete, Item, ShortcutAction } from './EhAutoComplete';
 import { autoCompleteFilter } from '../lib/autoCompleteFilter';
 import { findSubstitutionTypeInApp, getJumpUrl } from '../lib/utils';
 import { EhApp, EhAppId, EhEnv, EhSubstitutionType } from '@env-hopper/types';
@@ -13,8 +12,8 @@ export function formatUrl(env: EhEnv, urlPattern: string) {
 }
 
 
-function mapToAutoCompleteItemApp(app: EhAppId) {
-  return { id: app, title: app };
+function mapToAutoCompleteItemApp(app: EhApp, favorites: Set<EhAppId>, recents: Set<EhAppId>): Item {
+  return { id: app.name, title: app.name, favorite: favorites.has(app.name), recent: recents.has(app.name) };
 }
 
 interface ShortcutUniversalParams {
@@ -38,7 +37,7 @@ function shortcutUniversal({
   if (link !== undefined) {
     return { link };
   }
-  const substitutionType = findSubstitutionTypeInApp(app, listSubstitutions);
+  const substitutionType = findSubstitutionTypeInApp(app, env, listSubstitutions);
   if (substitutionType !== undefined) {
     return {
       substitutionTitle: substitutionType?.title
@@ -54,54 +53,27 @@ export interface AppListProps {
 
 export function AppList({ onOpenChange }: AppListProps) {
   const {
-    env,
     app,
-    substitution,
     listApps,
     setApp,
     listFavoriteApps,
-    listSubstitutions,
+    recentJumps,
+    toggleFavoriteApp,
     getAppById,
-    recordJump
   } = useEhContext();
 
 
-  const shortcutActionForApp = (appId: EhAppId) => {
-    const app = listApps.find(app => app.name === appId);
-    return shortcutUniversal({ app, env, substitution, listSubstitutions });
-  };
-  return <EhAutoComplete itemsAll={listApps.map(app => mapToAutoCompleteItemApp(app.name))}
-                         filter={autoCompleteFilter}
-                         onOpenChange={onOpenChange}
-                    selectedItem={app ? mapToAutoCompleteItemApp(app.name) : undefined}
-                    shortcutAction={shortcutActionForApp}
-                    onClick={(appId) => {
-                    }}
-                    onSelectedItemChange={(appId) => {
-                      setApp(getAppById(appId));
-                      recordJump({
-                        app: getAppById(appId),
-                        env,
-                        substitution
-                      });
+  const items = useMemo(() => {
+    const favSet = new Set(listFavoriteApps);
+    const recentSet = new Set(recentJumps.slice(0, 2).map(jump => jump.app || '').filter(Boolean));
+    return listApps.map(env => mapToAutoCompleteItemApp(env, favSet, recentSet));
+  }, [listApps, listFavoriteApps, recentJumps]);
 
-                      // const app = listApps.find(app => app.name === appId);
-                      // if (env !== undefined && app !== undefined) {
-                      //   jump({
-                      //     app, env: env, substitution: substitution ? {
-                      //       name: substitution.name,
-                      //       value: ''
-                      //     } : undefined
-                      //   });
-                      // }
-                    }} />;
-    {/*<div className="flex gap-2 my-2">*/}
-    {/*  <span aria-label="Favorites">⭐</span>*/}
-    {/*  <ul className="inline-flex gap-2">*/}
-    {/*    {listFavoriteApps.map(appId => <li key={appId}*/}
-    {/*                                       className={cn('border px-2 rounded-lg hover:bg-gray-500 hover:cursor-pointer hover:border-solid',*/}
-    {/*                                         appId === app?.name ? 'border-solid border-amber-300 text-amber-300' : 'border-dashed border-gray-300 ')}*/}
-    {/*                                       onClick={() => setApp(getAppById(appId === app?.name ? undefined : appId))}>{appId}</li>)}*/}
-    {/*  </ul>*/}
-    {/*</div>*/}
+  return <EhAutoComplete itemsAll={items} filter={autoCompleteFilter}
+                         label="Application"
+                         placeholder="Select application"
+                         onOpenChange={onOpenChange}
+                         selectedItem={app ? mapToAutoCompleteItemApp(app, new Set(), new Set()) : null}
+                         onSelectedItemChange={(envId) => setApp(getAppById(envId))}
+                         onFavoriteToggle={(env, isOn) => toggleFavoriteApp(env.id, isOn)} />;
 }

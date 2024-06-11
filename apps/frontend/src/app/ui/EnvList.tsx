@@ -24,19 +24,11 @@ export function EnvList({ onOpenChange }: EnvListProps) {
   }, [listEnvs, listFavoriteEnvs, recentJumps])
 
   return <EhAutoComplete itemsAll={items} filter={autoCompleteFilter}
+                         label="Environment"
+                         placeholder="Select environment"
                          onOpenChange={onOpenChange}
-                         selectedItem={env ? mapToAutoCompleteItem(env, new Set(), new Set()) : undefined}
+                         selectedItem={env ? mapToAutoCompleteItem(env, new Set(), new Set()) : null}
                          onSelectedItemChange={(envId) => setEnv(getEnvById(envId))}
                          onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
   />
-    {/*<div className="flex gap-2 my-2">*/}
-    {/*  <span aria-label="Favorites">⭐</span>*/}
-    {/*  <ul className="inline-flex gap-2">*/}
-    {/*    {listFavoriteEnvs.map(envId => <li key={envId}*/}
-    {/*                                       className={cn('border px-2 rounded-lg hover:bg-gray-500 hover:cursor-pointer hover:border-solid',*/}
-    {/*                                   envId === env?.name ? 'border-solid border-amber-300 text-amber-300' : 'border-dashed border-gray-300 ')}*/}
-    {/*                                       onClick={() => setEnv(getEnvById(envId === env?.name ? undefined : envId))}>{envId}</li>)}*/}
-    {/*  </ul>*/}
-    {/*</div>*/}
-
 }

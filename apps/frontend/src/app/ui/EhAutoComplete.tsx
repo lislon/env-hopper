@@ -1,6 +1,7 @@
 import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { useCombobox, UseComboboxPropGetters } from 'downshift';
 import cn from 'classnames';
+import { Section } from './Section';
 
 
 export interface Item {
@@ -18,7 +19,7 @@ export type ShortcutJump = { link: string };
 export type ShortcutPickSubstitution = { substitutionTitle: string };
 export type ShortcutAction = ShortcutJump | ShortcutPickSubstitution;
 
-const height = 'h-14';
+const height = 'h-10';
 
 export interface AutoCompleteProps {
   itemsAll: Item[];
@@ -26,7 +27,7 @@ export interface AutoCompleteProps {
   label?: string;
   filter: EhAutoCompleteFilter;
   onSelectedItemChange: OnSelectedItemChange;
-  selectedItem: Item | undefined;
+  selectedItem: Item | null;
   shortcutAction?: (id: string) => ShortcutAction | undefined;
   onClick?: (id: string) => void;
   onFavoriteToggle?: (item: Item, isOn: boolean) => void;
@@ -67,7 +68,7 @@ export interface ItemPrinterProps {
   index: number;
   item: Item;
   highlightedIndex: number;
-  selectedItem?: Item;
+  selectedItem: Item | null;
   getItemProps: UseComboboxPropGetters<Item>['getItemProps'];
   autoCompleteProps: AutoCompleteProps;
 }
@@ -88,7 +89,7 @@ function ItemPrinter({
   return (
     <div
       className={cn(
-        highlightedIndex === index && 'bg-gray-700',
+        highlightedIndex === index && 'bg-gray-100 dark:bg-gray-700',
         selectedItem === item && 'font-bold',
         `${height} py-2 px-1 shadow-sm`,
         // 'grayscale hover:grayscale-0',
@@ -98,7 +99,7 @@ function ItemPrinter({
     >
       <div className="flex">
         <span
-          className={cn('content-center min-w-2em text-amber-400 hover:text-amber-400', item.favorite ? 'text-amber-400' : 'text-gray-900')}
+          className={cn('content-center min-w-2em text-amber-400 hover:text-amber-400 cursor-pointer', item.favorite ? 'text-amber-400' : 'text-gray-900')}
           onClick={onClick}>
           ★
         </span>
@@ -119,44 +120,30 @@ export interface ItemsSectionProps {
 }
 
 
-function Section({ children, title }: { children: React.ReactNode, title: string }) {
-  return <section>
-    <div
-      className={cn('flex items-center text-center text-sm',
-        'before:content-[\'\'] before:flex-1 before:border-b before:border-white before:mr-0.5',
-        'after:content-[\'\'] after:flex-1 after:border-b after:border-white after:ml-0.5'
-      )}>{title}
-    </div>
-    {children}
-  </section>
-
-}
-
-function ItemsSections({ items, selectedItem, ...rest }: ItemsSectionProps) {
+function ItemsSections({ items, ...rest }: ItemsSectionProps) {
 
   const itemsWithIndex = items.map((item, index) => ({ ...item, index }));
 
-  const recentSlice = itemsWithIndex.filter(item => item.recent && !item.favorite);
-  const favSlice = itemsWithIndex.filter(item => item.favorite);
-  const regularSlice = itemsWithIndex.filter(item => !item.favorite && !item.recent)
+  const recentSection = itemsWithIndex.filter(item => item.recent && !item.favorite);
+  const favSection = itemsWithIndex.filter(item => item.favorite);
+  const allSection = itemsWithIndex.filter(item => !item.favorite && !item.recent);
 
   return (<>
-
-    {recentSlice.length > 0 && <Section title={"🕒 Recent"}>
-      {recentSlice.map((item) =>
+    {recentSection.length > 0 && <Section title={'🕒 Recent'}>
+      {recentSection.map((item) =>
         <ItemPrinter key={item.index} index={item.index} item={item} {...rest} />
       )}
     </Section>}
-    {favSlice.length > 0 && <Section title={"⭐ Favorites"}>
-      {favSlice.map((item) =>
+    {favSection.length > 0 && <Section title={'⭐ Favorites'}>
+      {favSection.map((item) =>
         <ItemPrinter key={item.index} index={item.index} item={item} {...rest} />
       )}
     </Section>}
-    <Section title={"🗂️ All"}>
-      {regularSlice.map((item) =>
+    {allSection.length > 0 && <Section title={'🗂️ All'}>
+      {allSection.map((item) =>
         <ItemPrinter key={item.index} index={item.index} item={item} {...rest} />
       )}
-    </Section>
+    </Section>}
   </>);
 }
 
@@ -170,7 +157,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     getInputProps,
     highlightedIndex,
     getItemProps,
-    reset,
+    getToggleButtonProps,
     selectedItem
   } = useCombobox({
     onInputValueChange({ inputValue }) {
@@ -206,30 +193,39 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     onClick: preselectAndShowAllOptions
   });
   return (
-    <>
+    <div>
       <div className="w-full flex flex-col gap-1">
         {props.label && <label className="w-fit" {...getLabelProps()}>
           {props.label}
         </label>}
-        <div className="flex shadow-sm bg-black gap-0.5">
+        <div className="flex shadow-sm border dark:border-0 dark:bg-black gap-0.5">
           <input
             placeholder={props.placeholder}
-            className={`w-full ${height} text-center text-2xl text-gray-500 rounded`}
+            className={`w-full ${height} text-xl text-gray-500 rounded p-2`}
             {...inputProps}
           />
+          <button
+            aria-label="toggle menu"
+            className="px-2"
+            type="button"
+            {...getToggleButtonProps()}
+          >
+            {isOpen ? <>&#8593;</> : <>&#8595;</>}
+          </button>
         </div>
       </div>
-      {<div className="relative w-full">
-        <div
-          className={cn(`w-full bg-gray-900 mt-1 shadow-md p-0 z-10 absolute max-h-80 overflow-y-scroll min-w-[800px]`,
-            !(isOpen && items.length) && 'hidden')}
-          {...getMenuProps()}
-        >
-          {isOpen && <ItemsSections items={items} highlightedIndex={highlightedIndex} getItemProps={getItemProps}
-                                   selectedItem={selectedItem}
-                                   autoCompleteProps={props} />}
-        </div>
-      </div>}
-    </>
+      {
+        <div className="relative w-full">
+          <div
+            className={cn(`w-full bg-white dark:bg-gray-900 mt-1 shadow-md p-0 z-10 absolute max-h-[50vh] overflow-y-scroll`,
+              !(isOpen && items.length) && 'hidden')}
+            {...getMenuProps()}
+          >
+            {isOpen && <ItemsSections items={items} highlightedIndex={highlightedIndex} getItemProps={getItemProps}
+                                      selectedItem={selectedItem}
+                                      autoCompleteProps={props} />}
+          </div>
+        </div>}
+    </div>
   );
 }

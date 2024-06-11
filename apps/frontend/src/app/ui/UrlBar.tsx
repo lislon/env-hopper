@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import cn from 'classnames';
-import { useEhContext } from '../context/EhContext';
 import { EnvList } from './EnvList';
 import { AppList } from './AppList';
+import { SubstitutionList } from './SubstitutionList';
 
 export function UrlPart({ text, children, open }: { text: string, children: React.ReactNode, open?: boolean }) {
   return <div
@@ -16,20 +16,10 @@ export function UrlPart({ text, children, open }: { text: string, children: Reac
 }
 
 export function UrlBar() {
-  const { domainPart, appPart } = useEhContext();
-  const [isEnvOpen, setIsEnvOpen] = useState<boolean>(false);
-  const [isAppOpen, setIsAppOpen] = useState<boolean>(false);
+  return <div className="flex flex-col gap-3 w-full">
+    <EnvList />
+    <AppList />
+    <SubstitutionList />
+  </div>
 
-  return <div className="tracking-widest">
-    <div className="text-4xl">
-      <span>https://</span>
-      <UrlPart text={domainPart} open={isEnvOpen}>
-        <EnvList onOpenChange={open => setIsEnvOpen(open)} />
-      </UrlPart>
-      <UrlPart text={appPart} open={isAppOpen}>
-        <AppList onOpenChange={open => setIsAppOpen(open)} />
-      </UrlPart>
-      <UrlPart text="123123">123123</UrlPart>
-    </div>
-  </div>;
 }

@@ -9,6 +9,7 @@ export interface EhJumpHistory {
   app?: EhAppId;
   env?: EhEnvId;
   substitution?: string;
+  url: string;
 }
 
 export interface EhJumpParams {

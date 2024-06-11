@@ -1,24 +1,9 @@
 'use client';
 import { EhApp, EhAppId, EhClientConfig, EhEnv, EhEnvId, EhSubstitutionType } from '@env-hopper/types';
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { EhJumpHistory, EhJumpParams, EhSubstitutionValue } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import {
-  cutApp,
-  cutDomain,
-  findSubstitutionIdByUrl,
-  getEnvSpecificAppUrl,
-  getJumpUrl,
-  getJumpUrlEvenNotComplete
-} from '../lib/utils';
-
-function sortByPopularity(list: string[]): string[] {
-  const counts = list.reduce((acc, item) => {
-    acc[item] = (acc[item] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  return [...new Set(list)].sort((a, b) => counts[b] - counts[a]);
-}
+import { cutApp, cutDomain, findSubstitutionIdByUrl, getJumpUrl, getJumpUrlEvenNotComplete } from '../lib/utils';
 
 export interface EhContextProps {
   listEnvs: EhEnv[];
@@ -82,36 +67,38 @@ export function EhContextProvider({ children, data }: { children: React.ReactNod
   const [substitution, setSubstitution] = useState<EhSubstitutionValue | undefined>();
 
   const [recentJumps, setRecentJumps] = useLocalStorage<EhJumpHistory[]>('recent', []);
-  const [favoriteEnvIds, setFavoriteEnvIds] = useLocalStorage<EhEnvId[]>('favoriteEnvs', []);
-  const [favoriteAppIds, setFavoriteAppIds] = useLocalStorage<EhAppId[]>('favoriteApps', []);
+  const [listFavoriteEnvs, setFavoriteEnvIds] = useLocalStorage<EhEnvId[]>('favoriteEnvs', []);
+  const [listFavoriteApps, setFavoriteAppIds] = useLocalStorage<EhAppId[]>('favoriteApps', []);
+  const [, setVersion] = useLocalStorage<string>('version', '');
+  useEffect(() => {
+    setVersion('0.0.3');
+  }, [setVersion]);
 
   const value = useMemo<EhContextProps>(() => {
-    const substitutionName = findSubstitutionIdByUrl(app ? getEnvSpecificAppUrl(app, env) : undefined);
+    const substitutionName = findSubstitutionIdByUrl({ app, env});
 
     const substitutionType = data.substitutions.find(s => s.name === substitutionName || undefined);
 
 
-    const env2 = env ? env : (data.envs.length > 0 ? data.envs[0] : undefined);
-    const app1 = app ? app : data.apps.length > 0 ? data.apps[0] : undefined;
-    const incompleteUrl = app1 && getJumpUrlEvenNotComplete({
-      app: app1,
-      env: env2,
+    const firstApp = app ? app : data.apps.length > 0 ? data.apps[0] : undefined;
+    const firstEnv = env ? env : (data.envs.length > 0 ? data.envs[0] : undefined);
+    const incompleteUrl = firstApp && getJumpUrlEvenNotComplete({
+      app: firstApp,
+      env: firstEnv,
       substitution: substitution
     });
     const domainPart = cutDomain(incompleteUrl || 'https://no-env');
-    const appPart = cutApp(incompleteUrl || 'https://no-env/no-app');
+    const appPart = cutApp(incompleteUrl || 'https://no-env/no-app')
 
     return {
       setEnv: env1 => {
         setEnv(data.envs.find(env => env === env1) || undefined);
       },
-      env: env,
-      listFavoriteEnvs: favoriteEnvIds,
-      listFavoriteApps: favoriteAppIds,
-      setApp: app => {
-        setApp(app);
-      },
-      app: app,
+      env,
+      listFavoriteEnvs,
+      listFavoriteApps,
+      setApp,
+      app,
       substitutionType,
       listEnvs: data.envs,
       listApps: data.apps,
@@ -126,24 +113,25 @@ export function EhContextProvider({ children, data }: { children: React.ReactNod
       },
       recordJump({ app, env, substitution: substitution1 }: RecordJumpParams) {
         console.log(`Jumping to ${app?.name} in ${env?.name} with ${substitution?.value}`);
-        if (getJumpUrl({ app: app, env: env, substitution: substitution }) === undefined) {
+        const jumpUrl = getJumpUrl({ app: app, env: env, substitution: substitution });
+        if (jumpUrl === undefined) {
           return;
         }
-        const newVar: EhJumpHistory = { app: app?.name, env: env?.name, substitution: substitution?.value };
-        setRecentJumps([newVar, ...recentJumps].slice(0, MAX_HISTORY_JUMPS));
+        const newVar: EhJumpHistory = { app: app?.name, env: env?.name, substitution: substitution?.value, url: jumpUrl };
+        setRecentJumps([newVar, ...recentJumps.filter(h => h.url !== jumpUrl)].slice(0, MAX_HISTORY_JUMPS));
       },
       toggleFavoriteEnv(envId, isOn) {
         if (isOn) {
-          setFavoriteEnvIds([...favoriteEnvIds, envId]);
+          setFavoriteEnvIds([...listFavoriteEnvs, envId]);
         } else {
-          setFavoriteEnvIds(favoriteEnvIds.filter(id => id !== envId));
+          setFavoriteEnvIds(listFavoriteEnvs.filter(id => id !== envId));
         }
       },
       toggleFavoriteApp(appId, isOn) {
         if (isOn) {
-          setFavoriteAppIds([...favoriteAppIds, appId]);
+          setFavoriteAppIds([...listFavoriteApps, appId]);
         } else {
-          setFavoriteAppIds(favoriteAppIds.filter(id => id !== appId));
+          setFavoriteAppIds(listFavoriteApps.filter(id => id !== appId));
         }
       },
       reset() {
@@ -156,7 +144,7 @@ export function EhContextProvider({ children, data }: { children: React.ReactNod
       appPart,
       recentJumps: recentJumps
     };
-  }, [env, app, data, recentJumps, setRecentJumps, substitution, favoriteAppIds, favoriteEnvIds]);
+  }, [env, app, data, recentJumps, setRecentJumps, substitution, listFavoriteApps, listFavoriteEnvs, setFavoriteEnvIds, setFavoriteAppIds]);
 
   return <EhContext.Provider value={value}>{children}</EhContext.Provider>;
 }

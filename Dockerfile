@@ -10,7 +10,7 @@ COPY . /app/
 ARG configuration=production
 #RUN npx nx run backend:prisma-g
 RUN npx nx run-many -t build -p backend frontend
-RUN mv /app/dist/listApps/frontend /app/dist/listApps/backend/assets
+RUN mv /app/dist/apps/frontend /app/dist/apps/backend/assets
 
 FROM node:21-alpine AS express-js
 RUN apk add --no-cache bash

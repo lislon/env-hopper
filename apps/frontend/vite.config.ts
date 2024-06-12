@@ -6,7 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/listApps/frontend',
+  cacheDir: '../../node_modules/.vite/apps/frontend',
 
   server: {
     port: 4000,
@@ -29,7 +29,7 @@ export default defineConfig({
   // },
 
   build: {
-    outDir: '../../dist/listApps/frontend',
+    outDir: '../../dist/apps/frontend',
     reportCompressedSize: true,
     commonjsOptions: {
       transformMixedEsModules: true,
@@ -39,14 +39,14 @@ export default defineConfig({
   test: {
     globals: true,
     cache: {
-      dir: '../../node_modules/.vitest/listApps/frontend',
+      dir: '../../node_modules/.vitest/apps/frontend',
     },
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
 
     reporters: ['default'],
     coverage: {
-      reportsDirectory: '../../coverage/listApps/frontend',
+      reportsDirectory: '../../coverage/apps/frontend',
       provider: 'v8',
     },
   },

@@ -30,7 +30,7 @@ export function JumpUrl({ children, app, env, substitution, className }: JumpUrl
   if (!jumpUrl) {
     return undefined;
   }
-  return <a href={jumpUrl} onClick={onClick} onAuxClick={onClick}  className={className}>
+  return <a href={jumpUrl} onClick={onClick} onAuxClick={onClick}  className={className} target="_blank">
     {children}
   </a>;
 }

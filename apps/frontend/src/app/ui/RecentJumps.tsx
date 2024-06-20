@@ -21,7 +21,7 @@ export function RecentJumps() {
           </thead>
           <tbody>
           {recentJumps.map((jump) => (
-            <tr key={`${jump.app}-${jump.env}-${jump.substitution}`} className="hover:bg-gray-900">
+            <tr key={`${jump.app}-${jump.env}-${jump.substitution}`} className="hover:bg-gray-100 dark:hover:bg-gray-900">
               <td className="px-2 py-2 cursor-pointer hover:underline" onClick={() => setEnv(getEnvById(jump.env))}>{jump.env}</td>
               <td className="px-2 py-2 cursor-pointer hover:underline" onClick={() => setApp(getAppById(jump.app))}>{jump.app}</td>
               <td className="px-2 py-2 cursor-pointer hover:underline" onClick={() => setSubstitution(getSubstitutionValueById(jump.env, jump.app, jump.substitution))}>{jump.substitution}</td>

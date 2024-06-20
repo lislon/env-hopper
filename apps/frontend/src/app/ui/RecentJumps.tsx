@@ -13,10 +13,10 @@ export function RecentJumps() {
         <table className="w-full table-auto">
           <thead>
           <tr className="text-left">
-            <th scope="col" className="px-2 ">Env</th>
-            <th scope="col" className="px-2 ">App</th>
-            <th scope="col" className="px-2 ">Context</th>
-            <th scope="col" className="px-2 "></th>
+            <th scope="col" className="px-2">Env</th>
+            <th scope="col" className="px-2">App</th>
+            <th scope="col" className="px-2">Context</th>
+            <th scope="col" className="px-2"></th>
           </tr>
           </thead>
           <tbody>

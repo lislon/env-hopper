@@ -4,7 +4,7 @@ import { EhEnv } from '@env-hopper/types';
 
 export async function dbEnvsSet(data: EhEnv[]): Promise<void> {
   await prisma.$transaction([
-    prisma.environment.deleteMany({}),
+    prisma.environment.deleteMany(),
     prisma.environment.createMany({ data: data.map(Writer.ehEnv) }),
   ]);
 }

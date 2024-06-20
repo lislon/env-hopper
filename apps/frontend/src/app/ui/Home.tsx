@@ -7,7 +7,6 @@ import { JumpMainButton } from './JumpMainButton';
 import { UrlBar } from './UrlBar';
 import { Header } from './Header';
 import { RecentJumps } from './RecentJumps';
-import { findSubstitutionIdByUrl } from '../lib/utils';
 
 function HomeWithContext() {
   const {
@@ -25,22 +24,6 @@ function HomeWithContext() {
       const latestApp = getAppById(latestJump?.app);
       setEnv(latestEnv);
       setApp(latestApp);
-      if (
-        latestJump.substitution &&
-        latestApp !== undefined &&
-        latestEnv !== undefined
-      ) {
-        const lastSubstitutionName = findSubstitutionIdByUrl({
-          app: latestApp,
-          env: latestEnv,
-        });
-        if (lastSubstitutionName) {
-          setSubstitution({
-            name: lastSubstitutionName,
-            value: latestJump.substitution,
-          });
-        }
-      }
     }
   }, []);
 

@@ -32,7 +32,9 @@ model Application {
 }
 
 model Substitution {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-  title String
+  id                    Int     @id @default(autoincrement())
+  name                  String  @unique
+  title                 String
+  isBrowserAutocomplete Boolean @default(false)
+  isSharedAcrossEnvs    Boolean @default(false)
 }

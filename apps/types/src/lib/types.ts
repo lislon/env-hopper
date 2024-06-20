@@ -11,6 +11,14 @@ export interface EhApp {
 export interface EhSubstitutionType {
   name: string;
   title: string;
+  /**
+   * Should the value be autocompletable using native browser autocomplete.
+   */
+  isBrowserAutocomplete?: boolean;
+  /**
+   * The value is shared across envs (By default: false)
+   */
+  isSharedAcrossEnvs?: boolean;
 }
 
 export type EhSubstitutionValue = string;

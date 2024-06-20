@@ -1,6 +1,5 @@
 'use client';
 import React, { useMemo } from 'react';
-import cn from 'classnames';
 import { useEhContext } from '../context/EhContext';
 import { EhAutoComplete, Item } from './EhAutoComplete';
 import { autoCompleteFilter } from '../lib/autoCompleteFilter';

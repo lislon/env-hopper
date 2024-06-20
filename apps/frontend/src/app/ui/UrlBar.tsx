@@ -5,10 +5,10 @@ import { AppList } from './AppList';
 import { SubstitutionList } from './SubstitutionList';
 
 export function UrlPart({
-  text,
-  children,
-  open,
-}: {
+                          text,
+                          children,
+                          open
+                        }: {
   text: string;
   children: React.ReactNode;
   open?: boolean;
@@ -35,10 +35,13 @@ export function UrlPart({
 
 export function UrlBar() {
   return (
-    <div className="flex flex-col gap-3 w-full">
-      <EnvList />
-      <AppList />
-      <SubstitutionList />
-    </div>
+    <form>
+      <div className="flex flex-col gap-3 w-full">
+        <EnvList />
+        <AppList />
+        <SubstitutionList />
+      </div>
+      <input type="submit" value="Mock button for autocomplete" className="hidden" />
+    </form>
   );
 }

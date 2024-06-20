@@ -21,3 +21,11 @@ npx nx run frontend:serve
 ```
 
 Navigate to `http://localhost:4001`
+
+
+### Migration
+
+```bash
+cd apps/backend
+npx prisma migrate dev 
+```

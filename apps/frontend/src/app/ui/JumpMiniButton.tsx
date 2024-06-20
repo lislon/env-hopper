@@ -1,6 +1,5 @@
 import { getJumpUrl } from '../lib/utils';
 import { JumpUrl } from './JumpUrl';
-import NewWindowIcon from '../../assets/new-window.svg?react';
 import { EhApp, EhEnv } from '@env-hopper/types';
 import { EhSubstitutionValue } from '../types';
 
@@ -11,7 +10,7 @@ export interface JumpMiniButtonProps {
 }
 
 export function JumpMiniButton({ env, app, substitution }: JumpMiniButtonProps) {
-  if (env === undefined || app === undefined || substitution === undefined) {
+  if (env === undefined || app === undefined) {
     return undefined;
   }
   const url = getJumpUrl({ app, env, substitution });

@@ -6,7 +6,7 @@ export async function dbSubstitutionsSet(
   data: EhSubstitutionDb[]
 ): Promise<void> {
   await prisma.$transaction([
-    prisma.substitution.deleteMany({}),
+    prisma.substitution.deleteMany(),
     prisma.substitution.createMany({ data: data.map(Writer.ehSubstitution) }),
   ]);
 }

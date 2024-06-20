@@ -6,7 +6,6 @@ export function Header() {
       <div className="my-4">
         <img
           src="/grasshopper-lsn.svg"
-          // className="dark:invert"
           alt={'Grasshopper Logo'}
           width={100}
           height={24}

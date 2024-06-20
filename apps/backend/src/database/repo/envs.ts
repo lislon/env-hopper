@@ -10,6 +10,8 @@ export async function dbEnvsSet(data: EhEnv[]): Promise<void> {
 }
 
 export async function dbEnvsGet(): Promise<EhEnv[]> {
-  const rows = await prisma.environment.findMany();
+  const rows = await prisma.environment.findMany({orderBy: [{
+      name: 'asc',
+    }]});
   return rows.map(Reader.ehEnv);
 }

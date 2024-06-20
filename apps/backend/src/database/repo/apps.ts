@@ -10,6 +10,8 @@ export async function dbAppsSet(dataRaw: EhApp[]): Promise<void> {
 }
 
 export async function dbAppsGet(): Promise<EhApp[]> {
-  const rows = await prisma.application.findMany();
+  const rows = await prisma.application.findMany({orderBy: [{
+      name: 'asc',
+    }]});
   return rows.map(Reader.ehApp);
 }

@@ -12,5 +12,7 @@ export async function dbSubstitutionsSet(
 }
 
 export async function dbSubstitutionsGet(): Promise<EhSubstitutionDb[]> {
-  return (await prisma.substitution.findMany()).map(Reader.ehSubstitution);
+  return (await prisma.substitution.findMany({orderBy: [{
+      name: 'asc',
+    }]})).map(Reader.ehSubstitution);
 }

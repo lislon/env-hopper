@@ -8,7 +8,6 @@ export function JumpMainButton() {
   const { app, env, substitution, substitutionType } = useEhContext();
 
   const url = getJumpUrl({ app, env, substitution });
-  console.log({ app, env, substitution });
   if (url !== undefined) {
     return (
       <div className="relative">

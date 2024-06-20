@@ -44,6 +44,8 @@ export interface EhContextProps {
 
   getEnvById(id: EhEnvId | undefined): EhEnv | undefined;
 
+  getSubstitutionValueById(envId: EhEnvId|undefined, appId: EhAppId|undefined, substitution: string|undefined) : EhSubstitutionValue | undefined;
+
   recordJump(jump: EhJumpParams): void;
 
   recentJumps: EhJumpHistory[];
@@ -189,6 +191,16 @@ export function EhContextProvider({
       toggleFavoriteApp(appId, isOn) {
         const allExceptThis = listFavoriteApps.filter((id) => id !== appId);
         setFavoriteAppIds([...allExceptThis, ...(isOn ? [appId] : [])]);
+      },
+      getSubstitutionValueById(envId, appId, substitution) {
+        const substitutionIdByUrl = findSubstitutionIdByUrl({ env: getEnvById(envId, data.envs), app: getAppById(appId, data.apps) });
+        if (substitutionIdByUrl !== undefined && substitution !== undefined) {
+          return {
+            name: substitutionIdByUrl,
+            value: substitution,
+          };
+        }
+        return undefined;
       },
       reset() {
         setEnv(undefined);

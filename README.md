@@ -9,6 +9,7 @@ No more manual URL typing or multiple tabs. Just select your environment, specif
 As of 2024-May-27 project is currently in development, not ready to be used on production.
 
 # Screenshot
+
 ![Env Hopper Demo](docs/env_hopper.gif)
 
 ## Local development

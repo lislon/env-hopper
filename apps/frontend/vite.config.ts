@@ -2,7 +2,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { VitePWA } from 'vite-plugin-pwa'
+import { VitePWA } from 'vite-plugin-pwa';
+import Svgr from 'vite-plugin-svgr';
 
 export default defineConfig({
   root: __dirname,
@@ -13,7 +14,7 @@ export default defineConfig({
     host: 'localhost',
     proxy: {
       '/api': 'http://localhost:4001',
-    }
+    },
   },
 
   preview: {
@@ -21,7 +22,10 @@ export default defineConfig({
     host: 'localhost',
   },
 
-  plugins: [react(), nxViteTsPaths(), VitePWA()],
+  plugins: [react(), nxViteTsPaths(), VitePWA(), Svgr()],
+  define: {
+    APP_VERSION: JSON.stringify(process.env.npm_package_version)
+  },
 
   // Uncomment this if you are using workers.
   // worker: {

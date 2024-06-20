@@ -1,4 +1,10 @@
-import { EhApp, EhAppId, EhEnv, EhEnvId, EhSubstitutionId } from '@env-hopper/types';
+import {
+  EhApp,
+  EhAppId,
+  EhEnv,
+  EhEnvId,
+  EhSubstitutionId,
+} from '@env-hopper/types';
 
 export interface EhSubstitutionValue {
   name: EhSubstitutionId;
@@ -18,4 +24,4 @@ export interface EhJumpParams {
   substitution?: EhSubstitutionValue;
 }
 
-export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }
+export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };

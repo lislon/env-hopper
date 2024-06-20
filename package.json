@@ -1,12 +1,14 @@
 {
   "name": "@env-hopper/source",
-  "version": "0.0.0",
+  "version": "0.0.4",
   "license": "MIT",
   "scripts": {
     "backend:serve": "nx run backend:serve",
     "frontend:serve": "nx run frontend:serve",
     "backend:generate": "nx run backend:prisma-g",
-    "backend:push": "nx run backend:prisma-p"
+    "backend:push": "nx run backend:prisma-p",
+    "lint": " nx run-many -t lint --projects=* && prettier --check .",
+    "format": "prettier --write . && nx run-many -t lint --fix --projects=*"
   },
   "private": true,
   "devDependencies": {
@@ -50,7 +52,7 @@
     "jest-environment-node": "^29.4.1",
     "jsdom": "~22.1.0",
     "nx": "19.0.4",
-    "postcss": "8.4.21",
+    "postcss": "8.4.31",
     "prettier": "^2.6.2",
     "react-refresh": "^0.10.0",
     "tailwindcss": "3.2.7",
@@ -59,6 +61,7 @@
     "typescript": "~5.4.2",
     "vite": "~5.0.0",
     "vite-plugin-pwa": "^0.20.0",
+    "vite-plugin-svgr": "^4.2.0",
     "vitest": "^1.3.1",
     "webpack-cli": "^5.1.4"
   },
@@ -72,6 +75,7 @@
     "express": "^4.18.1",
     "express-async-errors": "^3.1.1",
     "http-errors": "^2.0.0",
+    "lodash": "^4.17.21",
     "prisma": "^5.14.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",

@@ -2,7 +2,7 @@ import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { useCombobox, UseComboboxPropGetters } from 'downshift';
 import cn from 'classnames';
 import { Section } from './Section';
-
+import { StarIcon } from './StarIcon';
 
 export interface Item {
   id: string;
@@ -11,7 +11,9 @@ export interface Item {
   recent?: boolean;
 }
 
-export type EhAutoCompleteFilter = (inputValue: string) => (item: Item) => boolean;
+export type EhAutoCompleteFilter = (
+  inputValue: string
+) => (item: Item) => boolean;
 
 export type OnSelectedItemChange = (item: string | undefined) => void;
 
@@ -41,28 +43,31 @@ function ShortcutLink(props: AutoCompleteProps & { item: Item }) {
   }
 
   if ('link' in shortcutAction) {
-    return <a href={shortcutAction.link}
-              className="content-center p-1 hover:cursor-pointer"
-              onClick={(event) => {
-                event.preventDefault();
-                return props.onClick?.(props.item.id);
-              }}
-    >
-      <img
-        src="/grasshopper-lsn.svg"
-        alt={'Grasshopper Logo'}
-        width={64}
-        height={24}
-      />
-    </a>;
+    return (
+      <a
+        href={shortcutAction.link}
+        className="content-center p-1 hover:cursor-pointer"
+        onClick={(event) => {
+          event.preventDefault();
+          return props.onClick?.(props.item.id);
+        }}
+      >
+        <img
+          src="/grasshopper-lsn.svg"
+          alt={'Grasshopper Logo'}
+          width={64}
+          height={24}
+        />
+      </a>
+    );
   } else {
-    return <button className="content-center p-1 hover:cursor-pointer">
-      {`#${shortcutAction.substitutionTitle}`}
-    </button>;
+    return (
+      <button className="content-center p-1 hover:cursor-pointer">
+        {`#${shortcutAction.substitutionTitle}`}
+      </button>
+    );
   }
-
 }
-
 
 export interface ItemPrinterProps {
   index: number;
@@ -71,44 +76,56 @@ export interface ItemPrinterProps {
   selectedItem: Item | null;
   getItemProps: UseComboboxPropGetters<Item>['getItemProps'];
   autoCompleteProps: AutoCompleteProps;
+  tmpFavorite: Map<string, boolean>;
+  setTmpFavorite: (tmpFavorite: Map<string, boolean>) => void;
 }
 
 function ItemPrinter({
-                       item,
-                       index,
-                       highlightedIndex,
-                       selectedItem,
-                       getItemProps,
-                       autoCompleteProps
-                     }: ItemPrinterProps) {
-  const onClick: MouseEventHandler = event => {
+  item,
+  index,
+  highlightedIndex,
+  selectedItem,
+  getItemProps,
+  autoCompleteProps,
+  tmpFavorite,
+  setTmpFavorite,
+}: ItemPrinterProps) {
+  const onClick: MouseEventHandler = (event) => {
     event.stopPropagation();
     event.preventDefault();
-    autoCompleteProps.onFavoriteToggle?.(item, !item.favorite);
+    const wasFavorite =
+      tmpFavorite.get(item.id) !== undefined
+        ? tmpFavorite.get(item.id)
+        : item.favorite;
+    tmpFavorite.set(item.id, !wasFavorite);
+    setTmpFavorite(new Map(tmpFavorite));
+    autoCompleteProps.onFavoriteToggle?.(item, !wasFavorite);
   };
+  const isTmpFavorite = tmpFavorite.get(item.id);
+  const isFavorite =
+    isTmpFavorite !== undefined ? isTmpFavorite : item.favorite;
   return (
     <div
       className={cn(
+        'group',
         highlightedIndex === index && 'bg-gray-100 dark:bg-gray-700',
         selectedItem === item && 'font-bold',
         `${height} py-2 px-1 shadow-sm`,
-        // 'grayscale hover:grayscale-0',
-        'before:content-[\'\']'
+        "before:content-['']"
       )}
       {...getItemProps({ item, index })}
     >
-      <div className="flex">
-        <span
-          className={cn('content-center min-w-2em text-amber-400 hover:text-amber-400 cursor-pointer', item.favorite ? 'text-amber-400' : 'text-gray-900')}
-          onClick={onClick}>
-          ★
-        </span>
+      <div className="flex justify-between px-1">
         <div>{item.title}</div>
+        <StarIcon
+          isSelected={isFavorite}
+          className={isFavorite ? '' : 'invisible group-hover:visible'}
+          onClick={onClick}
+        />
       </div>
       <ShortcutLink {...autoCompleteProps} item={item} />
     </div>
   );
-
 }
 
 export interface ItemsSectionProps {
@@ -117,39 +134,69 @@ export interface ItemsSectionProps {
   selectedItem: Item | null;
   getItemProps: UseComboboxPropGetters<Item>['getItemProps'];
   autoCompleteProps: AutoCompleteProps;
+  tmpFavorite: Map<string, boolean>;
+  setTmpFavorite: (tmpFavorite: Map<string, boolean>) => void;
 }
-
 
 function ItemsSections({ items, ...rest }: ItemsSectionProps) {
-
   const itemsWithIndex = items.map((item, index) => ({ ...item, index }));
 
-  const recentSection = itemsWithIndex.filter(item => item.recent && !item.favorite);
-  const favSection = itemsWithIndex.filter(item => item.favorite);
-  const allSection = itemsWithIndex.filter(item => !item.favorite && !item.recent);
+  const recentSection = itemsWithIndex.filter(
+    (item) => item.recent && !item.favorite
+  );
+  const favSection = itemsWithIndex.filter((item) => item.favorite);
+  const allSection = itemsWithIndex.filter(
+    (item) => !item.favorite && !item.recent
+  );
 
-  return (<>
-    {recentSection.length > 0 && <Section title={'🕒 Recent'}>
-      {recentSection.map((item) =>
-        <ItemPrinter key={item.index} index={item.index} item={item} {...rest} />
+  return (
+    <>
+      {recentSection.length > 0 && (
+        <Section title={'🕒 Recent'}>
+          {recentSection.map((item) => (
+            <ItemPrinter
+              key={item.index}
+              index={item.index}
+              item={item}
+              {...rest}
+            />
+          ))}
+        </Section>
       )}
-    </Section>}
-    {favSection.length > 0 && <Section title={'⭐ Favorites'}>
-      {favSection.map((item) =>
-        <ItemPrinter key={item.index} index={item.index} item={item} {...rest} />
+      {favSection.length > 0 && (
+        <Section title={'⭐ Favorites'}>
+          {favSection.map((item) => (
+            <ItemPrinter
+              key={item.index}
+              index={item.index}
+              item={item}
+              {...rest}
+            />
+          ))}
+        </Section>
       )}
-    </Section>}
-    {allSection.length > 0 && <Section title={'🗂️ All'}>
-      {allSection.map((item) =>
-        <ItemPrinter key={item.index} index={item.index} item={item} {...rest} />
+      {allSection.length > 0 && (
+        <Section title={'🗂️ All'}>
+          {allSection.map((item) => (
+            <ItemPrinter
+              key={item.index}
+              index={item.index}
+              item={item}
+              {...rest}
+            />
+          ))}
+        </Section>
       )}
-    </Section>}
-  </>);
+    </>
+  );
 }
-
 
 export function EhAutoComplete(props: AutoCompleteProps) {
   const [items, setItems] = useState(props.itemsAll);
+  const [tmpFavorite, setTmpFavorite] = useState<Map<string, boolean>>(
+    new Map()
+  );
+
   const {
     isOpen,
     getLabelProps,
@@ -158,7 +205,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     highlightedIndex,
     getItemProps,
     getToggleButtonProps,
-    selectedItem
+    selectedItem,
   } = useCombobox({
     onInputValueChange({ inputValue }) {
       setItems(props.itemsAll.filter(props.filter(inputValue)));
@@ -173,7 +220,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     items,
     itemToString(item) {
       return item ? item.title : '';
-    }
+    },
   });
   const inputRef = React.createRef<HTMLInputElement>();
   const onOpenChange = props.onOpenChange;
@@ -190,14 +237,16 @@ export function EhAutoComplete(props: AutoCompleteProps) {
   const inputProps = getInputProps({
     ref: inputRef,
     onFocus: preselectAndShowAllOptions,
-    onClick: preselectAndShowAllOptions
+    onClick: preselectAndShowAllOptions,
   });
   return (
     <div>
       <div className="w-full flex flex-col gap-1">
-        {props.label && <label className="w-fit" {...getLabelProps()}>
-          {props.label}
-        </label>}
+        {props.label && (
+          <label className="w-fit" {...getLabelProps()}>
+            {props.label}
+          </label>
+        )}
         <div className="flex shadow-sm border dark:border-0 dark:bg-black gap-0.5">
           <input
             placeholder={props.placeholder}
@@ -217,15 +266,26 @@ export function EhAutoComplete(props: AutoCompleteProps) {
       {
         <div className="relative w-full">
           <div
-            className={cn(`w-full bg-white dark:bg-gray-900 mt-1 shadow-md p-0 z-10 absolute max-h-[50vh] overflow-y-scroll`,
-              !(isOpen && items.length) && 'hidden')}
+            className={cn(
+              `w-full bg-white dark:bg-gray-900 mt-1 shadow-md p-0 z-10 absolute max-h-[50vh] overflow-y-scroll`,
+              !(isOpen && items.length) && 'hidden'
+            )}
             {...getMenuProps()}
           >
-            {isOpen && <ItemsSections items={items} highlightedIndex={highlightedIndex} getItemProps={getItemProps}
-                                      selectedItem={selectedItem}
-                                      autoCompleteProps={props} />}
+            {isOpen && (
+              <ItemsSections
+                items={items}
+                highlightedIndex={highlightedIndex}
+                getItemProps={getItemProps}
+                tmpFavorite={tmpFavorite}
+                setTmpFavorite={setTmpFavorite}
+                selectedItem={selectedItem}
+                autoCompleteProps={props}
+              />
+            )}
           </div>
-        </div>}
+        </div>
+      }
     </div>
   );
 }

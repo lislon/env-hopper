@@ -1,7 +1,13 @@
 import { EhApp, EhEnv, EhSubstitutionType } from '@env-hopper/types';
 import { EhJumpParams, EhSubstitutionValue } from '../types';
 
-export function findSubstitutionIdByUrl({ app, env }: { app: EhApp | undefined; env: EhEnv | undefined }) {
+export function findSubstitutionIdByUrl({
+  app,
+  env,
+}: {
+  app: EhApp | undefined;
+  env: EhEnv | undefined;
+}) {
   if (app === undefined) {
     return undefined;
   }
@@ -10,11 +16,15 @@ export function findSubstitutionIdByUrl({ app, env }: { app: EhApp | undefined; 
   return match ? match[1] : undefined;
 }
 
-export function findSubstitutionTypeInApp(app: EhApp | undefined, env: EhEnv | undefined, listSubstitutions: EhSubstitutionType[]): EhSubstitutionType | undefined {
+export function findSubstitutionTypeInApp(
+  app: EhApp | undefined,
+  env: EhEnv | undefined,
+  listSubstitutions: EhSubstitutionType[]
+): EhSubstitutionType | undefined {
   if (app) {
     const match = findSubstitutionIdByUrl({ app, env });
     if (match) {
-      return listSubstitutions.find(v => v.name === match[1]) || undefined;
+      return listSubstitutions.find((v) => v.name === match[1]) || undefined;
     }
   }
   return undefined;
@@ -52,7 +62,11 @@ function replaceMetaSubstitutions(url: string, env: EhEnv) {
   return url;
 }
 
-export function getJumpUrlEvenNotComplete({ app, env, substitution }: JumpDataParamsForce) {
+export function getJumpUrlEvenNotComplete({
+  app,
+  env,
+  substitution,
+}: JumpDataParamsForce) {
   let url = app.url;
   if (env !== undefined) {
     url = replaceMetaSubstitutions(url, env);
@@ -65,7 +79,9 @@ export function getJumpUrlEvenNotComplete({ app, env, substitution }: JumpDataPa
   return url;
 }
 
-function isSubstitutionNotProvided(substitution: EhSubstitutionValue | undefined) {
+function isSubstitutionNotProvided(
+  substitution: EhSubstitutionValue | undefined
+) {
   return substitution === undefined || substitution.name.trim() === '';
 }
 

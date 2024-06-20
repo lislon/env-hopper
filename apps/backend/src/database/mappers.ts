@@ -5,7 +5,10 @@ export type Jsonify<T, K extends keyof T> = {
   [P in keyof T]: P extends K ? string : T[P];
 };
 
-export function jsonify<T, K extends keyof T>(data: T, jsonFields: K[]): Jsonify<T, K> {
+export function jsonify<T, K extends keyof T>(
+  data: T,
+  jsonFields: K[]
+): Jsonify<T, K> {
   const result: Jsonify<T, K> = {} as Jsonify<T, K>;
   Object.keys(data).forEach((key) => {
     if (jsonFields.includes(key as K)) {
@@ -17,7 +20,10 @@ export function jsonify<T, K extends keyof T>(data: T, jsonFields: K[]): Jsonify
   return result;
 }
 
-export function dejsonify<T, K extends keyof T>(data: Jsonify<T, K>, jsonFields: K[]): T {
+export function dejsonify<T, K extends keyof T>(
+  data: Jsonify<T, K>,
+  jsonFields: K[]
+): T {
   const result: T = {} as T;
   Object.keys(data).forEach((key) => {
     if (jsonFields.includes(key as K)) {
@@ -31,7 +37,7 @@ export function dejsonify<T, K extends keyof T>(data: Jsonify<T, K>, jsonFields:
 
 export class Writer {
   public static ehApp(data: EhApp): EhAppDb {
-    return jsonify({ urlPerEnv: {}, ...data}, ['urlPerEnv']);
+    return jsonify({ urlPerEnv: {}, ...data }, ['urlPerEnv']);
   }
 
   public static ehEnv(data: EhEnv): EhEnvDb {
@@ -41,7 +47,6 @@ export class Writer {
   public static ehSubstitution(data: EhSubstitutionType): EhSubstitutionDb {
     return data;
   }
-
 }
 
 export class Reader {

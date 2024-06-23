@@ -6,6 +6,24 @@ export interface EhApp {
   name: EhAppId;
   url: string;
   urlPerEnv: Record<string, string>;
+  meta: EhAppMeta;
+}
+
+export type EhAppMeta = EhAppMetaCredentials | EhAppMetaNote | undefined
+
+/**
+ * Hint for the user what the username and password are.
+ */
+export interface EhAppMetaCredentials {
+  username: string
+  password: string
+}
+
+/**
+ * Custom note for the app to be displayed to the user.
+ */
+export interface EhAppMetaNote {
+  note: string
 }
 
 export interface EhSubstitutionType {
@@ -20,8 +38,6 @@ export interface EhSubstitutionType {
    */
   isSharedAcrossEnvs?: boolean;
 }
-
-export type EhSubstitutionValue = string;
 
 export type EhEnvId = string;
 export type EhAppId = string;

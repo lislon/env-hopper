@@ -37,7 +37,7 @@ export function dejsonify<T, K extends keyof T>(
 
 export class Writer {
   public static ehApp(data: EhApp): EhAppDb {
-    return jsonify({ urlPerEnv: {}, ...data }, ['urlPerEnv']);
+    return jsonify({ urlPerEnv: {}, ...data }, ['urlPerEnv', 'meta']);
   }
 
   public static ehEnv(data: EhEnv): EhEnvDb {
@@ -51,7 +51,7 @@ export class Writer {
 
 export class Reader {
   public static ehApp(app: EhAppDb): EhApp {
-    return dejsonify(app, ['urlPerEnv']);
+    return dejsonify(app, ['urlPerEnv', 'meta']);
   }
 
   public static ehEnv(data: EhEnvDb): EhEnv {

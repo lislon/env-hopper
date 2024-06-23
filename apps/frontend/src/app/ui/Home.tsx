@@ -4,15 +4,16 @@ import { EhContextProvider, useEhContext } from '../context/EhContext';
 import { useQuery } from '@tanstack/react-query';
 import { getConfig } from '../api';
 import { JumpMainButton } from './JumpMainButton';
-import { UrlBar } from './UrlBar';
+import { MainForm } from './MainForm';
 import { Header } from './Header';
 import { RecentJumps } from './RecentJumps';
+import { Layout } from './Layout';
+
 
 function HomeWithContext() {
   const {
     recentJumps,
     setApp,
-    setSubstitution,
     setEnv,
     getEnvById,
     getAppById,
@@ -28,11 +29,11 @@ function HomeWithContext() {
   }, []);
 
   return (
-    <>
+    <Layout>
       <div className="w-[400px]">
         <Header />
         <div className="flex gap-16 flex-col">
-          <UrlBar />
+          <MainForm />
         </div>
       </div>
       <div className="m-16 min-w-[400px]">
@@ -41,7 +42,7 @@ function HomeWithContext() {
       <div className="min-w-[400px]">
         <RecentJumps />
       </div>
-    </>
+    </Layout>
   );
 }
 
@@ -49,17 +50,16 @@ export function Home() {
   const { data, failureCount } = useQuery({
     queryKey: ['config'],
     queryFn: getConfig,
-    retry: 50,
+    retry: 50
   });
   if (!data) {
-    if (failureCount > 0) {
-      return <div>Loading... Attempt {failureCount}</div>;
-    }
-    return <div>Loading...</div>;
+    return <Layout>
+      <div>Loading... {failureCount > 0 ? `Attempt ${failureCount}` : ''}</div>
+    </Layout>;
   }
   return (
-    <EhContextProvider data={data}>
-      <HomeWithContext />
-    </EhContextProvider>
+      <EhContextProvider data={data}>
+        <HomeWithContext />
+      </EhContextProvider>
   );
 }

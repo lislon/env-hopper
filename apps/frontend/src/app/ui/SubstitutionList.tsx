@@ -25,7 +25,7 @@ function getAutoCompleteName(substitutionType: EhSubstitutionType, env: EhEnv|un
 }
 
 export function SubstitutionList() {
-  const { substitutionType, app, substitution, setSubstitution, env, recordJump } = useEhContext();
+  const { substitutionType, app, substitution, setSubstitution, env, recordJump, tryJump } = useEhContext();
   if (!substitutionType) {
     return undefined;
   }
@@ -51,16 +51,7 @@ export function SubstitutionList() {
           }
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              const jumpUrl = getJumpUrl({ app, env, substitution });
-              if (!jumpUrl) {
-                return undefined;
-              }
-              recordJump({
-                app: app,
-                env: env,
-                substitution,
-              });
-              window.open(jumpUrl, '_blank')?.focus();
+              tryJump();
             }
           }}
         />

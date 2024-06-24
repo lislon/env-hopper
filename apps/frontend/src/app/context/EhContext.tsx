@@ -47,6 +47,7 @@ export interface EhContextProps {
   getSubstitutionValueById(envId: EhEnvId|undefined, appId: EhAppId|undefined, substitution: string|undefined) : EhSubstitutionValue | undefined;
 
   recordJump(jump: EhJumpParams): void;
+  tryJump(): void;
 
   recentJumps: EhJumpHistory[];
   reset: () => void;
@@ -138,6 +139,28 @@ export function EhContextProvider({
     const domainPart = cutDomain(incompleteUrl || 'https://no-env');
     const appPart = cutApp(incompleteUrl || 'https://no-env/no-app');
 
+    const recordJump = function({ app, env, substitution: substitution1 }: RecordJumpParams) {
+      const jumpUrl = getJumpUrl({
+        app: app,
+        env: env,
+        substitution: substitution
+      });
+      if (jumpUrl === undefined) {
+        return;
+      }
+      const newVar: EhJumpHistory = {
+        app: app?.name,
+        env: env?.name,
+        substitution: substitution?.value,
+        url: jumpUrl
+      };
+      setRecentJumps(
+        [newVar, ...recentJumps.filter((h) => h.url !== jumpUrl)].slice(
+          0,
+          MAX_HISTORY_JUMPS
+        )
+      );
+    };
     return {
       setEnv: (env1) => {
         setEnv(data.envs.find((env) => env === env1) || undefined);
@@ -159,31 +182,7 @@ export function EhContextProvider({
       getEnvById(id: EhEnvId): EhEnv | undefined {
         return getEnvById(id, data.envs);
       },
-      recordJump({ app, env, substitution: substitution1 }: RecordJumpParams) {
-        console.log(
-          `Jumping to ${app?.name} in ${env?.name} with ${substitution?.value}`
-        );
-        const jumpUrl = getJumpUrl({
-          app: app,
-          env: env,
-          substitution: substitution,
-        });
-        if (jumpUrl === undefined) {
-          return;
-        }
-        const newVar: EhJumpHistory = {
-          app: app?.name,
-          env: env?.name,
-          substitution: substitution?.value,
-          url: jumpUrl,
-        };
-        setRecentJumps(
-          [newVar, ...recentJumps.filter((h) => h.url !== jumpUrl)].slice(
-            0,
-            MAX_HISTORY_JUMPS
-          )
-        );
-      },
+      recordJump,
       toggleFavoriteEnv(envId, isOn) {
         const allExceptThis = listFavoriteEnvs.filter((id) => id !== envId);
         setFavoriteEnvIds([...allExceptThis, ...(isOn ? [envId] : [])]);
@@ -201,6 +200,19 @@ export function EhContextProvider({
           };
         }
         return undefined;
+      },
+      tryJump() {
+        const jumpUrl = getJumpUrl({ app, env, substitution });
+        console.log(jumpUrl);
+        if (!jumpUrl) {
+          return undefined;
+        }
+        recordJump({
+          app: app,
+          env: env,
+          substitution,
+        });
+        window.open(jumpUrl, '_blank')?.focus();
       },
       reset() {
         setEnv(undefined);

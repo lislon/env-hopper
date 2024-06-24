@@ -37,9 +37,6 @@ export function getEnvSpecificAppUrl(app: EhApp, env: EhEnv | undefined) {
   return app.url;
 }
 
-export function jump(jump: EhJumpParams) {
-  console.log('jump');
-}
 
 export interface JumpDataParams {
   env?: EhEnv;

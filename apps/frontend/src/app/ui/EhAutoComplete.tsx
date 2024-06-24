@@ -4,6 +4,7 @@ import cn from 'classnames';
 import { Section } from './Section';
 import { StarIcon } from './StarIcon';
 
+
 export interface Item {
   id: string;
   title: string;
@@ -11,9 +12,8 @@ export interface Item {
   recent?: boolean;
 }
 
-export type EhAutoCompleteFilter = (
-  inputValue: string
-) => (item: Item) => boolean;
+export type EhAutoCompleteFilter =(searchPattern: string , items: Item[] ) => Item[];
+
 
 export type OnSelectedItemChange = (item: string | undefined) => void;
 
@@ -34,6 +34,7 @@ export interface AutoCompleteProps {
   onClick?: (id: string) => void;
   onFavoriteToggle?: (item: Item, isOn: boolean) => void;
   onOpenChange?: (isOpen: boolean) => void;
+  onCtrlEnter?: () => void;
 }
 
 function ShortcutLink(props: AutoCompleteProps & { item: Item }) {
@@ -208,7 +209,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     selectedItem,
   } = useCombobox({
     onInputValueChange({ inputValue }) {
-      setItems(props.itemsAll.filter(props.filter(inputValue)));
+      setItems(props.filter(inputValue, props.itemsAll));
       if (inputValue === '') {
         props.onSelectedItemChange(undefined);
       }
@@ -238,6 +239,11 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     ref: inputRef,
     onFocus: preselectAndShowAllOptions,
     onClick: preselectAndShowAllOptions,
+    onKeyDown: (event) => {
+      if (event.ctrlKey && event.key === 'Enter') {
+        props.onCtrlEnter?.();
+      }
+    }
   });
   return (
     <div>

@@ -1,9 +1,8 @@
-/// <reference types='vitest' />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { VitePWA } from 'vite-plugin-pwa';
-import Svgr from 'vite-plugin-svgr';
+import svgr from 'vite-plugin-svgr';
 
 export default defineConfig({
   root: __dirname,
@@ -22,7 +21,10 @@ export default defineConfig({
     host: 'localhost',
   },
 
-  plugins: [react(), nxViteTsPaths(), VitePWA(), Svgr()],
+  plugins: [react(), nxViteTsPaths(), VitePWA(),
+    svgr()
+    // svgr({ include: '**/*.svg' })
+  ],
   define: {
     APP_VERSION: JSON.stringify(process.env.npm_package_version)
   },

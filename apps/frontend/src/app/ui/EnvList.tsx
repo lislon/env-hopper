@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { useEhContext } from '../context/EhContext';
 import { EhAutoComplete, Item } from './EhAutoComplete';
-import { autoCompleteFilter } from '../lib/autoCompleteFilter';
+import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
 import { EhEnv, EhEnvId } from '@env-hopper/types';
 
 function mapToAutoCompleteItem(
@@ -30,6 +30,7 @@ export function EnvList({ onOpenChange }: EnvListProps) {
     getEnvById,
     toggleFavoriteEnv,
     recentJumps,
+    tryJump
   } = useEhContext();
 
   const items = useMemo(() => {
@@ -46,7 +47,7 @@ export function EnvList({ onOpenChange }: EnvListProps) {
   return (
     <EhAutoComplete
       itemsAll={items}
-      filter={autoCompleteFilter}
+      filter={makeAutoCompleteFilter(items)}
       label="Environment"
       placeholder="Select environment"
       onOpenChange={onOpenChange}
@@ -55,6 +56,7 @@ export function EnvList({ onOpenChange }: EnvListProps) {
       }
       onSelectedItemChange={(envId) => setEnv(getEnvById(envId))}
       onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
+      onCtrlEnter={tryJump}
     />
   );
 }

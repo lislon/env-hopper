@@ -1,12 +1,11 @@
 import React from 'react';
-import cn from 'classnames';
 import { EnvList } from './EnvList';
 import { AppList } from './AppList';
 import { SubstitutionList } from './SubstitutionList';
 
 export function MainForm() {
   return (
-    <form>
+    <form onSubmit={(e) => { e.preventDefault(); }}>
       <div className="flex flex-col gap-3 w-full">
         <EnvList />
         <AppList />

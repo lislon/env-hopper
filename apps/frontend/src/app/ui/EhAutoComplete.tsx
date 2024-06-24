@@ -206,6 +206,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     highlightedIndex,
     getItemProps,
     getToggleButtonProps,
+    selectItem,
     selectedItem,
   } = useCombobox({
     onInputValueChange({ inputValue }) {
@@ -242,6 +243,9 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     onKeyDown: (event) => {
       if (event.ctrlKey && event.key === 'Enter') {
         props.onCtrlEnter?.();
+      } else if (event.key === 'Enter' && isOpen && items.length === 1) {
+        selectItem(items[0]);
+        props.onSelectedItemChange(items[0].id);
       }
     }
   });

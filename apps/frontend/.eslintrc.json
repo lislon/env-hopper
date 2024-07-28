@@ -14,5 +14,11 @@
       "files": ["*.js", "*.jsx"],
       "rules": {}
     }
+    //    {
+    //      "files": ["**/*.spec.tsx?"],
+    //      "env": {
+    //        "jest": true
+    //      }
+    //    }
   ]
 }

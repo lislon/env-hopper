@@ -1,6 +1,6 @@
 # EnvHopper
 
-Env Hopper is web application to navigate between different environments (stagings) in organizations. 
+Env Hopper is web application to navigate between different environments (stagings) in organizations.
 
 to simplify navigation between staging environments and applications within your company.
 
@@ -24,12 +24,12 @@ npx nx run frontend:serve
 
 Navigate to `http://localhost:4001`
 
-
 ### Migration
 
 Change schema in `schema.prisma` and then run
+
 ```bash
 cd apps/backend
 prisma generate
-npx prisma migrate dev 
+npx prisma migrate dev
 ```

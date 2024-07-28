@@ -31,7 +31,7 @@ export function AppList({ onOpenChange }: AppListProps) {
     recentJumps,
     toggleFavoriteApp,
     getAppById,
-    tryJump
+    tryJump,
   } = useEhContext();
 
   const items = useMemo(() => {

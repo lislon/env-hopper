@@ -30,7 +30,7 @@ export function EnvList({ onOpenChange }: EnvListProps) {
     getEnvById,
     toggleFavoriteEnv,
     recentJumps,
-    tryJump
+    tryJump,
   } = useEhContext();
 
   const items = useMemo(() => {

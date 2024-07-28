@@ -4,28 +4,46 @@ import { useEhContext } from '../context/EhContext';
 import { EhEnv, EhSubstitutionType } from '@env-hopper/types';
 import { getJumpUrl } from '../lib/utils';
 
-function getAutoCompleteAttr(substitutionType: EhSubstitutionType, env: EhEnv|undefined) {
+function getAutoCompleteAttr(
+  substitutionType: EhSubstitutionType,
+  env: EhEnv | undefined
+) {
   if (!substitutionType.isBrowserAutocomplete) {
     return 'off';
   }
   if (!substitutionType.isSharedAcrossEnvs) {
-    return env === undefined ? 'off' : `env-${env.name} eh-${substitutionType.name}`
+    return env === undefined
+      ? 'off'
+      : `env-${env.name} eh-${substitutionType.name}`;
   }
   return `eh-${substitutionType.name}`;
 }
 
-function getAutoCompleteName(substitutionType: EhSubstitutionType, env: EhEnv|undefined) {
+function getAutoCompleteName(
+  substitutionType: EhSubstitutionType,
+  env: EhEnv | undefined
+) {
   if (!substitutionType.isBrowserAutocomplete) {
     return 'context';
   }
   if (!substitutionType.isSharedAcrossEnvs) {
-    return env === undefined ? 'context' : `context-env-${env.name}-eh-${substitutionType.name}`
+    return env === undefined
+      ? 'context'
+      : `context-env-${env.name}-eh-${substitutionType.name}`;
   }
   return `context-eh-${substitutionType.name}`;
 }
 
 export function SubstitutionList() {
-  const { substitutionType, app, substitution, setSubstitution, env, recordJump, tryJump } = useEhContext();
+  const {
+    substitutionType,
+    app,
+    substitution,
+    setSubstitution,
+    env,
+    recordJump,
+    tryJump,
+  } = useEhContext();
   if (!substitutionType) {
     return undefined;
   }

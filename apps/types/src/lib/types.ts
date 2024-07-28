@@ -9,21 +9,21 @@ export interface EhApp {
   meta: EhAppMeta;
 }
 
-export type EhAppMeta = EhAppMetaCredentials | EhAppMetaNote | undefined
+export type EhAppMeta = EhAppMetaCredentials | EhAppMetaNote | undefined;
 
 /**
  * Hint for the user what the username and password are.
  */
 export interface EhAppMetaCredentials {
-  username: string
-  password: string
+  username: string;
+  password: string;
 }
 
 /**
  * Custom note for the app to be displayed to the user.
  */
 export interface EhAppMetaNote {
-  note: string
+  note: string;
 }
 
 export interface EhSubstitutionType {

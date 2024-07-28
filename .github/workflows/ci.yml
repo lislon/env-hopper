@@ -31,7 +31,7 @@ jobs:
         run: npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: export APP_VERSION=${{ steps.get-next-version.outputs.new-release-version }}
+      - run: export APP_VERSION=${{ steps.get-next-version.outputs.new-release-version || '0.0.0-ci' }}
       - run: npx nx affected --base=origin/main --head=HEAD -t lint test build
     outputs:
       new-release-published: ${{ steps.get-next-version.outputs.new-release-published }}

@@ -1,3 +1,4 @@
+ARG APP_VERSION="v0.0.0+unknown"
 FROM node:21-alpine as build-stage
 WORKDIR /app
 COPY package*.json /app/
@@ -32,7 +33,6 @@ ENV NODE_ENV production
 ENV PORT 4000
 #ENV DATABASE_URL postgres://postgres:postgres@localhost:5440/eh
 ENV DATABASE_URL file:/var/db/sqlite.db
-
 ENV ASSETS_DIR /app/assets
 
 EXPOSE 4000

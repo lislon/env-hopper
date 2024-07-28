@@ -70,6 +70,8 @@ jobs:
             ghcr.io/${{ github.repository }}:v${{ needs.build.outputs.new-release-version }}
             ghcr.io/${{ github.repository }}:latest
           context: .
+          args: |
+            APP_VERSION=${{ needs.build.outputs.new-release-version }}
 
       - name: Attest image
         uses: actions/attest-build-provenance@v1.0.0

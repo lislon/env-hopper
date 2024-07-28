@@ -4,8 +4,11 @@ import { sortBy } from 'lodash';
 export interface SearchableItem {
   title: string;
 }
-function tokenize(textLower: string): string[] {
-  return [...textLower.matchAll(/([a-z]+|[0-9]+)/g)].map((x) => x[0]);
+
+function tokenize(text: string): string[] {
+  const camelCaseSecondaryWords = [...text.matchAll(/(?<=[a-z])[A-Z]\w+/g)].map((x) => x[0].toLowerCase());
+  const primary = [...text.matchAll(/([a-z]+|[0-9]+)/gi)].map((x) => x[0].toLowerCase());
+  return [...camelCaseSecondaryWords, ...primary];
 }
 
 export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
@@ -14,7 +17,7 @@ export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
     const lower = item.title.toLowerCase();
     return ({
       title: lower,
-      tokens: tokenize(lower),
+      tokens: tokenize(item.title),
       notFavorite: !item.favorite,
       item
     });

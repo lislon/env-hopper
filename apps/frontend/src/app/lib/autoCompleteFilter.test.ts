@@ -44,6 +44,11 @@ describe('env search a bit fuzzy', () => {
       'env-xxxx-33']);
   });
 
+  it('Case insensitive', () => {
+    given(['Abc Review', 'AbcRev']);
+    expectSearchResults('Rev', ['Abc Review', 'AbcRev']);
+  });
+
   it('fuzzy will not match inverted', () => {
     given(['env-33']);
     expectSearchResults('33-env', []);
@@ -58,4 +63,11 @@ describe('env search a bit fuzzy', () => {
       'o4']);
   });
 
+  it('Upper case is a word separator', () => {
+    given(['camelCase', 'PascalCase', 'case']);
+    expectSearchResults('case', [
+      'case',
+      'camelCase',
+      'PascalCase']);
+  });
 });

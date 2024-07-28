@@ -7,7 +7,8 @@
     "frontend:serve": "nx run frontend:serve",
     "backend:generate": "nx run backend:prisma-g",
     "backend:push": "nx run backend:prisma-p",
-    "lint": " nx run-many -t lint --projects=* && prettier --check .",
+    "lint": "nx run-many -t lint --projects=* && prettier --check .",
+    "test": "nx run-many -t test --projects=*",
     "format": "prettier --write . && nx run-many -t lint --fix --projects=*",
     "prepare": "husky"
   },

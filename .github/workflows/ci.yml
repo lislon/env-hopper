@@ -26,12 +26,13 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - uses: nrwl/nx-set-shas@v4
-      - run: npx nx affected --base=origin/main --head=HEAD -t lint test build
       - name: get next release version
         id: get-next-version
         run: npx semantic-release --dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: export APP_VERSION=${{ steps.get-next-version.outputs.new-release-version }}
+      - run: npx nx affected --base=origin/main --head=HEAD -t lint test build
     outputs:
       new-release-published: ${{ steps.get-next-version.outputs.new-release-published }}
       new-release-version: ${{ steps.get-next-version.outputs.new-release-version }}

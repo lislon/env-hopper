@@ -4,7 +4,6 @@ import cn from 'classnames';
 import { Section } from './Section';
 import { StarIcon } from './StarIcon';
 
-
 export interface Item {
   id: string;
   title: string;
@@ -12,8 +11,10 @@ export interface Item {
   recent?: boolean;
 }
 
-export type EhAutoCompleteFilter =(searchPattern: string , items: Item[] ) => Item[];
-
+export type EhAutoCompleteFilter = (
+  searchPattern: string,
+  items: Item[]
+) => Item[];
 
 export type OnSelectedItemChange = (item: string | undefined) => void;
 
@@ -153,7 +154,7 @@ function ItemsSections({ items, ...rest }: ItemsSectionProps) {
   return (
     <>
       {recentSection.length > 0 && (
-        <Section title={'🕒 Recent'}>
+        <Section title={'🕒 Recent'} id="recent">
           {recentSection.map((item) => (
             <ItemPrinter
               key={item.index}
@@ -165,7 +166,7 @@ function ItemsSections({ items, ...rest }: ItemsSectionProps) {
         </Section>
       )}
       {favSection.length > 0 && (
-        <Section title={'⭐ Favorites'}>
+        <Section title={'⭐ Favorites'} id="favorites">
           {favSection.map((item) => (
             <ItemPrinter
               key={item.index}
@@ -177,7 +178,7 @@ function ItemsSections({ items, ...rest }: ItemsSectionProps) {
         </Section>
       )}
       {allSection.length > 0 && (
-        <Section title={'🗂️ All'}>
+        <Section title={'🗂️ All'} id="all">
           {allSection.map((item) => (
             <ItemPrinter
               key={item.index}
@@ -247,7 +248,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
         selectItem(items[0]);
         props.onSelectedItemChange(items[0].id);
       }
-    }
+    },
   });
   return (
     <div>

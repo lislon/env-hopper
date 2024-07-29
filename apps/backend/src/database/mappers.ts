@@ -10,10 +10,13 @@ export function jsonify<T, K extends keyof T>(
   jsonFields: K[]
 ): Jsonify<T, K> {
   const result: Jsonify<T, K> = {} as Jsonify<T, K>;
+  // @ts-expect-error  quick dirty solution
   Object.keys(data).forEach((key) => {
     if (jsonFields.includes(key as K)) {
+      // @ts-expect-error  quick dirty solution
       result[key] = JSON.stringify(data[key]);
     } else {
+      // @ts-expect-error  quick dirty solution
       result[key] = data[key];
     }
   });
@@ -27,8 +30,10 @@ export function dejsonify<T, K extends keyof T>(
   const result: T = {} as T;
   Object.keys(data).forEach((key) => {
     if (jsonFields.includes(key as K)) {
+      // @ts-expect-error quick dirty solution
       result[key] = JSON.parse(data[key]);
     } else {
+      // @ts-expect-error quick dirty solution
       result[key] = data[key];
     }
   });
@@ -37,6 +42,7 @@ export function dejsonify<T, K extends keyof T>(
 
 export class Writer {
   public static ehApp(data: EhApp): EhAppDb {
+    // @ts-expect-error incoming data is not validated really
     return jsonify({ urlPerEnv: {}, ...data }, ['urlPerEnv', 'meta']);
   }
 

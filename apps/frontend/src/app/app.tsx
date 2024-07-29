@@ -7,11 +7,11 @@ const queryClient = new QueryClient();
 
 export function App() {
   return (
-      <QueryClientProvider client={queryClient}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-        </Routes>
-      </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+      </Routes>
+    </QueryClientProvider>
   );
 }
 

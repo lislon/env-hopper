@@ -44,7 +44,11 @@ export interface EhContextProps {
 
   getEnvById(id: EhEnvId | undefined): EhEnv | undefined;
 
-  getSubstitutionValueById(envId: EhEnvId|undefined, appId: EhAppId|undefined, substitution: string|undefined) : EhSubstitutionValue | undefined;
+  getSubstitutionValueById(
+    envId: EhEnvId | undefined,
+    appId: EhAppId | undefined,
+    substitution: string | undefined
+  ): EhSubstitutionValue | undefined;
 
   recordJump(jump: EhJumpParams): void;
   tryJump(): void;
@@ -139,11 +143,15 @@ export function EhContextProvider({
     const domainPart = cutDomain(incompleteUrl || 'https://no-env');
     const appPart = cutApp(incompleteUrl || 'https://no-env/no-app');
 
-    const recordJump = function({ app, env, substitution: substitution1 }: RecordJumpParams) {
+    const recordJump = function ({
+      app,
+      env,
+      substitution: substitution1,
+    }: RecordJumpParams) {
       const jumpUrl = getJumpUrl({
         app: app,
         env: env,
-        substitution: substitution
+        substitution: substitution,
       });
       if (jumpUrl === undefined) {
         return;
@@ -152,7 +160,7 @@ export function EhContextProvider({
         app: app?.name,
         env: env?.name,
         substitution: substitution?.value,
-        url: jumpUrl
+        url: jumpUrl,
       };
       setRecentJumps(
         [newVar, ...recentJumps.filter((h) => h.url !== jumpUrl)].slice(
@@ -192,7 +200,10 @@ export function EhContextProvider({
         setFavoriteAppIds([...allExceptThis, ...(isOn ? [appId] : [])]);
       },
       getSubstitutionValueById(envId, appId, substitution) {
-        const substitutionIdByUrl = findSubstitutionIdByUrl({ env: getEnvById(envId, data.envs), app: getAppById(appId, data.apps) });
+        const substitutionIdByUrl = findSubstitutionIdByUrl({
+          env: getEnvById(envId, data.envs),
+          app: getAppById(appId, data.apps),
+        });
         if (substitutionIdByUrl !== undefined && substitution !== undefined) {
           return {
             name: substitutionIdByUrl,

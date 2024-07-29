@@ -13,7 +13,7 @@ describe('env search a bit fuzzy', () => {
   }
 
   function expectSearchResults(search: string, expected: string[]) {
-    const actual = makeAutoCompleteFilter(db)(search, db).map(x => x.title);
+    const actual = makeAutoCompleteFilter(db)(search, db).map((x) => x.title);
     expect(actual).toEqual(expected);
   }
 
@@ -39,9 +39,16 @@ describe('env search a bit fuzzy', () => {
 
   it('case 5', () => {
     given(['env-xxxx-33', 'env-xxx-33', 'env-xxx-3']);
-    expectSearchResults('env-xxx-3', ['env-xxx-3',
+    expectSearchResults('env-xxx-3', [
+      'env-xxx-3',
       'env-xxx-33',
-      'env-xxxx-33']);
+      'env-xxxx-33',
+    ]);
+  });
+
+  it('Case insensitive', () => {
+    given(['Abc Review', 'AbcRev']);
+    expectSearchResults('Rev', ['Abc Review', 'AbcRev']);
   });
 
   it('fuzzy will not match inverted', () => {
@@ -51,11 +58,11 @@ describe('env search a bit fuzzy', () => {
 
   it('favorite should come first', () => {
     given(['o1', 'o2-favorite', 'o3-favorite', 'o4']);
-    expectSearchResults('o', [
-      'o2-favorite',
-      'o3-favorite',
-      'o1',
-      'o4']);
+    expectSearchResults('o', ['o2-favorite', 'o3-favorite', 'o1', 'o4']);
   });
 
+  it('Upper case is a word separator', () => {
+    given(['camelCase', 'PascalCase', 'case']);
+    expectSearchResults('case', ['case', 'camelCase', 'PascalCase']);
+  });
 });

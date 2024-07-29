@@ -1,5 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "types": [
+      "vite/client",
+      "vitest"
+    ]
+  },
   "files": [],
   "include": [],
   "references": [
@@ -9,8 +16,5 @@
     {
       "path": "./tsconfig.spec.json"
     }
-  ],
-  "compilerOptions": {
-    "esModuleInterop": true
-  }
+  ]
 }

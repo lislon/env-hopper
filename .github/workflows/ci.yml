@@ -4,43 +4,46 @@ on:
   push:
     branches:
       - main
-      - dev
-      - sandbox
   pull_request:
-
 env:
   REGISTRY: lislon
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  main:
+
+  build:
     runs-on: ubuntu-latest
     permissions:
       actions: read
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      # Connect your workspace on nx.app and uncomment this to enable task distribution.
-      # The "--stop-agents-after" is optional, but allows idle agents to shut down once the "build" targets have been requested
-      # - run: npx nx-cloud start-ci-run --distribute-on="5 linux-medium-js" --stop-agents-after="build"
-
-      # Cache node_modules
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
       - run: npm ci
       - uses: nrwl/nx-set-shas@v4
-
-      # Prepend any command with "nx-cloud record --" to record its logs to Nx Cloud
-      # - run: npx nx-cloud record -- echo Hello World
+      - name: get next release version
+        id: get-next-version
+        run: npx semantic-release --dry-run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: export APP_VERSION=${{ steps.get-next-version.outputs.new-release-version || '0.0.0-ci' }}
       - run: npx nx affected --base=origin/main --head=HEAD -t lint test build
-      #- run: npx nx run-many -t lint test build -p backend frontend
-  push_to_registry:
-    name: Push Docker image to Docker Hub
+    outputs:
+      new-release-published: ${{ steps.get-next-version.outputs.new-release-published }}
+      new-release-version: ${{ steps.get-next-version.outputs.new-release-version }}
+      new-release-git-tag: ${{ steps.get-next-version.outputs.new-release-git-tag }}
+
+  push:
+    needs: build
+    if:
+      ${{ needs.build.outputs.new-release-published == 'true' &&
+      contains('refs/heads/main,refs/heads/beta,refs/heads/alpha', github.ref)
+      && github.event_name == 'push' }}
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -48,9 +51,10 @@ jobs:
       attestations: write
       id-token: write
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: echo "The new release version is ${{ needs.build.outputs.new-release-version }}"
       - name: Log into ghcr.io
         uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
         with:
@@ -63,8 +67,12 @@ jobs:
         uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
         with:
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: |
+            ghcr.io/${{ github.repository }}:v${{ needs.build.outputs.new-release-version }}
+            ghcr.io/${{ github.repository }}:latest
           context: .
+          args: |
+            APP_VERSION=${{ needs.build.outputs.new-release-version }}
 
       - name: Attest image
         uses: actions/attest-build-provenance@v1.0.0
@@ -72,3 +80,21 @@ jobs:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.push-step.outputs.digest }}
           push-to-registry: true
+
+
+  release:
+    runs-on: ubuntu-latest
+    needs: push
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npx semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

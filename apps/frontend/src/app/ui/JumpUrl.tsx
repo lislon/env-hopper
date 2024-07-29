@@ -10,6 +10,7 @@ export interface JumpUrlParams {
   env?: EhEnv;
   substitution?: EhSubstitutionValue;
   className?: string;
+  isMain?: boolean;
 }
 
 export function JumpUrl({
@@ -18,6 +19,7 @@ export function JumpUrl({
   env,
   substitution,
   className,
+  isMain,
 }: JumpUrlParams) {
   const { recordJump } = useEhContext();
 
@@ -44,6 +46,7 @@ export function JumpUrl({
       className={className}
       target="_blank"
       rel="noreferrer"
+      title={isMain ? 'Jump to selected app' : undefined}
     >
       {children}
     </a>

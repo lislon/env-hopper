@@ -1,4 +1,11 @@
-import { EhApp, EhAppMeta, EhAppMetaCredentials, EhAppMetaNote, EhEnv, EhSubstitutionType } from '@env-hopper/types';
+import {
+  EhApp,
+  EhAppMeta,
+  EhAppMetaCredentials,
+  EhAppMetaNote,
+  EhEnv,
+  EhSubstitutionType,
+} from '@env-hopper/types';
 import { EhJumpParams, EhSubstitutionValue } from '../types';
 
 export function findSubstitutionIdByUrl({
@@ -36,7 +43,6 @@ export function getEnvSpecificAppUrl(app: EhApp, env: EhEnv | undefined) {
   }
   return app.url;
 }
-
 
 export interface JumpDataParams {
   env?: EhEnv;
@@ -103,7 +109,9 @@ export function cutApp(fullUrl: string) {
   return fullUrl.split('/').slice(3).join('/');
 }
 
-export function metaHasUsernamePassword(meta: EhAppMeta): meta is EhAppMetaCredentials {
+export function metaHasUsernamePassword(
+  meta: EhAppMeta
+): meta is EhAppMetaCredentials {
   return (meta && 'username' in meta && 'password' in meta) || false;
 }
 

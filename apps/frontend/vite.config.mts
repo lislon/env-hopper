@@ -21,12 +21,15 @@ export default defineConfig({
     host: 'localhost',
   },
 
-  plugins: [react(), nxViteTsPaths(), VitePWA(),
-    svgr()
+  plugins: [
+    react(),
+    nxViteTsPaths(),
+    VitePWA(),
+    svgr(),
     // svgr({ include: '**/*.svg' })
   ],
   define: {
-    APP_VERSION: JSON.stringify(process.env.npm_package_version)
+    APP_VERSION: JSON.stringify(process.env['APP_VERSION'] || 'local'),
   },
 
   // Uncomment this if you are using workers.
@@ -44,12 +47,8 @@ export default defineConfig({
 
   test: {
     globals: true,
-    cache: {
-      dir: '../../node_modules/.vitest/apps/frontend',
-    },
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-
     reporters: ['default'],
     coverage: {
       reportsDirectory: '../../coverage/apps/frontend',

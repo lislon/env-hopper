@@ -9,15 +9,9 @@ import { Header } from './Header';
 import { RecentJumps } from './RecentJumps';
 import { Layout } from './Layout';
 
-
 function HomeWithContext() {
-  const {
-    recentJumps,
-    setApp,
-    setEnv,
-    getEnvById,
-    getAppById,
-  } = useEhContext();
+  const { recentJumps, setApp, setEnv, getEnvById, getAppById } =
+    useEhContext();
   useEffect(() => {
     if (recentJumps.length > 0) {
       const latestJump = recentJumps[0];
@@ -50,16 +44,20 @@ export function Home() {
   const { data, failureCount } = useQuery({
     queryKey: ['config'],
     queryFn: getConfig,
-    retry: 50
+    retry: 50,
   });
   if (!data) {
-    return <Layout>
-      <div>Loading... {failureCount > 0 ? `Attempt ${failureCount}` : ''}</div>
-    </Layout>;
+    return (
+      <Layout>
+        <div>
+          Loading... {failureCount > 0 ? `Attempt ${failureCount}` : ''}
+        </div>
+      </Layout>
+    );
   }
   return (
-      <EhContextProvider data={data}>
-        <HomeWithContext />
-      </EhContextProvider>
+    <EhContextProvider data={data}>
+      <HomeWithContext />
+    </EhContextProvider>
   );
 }

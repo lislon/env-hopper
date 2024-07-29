@@ -4,12 +4,8 @@ WORKDIR /app
 COPY package*.json /app/
 
 RUN npm ci --quiet
-# RUN npm i -g @angular/cli
-#RUN npm install -g @nrwl/cli
-#RUN npm install --global nx@latest
 COPY . /app/
 ARG configuration=production
-#RUN npx nx run backend:prisma-g
 RUN npx nx run-many -t build -p backend frontend
 RUN mv /app/dist/apps/frontend /app/dist/apps/backend/assets
 
@@ -31,7 +27,6 @@ RUN npx prisma generate \
 
 ENV NODE_ENV production
 ENV PORT 4000
-#ENV DATABASE_URL postgres://postgres:postgres@localhost:5440/eh
 ENV DATABASE_URL file:/var/db/sqlite.db
 ENV ASSETS_DIR /app/assets
 

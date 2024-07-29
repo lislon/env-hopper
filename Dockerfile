@@ -1,4 +1,3 @@
-ARG APP_VERSION="v0.0.0+unknown"
 FROM node:21-alpine as build-stage
 WORKDIR /app
 COPY package*.json /app/
@@ -6,10 +5,11 @@ COPY package*.json /app/
 RUN npm ci --quiet
 COPY . /app/
 ARG configuration=production
-RUN npx nx run-many -t build -p backend frontend
+RUN NX_SKIP_NX_CACHE=true npx nx run-many -t build -p backend frontend
 RUN mv /app/dist/apps/frontend /app/dist/apps/backend/assets
 
 FROM node:21-alpine AS express-js
+ARG APP_VERSION
 RUN apk add --no-cache bash
 WORKDIR /app
 COPY --from=build-stage /app/dist/apps/backend .
@@ -29,6 +29,7 @@ ENV NODE_ENV production
 ENV PORT 4000
 ENV DATABASE_URL file:/var/db/sqlite.db
 ENV ASSETS_DIR /app/assets
+ENV APP_VERSION ${APP_VERSION}
 
 EXPOSE 4000
 ENTRYPOINT ["./docker-entrypoint.sh"]

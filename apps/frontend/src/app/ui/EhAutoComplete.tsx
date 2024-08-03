@@ -2,7 +2,7 @@ import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { useCombobox, UseComboboxPropGetters } from 'downshift';
 import cn from 'classnames';
 import { Section } from './Section';
-import { StarIcon } from './StarIcon';
+import { FavoriteButton } from './FavoriteButton';
 
 export interface Item {
   id: string;
@@ -119,9 +119,10 @@ function ItemPrinter({
     >
       <div className="flex justify-between px-1">
         <div>{item.title}</div>
-        <StarIcon
+        <FavoriteButton
           isSelected={isFavorite}
           className={isFavorite ? '' : 'invisible group-hover:visible'}
+          title={isFavorite ? `Remove ${item.title} from favorites` : `Add ${item.title} to favorites`}
           onClick={onClick}
         />
       </div>
@@ -144,11 +145,11 @@ function ItemsSections({ items, ...rest }: ItemsSectionProps) {
   const itemsWithIndex = items.map((item, index) => ({ ...item, index }));
 
   const recentSection = itemsWithIndex.filter(
-    (item) => item.recent && !item.favorite
+    (item) => item.recent
   );
   const favSection = itemsWithIndex.filter((item) => item.favorite);
   const allSection = itemsWithIndex.filter(
-    (item) => !item.favorite && !item.recent
+    (item) => !item.favorite
   );
 
   return (

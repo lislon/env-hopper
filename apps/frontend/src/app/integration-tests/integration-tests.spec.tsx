@@ -1,96 +1,66 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import App from '../app';
-import { beforeEach, describe, it, vi } from 'vitest';
+import { describe, it, vi } from 'vitest';
 import { getConfig } from '../api';
 import { userEvent } from '@testing-library/user-event';
+import {
+  expectHasHistory,
+  testClickJumpAndReturnBtn,
+  testFillEnvAndApp,
+  testGetEnvComboBox,
+  testToggleFavorite,
+  testWaitLoading
+} from './__utils__/ui-toolbelt';
+import { TestFeatureMagazine, TestFixtures, testMagazineMakeFixtures } from './__utils__/tests-magazine';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { localStorageMock, useLocalStorageMock } from './__utils__/useLocalStorageMock';
 
 vi.mock('../api');
+vi.mock('../hooks/useLocalStorage');
 
-type UserType = ReturnType<typeof userEvent.setup>;
-
-function testMakeEnv(name: string) {
-  return {
-    name: name,
-    meta: {
-      subdomain: name,
-    },
-  };
+export interface GivenProps {
+  testFixtures: TestFixtures;
 }
 
-function testMakeApp(name: string) {
-  return {
-    name: name,
-    url: 'https://{subdomain}.mycompany.com:8250/login',
-    meta: undefined,
-    urlPerEnv: {},
-  };
-}
+async function given({ testFixtures }: GivenProps) {
+  vi.mocked(getConfig).mockResolvedValue({
+    envs: testFixtures.envs || [],
+    apps: testFixtures.apps || [],
+    substitutions: []
+  });
 
-async function testWaitLoading() {
-  await waitFor(() =>
-    screen.getByRole('combobox', {
-      name: /environment/i,
-    })
+  vi.mocked(useLocalStorage).mockImplementation(useLocalStorageMock);
+
+  if (testFixtures.favorites) {
+    localStorageMock['favoriteEnvs'] = testFixtures.favorites;
+  }
+  if (testFixtures.recentJumps) {
+    localStorageMock['recentJumps'] = testFixtures.recentJumps;
+  }
+
+  render(
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   );
+
+  const setup = userEvent.setup();
+  await testWaitLoading();
+  return setup;
 }
 
-function expectHasHistory(envName: string, appName: string) {
-  screen.getByRole('row', {
-    name: envName + ' ' + appName + ' JUMP',
+function testGetRecentJumpsAutocompleteSection() {
+  return screen.getByRole('region', {
+    name: /🕒 Recent/i
   });
-}
-
-function testGetEnvComboBox() {
-  return screen.getByRole('combobox', {
-    name: /environment/i,
-  });
-}
-
-async function testFillEnvAndApp(
-  user: UserType,
-  envName: string,
-  appName: string
-) {
-  await user.click(testGetEnvComboBox());
-
-  await user.keyboard(envName);
-  await user.keyboard('{Enter}{Tab}');
-  await user.keyboard(appName);
-  await user.keyboard('{Enter}{Tab}');
-}
-
-async function testClickJumpAndReturnBtn(user: UserType) {
-  const link = screen.getByRole<HTMLAnchorElement>('link', {
-    name: /JUMP .+/,
-  });
-
-  await user.click(link);
-  return link;
 }
 
 describe('Integration tests', () => {
-  let user: UserType;
-
-  beforeEach(async () => {
-    vi.mocked(getConfig).mockResolvedValue({
-      envs: ['env1', 'env2', 'env3', 'env4'].map(testMakeEnv),
-      apps: [testMakeApp('app1')],
-      substitutions: [],
-    });
-
-    render(
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    );
-
-    user = userEvent.setup();
-
-    await testWaitLoading();
-  });
 
   it('Basic scenario - user can navigate to URL by keyboard', async () => {
+    const user = await given({ testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.baseline) });
+
     await testFillEnvAndApp(user, '1', 'App1');
     const link = await testClickJumpAndReturnBtn(user);
 
@@ -99,16 +69,34 @@ describe('Integration tests', () => {
   });
 
   it('Recent env are suggested', async () => {
+    const user = await given({ testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.baseline) });
+
     await testFillEnvAndApp(user, '1', 'App1');
     await testClickJumpAndReturnBtn(user);
     await user.click(testGetEnvComboBox());
 
     const recentSection = screen.getByRole('region', {
-      name: /🕒 recent/i,
+      name: /🕒 recent/i
     });
     within(recentSection).getByRole('option', {
-      name: /env1/,
+      name: /env1/
     });
     screen.debug();
+  });
+
+  it('If toggle favorite recent app, the star icon will be added and selection stays in the recent section', async () => {
+    const user = await given({ testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.hasRecentJumps) });
+
+    await user.click(testGetEnvComboBox());
+
+    await user.keyboard('1');
+    await testToggleFavorite(user, 'env1');
+    const recentSection = testGetRecentJumpsAutocompleteSection();
+
+    within(recentSection).getByRole('button', {
+      name: /Remove/i
+    });
+  }, {
+    timeout: 100000
   });
 });

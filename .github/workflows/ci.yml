@@ -65,7 +65,7 @@ jobs:
 
       - name: Build and push image
         id: push-step
-        uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
+        uses: docker/build-push-action@a8d35412fb758de9162fd63e3fa3f0942bdedb4d
         with:
           push: true
           tags: |

@@ -1,1 +1,1 @@
-declare module 'express-async-errors'
+declare module 'express-async-errors';

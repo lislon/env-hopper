@@ -28,7 +28,7 @@ export function RecentJumps() {
               <th scope="col" className="px-2">
                 Context
               </th>
-              <th scope="col" className="px-2" title={"Actions"}></th>
+              <th scope="col" className="px-2" title={'Actions'}></th>
             </tr>
           </thead>
           <tbody>

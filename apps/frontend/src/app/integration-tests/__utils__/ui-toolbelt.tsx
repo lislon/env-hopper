@@ -6,20 +6,20 @@ export type UserType = ReturnType<typeof userEvent.setup>;
 export async function testWaitLoading() {
   await waitFor(() =>
     screen.getByRole('combobox', {
-      name: /environment/i
+      name: /environment/i,
     })
   );
 }
 
 export function testGetEnvComboBox() {
   return screen.getByRole('combobox', {
-    name: /environment/i
+    name: /environment/i,
   });
 }
 
 export async function testToggleFavorite(user: UserType, title: string) {
   const favoriteButton = screen.getByRole('button', {
-    name: new RegExp(`${title} .+? favorites`, 'i')
+    name: new RegExp(`${title} .+? favorites`, 'i'),
   });
   await user.click(favoriteButton);
 }
@@ -39,7 +39,7 @@ export async function testFillEnvAndApp(
 
 export async function testClickJumpAndReturnBtn(user: UserType) {
   const link = screen.getByRole<HTMLAnchorElement>('link', {
-    name: /JUMP .+/
+    name: /JUMP .+/,
   });
 
   await user.click(link);
@@ -48,6 +48,6 @@ export async function testClickJumpAndReturnBtn(user: UserType) {
 
 export function expectHasHistory(envName: string, appName: string) {
   screen.getByRole('row', {
-    name: envName + ' ' + appName + ' JUMP'
+    name: envName + ' ' + appName + ' JUMP',
   });
 }

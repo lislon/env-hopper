@@ -11,7 +11,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -41,8 +40,7 @@ jobs:
 
   push:
     needs: build
-    if:
-      ${{ needs.build.outputs.new-release-published == 'true' &&
+    if: ${{ needs.build.outputs.new-release-published == 'true' &&
       contains('refs/heads/main,refs/heads/beta,refs/heads/alpha', github.ref)
       && github.event_name == 'push' }}
     runs-on: ubuntu-latest
@@ -81,7 +79,6 @@ jobs:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.push-step.outputs.digest }}
           push-to-registry: true
-
 
   release:
     runs-on: ubuntu-latest

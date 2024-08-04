@@ -1,5 +1,6 @@
-import { EhAutoCompleteFilter, Item } from '../ui/EhAutoComplete';
+import { EhAutoCompleteFilter } from '../ui/AutoComplete/EhAutoComplete';
 import { sortBy } from 'lodash';
+import { Item } from '../ui/AutoComplete/common';
 
 export interface SearchableItem {
   title: string;
@@ -12,7 +13,13 @@ function tokenize(text: string): string[] {
   const primary = [...text.matchAll(/([a-z]+|[0-9]+)/gi)].map((x) =>
     x[0].toLowerCase()
   );
-  return [...camelCaseSecondaryWords, ...primary];
+
+  const leadingZeros = (input: string) => {
+    const match = input.match(/^0+(.+)/);
+    return match ? [input, match[1]] : [input];
+  };
+
+  return [...camelCaseSecondaryWords, ...primary].flatMap(leadingZeros);
 }
 
 export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {

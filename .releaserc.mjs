@@ -8,6 +8,6 @@ export default {
     '@semantic-release/release-notes-generator',
     // https://github.com/felipecrs/semantic-release-export-data#github-actions-example
     'semantic-release-export-data',
-    '@semantic-release/github'
-  ]
+    '@semantic-release/github',
+  ],
 };

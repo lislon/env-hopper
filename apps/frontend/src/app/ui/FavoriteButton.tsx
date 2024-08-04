@@ -9,7 +9,12 @@ export interface StarIconProps {
   title?: string;
 }
 
-export function FavoriteButton({ isSelected, className, onClick, title }: StarIconProps) {
+export function FavoriteButton({
+  isSelected,
+  className,
+  onClick,
+  title,
+}: StarIconProps) {
   return (
     <button onClick={onClick} title={title}>
       <StarOutlineIcon

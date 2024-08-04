@@ -22,6 +22,10 @@ app.use('/', express.static(assets));
 
 const port = process.env['PORT'] || 4001;
 const server = app.listen(port, () => {
-  console.log(`Listening at http://localhost:${port} v${process.env['APP_VERSION'] || 'local'}`);
+  console.log(
+    `Listening at http://localhost:${port} v${
+      process.env['APP_VERSION'] || 'local'
+    }`
+  );
 });
 server.on('error', console.error);

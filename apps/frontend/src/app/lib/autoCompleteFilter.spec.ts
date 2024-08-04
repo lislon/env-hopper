@@ -1,5 +1,5 @@
-import { Item } from '../ui/EhAutoComplete';
 import { makeAutoCompleteFilter } from './autoCompleteFilter';
+import { Item } from '../ui/AutoComplete/common';
 
 describe('env search a bit fuzzy', () => {
   let db: Item[] = [];
@@ -64,5 +64,10 @@ describe('env search a bit fuzzy', () => {
   it('Upper case is a word separator', () => {
     given(['camelCase', 'PascalCase', 'case']);
     expectSearchResults('case', ['case', 'camelCase', 'PascalCase']);
+  });
+
+  it('Leading zeros can be omitted', () => {
+    given(['env-001', 'env-1']);
+    expectSearchResults('1', ['env-001', 'env-1']);
   });
 });

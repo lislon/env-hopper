@@ -24,6 +24,11 @@ import {
   getJumpUrlEvenNotComplete,
 } from '../lib/utils';
 
+export const LOCAL_STORAGE_KEY_RECENT_JUMPS = 'recent';
+export const LOCAL_STORAGE_KEY_FAVORITE_ENVS = 'favoriteEnvs';
+export const LOCAL_STORAGE_KEY_FAVORITE_APPS = 'favoriteApps';
+export const LOCAL_STORAGE_KEY_VERSION = 'version';
+
 export interface EhContextProps {
   listEnvs: EhEnv[];
   listApps: EhApp[];
@@ -100,18 +105,18 @@ export function EhContextProvider({
   >();
 
   const [recentJumps, setRecentJumps] = useLocalStorage<EhJumpHistory[]>(
-    'recent',
+    LOCAL_STORAGE_KEY_RECENT_JUMPS,
     []
   );
   const [listFavoriteEnvs, setFavoriteEnvIds] = useLocalStorage<EhEnvId[]>(
-    'favoriteEnvs',
+    LOCAL_STORAGE_KEY_FAVORITE_ENVS,
     []
   );
   const [listFavoriteApps, setFavoriteAppIds] = useLocalStorage<EhAppId[]>(
-    'favoriteApps',
+    LOCAL_STORAGE_KEY_FAVORITE_APPS,
     []
   );
-  const [, setVersion] = useLocalStorage<string>('version', '');
+  const [, setVersion] = useLocalStorage<string>(LOCAL_STORAGE_KEY_VERSION, '');
   useEffect(() => {
     setVersion(APP_VERSION);
   }, [setVersion]);
@@ -214,7 +219,6 @@ export function EhContextProvider({
       },
       tryJump() {
         const jumpUrl = getJumpUrl({ app, env, substitution });
-        console.log(jumpUrl);
         if (!jumpUrl) {
           return undefined;
         }

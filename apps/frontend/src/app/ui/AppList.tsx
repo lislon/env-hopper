@@ -1,9 +1,10 @@
 'use client';
 import React, { useMemo } from 'react';
 import { useEhContext } from '../context/EhContext';
-import { EhAutoComplete, Item } from './EhAutoComplete';
+import { EhAutoComplete } from './AutoComplete/EhAutoComplete';
 import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
 import { EhApp, EhAppId } from '@env-hopper/types';
+import { Item } from './AutoComplete/common';
 
 function mapToAutoCompleteItemApp(
   app: EhApp,

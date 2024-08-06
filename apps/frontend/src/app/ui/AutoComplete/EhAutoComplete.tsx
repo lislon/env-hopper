@@ -8,6 +8,7 @@ import {
   mapToItemWithSection,
 } from './section-splitting';
 import { ItemsSections } from './ItemsSections';
+import { sortBy } from 'lodash';
 
 export type EhAutoCompleteFilter = (
   searchPattern: string,
@@ -34,10 +35,15 @@ export interface AutoCompleteProps {
   onCtrlEnter?: () => void;
 }
 
+function getInitialItems(collection: Item[]) {
+  return flatmapToItemsWithSections(sortBy(collection, 'title'), false);
+}
+
 export function EhAutoComplete(props: AutoCompleteProps) {
-  const [items, setItems] = useState(
-    flatmapToItemsWithSections(props.itemsAll, false)
+  const [items, setItems] = useState(() =>
+    getInitialItems(props.itemsAll)
   );
+
   const [tmpFavorite, setTmpFavorite] = useState<Map<string, boolean>>(
     new Map()
   );
@@ -83,7 +89,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
 
   function preselectAndShowAllOptions() {
     inputRef.current?.select();
-    setItems(flatmapToItemsWithSections(props.itemsAll, false));
+    setItems(getInitialItems(props.itemsAll));
   }
 
   const inputProps = getInputProps({

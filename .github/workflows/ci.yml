@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - alpha
+      - beta
   pull_request:
 env:
   REGISTRY: lislon

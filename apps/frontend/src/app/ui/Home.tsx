@@ -45,6 +45,7 @@ export function Home() {
     queryKey: ['config'],
     queryFn: getConfig,
     retry: 50,
+    refetchInterval: 1000 * 60 * 60, // 1h
   });
   if (!data) {
     return (
@@ -55,6 +56,7 @@ export function Home() {
       </Layout>
     );
   }
+
   return (
     <EhContextProvider data={data}>
       <HomeWithContext />

@@ -12,10 +12,10 @@ function mapToAutoCompleteItem(
   recents: Set<EhEnvId>
 ): Item {
   return {
-    id: env.name,
-    title: env.name,
-    favorite: favorites.has(env.name),
-    recent: recents.has(env.name),
+    id: env.id,
+    title: env.id,
+    favorite: favorites.has(env.id),
+    recent: recents.has(env.id),
   };
 }
 

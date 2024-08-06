@@ -40,6 +40,7 @@ async function given({ testFixtures }: GivenProps) {
     envs: testFixtures.envs || [],
     apps: testFixtures.apps || [],
     substitutions: [],
+    appVersion: 'test'
   });
 
   vi.mocked(useLocalStorage).mockImplementation(useLocalStorageMock);

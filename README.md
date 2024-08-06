@@ -18,6 +18,7 @@ As of 2024-May-27 project is currently in development, not ready to be used on p
 
 ```
 npm install
+(cd apps/backend && prisma generate)
 npx nx run backend:serve
 npx nx run frontend:serve
 ```

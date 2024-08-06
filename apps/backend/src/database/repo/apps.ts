@@ -1,21 +1,21 @@
 import prisma from '../prisma';
-import { Reader, Writer } from '../mappers';
-import { EhApp } from '@env-hopper/types';
+import { DbReaderMapper, DbWriterMapper } from '../mappers';
+import { EhAppBackend } from '../../backend-types';
 
-export async function dbAppsSet(dataRaw: EhApp[]): Promise<void> {
+export async function dbAppsSet(dataRaw: EhAppBackend[]): Promise<void> {
   await prisma.$transaction([
     prisma.application.deleteMany({}),
-    prisma.application.createMany({ data: dataRaw.map(Writer.ehApp) }),
+    prisma.application.createMany({ data: dataRaw.map(DbWriterMapper.ehApp) }),
   ]);
 }
 
-export async function dbAppsGet(): Promise<EhApp[]> {
+export async function dbAppsGet(): Promise<EhAppBackend[]> {
   const rows = await prisma.application.findMany({
     orderBy: [
       {
-        name: 'asc',
+        id: 'asc',
       },
     ],
   });
-  return rows.map(Reader.ehApp);
+  return rows.map(DbReaderMapper.ehApp);
 }

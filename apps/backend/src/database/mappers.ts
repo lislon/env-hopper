@@ -1,5 +1,7 @@
-import { EhAppDb, EhEnvDb, EhSubstitutionDb } from '../backend-types';
+import { EhAppBackend, EhAppDb, EhEnvDb, EhSubstitutionDb } from '../backend-types';
 import { EhApp, EhEnv, EhSubstitutionType } from '@env-hopper/types';
+import { omit } from 'lodash';
+import { formatAppTitle } from '../utils';
 
 export type Jsonify<T, K extends keyof T> = {
   [P in keyof T]: P extends K ? string : T[P];
@@ -40,10 +42,9 @@ export function dejsonify<T, K extends keyof T>(
   return result;
 }
 
-export class Writer {
-  public static ehApp(data: EhApp): EhAppDb {
-    // @ts-expect-error incoming data is not validated really
-    return jsonify({ urlPerEnv: {}, ...data }, ['urlPerEnv', 'meta']);
+export class DbWriterMapper {
+  public static ehApp(data: EhAppBackend): EhAppDb {
+    return jsonify(data, ['meta', 'aliases', 'pages']);
   }
 
   public static ehEnv(data: EhEnv): EhEnvDb {
@@ -55,16 +56,30 @@ export class Writer {
   }
 }
 
-export class Reader {
-  public static ehApp(app: EhAppDb): EhApp {
-    return dejsonify(app, ['urlPerEnv', 'meta']);
+export class DbReaderMapper {
+  public static ehApp(app: EhAppDb): EhAppBackend {
+    return omit(dejsonify(app, ['aliases', 'meta', 'pages']), 'syntheticId');
   }
 
   public static ehEnv(data: EhEnvDb): EhEnv {
-    return dejsonify(data, ['meta']);
+    return omit(dejsonify(data, ['meta']), 'syntheticId')
   }
 
   public static ehSubstitution(data: EhSubstitutionDb): EhSubstitutionType {
-    return data;
+    return omit(data, 'syntheticId');
   }
+}
+
+export class UiReaderMapper {
+  public static ehApp(app: EhAppBackend): EhApp[] {
+    return app.pages.flatMap((page) => ({
+      id: app.id + '/' + page.id,
+      appTitle: app.title,
+      title: formatAppTitle(app, page, app.pages.length === 1 ? '' : page.id),
+      aliases: app.aliases,
+      url: page.url,
+      meta: app.meta,
+    }));
+  }
+
 }

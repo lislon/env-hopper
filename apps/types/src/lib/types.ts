@@ -1,20 +1,30 @@
 export interface EhEnv {
-  name: EhEnvId;
+  id: EhEnvId;
   meta: Record<string, string>;
 }
 export interface EhApp {
-  name: EhAppId;
+  id: EhAppId;
+  title: string;
+  aliases: string[];
   url: string;
-  urlPerEnv: Record<string, string>;
   meta: EhAppMeta;
 }
 
-export type EhAppMeta = EhAppMetaCredentials | EhAppMetaNote | undefined;
+export type EhAppMeta = {
+  ui?: EhAppWidgetUiCreds
+  db?: EhAppWidgetDbCreds
+} | undefined
 
 /**
  * Hint for the user what the username and password are.
  */
-export interface EhAppMetaCredentials {
+export interface EhAppWidgetUiCreds {
+  username: string;
+  password: string;
+}
+
+export interface EhAppWidgetDbCreds {
+  url: string
   username: string;
   password: string;
 }
@@ -27,10 +37,10 @@ export interface EhAppMetaNote {
 }
 
 export interface EhSubstitutionType {
-  name: string;
+  id: string;
   title: string;
   /**
-   * Should the value be autocompletable using native browser autocomplete.
+   * Should the value be autocomplete using native browser autocomplete.
    */
   isBrowserAutocomplete?: boolean;
   /**
@@ -41,10 +51,13 @@ export interface EhSubstitutionType {
 
 export type EhEnvId = string;
 export type EhAppId = string;
+export type EhPageId = string;
 export type EhSubstitutionId = string;
 
 export interface EhClientConfig {
   envs: EhEnv[];
   apps: EhApp[];
   substitutions: EhSubstitutionType[];
+  appVersion: string
+  customFooterHtml?: string
 }

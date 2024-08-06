@@ -2,7 +2,6 @@
 import React from 'react';
 import { useEhContext } from '../context/EhContext';
 import { EhEnv, EhSubstitutionType } from '@env-hopper/types';
-import { getJumpUrl } from '../lib/utils';
 
 function getAutoCompleteAttr(
   substitutionType: EhSubstitutionType,
@@ -14,9 +13,9 @@ function getAutoCompleteAttr(
   if (!substitutionType.isSharedAcrossEnvs) {
     return env === undefined
       ? 'off'
-      : `env-${env.name} eh-${substitutionType.name}`;
+      : `env-${env.id} eh-${substitutionType.id}`;
   }
-  return `eh-${substitutionType.name}`;
+  return `eh-${substitutionType.id}`;
 }
 
 function getAutoCompleteName(
@@ -29,19 +28,17 @@ function getAutoCompleteName(
   if (!substitutionType.isSharedAcrossEnvs) {
     return env === undefined
       ? 'context'
-      : `context-env-${env.name}-eh-${substitutionType.name}`;
+      : `context-env-${env.id}-eh-${substitutionType.id}`;
   }
-  return `context-eh-${substitutionType.name}`;
+  return `context-eh-${substitutionType.id}`;
 }
 
 export function SubstitutionList() {
   const {
     substitutionType,
-    app,
     substitution,
     setSubstitution,
     env,
-    recordJump,
     tryJump,
   } = useEhContext();
   if (!substitutionType) {
@@ -64,7 +61,7 @@ export function SubstitutionList() {
           onChange={(e) =>
             setSubstitution({
               value: e.target.value,
-              name: substitutionType?.name,
+              name: substitutionType?.id,
             })
           }
           onKeyDown={(e) => {

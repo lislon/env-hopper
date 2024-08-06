@@ -1,13 +1,13 @@
 import { EhSubstitutionDb } from '../../backend-types';
 import prisma from '../prisma';
-import { Reader, Writer } from '../mappers';
+import { DbReaderMapper, DbWriterMapper } from '../mappers';
 
 export async function dbSubstitutionsSet(
   data: EhSubstitutionDb[]
 ): Promise<void> {
   await prisma.$transaction([
     prisma.substitution.deleteMany(),
-    prisma.substitution.createMany({ data: data.map(Writer.ehSubstitution) }),
+    prisma.substitution.createMany({ data: data.map(DbWriterMapper.ehSubstitution) }),
   ]);
 }
 
@@ -16,9 +16,9 @@ export async function dbSubstitutionsGet(): Promise<EhSubstitutionDb[]> {
     await prisma.substitution.findMany({
       orderBy: [
         {
-          name: 'asc',
+          id: 'asc',
         },
       ],
     })
-  ).map(Reader.ehSubstitution);
+  ).map(DbReaderMapper.ehSubstitution);
 }

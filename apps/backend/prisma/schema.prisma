@@ -14,23 +14,30 @@ datasource db {
 }
 
 model Environment {
-  id   Int    @id @default(autoincrement())
-  name String @unique
-  meta String
+  syntheticId Int    @id @default(autoincrement())
+  id          String @unique
+  meta        String
 }
 
 model Application {
-  id        Int    @id @default(autoincrement())
-  name      String @unique
-  url       String
-  urlPerEnv String
-  meta      String @default("{}")
+  syntheticId Int    @id @default(autoincrement())
+  id          String @unique
+  title       String @unique
+  abbr        String @default("")
+  aliases     String @default("[]")
+  pages       String @default("[]")
+  meta        String @default("{}")
 }
 
 model Substitution {
-  id                    Int     @id @default(autoincrement())
-  name                  String  @unique
+  syntheticId           Int     @id @default(autoincrement())
+  id                    String  @unique
   title                 String
   isBrowserAutocomplete Boolean @default(false)
   isSharedAcrossEnvs    Boolean @default(false)
+}
+
+model CustomFooterHtml {
+  syntheticId Int    @id @default(autoincrement())
+  html        String
 }

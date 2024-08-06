@@ -44,6 +44,7 @@ export interface EhContextProps {
   app: EhApp | undefined;
   substitution: EhSubstitutionValue | undefined;
   substitutionType: EhSubstitutionType | undefined;
+  customFooterHtml?: string;
 
   getAppById(id: EhAppId | undefined): EhApp | undefined;
 
@@ -84,11 +85,11 @@ type RecordJumpParams = {
 };
 
 function getAppById(id: string | undefined, ehApps: EhApp[]) {
-  return ehApps.find((app) => app.name === id) || undefined;
+  return ehApps.find((app) => app.id === id) || undefined;
 }
 
 function getEnvById(id: string | undefined, ehEnvs: EhEnv[]) {
-  return ehEnvs.find((env) => env.name === id) || undefined;
+  return ehEnvs.find((env) => env.id === id) || undefined;
 }
 
 export function EhContextProvider({
@@ -125,7 +126,7 @@ export function EhContextProvider({
     const substitutionName = findSubstitutionIdByUrl({ app, env });
 
     const substitutionType = data.substitutions.find(
-      (s) => s.name === substitutionName || undefined
+      (s) => s.id === substitutionName || undefined
     );
 
     const firstApp = app
@@ -162,8 +163,8 @@ export function EhContextProvider({
         return;
       }
       const newVar: EhJumpHistory = {
-        app: app?.name,
-        env: env?.name,
+        app: app?.id,
+        env: env?.id,
         substitution: substitution?.value,
         url: jumpUrl,
       };
@@ -189,6 +190,7 @@ export function EhContextProvider({
       listSubstitutions: data.substitutions,
       substitution,
       setSubstitution,
+      customFooterHtml: data.customFooterHtml,
       getAppById(id: EhAppId): EhApp | undefined {
         return getAppById(id, data.apps);
       },

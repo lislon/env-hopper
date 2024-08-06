@@ -48,21 +48,24 @@ export interface TestFixtures {
   recentJumps?: EhJumpHistory[];
 }
 
+const ENV_SUBSTITUTION_VARIABLE = 'env.id';
+
 export function testMakeEnv(name: string): EhEnv {
   return {
-    name: name,
+    id: name,
     meta: {
-      subdomain: name,
+      [ENV_SUBSTITUTION_VARIABLE]: name,
     },
   };
 }
 
-export function testMakeApp(name: string): EhApp {
+export function testMakeApp(id: string): EhApp {
   return {
-    name: name,
-    url: 'https://{subdomain}.mycompany.com:8250/login',
-    meta: undefined,
-    urlPerEnv: {},
+    id: id,
+    title: id,
+    aliases: [],
+    url: 'https://{{' + ENV_SUBSTITUTION_VARIABLE + '}}.mycompany.com:8250/login',
+    meta: undefined
   };
 }
 

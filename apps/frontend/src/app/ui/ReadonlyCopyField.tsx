@@ -24,6 +24,7 @@ export function ReadonlyCopyField({ value }: { value: string }) {
           type="text"
           value={value}
           className="dark:text-gray-000 py-1 px-2 dark:bg-gray-700 rounded-l w-full dark:border-0 border"
+          onClick={(e) => e.currentTarget.select()}
           readOnly={true}
         />
         <div className="dark:bg-gray-700 flex items-center rounded-r">

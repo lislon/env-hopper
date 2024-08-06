@@ -12,10 +12,10 @@ function mapToAutoCompleteItemApp(
   recents: Set<EhAppId>
 ): Item {
   return {
-    id: app.name,
-    title: app.name,
-    favorite: favorites.has(app.name),
-    recent: recents.has(app.name),
+    id: app.id,
+    title: app.title,
+    favorite: favorites.has(app.id),
+    recent: recents.has(app.id),
   };
 }
 

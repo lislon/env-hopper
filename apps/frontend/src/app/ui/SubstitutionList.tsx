@@ -41,11 +41,12 @@ export function SubstitutionList() {
   }
   return (
     <div>
-      <label className="w-fit" htmlFor={'context'}>
+      <label className="w-fit" id={"context-label"}>
         {substitutionType?.title}
       </label>
       <div className="flex shadow-sm border dark:border-0 dark:bg-black gap-0.5">
         <input
+          aria-labelledby="context-label"
           type="text"
           placeholder={`Enter ${substitutionType?.title}`}
           autoComplete={getAutoCompleteAttr(substitutionType, env)}

@@ -5,6 +5,7 @@
   "scripts": {
     "backend:serve": "nx run backend:serve",
     "frontend:serve": "nx run frontend:serve",
+    "serve": "nx run-many -t serve --projects=backend,frontend",
     "backend:generate": "nx run backend:prisma-g",
     "backend:push": "nx run backend:prisma-p",
     "lint": "nx run-many -t lint --projects=* && prettier --check .",

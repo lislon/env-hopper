@@ -1,4 +1,4 @@
-import { EhApp, EhAppId, EhEnv, EhEnvId } from '@env-hopper/types';
+import { EhApp, EhAppId, EhEnv, EhEnvId, EhSubstitutionId, EhSubstitutionType } from '@env-hopper/types';
 import { EhJumpHistory } from '../../types';
 
 export const TestFeatureMagazine = {
@@ -43,6 +43,7 @@ export interface TestTrait {
 export interface TestFixtures {
   apps?: EhApp[];
   envs?: EhEnv[];
+  substitutions?: EhSubstitutionType[]
   favoriteApps?: EhAppId[];
   favoriteEnvs?: EhEnvId[];
   recentJumps?: EhJumpHistory[];
@@ -74,8 +75,14 @@ export function testMagazineMakeFixtures(
   features: TestTrait = {},
 ): TestFixtures {
   let testFixtures: TestFixtures = {
-    apps: ['app1', 'app2', 'app3', 'app4'].map(testMakeApp),
-    envs: ['env1', 'env2', 'env3', 'env4'].map(testMakeEnv),
+    apps: [...['app1', 'app2'].map(testMakeApp), { ...testMakeApp('app3'), url: 'https://{{' + ENV_SUBSTITUTION_VARIABLE + '}}.mycompany.com:8250/{{namespace}}'}],
+    envs: ['env1', 'env2', 'env3'].map(testMakeEnv),
+    substitutions: [
+      {
+        id: 'namespace',
+        title: 'Namespace',
+      }
+    ],
     favoriteApps: [],
     favoriteEnvs: [],
     recentJumps: [],

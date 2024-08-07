@@ -24,7 +24,9 @@ export default defineConfig({
   plugins: [
     react(),
     nxViteTsPaths(),
-    VitePWA(),
+    VitePWA({
+      selfDestroying: true
+    }),
     svgr(),
     // svgr({ include: '**/*.svg' })
   ],

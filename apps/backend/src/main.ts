@@ -10,7 +10,6 @@ import { publicApi } from './api/public-api';
 import { loggerMiddleware } from './logger';
 
 const app = express();
-
 app.get('/health', (_, res) => {
   res.send('ok');
 });
@@ -18,7 +17,9 @@ app.use(loggerMiddleware);
 app.use(publicApi);
 
 const assets = process.env['ASSETS_DIR'] || path.join(__dirname, 'assets');
-app.use('/', express.static(assets));
+app.use('/', express.static(assets, {
+  cacheControl: false
+}));
 
 const port = process.env['PORT'] || 4001;
 const server = app.listen(port, () => {

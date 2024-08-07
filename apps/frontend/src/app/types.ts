@@ -1,3 +1,4 @@
+/// <reference types="vite-plugin-pwa/client" />
 import {
   EhApp,
   EhAppId,

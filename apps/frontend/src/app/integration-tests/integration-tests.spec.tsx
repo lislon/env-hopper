@@ -171,4 +171,19 @@ describe('Integration tests', () => {
       name: /Remove/i,
     });
   });
+
+  it('When there is already preselected env and user clicks on it, text will be select-ed and all options will be shown', async () => {
+    const user = await given({
+      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.baseline),
+    });
+    await testFillEnvAndApp(user, '1', 'App1');
+    const envComboBox = testGetEnvComboBox();
+    await user.click(envComboBox);
+
+    expect(getAllSection()).toBeTruthy();
+
+    expect(window.getSelection()?.type).toEqual('Range');
+  });
+
+
 });

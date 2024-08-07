@@ -1,6 +1,6 @@
 import { EhClientConfig } from '@env-hopper/types';
 
 export async function getConfig(): Promise<EhClientConfig> {
-  const response = await fetch(`/api/config?bust=${APP_VERSION}`);
+  const response = await fetch(`/api/config`);
   return response.json();
 }

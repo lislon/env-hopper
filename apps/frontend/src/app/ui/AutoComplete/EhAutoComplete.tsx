@@ -8,7 +8,7 @@ import {
   mapToItemWithSection,
 } from './section-splitting';
 import { ItemsSections } from './ItemsSections';
-import { sortBy } from 'lodash';
+import { first, sortBy } from 'lodash';
 
 export type EhAutoCompleteFilter = (
   searchPattern: string,
@@ -71,10 +71,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     onSelectedItemChange({ selectedItem }) {
       props.onSelectedItemChange(selectedItem?.id || undefined);
     },
-    selectedItem: mapToItemWithSection(props.selectedItem, false).reduce(
-      (x) => x,
-      null
-    ),
+    selectedItem: first(mapToItemWithSection(props.selectedItem, false)) || null,
     items,
     itemToString(item) {
       return item ? item.title : '';

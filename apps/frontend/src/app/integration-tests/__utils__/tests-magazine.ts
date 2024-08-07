@@ -64,13 +64,14 @@ export function testMakeApp(id: string): EhApp {
     id: id,
     title: id,
     aliases: [],
-    url: 'https://{{' + ENV_SUBSTITUTION_VARIABLE + '}}.mycompany.com:8250/login',
-    meta: undefined
+    url:
+      'https://{{' + ENV_SUBSTITUTION_VARIABLE + '}}.mycompany.com:8250/login',
+    meta: undefined,
   };
 }
 
 export function testMagazineMakeFixtures(
-  features: TestTrait = {}
+  features: TestTrait = {},
 ): TestFixtures {
   let testFixtures: TestFixtures = {
     apps: ['app1', 'app2', 'app3', 'app4'].map(testMakeApp),

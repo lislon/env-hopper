@@ -9,7 +9,7 @@ import { Item } from './AutoComplete/common';
 function mapToAutoCompleteItem(
   env: EhEnv,
   favorites: Set<EhEnvId>,
-  recents: Set<EhEnvId>
+  recents: Set<EhEnvId>,
 ): Item {
   return {
     id: env.id,
@@ -40,7 +40,7 @@ export function EnvList({ onOpenChange }: EnvListProps) {
       recentJumps
         .slice(0, 2)
         .map((jump) => jump.env || '')
-        .filter(Boolean)
+        .filter(Boolean),
     );
     return listEnvs.map((env) => mapToAutoCompleteItem(env, favSet, recentSet));
   }, [listEnvs, listFavoriteEnvs, recentJumps]);

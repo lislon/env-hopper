@@ -5,7 +5,7 @@ import { EhEnv, EhSubstitutionType } from '@env-hopper/types';
 
 function getAutoCompleteAttr(
   substitutionType: EhSubstitutionType,
-  env: EhEnv | undefined
+  env: EhEnv | undefined,
 ) {
   if (!substitutionType.isBrowserAutocomplete) {
     return 'off';
@@ -20,7 +20,7 @@ function getAutoCompleteAttr(
 
 function getAutoCompleteName(
   substitutionType: EhSubstitutionType,
-  env: EhEnv | undefined
+  env: EhEnv | undefined,
 ) {
   if (!substitutionType.isBrowserAutocomplete) {
     return 'context';
@@ -34,13 +34,8 @@ function getAutoCompleteName(
 }
 
 export function SubstitutionList() {
-  const {
-    substitutionType,
-    substitution,
-    setSubstitution,
-    env,
-    tryJump,
-  } = useEhContext();
+  const { substitutionType, substitution, setSubstitution, env, tryJump } =
+    useEhContext();
   if (!substitutionType) {
     return undefined;
   }

@@ -40,7 +40,7 @@ async function given({ testFixtures }: GivenProps) {
     envs: testFixtures.envs || [],
     apps: testFixtures.apps || [],
     substitutions: [],
-    appVersion: 'test'
+    appVersion: 'test',
   });
 
   vi.mocked(useLocalStorage).mockImplementation(useLocalStorageMock);
@@ -60,7 +60,7 @@ async function given({ testFixtures }: GivenProps) {
   render(
     <BrowserRouter>
       <App />
-    </BrowserRouter>
+    </BrowserRouter>,
   );
 
   const setup = userEvent.setup();
@@ -102,7 +102,7 @@ describe('Integration tests', () => {
   it('If user opens a autocomplete, but do not type anything, app will appear in every section', async () => {
     const user = await given({
       testFixtures: testMagazineMakeFixtures(
-        TestFeatureMagazine.hasRecentAndFavoriteApp
+        TestFeatureMagazine.hasRecentAndFavoriteApp,
       ),
     });
 
@@ -137,7 +137,7 @@ describe('Integration tests', () => {
   it('If toggle favorite recent env, the star icon will be added and selection stays in the recent section', async () => {
     const user = await given({
       testFixtures: testMagazineMakeFixtures(
-        TestFeatureMagazine.hasRecentJumps
+        TestFeatureMagazine.hasRecentJumps,
       ),
     });
 
@@ -153,7 +153,7 @@ describe('Integration tests', () => {
   it('favorite env has stars in all sections', async () => {
     const user = await given({
       testFixtures: testMagazineMakeFixtures(
-        TestFeatureMagazine.hasRecentAndFavoriteApp
+        TestFeatureMagazine.hasRecentAndFavoriteApp,
       ),
     });
 
@@ -170,5 +170,17 @@ describe('Integration tests', () => {
     within(getAllSection()).getByRole('button', {
       name: /Remove/i,
     });
+  });
+
+  it('When there is already preselected env and user clicks on it, text will be select-ed and all options will be shown', async () => {
+    const user = await given({
+      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.baseline),
+    });
+    await testFillEnvAndApp(user, '1', 'App1');
+    const envComboBox = testGetEnvComboBox();
+    await user.click(envComboBox);
+
+    expect(getAllSection()).toBeTruthy();
+    expect([envComboBox.selectionStart, envComboBox.selectionEnd]).toEqual([0, envComboBox.value.length]);
   });
 });

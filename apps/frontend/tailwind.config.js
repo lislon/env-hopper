@@ -5,7 +5,7 @@ module.exports = {
   content: [
     join(
       __dirname,
-      '{src,pages,components,app}/**/*!(*.stories|*.test).{ts,tsx,html}'
+      '{src,pages,components,app}/**/*!(*.stories|*.test).{ts,tsx,html}',
     ),
   ],
   theme: {

@@ -32,8 +32,8 @@ export function JumpMainButton() {
             {env === undefined
               ? 'Select an environment'
               : app === undefined
-              ? 'Select an app'
-              : `Enter ${substitutionType?.title}`}
+                ? 'Select an app'
+                : `Enter ${substitutionType?.title}`}
           </div>
         </div>
       </div>

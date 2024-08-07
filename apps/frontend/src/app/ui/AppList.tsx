@@ -9,7 +9,7 @@ import { Item } from './AutoComplete/common';
 function mapToAutoCompleteItemApp(
   app: EhApp,
   favorites: Set<EhAppId>,
-  recents: Set<EhAppId>
+  recents: Set<EhAppId>,
 ): Item {
   return {
     id: app.id,
@@ -41,10 +41,10 @@ export function AppList({ onOpenChange }: AppListProps) {
       recentJumps
         .slice(0, 2)
         .map((jump) => jump.app || '')
-        .filter(Boolean)
+        .filter(Boolean),
     );
     return listApps.map((env) =>
-      mapToAutoCompleteItemApp(env, favSet, recentSet)
+      mapToAutoCompleteItemApp(env, favSet, recentSet),
     );
   }, [listApps, listFavoriteApps, recentJumps]);
 

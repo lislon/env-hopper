@@ -5,7 +5,7 @@ import { getConfig } from '../../../api';
 export function CustomHtml() {
   const { data } = useQuery({
     queryKey: ['config'],
-    queryFn: getConfig
+    queryFn: getConfig,
   });
 
   if (data?.customFooterHtml) {

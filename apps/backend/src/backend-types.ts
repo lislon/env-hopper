@@ -1,10 +1,16 @@
-import { EhAppId, EhAppMeta, EhEnv, EhPageId, EhSubstitutionType } from '@env-hopper/types';
+import {
+  EhAppId,
+  EhAppMeta,
+  EhEnv,
+  EhPageId,
+  EhSubstitutionType,
+} from '@env-hopper/types';
 import { Jsonify } from './database/mappers';
 
 export interface EhAppPageBackend {
   id: EhPageId;
   title: string;
-  url: string
+  url: string;
 }
 
 export interface EhAppBackend {

@@ -8,7 +8,7 @@ export interface ItemWithSection extends Item {
 
 export function flatmapToItemsWithSections(
   item: Item[],
-  isUserSearching: boolean
+  isUserSearching: boolean,
 ): ItemWithSection[] {
   return item.flatMap((i) => mapToItemWithSection(i, isUserSearching));
 }
@@ -20,7 +20,7 @@ export function flatmapToItemsWithSections(
  */
 export function mapToItemWithSection(
   item: Item | null,
-  isUserSearching: boolean
+  isUserSearching: boolean,
 ): ItemWithSection[] {
   if (item === null) {
     return [];

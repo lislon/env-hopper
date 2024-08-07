@@ -3,11 +3,13 @@ import prisma from '../prisma';
 import { DbReaderMapper, DbWriterMapper } from '../mappers';
 
 export async function dbSubstitutionsSet(
-  data: EhSubstitutionDb[]
+  data: EhSubstitutionDb[],
 ): Promise<void> {
   await prisma.$transaction([
     prisma.substitution.deleteMany(),
-    prisma.substitution.createMany({ data: data.map(DbWriterMapper.ehSubstitution) }),
+    prisma.substitution.createMany({
+      data: data.map(DbWriterMapper.ehSubstitution),
+    }),
   ]);
 }
 

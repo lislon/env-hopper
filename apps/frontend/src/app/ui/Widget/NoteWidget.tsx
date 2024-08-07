@@ -11,8 +11,7 @@ export function NoteSection({ meta }: { meta: EhAppMetaNote }) {
           fill="currentColor"
           viewBox="0 0 24 24"
         >
-          <path
-            d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2ZM6 7h12v2H6V7Zm0 4h12v2H6v-2Zm0 4h9v2H6v-2Z" />
+          <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2ZM6 7h12v2H6V7Zm0 4h12v2H6v-2Zm0 4h9v2H6v-2Z" />
         </svg>
       </div>
       <div className="border-l-2 border-gray-300 dark:border-gray-500 pl-2">

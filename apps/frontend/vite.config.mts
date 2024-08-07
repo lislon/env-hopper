@@ -31,7 +31,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}', '/api/config'],
+        // globPatterns: ['**/*.{js,css,html,ico,png,svg}', '/api/config'],
         sourcemap: true,
       },
       includeAssets: ['favicon.ico', 'env-hopper-square.svg'],

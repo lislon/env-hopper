@@ -48,7 +48,7 @@ export function Suggestion({
         highlightedIndex === index && 'bg-gray-100 dark:bg-gray-700',
         selectedItem === item && 'font-bold',
         `${suggestionHeightClass} py-2 px-1 shadow-sm`,
-        "before:content-['']"
+        "before:content-['']",
       )}
       {...getItemProps({ item, index })}
     >

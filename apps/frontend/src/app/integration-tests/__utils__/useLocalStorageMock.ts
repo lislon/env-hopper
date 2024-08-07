@@ -4,7 +4,7 @@ export const localStorageMock = {} as Record<string, unknown>;
 
 export function useLocalStorageMock<T>(
   key: string,
-  defaultValue: T
+  defaultValue: T,
 ): [T, Dispatch<SetStateAction<T>>] {
   const [, dispatch] = useReducer((n) => n + 1, 0);
 

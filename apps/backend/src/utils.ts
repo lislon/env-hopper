@@ -1,8 +1,12 @@
 import { EhAppBackend, EhAppPageBackend } from './backend-types';
 import { EhPageId } from '@env-hopper/types';
 
-export function formatAppTitle(app: EhAppBackend, page: EhAppPageBackend, pageId: EhPageId) {
-  const title = []
+export function formatAppTitle(
+  app: EhAppBackend,
+  page: EhAppPageBackend,
+  pageId: EhPageId,
+) {
+  const title = [];
   if (app.abbr !== '') {
     title.push(app.abbr);
   }

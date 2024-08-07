@@ -7,12 +7,12 @@ export async function testWaitLoading() {
   await waitFor(() =>
     screen.getByRole('combobox', {
       name: /environment/i,
-    })
+    }),
   );
 }
 
 export function testGetEnvComboBox() {
-  return screen.getByRole('combobox', {
+  return screen.getByRole<HTMLInputElement>('combobox', {
     name: /environment/i,
   });
 }
@@ -27,7 +27,7 @@ export async function testToggleFavorite(user: UserType, title: string) {
 export async function testFillEnvAndApp(
   user: UserType,
   envName: string,
-  appName: string
+  appName: string,
 ) {
   await user.click(testGetEnvComboBox());
 

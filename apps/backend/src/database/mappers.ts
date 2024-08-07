@@ -1,4 +1,9 @@
-import { EhAppBackend, EhAppDb, EhEnvDb, EhSubstitutionDb } from '../backend-types';
+import {
+  EhAppBackend,
+  EhAppDb,
+  EhEnvDb,
+  EhSubstitutionDb,
+} from '../backend-types';
 import { EhApp, EhEnv, EhSubstitutionType } from '@env-hopper/types';
 import { omit } from 'lodash';
 import { formatAppTitle } from '../utils';
@@ -9,7 +14,7 @@ export type Jsonify<T, K extends keyof T> = {
 
 export function jsonify<T, K extends keyof T>(
   data: T,
-  jsonFields: K[]
+  jsonFields: K[],
 ): Jsonify<T, K> {
   const result: Jsonify<T, K> = {} as Jsonify<T, K>;
   // @ts-expect-error  quick dirty solution
@@ -27,7 +32,7 @@ export function jsonify<T, K extends keyof T>(
 
 export function dejsonify<T, K extends keyof T>(
   data: Jsonify<T, K>,
-  jsonFields: K[]
+  jsonFields: K[],
 ): T {
   const result: T = {} as T;
   Object.keys(data).forEach((key) => {
@@ -62,7 +67,7 @@ export class DbReaderMapper {
   }
 
   public static ehEnv(data: EhEnvDb): EhEnv {
-    return omit(dejsonify(data, ['meta']), 'syntheticId')
+    return omit(dejsonify(data, ['meta']), 'syntheticId');
   }
 
   public static ehSubstitution(data: EhSubstitutionDb): EhSubstitutionType {
@@ -81,5 +86,4 @@ export class UiReaderMapper {
       meta: app.meta,
     }));
   }
-
 }

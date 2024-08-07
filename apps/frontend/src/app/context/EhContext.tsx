@@ -53,7 +53,7 @@ export interface EhContextProps {
   getSubstitutionValueById(
     envId: EhEnvId | undefined,
     appId: EhAppId | undefined,
-    substitution: string | undefined
+    substitution: string | undefined,
   ): EhSubstitutionValue | undefined;
 
   recordJump(jump: EhJumpParams): void;
@@ -107,15 +107,15 @@ export function EhContextProvider({
 
   const [recentJumps, setRecentJumps] = useLocalStorage<EhJumpHistory[]>(
     LOCAL_STORAGE_KEY_RECENT_JUMPS,
-    []
+    [],
   );
   const [listFavoriteEnvs, setFavoriteEnvIds] = useLocalStorage<EhEnvId[]>(
     LOCAL_STORAGE_KEY_FAVORITE_ENVS,
-    []
+    [],
   );
   const [listFavoriteApps, setFavoriteAppIds] = useLocalStorage<EhAppId[]>(
     LOCAL_STORAGE_KEY_FAVORITE_APPS,
-    []
+    [],
   );
   const [, setVersion] = useLocalStorage<string>(LOCAL_STORAGE_KEY_VERSION, '');
   useEffect(() => {
@@ -126,19 +126,19 @@ export function EhContextProvider({
     const substitutionName = findSubstitutionIdByUrl({ app, env });
 
     const substitutionType = data.substitutions.find(
-      (s) => s.id === substitutionName || undefined
+      (s) => s.id === substitutionName || undefined,
     );
 
     const firstApp = app
       ? app
       : data.apps.length > 0
-      ? data.apps[0]
-      : undefined;
+        ? data.apps[0]
+        : undefined;
     const firstEnv = env
       ? env
       : data.envs.length > 0
-      ? data.envs[0]
-      : undefined;
+        ? data.envs[0]
+        : undefined;
     const incompleteUrl =
       firstApp &&
       getJumpUrlEvenNotComplete({
@@ -171,8 +171,8 @@ export function EhContextProvider({
       setRecentJumps(
         [newVar, ...recentJumps.filter((h) => h.url !== jumpUrl)].slice(
           0,
-          MAX_HISTORY_JUMPS
-        )
+          MAX_HISTORY_JUMPS,
+        ),
       );
     };
     return {

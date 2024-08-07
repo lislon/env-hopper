@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "defaultBase": "master",
+  "defaultBase": "main",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
@@ -15,7 +15,6 @@
     ],
     "sharedGlobals": []
   },
-  "nxCloudAccessToken": "YTViMWM1MjUtYjUzNS00ZDI3LWFiNzctYjFlN2U5ZDFmMDQ3fHJlYWQtd3JpdGU=",
   "plugins": [
     {
       "plugin": "@nx/eslint/plugin",

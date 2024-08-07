@@ -18,7 +18,6 @@ import { dbCustomHtmlGet, dbCustomHtmlSet } from '../database/repo/customHtml';
 
 export const publicApi = Router();
 
-
 publicApi.use(express.json());
 publicApi.use(express.raw({ type: '*/*', limit: '10mb' }));
 
@@ -32,7 +31,7 @@ publicApi.get(
       appVersion: process.env['APP_VERSION'] || 'vlocal',
       customFooterHtml: await dbCustomHtmlGet(),
     });
-  }
+  },
 );
 
 publicApi.get('/api/envs', async (req: Request, res: Response<EhEnv[]>) => {
@@ -44,26 +43,29 @@ publicApi.post(
   async (req: Request<EhEnv[]>, res: Response<'OK'>) => {
     await dbEnvsSet(req.body);
     res.send('OK');
-  }
+  },
 );
 
-publicApi.get('/api/apps', async (req: Request, res: Response<EhAppBackend[]>) => {
-  res.send(await dbAppsGet());
-});
+publicApi.get(
+  '/api/apps',
+  async (req: Request, res: Response<EhAppBackend[]>) => {
+    res.send(await dbAppsGet());
+  },
+);
 
 publicApi.post(
   '/api/apps',
   async (req: Request<EhAppBackend[]>, res: Response<'OK'>) => {
     await dbAppsSet(req.body);
     res.send('OK');
-  }
+  },
 );
 
 publicApi.get(
   '/api/substitutions',
   async (req: Request, res: Response<EhSubstitutionType[]>) => {
     res.send(await dbSubstitutionsGet());
-  }
+  },
 );
 
 publicApi.post(
@@ -71,14 +73,14 @@ publicApi.post(
   async (req: Request<EhSubstitutionType[]>, res: Response<'OK'>) => {
     await dbSubstitutionsSet(req.body);
     res.send('OK');
-  }
+  },
 );
 
 publicApi.get(
   '/api/customHtml',
   async (req: Request, res: Response<string>) => {
     res.send(await dbCustomHtmlGet());
-  }
+  },
 );
 
 publicApi.post(
@@ -86,6 +88,5 @@ publicApi.post(
   async (req: Request<string>, res: Response<'OK'>) => {
     await dbCustomHtmlSet(req.body.toString('utf-8'));
     res.send('OK');
-  }
+  },
 );
-

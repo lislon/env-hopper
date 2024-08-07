@@ -10,7 +10,7 @@ export function ShowContext() {
       {JSON.stringify(
         { app, env, substitution, substitutionType, recentJumps },
         undefined,
-        2
+        2,
       )}
     </pre>
   );

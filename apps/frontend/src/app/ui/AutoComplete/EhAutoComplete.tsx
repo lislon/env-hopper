@@ -12,7 +12,7 @@ import { first, sortBy } from 'lodash';
 
 export type EhAutoCompleteFilter = (
   searchPattern: string,
-  items: Item[]
+  items: Item[],
 ) => Item[];
 
 export type OnSelectedItemChange = (item: string | undefined) => void;
@@ -40,13 +40,20 @@ function getInitialItems(collection: Item[]) {
 }
 
 export function EhAutoComplete(props: AutoCompleteProps) {
-  const [items, setItems] = useState(() =>
-    getInitialItems(props.itemsAll)
-  );
+  const [items, setItems] = useState(() => getInitialItems(props.itemsAll));
 
   const [tmpFavorite, setTmpFavorite] = useState<Map<string, boolean>>(
-    new Map()
+    new Map(),
   );
+
+  const [selectedItemWithSection, setSelectedItemWithSection] =
+    useState<ItemWithSection | null>(null);
+
+  useEffect(() => {
+    setSelectedItemWithSection(
+      first(mapToItemWithSection(props.selectedItem, false)) || null,
+    );
+  }, [props.selectedItem]);
 
   const {
     isOpen,
@@ -71,7 +78,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     onSelectedItemChange({ selectedItem }) {
       props.onSelectedItemChange(selectedItem?.id || undefined);
     },
-    selectedItem: first(mapToItemWithSection(props.selectedItem, false)) || null,
+    selectedItem: selectedItemWithSection,
     items,
     itemToString(item) {
       return item ? item.title : '';
@@ -131,7 +138,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
           <div
             className={cn(
               `w-full bg-white dark:bg-gray-900 mt-1 shadow-md p-0 z-10 absolute max-h-[50vh] overflow-y-scroll`,
-              !(isOpen && items.length) && 'hidden'
+              !(isOpen && items.length) && 'hidden',
             )}
             {...getMenuProps()}
           >

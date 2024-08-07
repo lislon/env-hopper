@@ -10,10 +10,12 @@ export interface EhApp {
   meta: EhAppMeta;
 }
 
-export type EhAppMeta = {
-  ui?: EhAppWidgetUiCreds
-  db?: EhAppWidgetDbCreds
-} | undefined
+export type EhAppMeta =
+  | {
+      ui?: EhAppWidgetUiCreds;
+      db?: EhAppWidgetDbCreds;
+    }
+  | undefined;
 
 /**
  * Hint for the user what the username and password are.
@@ -24,7 +26,7 @@ export interface EhAppWidgetUiCreds {
 }
 
 export interface EhAppWidgetDbCreds {
-  url: string
+  url: string;
   username: string;
   password: string;
 }
@@ -58,6 +60,6 @@ export interface EhClientConfig {
   envs: EhEnv[];
   apps: EhApp[];
   substitutions: EhSubstitutionType[];
-  appVersion: string
-  customFooterHtml?: string
+  appVersion: string;
+  customFooterHtml?: string;
 }

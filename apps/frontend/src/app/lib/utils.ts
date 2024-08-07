@@ -19,7 +19,7 @@ export function findSubstitutionIdByUrl({
 export function findSubstitutionTypeInApp(
   app: EhApp | undefined,
   env: EhEnv | undefined,
-  listSubstitutions: EhSubstitutionType[]
+  listSubstitutions: EhSubstitutionType[],
 ): EhSubstitutionType | undefined {
   if (app) {
     const match = findSubstitutionIdByUrl({ app, env });
@@ -69,7 +69,7 @@ export function getJumpUrlEvenNotComplete({
 }
 
 function isSubstitutionNotProvided(
-  substitution: EhSubstitutionValue | undefined
+  substitution: EhSubstitutionValue | undefined,
 ) {
   return substitution === undefined || substitution.name.trim() === '';
 }
@@ -94,4 +94,3 @@ export function cutDomain(fullUrl: string) {
 export function cutApp(fullUrl: string) {
   return fullUrl.split('/').slice(3).join('/');
 }
-

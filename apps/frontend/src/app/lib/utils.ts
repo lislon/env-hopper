@@ -12,7 +12,7 @@ export function findSubstitutionIdByUrl({
     return undefined;
   }
   const urlPattern = getJumpUrlEvenNotComplete({ app, env });
-  const match = urlPattern.match(/{(.+)}/);
+  const match = urlPattern.match(/{{(.+)}}/);
   return match ? match[1] : undefined;
 }
 
@@ -40,15 +40,17 @@ export interface JumpDataParamsForce extends JumpDataParams {
   app: EhApp;
 }
 
-export function hasSubstitution(app: EhApp, env: EhEnv) {
-  return replaceMetaSubstitutions(app.url, env).includes('{');
+export function hasUnresolvedSubstitution(app: EhApp, env: EhEnv) {
+  return replaceSubstitutionsFromMeta(app.url, env).includes('{{');
 }
 
-function replaceMetaSubstitutions(url: string, env: EhEnv) {
-  Object.entries(env.meta).forEach(([key, value]) => {
-    url = url.replace('{{' + key + '}}', value);
-  });
-  return url;
+export function replaceSubstitutionsFromMeta(string: string, env: EhEnv|undefined) {
+  if (env !== undefined) {
+    Object.entries(env.meta).forEach(([key, value]) => {
+      string = string.replace('{{' + key + '}}', value);
+    });
+  }
+  return string;
 }
 
 export function getJumpUrlEvenNotComplete({
@@ -58,7 +60,7 @@ export function getJumpUrlEvenNotComplete({
 }: JumpDataParamsForce) {
   let url = app.url;
   if (env !== undefined) {
-    url = replaceMetaSubstitutions(url, env);
+    url = replaceSubstitutionsFromMeta(url, env);
   }
 
   if (substitution !== undefined && substitution.name.trim() !== '') {
@@ -81,7 +83,7 @@ export function getJumpUrl({ app, env, substitution }: JumpDataParams) {
   if (env === undefined) {
     return undefined;
   }
-  if (isSubstitutionNotProvided(substitution) && hasSubstitution(app, env)) {
+  if (isSubstitutionNotProvided(substitution) && hasUnresolvedSubstitution(app, env)) {
     return undefined;
   }
   return getJumpUrlEvenNotComplete({ app, env, substitution });

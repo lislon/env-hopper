@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import App from '../app';
-import { describe, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { getConfig } from '../api';
 import { userEvent } from '@testing-library/user-event';
 import {
@@ -39,7 +39,7 @@ async function given({ testFixtures }: GivenProps) {
   vi.mocked(getConfig).mockResolvedValue({
     envs: testFixtures.envs || [],
     apps: testFixtures.apps || [],
-    substitutions: [],
+    substitutions: testFixtures.substitutions || [],
     appVersion: 'test',
   });
 
@@ -183,4 +183,25 @@ describe('Integration tests', () => {
     expect(getAllSection()).toBeTruthy();
     expect([envComboBox.selectionStart, envComboBox.selectionEnd]).toEqual([0, envComboBox.value.length]);
   });
+
+
+  it('additional substitutions in URL works', async () => {
+    const user = await given({
+      testFixtures: testMagazineMakeFixtures(
+        TestFeatureMagazine.hasRecentAndFavoriteApp,
+      ),
+    });
+    await testFillEnvAndApp(user, '1', 'App3');
+
+   const substitutionValue = screen.getByRole('textbox', {
+    name: /Namespace/i,
+  });
+   await user.type(substitutionValue, 'my-namespace');
+
+    const link = screen.getByRole<HTMLAnchorElement>('link', {
+      name: /JUMP .+/,
+    });
+    expect(link.href).toEqual('https://env1.mycompany.com:8250/my-namespace');
+  });
+
 });

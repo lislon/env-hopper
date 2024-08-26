@@ -17,6 +17,7 @@ app.use(loggerMiddleware);
 app.use(publicApi);
 
 const assets = process.env['ASSETS_DIR'] || path.join(__dirname, 'assets');
+
 app.use(
   '/',
   express.static(assets, {
@@ -33,3 +34,6 @@ const server = app.listen(port, () => {
   );
 });
 server.on('error', console.error);
+
+process.on('SIGTERM', process.exit);
+process.on('SIGINT', process.exit);

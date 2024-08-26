@@ -1,17 +1,9 @@
 import express, { Request, Response, Router } from 'express';
 import { dbEnvsGet, dbEnvsSet } from '../database/repo/envs';
-import {
-  EhApp,
-  EhClientConfig,
-  EhEnv,
-  EhSubstitutionType,
-} from '@env-hopper/types';
+import { EhClientConfig, EhEnv, EhSubstitutionType } from '@env-hopper/types';
 
 import { dbAppsGet, dbAppsSet } from '../database/repo/apps';
-import {
-  dbSubstitutionsGet,
-  dbSubstitutionsSet,
-} from '../database/repo/substitutions';
+import { dbSubstitutionsGet, dbSubstitutionsSet } from '../database/repo/substitutions';
 import { EhAppBackend } from '../backend-types';
 import { UiReaderMapper } from '../database/mappers';
 import { dbCustomHtmlGet, dbCustomHtmlSet } from '../database/repo/customHtml';

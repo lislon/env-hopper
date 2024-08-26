@@ -41,7 +41,7 @@ export function SubstitutionList() {
   }
   return (
     <div>
-      <label className="w-fit" id={"context-label"}>
+      <label className="w-fit" id={'context-label'}>
         {substitutionType?.title}
       </label>
       <div className="flex shadow-sm border dark:border-0 dark:bg-black gap-0.5">
@@ -52,7 +52,7 @@ export function SubstitutionList() {
           autoComplete={getAutoCompleteAttr(substitutionType, env)}
           name={getAutoCompleteName(substitutionType, env)}
           autoFocus={true}
-          className="w-full h-10 text-gray-500 p-2 text-xl"
+          className="w-full h-10 text-gray-500 p-2 text-xl rounded"
           value={substitution?.value || ''}
           onChange={(e) =>
             setSubstitution({

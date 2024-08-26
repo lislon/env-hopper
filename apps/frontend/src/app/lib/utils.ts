@@ -12,7 +12,7 @@ export function findSubstitutionIdByUrl({
     return undefined;
   }
   const urlPattern = getJumpUrlEvenNotComplete({ app, env });
-  const match = urlPattern.match(/{{(.+)}}/);
+  const match = urlPattern.match(/{{(.+?)}}/);
   return match ? match[1] : undefined;
 }
 
@@ -44,7 +44,10 @@ export function hasUnresolvedSubstitution(app: EhApp, env: EhEnv) {
   return replaceSubstitutionsFromMeta(app.url, env).includes('{{');
 }
 
-export function replaceSubstitutionsFromMeta(string: string, env: EhEnv|undefined) {
+export function replaceSubstitutionsFromMeta(
+  string: string,
+  env: EhEnv | undefined,
+) {
   if (env !== undefined) {
     Object.entries(env.meta).forEach(([key, value]) => {
       string = string.replace('{{' + key + '}}', value);
@@ -83,7 +86,10 @@ export function getJumpUrl({ app, env, substitution }: JumpDataParams) {
   if (env === undefined) {
     return undefined;
   }
-  if (isSubstitutionNotProvided(substitution) && hasUnresolvedSubstitution(app, env)) {
+  if (
+    isSubstitutionNotProvided(substitution) &&
+    hasUnresolvedSubstitution(app, env)
+  ) {
     return undefined;
   }
   return getJumpUrlEvenNotComplete({ app, env, substitution });
@@ -95,4 +101,11 @@ export function cutDomain(fullUrl: string) {
 
 export function cutApp(fullUrl: string) {
   return fullUrl.split('/').slice(3).join('/');
+}
+
+export function normalizeExternalAppName(appName: string) {
+  if (appName.indexOf('/') === -1) {
+    appName = appName + '/home';
+  }
+  return appName;
 }

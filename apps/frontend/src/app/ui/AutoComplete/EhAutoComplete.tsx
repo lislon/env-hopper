@@ -117,15 +117,15 @@ export function EhAutoComplete(props: AutoCompleteProps) {
             {props.label}
           </label>
         )}
-        <div className="flex shadow-sm border dark:border-0 dark:bg-black gap-0.5">
+        <div className="flex shadow-sm">
           <input
             placeholder={props.placeholder}
-            className={`w-full ${suggestionHeightClass} text-xl text-gray-500 rounded p-2`}
+            className={`border bg-gray-50 dark:border-0 w-full ${suggestionHeightClass} text-xl text-gray-500 rounded-l p-2`}
             {...inputProps}
           />
           <button
             aria-label="toggle menu"
-            className="px-2"
+            className="px-2 border-r border-t border-b rounded-r bg-gray-100 dark:bg-gray-700 "
             type="button"
             {...getToggleButtonProps()}
           >
@@ -137,7 +137,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
         <div className="relative w-full">
           <div
             className={cn(
-              `w-full bg-white dark:bg-gray-900 mt-1 shadow-md p-0 z-10 absolute max-h-[50vh] overflow-y-scroll`,
+              `w-full bg-white dark:bg-gray-900 shadow-2xl p-0 z-10 absolute max-h-[50vh] overflow-y-scroll border border-b-gray-800 dark:border-gray-600 pt-1 hover:cursor-pointer transition`,
               !(isOpen && items.length) && 'hidden',
             )}
             {...getMenuProps()}

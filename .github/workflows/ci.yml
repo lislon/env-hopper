@@ -69,7 +69,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:v${{ needs.build.outputs.new-release-version }}
-            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.ref == 'refs/heads/main' && 'latest' || 'alpha' }}
           context: .
           build-args: |
             APP_VERSION=${{ needs.build.outputs.new-release-version }}

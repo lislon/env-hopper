@@ -4,7 +4,7 @@
  */
 
 import 'express-async-errors';
-import express from 'express';
+import express, { RequestHandler } from 'express';
 import * as path from 'path';
 import { publicApi } from './api/public-api';
 import { loggerMiddleware } from './logger';
@@ -24,6 +24,10 @@ app.use(
     cacheControl: false,
   }),
 );
+
+const indexHtml: RequestHandler = (_, res) => res.sendFile(path.resolve(assets, 'index.html'));
+app.get('/app/*', indexHtml);
+app.get('/env/*', indexHtml);
 
 const port = process.env['PORT'] || 4001;
 const server = app.listen(port, () => {

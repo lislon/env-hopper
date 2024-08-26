@@ -7,8 +7,8 @@ import { ThemeSwitcher } from './ThemeSwitcher/ThemeSwitcher';
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <ThemeContextProvider>
-      <div className="flex min-h-screen flex-col items-center bg-[#fcfefe] dark:bg-gray-800 dark:text-white text-black w-full">
-        <ThemeSwitcher className="absolute top-2 right-2" />
+      <div className="flex min-h-screen flex-col items-center bg-[#fcfefe] dark:bg-gray-800 dark:text-white text-black w-full transition">
+        <ThemeSwitcher className="absolute top-2 right-2 overflow-clip" />
         <Header />
         <Suspense fallback={'Loading...'}>{children}</Suspense>
         <Footer />

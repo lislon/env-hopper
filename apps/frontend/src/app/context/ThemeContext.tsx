@@ -30,7 +30,7 @@ function switchTheme(theme: EhTheme) {
     theme === 'dark' ||
     (theme === 'system' &&
       typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-colour-scheme: dark)').matches)
+      window.matchMedia('(prefers-color-scheme: dark)').matches)
   ) {
     document.body.classList.add('dark');
   }

@@ -90,6 +90,7 @@
     "react-dom": "18.3.1",
     "react-router-dom": "6.26.1",
     "rfc-7807-problem-details": "^1.2.0",
+    "sleep-promise": "^9.1.0",
     "tslib": "^2.3.0"
   }
 }

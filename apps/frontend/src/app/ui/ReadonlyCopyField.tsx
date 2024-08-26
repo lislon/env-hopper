@@ -23,13 +23,13 @@ export function ReadonlyCopyField({ value }: { value: string }) {
           ref={inputRef}
           type="text"
           value={value}
-          className="dark:text-gray-000 py-1 px-2 dark:bg-gray-700 rounded-l w-full dark:border-0 border"
+          className="dark:text-gray-000 py-1 px-2 bg-gray-200 dark:bg-gray-700 rounded-l w-full dark:border-0 border"
           onClick={(e) => e.currentTarget.select()}
           readOnly={true}
         />
         <div className="dark:bg-gray-700 flex items-center rounded-r">
           <button
-            className="flex-shrink-0 z-10 inline-flex items-center p-2 font-medium text-center dark:text-white rounded-e-lg
+            className="flex-shrink-0 z-10 inline-flex items-center p-2 font-medium text-center dark:text-white rounded-e-lg bg-gray-200 dark:bg-gray-700
               hover:bg-gray-200 focus:ring-2 focus:outline-none focus:ring-gray-300 dark:hover:bg-gray-600 dark:focus:ring-gray-200"
             title="Copy to clipboard"
             type="button"

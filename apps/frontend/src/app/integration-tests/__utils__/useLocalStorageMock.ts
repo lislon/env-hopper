@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useReducer, useState } from 'react';
+import { Dispatch, SetStateAction, useReducer } from 'react';
 
 export const localStorageMock = {} as Record<string, unknown>;
 

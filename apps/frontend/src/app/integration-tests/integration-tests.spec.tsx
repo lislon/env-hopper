@@ -1,6 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import App from '../app';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { getConfig } from '../api';
 import { userEvent } from '@testing-library/user-event';
@@ -27,6 +26,8 @@ import {
   LOCAL_STORAGE_KEY_FAVORITE_ENVS,
   LOCAL_STORAGE_KEY_RECENT_JUMPS,
 } from '../context/EhContext';
+import React from 'react';
+import { routes } from '../routes';
 
 vi.mock('../api');
 vi.mock('../hooks/useLocalStorage');
@@ -57,11 +58,8 @@ async function given({ testFixtures }: GivenProps) {
     localStorageMock[LOCAL_STORAGE_KEY_RECENT_JUMPS] = testFixtures.recentJumps;
   }
 
-  render(
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>,
-  );
+  const router = createMemoryRouter(routes);
+  render(<RouterProvider router={router} />);
 
   const setup = userEvent.setup();
   await testWaitLoading();
@@ -89,7 +87,7 @@ function getAllSection() {
 describe('Integration tests', () => {
   it('Basic scenario - user can navigate to URL by keyboard', async () => {
     const user = await given({
-      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.baseline),
+      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.userNoOptions),
     });
 
     await testFillEnvAndApp(user, '1', 'App1');
@@ -122,7 +120,7 @@ describe('Integration tests', () => {
 
   it('Recent env are suggested', async () => {
     const user = await given({
-      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.baseline),
+      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.userNoOptions),
     });
 
     await testFillEnvAndApp(user, '1', 'App1');
@@ -174,16 +172,18 @@ describe('Integration tests', () => {
 
   it('When there is already preselected env and user clicks on it, text will be select-ed and all options will be shown', async () => {
     const user = await given({
-      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.baseline),
+      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.userNoOptions),
     });
     await testFillEnvAndApp(user, '1', 'App1');
     const envComboBox = testGetEnvComboBox();
     await user.click(envComboBox);
 
     expect(getAllSection()).toBeTruthy();
-    expect([envComboBox.selectionStart, envComboBox.selectionEnd]).toEqual([0, envComboBox.value.length]);
+    expect([envComboBox.selectionStart, envComboBox.selectionEnd]).toEqual([
+      0,
+      envComboBox.value.length,
+    ]);
   });
-
 
   it('additional substitutions in URL works', async () => {
     const user = await given({
@@ -193,15 +193,14 @@ describe('Integration tests', () => {
     });
     await testFillEnvAndApp(user, '1', 'App3');
 
-   const substitutionValue = screen.getByRole('textbox', {
-    name: /Namespace/i,
-  });
-   await user.type(substitutionValue, 'my-namespace');
+    const substitutionValue = screen.getByRole('textbox', {
+      name: /Namespace/i,
+    });
+    await user.type(substitutionValue, 'my-namespace');
 
     const link = screen.getByRole<HTMLAnchorElement>('link', {
       name: /JUMP .+/,
     });
     expect(link.href).toEqual('https://env1.mycompany.com:8250/my-namespace');
   });
-
 });

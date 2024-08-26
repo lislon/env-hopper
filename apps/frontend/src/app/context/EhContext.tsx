@@ -1,19 +1,6 @@
 'use client';
-import {
-  EhApp,
-  EhAppId,
-  EhClientConfig,
-  EhEnv,
-  EhEnvId,
-  EhSubstitutionType,
-} from '@env-hopper/types';
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { EhApp, EhAppId, EhClientConfig, EhEnv, EhEnvId, EhSubstitutionType } from '@env-hopper/types';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { EhJumpHistory, EhJumpParams, EhSubstitutionValue } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import {
@@ -22,7 +9,11 @@ import {
   findSubstitutionIdByUrl,
   getJumpUrl,
   getJumpUrlEvenNotComplete,
+  normalizeExternalAppName
 } from '../lib/utils';
+import { useNavigate, useParams } from 'react-router-dom';
+import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
+import { Item } from '../ui/AutoComplete/common';
 
 export const LOCAL_STORAGE_KEY_RECENT_JUMPS = 'recent';
 export const LOCAL_STORAGE_KEY_FAVORITE_ENVS = 'favoriteEnvs';
@@ -57,8 +48,10 @@ export interface EhContextProps {
   ): EhSubstitutionValue | undefined;
 
   recordJump(jump: EhJumpParams): void;
+
   tryJump(): void;
 
+  // latest - in the end
   recentJumps: EhJumpHistory[];
   reset: () => void;
   domainPart: string;
@@ -92,18 +85,85 @@ function getEnvById(id: string | undefined, ehEnvs: EhEnv[]) {
   return ehEnvs.find((env) => env.id === id) || undefined;
 }
 
+function escapeAppId(appId: string) {
+  return encodeURIComponent(appId.replace(/\/home$/, '').replace('/', '@'));
+}
+
+function unescapeAppId(appIdFromUrl: string) {
+  return normalizeExternalAppName(appIdFromUrl.replace('@', '/'));
+}
+
+function escapeSubValue(subValue: string) {
+  return encodeURIComponent(subValue);
+}
+
+function escapeEnvId(envId: string) {
+  return encodeURIComponent(envId);
+}
+
+function getByIdRelaxed<T extends { id: string }>(
+  primarySearch: (id: string | undefined, ehEnvs: T[]) => T | undefined,
+  id: string | undefined,
+  options: T[],
+): [T | undefined, boolean] {
+  if (id !== undefined) {
+    const stictMatch = primarySearch(id, options);
+    if (stictMatch !== undefined) {
+      return [stictMatch, true];
+    }
+
+    const items: Item[] = options.map((e) => ({ title: e.id, id: e.id }));
+    const found = makeAutoCompleteFilter(items)(id.toLowerCase(), items);
+    if (found.length === 1) {
+      return [primarySearch(found[0].id, options), false];
+    }
+  }
+  return [undefined, false];
+}
+
+function getUrlBasedOn(
+  envId: EhEnvId | undefined,
+  appId: EhAppId | undefined,
+  substitution: string | undefined,
+) {
+  const portions = [
+    envId ? `env/${escapeEnvId(envId)}` : false,
+    appId ? `app/${escapeAppId(appId)}` : false,
+    substitution ? `sub/${escapeSubValue(substitution)}` : false,
+  ].filter(Boolean);
+
+  return '/' + portions.join('/');
+}
+
 export function EhContextProvider({
   children,
-  data,
+  config,
 }: {
   children: React.ReactNode;
-  data: EhClientConfig;
+  config: EhClientConfig;
 }) {
   const [env, setEnv] = useState<EhEnv | undefined>();
   const [app, setApp] = useState<EhApp | undefined>();
   const [substitution, setSubstitution] = useState<
     EhSubstitutionValue | undefined
   >();
+  const navigate = useNavigate();
+  const params = useParams();
+
+  const jumpBasedOn = useCallback(
+    (
+      envId: EhEnvId | undefined,
+      appId: EhAppId | undefined,
+      substitution: string | undefined,
+      replace = false,
+    ) => {
+      const url = getUrlBasedOn(envId, appId, substitution);
+      navigate(url, {
+        replace,
+      });
+    },
+    [navigate],
+  );
 
   const [recentJumps, setRecentJumps] = useLocalStorage<EhJumpHistory[]>(
     LOCAL_STORAGE_KEY_RECENT_JUMPS,
@@ -122,22 +182,89 @@ export function EhContextProvider({
     setVersion(APP_VERSION);
   }, [setVersion]);
 
-  const value = useMemo<EhContextProps>(() => {
-    const substitutionName = findSubstitutionIdByUrl({ app, env });
+  useEffect(() => {
+    if (app && env) {
+      document.title = `${env.id} - ${app.title} - Env Hopper`;
+    } else if (app) {
+      document.title = `${app.title} - Env Hopper`;
+    } else if (env) {
+      document.title = `${env.id} - Env Hopper`;
+    } else {
+      document.title = `Env Hopper`;
+    }
+  }, [env, app]);
 
-    const substitutionType = data.substitutions.find(
+  useEffect(() => {
+    let env = undefined,
+      app = undefined,
+      sub = undefined;
+    let urlWasFixed = false;
+
+    if ('envId' in params) {
+      let strictMatch;
+      [env, strictMatch] = getByIdRelaxed<EhEnv>(
+        getEnvById,
+        params['envId'],
+        config.envs,
+      );
+      if (!strictMatch) {
+        urlWasFixed = true;
+      }
+    }
+
+    if ('appId' in params) {
+      let strictMatch;
+      [app, strictMatch] = getByIdRelaxed<EhApp>(
+        getAppById,
+        params['appId'] !== undefined
+          ? unescapeAppId(params['appId'])
+          : undefined,
+        config.apps,
+      );
+      if (!strictMatch) {
+        urlWasFixed = true;
+      }
+    }
+
+    if ('subValue' in params && params['subValue'] !== undefined) {
+      const subName = findSubstitutionIdByUrl({ app, env });
+      if (subName !== undefined) {
+        sub = {
+          name: subName,
+          value: params['subValue'],
+        };
+      }
+    }
+
+    if (urlWasFixed) {
+      jumpBasedOn(env?.id, app?.id, sub?.value, true);
+      return;
+    }
+
+    setEnv(env);
+    setApp(app);
+    setSubstitution(sub);
+  }, [config.apps, config.envs, params, jumpBasedOn]);
+
+  const value = useMemo<EhContextProps>(() => {
+    const substitutionName = findSubstitutionIdByUrl({
+      app,
+      env: config.envs?.[0],
+    });
+
+    const substitutionType = config.substitutions.find(
       (s) => s.id === substitutionName || undefined,
     );
 
     const firstApp = app
       ? app
-      : data.apps.length > 0
-        ? data.apps[0]
+      : config.apps.length > 0
+        ? config.apps[0]
         : undefined;
     const firstEnv = env
       ? env
-      : data.envs.length > 0
-        ? data.envs[0]
+      : config.envs.length > 0
+        ? config.envs[0]
         : undefined;
     const incompleteUrl =
       firstApp &&
@@ -176,26 +303,30 @@ export function EhContextProvider({
       );
     };
     return {
-      setEnv: (env1) => {
-        setEnv(data.envs.find((env) => env === env1) || undefined);
+      setEnv: (newEnv) => {
+        jumpBasedOn(newEnv?.id, app?.id, substitution?.value);
       },
       env,
       listFavoriteEnvs,
       listFavoriteApps,
-      setApp,
+      setApp: (newApp) => {
+        jumpBasedOn(env?.id, newApp?.id, substitution?.value);
+      },
       app,
       substitutionType,
-      listEnvs: data.envs,
-      listApps: data.apps,
-      listSubstitutions: data.substitutions,
+      listEnvs: config.envs,
+      listApps: config.apps,
+      listSubstitutions: config.substitutions,
       substitution,
-      setSubstitution,
-      customFooterHtml: data.customFooterHtml,
+      setSubstitution: (newSubstitution) => {
+        jumpBasedOn(env?.id, app?.id, newSubstitution?.value, true);
+      },
+      customFooterHtml: config.customFooterHtml,
       getAppById(id: EhAppId): EhApp | undefined {
-        return getAppById(id, data.apps);
+        return getAppById(id, config.apps);
       },
       getEnvById(id: EhEnvId): EhEnv | undefined {
-        return getEnvById(id, data.envs);
+        return getEnvById(id, config.envs);
       },
       recordJump,
       toggleFavoriteEnv(envId, isOn) {
@@ -208,8 +339,8 @@ export function EhContextProvider({
       },
       getSubstitutionValueById(envId, appId, substitution) {
         const substitutionIdByUrl = findSubstitutionIdByUrl({
-          env: getEnvById(envId, data.envs),
-          app: getAppById(appId, data.apps),
+          env: getEnvById(envId, config.envs),
+          app: getAppById(appId, config.apps),
         });
         if (substitutionIdByUrl !== undefined && substitution !== undefined) {
           return {
@@ -244,7 +375,7 @@ export function EhContextProvider({
   }, [
     env,
     app,
-    data,
+    config,
     recentJumps,
     setRecentJumps,
     substitution,

@@ -1,18 +1,9 @@
-import { Route, Routes } from 'react-router-dom';
-import { Home } from './ui/Home';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import React from 'react';
+import { routes } from './routes';
 
-// Create a client
-const queryClient = new QueryClient();
+const router = createBrowserRouter(routes);
 
-export function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
-    </QueryClientProvider>
-  );
+export default function App() {
+  return <RouterProvider router={router} />;
 }
-
-export default App;

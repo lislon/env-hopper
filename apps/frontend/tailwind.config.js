@@ -8,6 +8,7 @@ module.exports = {
       '{src,pages,components,app}/**/*!(*.stories|*.test).{ts,tsx,html}',
     ),
   ],
+  darkMode: 'selector',
   theme: {
     extend: {},
   },

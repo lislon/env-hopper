@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { VitePWA } from 'vite-plugin-pwa';
 import svgr from 'vite-plugin-svgr';
+import { removeUseClient } from './src/vite-plugins/remove-use-client';
 
 function minutes(minutes: number) {
   return 1000 * 60 * minutes;
@@ -26,15 +27,19 @@ export default defineConfig({
   },
 
   plugins: [
+    removeUseClient(),
     react(),
     nxViteTsPaths(),
     VitePWA({
-      registerType: 'prompt',
-      workbox: {
-        // globPatterns: ['**/*.{js,css,html,ico,png,svg}', '/api/config'],
-        sourcemap: true,
-      },
-      includeAssets: ['favicon.ico', 'env-hopper-square.svg'],
+      registerType: 'autoUpdate',
+      // workbox: {
+      //   // globPatterns: ['**/*.{js,css,html,ico,png,svg}', '/api/config'],
+      //   sourcemap: true,
+      // },
+      // devOptions: {
+      //   enabled: true
+      // },
+      includeAssets: ['favicon.ico', '*.svg'],
       manifest: {
         name: 'Env hopper',
         short_name: 'EH',
@@ -43,15 +48,17 @@ export default defineConfig({
         icons: [
           {
             src: 'favicon.ico',
-            sizes: '16x16 32x32 48x48',
+            sizes: '48x48',
           },
           {
             src: 'env-hopper-square.svg',
-            sizes: '72x72 96x96 192x192 256x256',
+            sizes: '150x150',
+            // sizes: '72x72 96x96 192x192 256x256',
           },
           {
             src: 'env-hopper-square.svg',
-            sizes: '72x72 96x96 192x192 256x256',
+            sizes: '150x150',
+            // sizes: '72x72 96x96 192x192 256x256',
             purpose: 'maskable',
           },
           {
@@ -66,7 +73,7 @@ export default defineConfig({
     // svgr({ include: '**/*.svg' })
   ],
   define: {
-    APP_VERSION: JSON.stringify(process.env['APP_VERSION'] || 'local'),
+    APP_VERSION: JSON.stringify(process.env['APP_VERSION'] || 'local v1'),
   },
 
   // Uncomment this if you are using workers.
@@ -76,6 +83,7 @@ export default defineConfig({
 
   build: {
     outDir: '../../dist/apps/frontend',
+    emptyOutDir: true,
     reportCompressedSize: true,
     commonjsOptions: {
       transformMixedEsModules: true,

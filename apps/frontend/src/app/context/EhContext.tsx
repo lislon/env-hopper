@@ -1,6 +1,21 @@
 'use client';
-import { EhApp, EhAppId, EhClientConfig, EhEnv, EhEnvId, EhSubstitutionType } from '@env-hopper/types';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  EhApp,
+  EhAppId,
+  EhClientConfig,
+  EhEnv,
+  EhEnvId,
+  EhSubstitutionType,
+  LastSelected,
+} from '@env-hopper/types';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { EhJumpHistory, EhJumpParams, EhSubstitutionValue } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import {
@@ -9,16 +24,18 @@ import {
   findSubstitutionIdByUrl,
   getJumpUrl,
   getJumpUrlEvenNotComplete,
-  normalizeExternalAppName
+  normalizeExternalAppName,
 } from '../lib/utils';
 import { useNavigate, useParams } from 'react-router-dom';
 import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
 import { Item } from '../ui/AutoComplete/common';
-
-export const LOCAL_STORAGE_KEY_RECENT_JUMPS = 'recent';
-export const LOCAL_STORAGE_KEY_FAVORITE_ENVS = 'favoriteEnvs';
-export const LOCAL_STORAGE_KEY_FAVORITE_APPS = 'favoriteApps';
-export const LOCAL_STORAGE_KEY_VERSION = 'version';
+import {
+  LOCAL_STORAGE_KEY_FAVORITE_APPS,
+  LOCAL_STORAGE_KEY_FAVORITE_ENVS,
+  LOCAL_STORAGE_KEY_LAST_SELECTED,
+  LOCAL_STORAGE_KEY_RECENT_JUMPS,
+  LOCAL_STORAGE_KEY_VERSION,
+} from '../lib/local-storage-keys';
 
 export interface EhContextProps {
   listEnvs: EhEnv[];
@@ -77,11 +94,11 @@ type RecordJumpParams = {
   substitution: EhSubstitutionValue | undefined;
 };
 
-function getAppById(id: string | undefined, ehApps: EhApp[]) {
+export function getAppById(id: string | undefined, ehApps: EhApp[]) {
   return ehApps.find((app) => app.id === id) || undefined;
 }
 
-function getEnvById(id: string | undefined, ehEnvs: EhEnv[]) {
+export function getEnvById(id: string | undefined, ehEnvs: EhEnv[]) {
   return ehEnvs.find((env) => env.id === id) || undefined;
 }
 
@@ -121,11 +138,11 @@ function getByIdRelaxed<T extends { id: string }>(
   return [undefined, false];
 }
 
-function getUrlBasedOn(
+export function getUrlBasedOn(
   envId: EhEnvId | undefined,
   appId: EhAppId | undefined,
   substitution: string | undefined,
-) {
+): string {
   const portions = [
     envId ? `env/${escapeEnvId(envId)}` : false,
     appId ? `app/${escapeAppId(appId)}` : false,
@@ -193,6 +210,23 @@ export function EhContextProvider({
       document.title = `Env Hopper`;
     }
   }, [env, app]);
+
+  const [, setLastSelection] = useLocalStorage<LastSelected | null>(
+    LOCAL_STORAGE_KEY_LAST_SELECTED,
+    null,
+  );
+
+  useEffect(() => {
+    setLastSelection(
+      app || env
+        ? {
+            appId: app?.id,
+            envId: env?.id,
+            subValue: substitution?.value,
+          }
+        : null,
+    );
+  }, [setLastSelection, app, env, substitution]);
 
   useEffect(() => {
     let env = undefined,
@@ -383,6 +417,7 @@ export function EhContextProvider({
     listFavoriteEnvs,
     setFavoriteEnvIds,
     setFavoriteAppIds,
+    jumpBasedOn,
   ]);
 
   return <EhContext.Provider value={value}>{children}</EhContext.Provider>;

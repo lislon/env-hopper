@@ -63,3 +63,9 @@ export interface EhClientConfig {
   appVersion: string;
   customFooterHtml?: string;
 }
+
+export interface LastSelected {
+  appId?: EhAppId;
+  envId?: EhEnvId;
+  subValue?: string;
+}

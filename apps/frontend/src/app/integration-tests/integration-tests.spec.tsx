@@ -21,13 +21,13 @@ import {
   localStorageMock,
   useLocalStorageMock,
 } from './__utils__/useLocalStorageMock';
+import React from 'react';
+import { routes } from '../routes';
 import {
   LOCAL_STORAGE_KEY_FAVORITE_APPS,
   LOCAL_STORAGE_KEY_FAVORITE_ENVS,
   LOCAL_STORAGE_KEY_RECENT_JUMPS,
-} from '../context/EhContext';
-import React from 'react';
-import { routes } from '../routes';
+} from '../lib/local-storage-keys';
 
 vi.mock('../api');
 vi.mock('../hooks/useLocalStorage');

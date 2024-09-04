@@ -57,7 +57,7 @@
     "jest-transformer-svg": "^2.0.2",
     "jsdom": "~25.0.0",
     "nx": "19.6.5",
-    "postcss": "8.4.44",
+    "postcss": "8.4.45",
     "prettier": "^3.0.0",
     "react-refresh": "^0.14.0",
     "semantic-release": "^24.0.0",

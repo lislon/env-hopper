@@ -1,10 +1,11 @@
 'use client';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useEhContext } from '../context/EhContext';
 import { EhAutoComplete } from './AutoComplete/EhAutoComplete';
 import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
 import { EhEnv, EhEnvId } from '@env-hopper/types';
 import { Item } from './AutoComplete/common';
+import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
 
 function mapToAutoCompleteItem(
   env: EhEnv,
@@ -45,6 +46,8 @@ export function EnvList({ onOpenChange }: EnvListProps) {
     return listEnvs.map((env) => mapToAutoCompleteItem(env, favSet, recentSet));
   }, [listEnvs, listFavoriteEnvs, recentJumps]);
 
+  const { autoFocusEnv } = useAutoFocusHelper();
+
   return (
     <EhAutoComplete
       itemsAll={items}
@@ -58,6 +61,7 @@ export function EnvList({ onOpenChange }: EnvListProps) {
       onSelectedItemChange={(envId) => setEnv(getEnvById(envId))}
       onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
       onCtrlEnter={tryJump}
+      autoFocus={autoFocusEnv}
     />
   );
 }

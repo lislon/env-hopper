@@ -37,7 +37,8 @@ model Substitution {
   isSharedAcrossEnvs    Boolean @default(false)
 }
 
-model CustomFooterHtml {
-  syntheticId Int    @id @default(autoincrement())
-  html        String
+model UnstableCustomization {
+  syntheticId              Int    @id @default(autoincrement())
+  unstable__analytics_html String
+  unstable__footer_html    String
 }

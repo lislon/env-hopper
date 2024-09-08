@@ -3,6 +3,7 @@ import { Header } from './Header';
 import { Footer } from './Footer/Footer';
 import { ThemeContextProvider } from '../context/ThemeContext';
 import { ThemeSwitcher } from './ThemeSwitcher/ThemeSwitcher';
+import { Analytics } from './Analytics';
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +14,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Suspense fallback={'Loading...'}>{children}</Suspense>
         <Footer />
       </div>
+      <Analytics />
     </ThemeContextProvider>
   );
 }

@@ -51,7 +51,6 @@ export function SubstitutionList() {
           placeholder={`Enter ${substitutionType?.title}`}
           autoComplete={getAutoCompleteAttr(substitutionType, env)}
           name={getAutoCompleteName(substitutionType, env)}
-          autoFocus={true}
           className="w-full h-10 text-gray-500 p-2 text-xl rounded"
           value={substitution?.value || ''}
           onChange={(e) =>

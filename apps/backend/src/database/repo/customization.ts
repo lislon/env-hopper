@@ -19,11 +19,11 @@ export async function dbCustomizationUpdate({
     create: {
       syntheticId: 1,
       unstable__footer_html: footerHtml || '',
-      unstable__analytics_html: analyticsScript || '',
+      unstable__analytics_script: analyticsScript || '',
     },
     update: {
       ...(analyticsScript !== undefined
-        ? { unstable__analytics_html: analyticsScript }
+        ? { unstable__analytics_script: analyticsScript }
         : {}),
       ...(footerHtml !== undefined
         ? { unstable__footer_html: footerHtml }
@@ -41,7 +41,7 @@ export async function dbCustomizationGet(): Promise<EhCustomization> {
   if (prismaUnstableCustomizationClient) {
     return {
       analyticsScript:
-        prismaUnstableCustomizationClient.unstable__analytics_html,
+        prismaUnstableCustomizationClient.unstable__analytics_script,
       footerHtml: prismaUnstableCustomizationClient.unstable__footer_html,
     };
   }

@@ -10,13 +10,13 @@ import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
 function mapToAutoCompleteItemApp(
   app: EhApp,
   favorites: Set<EhAppId>,
-  recents: Set<EhAppId>
+  recents: Set<EhAppId>,
 ): Item {
   return {
     id: app.id,
     title: app.title,
     favorite: favorites.has(app.id),
-    recent: recents.has(app.id)
+    recent: recents.has(app.id),
   };
 }
 
@@ -33,7 +33,7 @@ export function AppList({ onOpenChange }: AppListProps) {
     recentJumps,
     toggleFavoriteApp,
     getAppById,
-    tryJump
+    tryJump,
   } = useEhContext();
 
   const { autoFocusApp } = useAutoFocusHelper();
@@ -44,10 +44,10 @@ export function AppList({ onOpenChange }: AppListProps) {
       recentJumps
         .slice(0, 2)
         .map((jump) => jump.app || '')
-        .filter(Boolean)
+        .filter(Boolean),
     );
     return listApps.map((env) =>
-      mapToAutoCompleteItemApp(env, favSet, recentSet)
+      mapToAutoCompleteItemApp(env, favSet, recentSet),
     );
   }, [listApps, listFavoriteApps, recentJumps]);
 

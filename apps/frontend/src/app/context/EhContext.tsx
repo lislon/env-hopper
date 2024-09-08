@@ -1,6 +1,20 @@
 'use client';
-import { EhApp, EhAppId, EhClientConfig, EhEnv, EhEnvId, EhSubstitutionType } from '@env-hopper/types';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  EhApp,
+  EhAppId,
+  EhClientConfig,
+  EhEnv,
+  EhEnvId,
+  EhSubstitutionType,
+} from '@env-hopper/types';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { EhJumpHistory, EhJumpParams, EhSubstitutionValue } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import {
@@ -9,7 +23,7 @@ import {
   findSubstitutionIdByUrl,
   getJumpUrl,
   getJumpUrlEvenNotComplete,
-  normalizeExternalAppName
+  normalizeExternalAppName,
 } from '../lib/utils';
 import { Params, useNavigate, useParams } from 'react-router-dom';
 import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
@@ -44,7 +58,7 @@ export interface EhContextProps {
   getSubstitutionValueById(
     envId: EhEnvId | undefined,
     appId: EhAppId | undefined,
-    substitution: string | undefined
+    substitution: string | undefined,
   ): EhSubstitutionValue | undefined;
 
   recordJump(jump: EhJumpParams): void;
@@ -104,7 +118,7 @@ function escapeEnvId(envId: string) {
 function getByIdRelaxed<T extends { id: string }>(
   primarySearch: (id: string | undefined, ehEnvs: T[]) => T | undefined,
   id: string | undefined,
-  options: T[]
+  options: T[],
 ): [T | undefined, boolean] {
   if (id !== undefined) {
     const stictMatch = primarySearch(id, options);
@@ -124,12 +138,12 @@ function getByIdRelaxed<T extends { id: string }>(
 function getUrlBasedOn(
   envId: EhEnvId | undefined,
   appId: EhAppId | undefined,
-  substitution: string | undefined
+  substitution: string | undefined,
 ) {
   const portions = [
     envId ? `env/${escapeEnvId(envId)}` : false,
     appId ? `app/${escapeAppId(appId)}` : false,
-    substitution ? `sub/${escapeSubValue(substitution)}` : false
+    substitution ? `sub/${escapeSubValue(substitution)}` : false,
   ].filter(Boolean);
 
   return '/' + portions.join('/');
@@ -142,7 +156,10 @@ export interface PreselectedBasedOnParamsReturn {
   substitution: EhSubstitutionValue | undefined;
 }
 
-function getPreselectedBasedOnParams(routerParams: Readonly<Params<string>>, config: EhClientConfig): PreselectedBasedOnParamsReturn {
+function getPreselectedBasedOnParams(
+  routerParams: Readonly<Params<string>>,
+  config: EhClientConfig,
+): PreselectedBasedOnParamsReturn {
   let env = undefined,
     app = undefined,
     sub = undefined;
@@ -153,7 +170,7 @@ function getPreselectedBasedOnParams(routerParams: Readonly<Params<string>>, con
     [env, strictMatch] = getByIdRelaxed<EhEnv>(
       getEnvById,
       routerParams['envId'],
-      config.envs
+      config.envs,
     );
     if (!strictMatch) {
       urlWasFixed = true;
@@ -167,7 +184,7 @@ function getPreselectedBasedOnParams(routerParams: Readonly<Params<string>>, con
       routerParams['appId'] !== undefined
         ? unescapeAppId(routerParams['appId'])
         : undefined,
-      config.apps
+      config.apps,
     );
     if (!strictMatch) {
       urlWasFixed = true;
@@ -179,31 +196,27 @@ function getPreselectedBasedOnParams(routerParams: Readonly<Params<string>>, con
     if (subName !== undefined) {
       sub = {
         name: subName,
-        value: routerParams['subValue']
+        value: routerParams['subValue'],
       };
     }
   }
 
   return { urlWasFixed, env, app, substitution: sub };
-
-
 }
 
-
 export function EhContextProvider({
-                                    children,
-                                    config
-                                  }: {
+  children,
+  config,
+}: {
   children: React.ReactNode;
   config: EhClientConfig;
 }) {
   const navigate = useNavigate();
   const params = useParams();
 
-  const [initialEnvAppSubBased, ] = useState(() => {
+  const [initialEnvAppSubBased] = useState(() => {
     return getPreselectedBasedOnParams(params, config);
   });
-
 
   const [env, setEnv] = useState<EhEnv | undefined>(initialEnvAppSubBased.env);
   const [app, setApp] = useState<EhApp | undefined>(initialEnvAppSubBased.app);
@@ -216,27 +229,27 @@ export function EhContextProvider({
       envId: EhEnvId | undefined,
       appId: EhAppId | undefined,
       substitution: string | undefined,
-      replace = false
+      replace = false,
     ) => {
       const url = getUrlBasedOn(envId, appId, substitution);
       navigate(url, {
-        replace
+        replace,
       });
     },
-    [navigate]
+    [navigate],
   );
 
   const [recentJumps, setRecentJumps] = useLocalStorage<EhJumpHistory[]>(
     LOCAL_STORAGE_KEY_RECENT_JUMPS,
-    []
+    [],
   );
   const [listFavoriteEnvs, setFavoriteEnvIds] = useLocalStorage<EhEnvId[]>(
     LOCAL_STORAGE_KEY_FAVORITE_ENVS,
-    []
+    [],
   );
   const [listFavoriteApps, setFavoriteAppIds] = useLocalStorage<EhAppId[]>(
     LOCAL_STORAGE_KEY_FAVORITE_APPS,
-    []
+    [],
   );
   const [, setVersion] = useLocalStorage<string>(LOCAL_STORAGE_KEY_VERSION, '');
   useEffect(() => {
@@ -256,12 +269,10 @@ export function EhContextProvider({
   }, [env, app]);
 
   useEffect(() => {
-    const {
-      app,
-      env,
-      substitution,
-      urlWasFixed
-    } = getPreselectedBasedOnParams(params, config);
+    const { app, env, substitution, urlWasFixed } = getPreselectedBasedOnParams(
+      params,
+      config,
+    );
 
     if (urlWasFixed) {
       jumpBasedOn(env?.id, app?.id, substitution?.value, true);
@@ -276,11 +287,11 @@ export function EhContextProvider({
   const value = useMemo<EhContextProps>(() => {
     const substitutionName = findSubstitutionIdByUrl({
       app,
-      env: config.envs?.[0]
+      env: config.envs?.[0],
     });
 
     const substitutionType = config.substitutions.find(
-      (s) => s.id === substitutionName || undefined
+      (s) => s.id === substitutionName || undefined,
     );
 
     const firstApp = app
@@ -298,20 +309,20 @@ export function EhContextProvider({
       getJumpUrlEvenNotComplete({
         app: firstApp,
         env: firstEnv,
-        substitution: substitution
+        substitution: substitution,
       });
     const domainPart = cutDomain(incompleteUrl || 'https://no-env');
     const appPart = cutApp(incompleteUrl || 'https://no-env/no-app');
 
-    const recordJump = function({
-                                  app,
-                                  env,
-                                  substitution: substitution1
-                                }: RecordJumpParams) {
+    const recordJump = function ({
+      app,
+      env,
+      substitution: substitution1,
+    }: RecordJumpParams) {
       const jumpUrl = getJumpUrl({
         app: app,
         env: env,
-        substitution: substitution
+        substitution: substitution,
       });
       if (jumpUrl === undefined) {
         return;
@@ -320,13 +331,13 @@ export function EhContextProvider({
         app: app?.id,
         env: env?.id,
         substitution: substitution?.value,
-        url: jumpUrl
+        url: jumpUrl,
       };
       setRecentJumps(
         [newVar, ...recentJumps.filter((h) => h.url !== jumpUrl)].slice(
           0,
-          MAX_HISTORY_JUMPS
-        )
+          MAX_HISTORY_JUMPS,
+        ),
       );
     };
     return {
@@ -366,12 +377,12 @@ export function EhContextProvider({
       getSubstitutionValueById(envId, appId, substitution) {
         const substitutionIdByUrl = findSubstitutionIdByUrl({
           env: getEnvById(envId, config.envs),
-          app: getAppById(appId, config.apps)
+          app: getAppById(appId, config.apps),
         });
         if (substitutionIdByUrl !== undefined && substitution !== undefined) {
           return {
             name: substitutionIdByUrl,
-            value: substitution
+            value: substitution,
           };
         }
         return undefined;
@@ -384,7 +395,7 @@ export function EhContextProvider({
         recordJump({
           app: app,
           env: env,
-          substitution
+          substitution,
         });
         window.open(jumpUrl, '_blank')?.focus();
       },
@@ -396,9 +407,23 @@ export function EhContextProvider({
       },
       domainPart,
       appPart,
-      recentJumps
+      recentJumps,
     };
-  }, [app, config.envs, config.substitutions, config.apps, env, substitution, listFavoriteEnvs, listFavoriteApps, recentJumps, setRecentJumps, jumpBasedOn, setFavoriteEnvIds, setFavoriteAppIds]);
+  }, [
+    app,
+    config.envs,
+    config.substitutions,
+    config.apps,
+    env,
+    substitution,
+    listFavoriteEnvs,
+    listFavoriteApps,
+    recentJumps,
+    setRecentJumps,
+    jumpBasedOn,
+    setFavoriteEnvIds,
+    setFavoriteAppIds,
+  ]);
 
   return <EhContext.Provider value={value}>{children}</EhContext.Provider>;
 }

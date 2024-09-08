@@ -49,10 +49,14 @@ export function EnvList({ onOpenChange }: EnvListProps) {
 
   const { autoFocusEnv } = useAutoFocusHelper();
 
+  const autoCompleteFilter = useMemo(
+    () => makeAutoCompleteFilter(items),
+    [items],
+  );
   return (
     <EhAutoComplete
       itemsAll={items}
-      filter={makeAutoCompleteFilter(items)}
+      filter={autoCompleteFilter}
       label="Environment"
       placeholder="Select environment"
       onOpenChange={onOpenChange}
@@ -61,7 +65,7 @@ export function EnvList({ onOpenChange }: EnvListProps) {
       }
       onSelectedItemChange={(envId) => setEnv(getEnvById(envId))}
       onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
-      onCtrlEnter={tryJump}
+      onTryJump={tryJump}
       autoFocus={autoFocusEnv}
     />
   );

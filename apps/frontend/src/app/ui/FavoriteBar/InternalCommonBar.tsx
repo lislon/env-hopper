@@ -24,6 +24,7 @@ export function InternalCommonBar<ID extends string | number>({
         const isActive = element.id === activeId;
         return (
           <button
+            tabIndex={-1}
             key={element.id}
             className={cn(
               'border px-2 py-1 rounded-md flex gap-0.5 items-center border-gray-400 text-nowrap hover:border-solid hover:bg-gray-200 dark:hover:bg-gray-700 hover:cursor-pointer',
@@ -32,7 +33,12 @@ export function InternalCommonBar<ID extends string | number>({
                 'border-dashed': !isActive,
               },
             )}
-            onClick={() => onClick(element.id)}
+            onClick={(e) => {
+              if (e.detail > 0) {
+                // when user do enter 2x times in opened selected input, button being called. Not sure how to fix it.
+                onClick(element.id);
+              }
+            }}
           >
             <div>
               <StarOutlineIcon

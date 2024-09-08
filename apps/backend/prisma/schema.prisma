@@ -39,6 +39,6 @@ model Substitution {
 
 model UnstableCustomization {
   syntheticId              Int    @id @default(autoincrement())
-  unstable__analytics_html String
+  unstable__analytics_script String
   unstable__footer_html    String
 }

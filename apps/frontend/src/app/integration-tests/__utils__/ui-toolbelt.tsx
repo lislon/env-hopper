@@ -39,12 +39,11 @@ export async function testFillEnvAndApp(
 
 export async function testClickJumpAndReturnBtn(user: UserType) {
   const link = await waitFor(() => {
-    screen.debug(document, 100000)
+    screen.debug(document, 100000);
     return screen.getByRole<HTMLAnchorElement>('link', {
       name: /JUMP .+/,
     });
-
-  })
+  });
   await user.click(link);
   return link;
 }

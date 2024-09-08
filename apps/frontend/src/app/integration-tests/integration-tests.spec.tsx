@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { apiGetConfig } from '../api/apiGetConfig';
@@ -26,7 +26,7 @@ import {
   LOCAL_STORAGE_KEY_FAVORITE_ENVS,
   LOCAL_STORAGE_KEY_RECENT_JUMPS,
 } from '../context/EhContext';
-import React, { act } from 'react';
+import React from 'react';
 import { getRoutes } from '../routes';
 import { QueryClient } from '@tanstack/react-query';
 import { apiGetCustomization } from '../api/apiGetCustomization';

@@ -29,6 +29,7 @@ export function ReadonlyCopyField({ value }: { value: string }) {
         />
         <div className="dark:bg-gray-700 flex items-center rounded-r">
           <button
+            tabIndex={-1}
             className="flex-shrink-0 z-10 inline-flex items-center p-2 font-medium text-center dark:text-white rounded-e-lg bg-gray-200 dark:bg-gray-700
               hover:bg-gray-200 focus:ring-2 focus:outline-none focus:ring-gray-300 dark:hover:bg-gray-600 dark:focus:ring-gray-200"
             title="Copy to clipboard"

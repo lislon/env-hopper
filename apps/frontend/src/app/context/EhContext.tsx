@@ -340,6 +340,7 @@ export function EhContextProvider({
         ),
       );
     };
+
     return {
       setEnv: (newEnv) => {
         jumpBasedOn(newEnv?.id, app?.id, substitution?.value);

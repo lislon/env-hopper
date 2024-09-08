@@ -32,7 +32,7 @@ export interface AutoCompleteProps {
   onClick?: (id: string) => void;
   onFavoriteToggle?: (item: Item, isOn: boolean) => void;
   onOpenChange?: (isOpen: boolean) => void;
-  onCtrlEnter?: () => void;
+  onTryJump?: () => void;
   autoFocus?: boolean;
 }
 
@@ -69,9 +69,16 @@ export function EhAutoComplete(props: AutoCompleteProps) {
   } = useCombobox<ItemWithSection>({
     onInputValueChange({ inputValue }) {
       const userSearching = inputValue !== '';
-      const items = props.filter(inputValue, props.itemsAll);
-      const itemWithFakeIds = flatmapToItemsWithSections(items, userSearching);
-      setItems(itemWithFakeIds);
+      if (!userSearching) {
+        setItems(getInitialItems(props.itemsAll));
+      } else {
+        const items = props.filter(inputValue, props.itemsAll);
+        const itemWithFakeIds = flatmapToItemsWithSections(
+          items,
+          userSearching,
+        );
+        setItems(itemWithFakeIds);
+      }
       if (inputValue === '') {
         props.onSelectedItemChange(undefined);
       }
@@ -104,10 +111,12 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     onClick: preselectAndShowAllOptions,
     onKeyDown: (event) => {
       if (event.ctrlKey && event.key === 'Enter') {
-        props.onCtrlEnter?.();
-      } else if (event.key === 'Enter' && isOpen && items.length === 1) {
+        props.onTryJump?.();
+      } else if (event.key === 'Enter' && isOpen) {
         selectItem(items[0]);
         props.onSelectedItemChange(items[0].id);
+      } else if (event.key === 'Enter' && !isOpen) {
+        props.onTryJump?.();
       }
     },
   });

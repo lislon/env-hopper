@@ -8,6 +8,7 @@ export class ApiQueryMagazine {
     return queryOptions<EhClientConfig, Error>({
       queryKey: ['config'],
       queryFn: apiGetConfig,
+      staleTime: 1000 * 60 * 60 * 5,
     });
   }
 
@@ -15,6 +16,7 @@ export class ApiQueryMagazine {
     return queryOptions<EhCustomization, Error>({
       queryKey: ['customization'],
       queryFn: apiGetCustomization,
+      staleTime: Infinity,
     });
   }
 }

@@ -2,10 +2,6 @@ import { EhAutoCompleteFilter } from '../ui/AutoComplete/EhAutoComplete';
 import { sortBy } from 'lodash';
 import { Item } from '../ui/AutoComplete/common';
 
-export interface SearchableItem {
-  title: string;
-}
-
 function tokenize(text: string): string[] {
   const camelCaseSecondaryWords = [...text.matchAll(/(?<=[a-z])[A-Z]\w+/g)].map(
     (x) => x[0].toLowerCase(),

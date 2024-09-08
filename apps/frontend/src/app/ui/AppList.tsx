@@ -52,17 +52,22 @@ export function AppList({ onOpenChange }: AppListProps) {
     );
   }, [listApps, listFavoriteApps, recentJumps]);
 
+  const autoCompleteFilter = useMemo(
+    () => makeAutoCompleteFilter(items),
+    [items],
+  );
+
   return (
     <EhAutoComplete
       itemsAll={items}
-      filter={makeAutoCompleteFilter(items)}
+      filter={autoCompleteFilter}
       label="Application"
       placeholder="Select application"
       onOpenChange={onOpenChange}
       selectedItem={
         app ? mapToAutoCompleteItemApp(app, new Set(), new Set()) : null
       }
-      onCtrlEnter={tryJump}
+      onTryJump={tryJump}
       onSelectedItemChange={(envId) => setApp(getAppById(envId))}
       onFavoriteToggle={(env, isOn) => toggleFavoriteApp(env.id, isOn)}
       autoFocus={autoFocusApp}

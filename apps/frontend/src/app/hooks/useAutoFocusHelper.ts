@@ -1,7 +1,6 @@
 import { useEhContext } from '../context/EhContext';
 import { useState } from 'react';
 
-
 export interface AutofocusHelperReturn {
   autoFocusEnv: boolean;
   autoFocusApp: boolean;
@@ -14,7 +13,8 @@ export function useAutoFocusHelper(): AutofocusHelperReturn {
   const [ret] = useState<AutofocusHelperReturn>({
     autoFocusEnv: env === undefined,
     autoFocusApp: env !== undefined && app === undefined,
-    autoFocusSubstitution: env !== undefined && app !== undefined && substitution === undefined
+    autoFocusSubstitution:
+      env !== undefined && app !== undefined && substitution === undefined,
   });
 
   return ret;

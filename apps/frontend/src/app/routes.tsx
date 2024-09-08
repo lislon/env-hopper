@@ -10,16 +10,14 @@ import { ApiQueryMagazine } from './api/ApiQueryMagazine';
 
 export function getRoutes(queryClient: QueryClient) {
   const loader = async () => {
-    const config = queryClient.fetchQuery(
-      ApiQueryMagazine.getConfig()
-    );
+    const config = queryClient.fetchQuery(ApiQueryMagazine.getConfig());
     const customization = queryClient.fetchQuery(
-      ApiQueryMagazine.getCustomization()
+      ApiQueryMagazine.getCustomization(),
     );
 
     return defer({
       config,
-      customization
+      customization,
     } satisfies EhMainLoaderData);
   };
 
@@ -37,16 +35,16 @@ export function getRoutes(queryClient: QueryClient) {
           'app/:appId',
           'env/:envId/app/:appId',
           'env/:envId/app/:appId/sub/:subValue',
-          'app/:appId/sub/:subValue'
+          'app/:appId/sub/:subValue',
         ].map((path) => ({
           path,
-          element: <Home />
+          element: <Home />,
         })),
         {
           path: '*',
-          element: <NotFoundError />
-        }
-      ]
-    }
+          element: <NotFoundError />,
+        },
+      ],
+    },
   ];
 }

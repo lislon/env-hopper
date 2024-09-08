@@ -5,17 +5,18 @@ import { EhAutoComplete } from './AutoComplete/EhAutoComplete';
 import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
 import { EhApp, EhAppId } from '@env-hopper/types';
 import { Item } from './AutoComplete/common';
+import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
 
 function mapToAutoCompleteItemApp(
   app: EhApp,
   favorites: Set<EhAppId>,
-  recents: Set<EhAppId>,
+  recents: Set<EhAppId>
 ): Item {
   return {
     id: app.id,
     title: app.title,
     favorite: favorites.has(app.id),
-    recent: recents.has(app.id),
+    recent: recents.has(app.id)
   };
 }
 
@@ -32,8 +33,10 @@ export function AppList({ onOpenChange }: AppListProps) {
     recentJumps,
     toggleFavoriteApp,
     getAppById,
-    tryJump,
+    tryJump
   } = useEhContext();
+
+  const { autoFocusApp } = useAutoFocusHelper();
 
   const items = useMemo(() => {
     const favSet = new Set(listFavoriteApps);
@@ -41,10 +44,10 @@ export function AppList({ onOpenChange }: AppListProps) {
       recentJumps
         .slice(0, 2)
         .map((jump) => jump.app || '')
-        .filter(Boolean),
+        .filter(Boolean)
     );
     return listApps.map((env) =>
-      mapToAutoCompleteItemApp(env, favSet, recentSet),
+      mapToAutoCompleteItemApp(env, favSet, recentSet)
     );
   }, [listApps, listFavoriteApps, recentJumps]);
 
@@ -61,6 +64,7 @@ export function AppList({ onOpenChange }: AppListProps) {
       onCtrlEnter={tryJump}
       onSelectedItemChange={(envId) => setApp(getAppById(envId))}
       onFavoriteToggle={(env, isOn) => toggleFavoriteApp(env.id, isOn)}
+      autoFocus={autoFocusApp}
     />
   );
 }

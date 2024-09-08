@@ -30,8 +30,6 @@ export async function testFillEnvAndApp(
   envName: string,
   appName: string,
 ) {
-  await user.click(testGetEnvComboBox());
-
   await user.keyboard(envName);
   await user.keyboard('{Enter}{Tab}');
   await user.click(screen.getByRole('combobox', { name: /application/i }));
@@ -40,10 +38,13 @@ export async function testFillEnvAndApp(
 }
 
 export async function testClickJumpAndReturnBtn(user: UserType) {
-  const link = screen.getByRole<HTMLAnchorElement>('link', {
-    name: /JUMP .+/,
-  });
+  const link = await waitFor(() => {
+    screen.debug(document, 100000)
+    return screen.getByRole<HTMLAnchorElement>('link', {
+      name: /JUMP .+/,
+    });
 
+  })
   await user.click(link);
   return link;
 }

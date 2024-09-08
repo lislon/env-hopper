@@ -1,7 +1,7 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import { getConfig } from '../api';
+import { apiGetConfig } from '../api/apiGetConfig';
 import { userEvent } from '@testing-library/user-event';
 import {
   expectHasHistory,
@@ -26,10 +26,13 @@ import {
   LOCAL_STORAGE_KEY_FAVORITE_ENVS,
   LOCAL_STORAGE_KEY_RECENT_JUMPS,
 } from '../context/EhContext';
-import React from 'react';
-import { routes } from '../routes';
+import React, { act } from 'react';
+import { getRoutes } from '../routes';
+import { QueryClient } from '@tanstack/react-query';
+import { apiGetCustomization } from '../api/apiGetCustomization';
 
-vi.mock('../api');
+vi.mock('../api/apiGetConfig');
+vi.mock('../api/apiGetCustomization');
 vi.mock('../hooks/useLocalStorage');
 
 export interface GivenProps {
@@ -37,11 +40,15 @@ export interface GivenProps {
 }
 
 async function given({ testFixtures }: GivenProps) {
-  vi.mocked(getConfig).mockResolvedValue({
+  vi.mocked(apiGetConfig).mockResolvedValue({
     envs: testFixtures.envs || [],
     apps: testFixtures.apps || [],
     substitutions: testFixtures.substitutions || [],
     appVersion: 'test',
+  });
+  vi.mocked(apiGetCustomization).mockResolvedValue({
+    footerHtml: '',
+    analyticsScript: '',
   });
 
   vi.mocked(useLocalStorage).mockImplementation(useLocalStorageMock);
@@ -58,7 +65,8 @@ async function given({ testFixtures }: GivenProps) {
     localStorageMock[LOCAL_STORAGE_KEY_RECENT_JUMPS] = testFixtures.recentJumps;
   }
 
-  const router = createMemoryRouter(routes);
+  const queryClient = new QueryClient();
+  const router = createMemoryRouter(getRoutes(queryClient));
   render(<RouterProvider router={router} />);
 
   const setup = userEvent.setup();

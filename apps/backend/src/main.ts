@@ -25,7 +25,8 @@ app.use(
   }),
 );
 
-const indexHtml: RequestHandler = (_, res) => res.sendFile(path.resolve(assets, 'index.html'));
+const indexHtml: RequestHandler = (_, res) =>
+  res.sendFile(path.resolve(assets, 'index.html'));
 app.get('/app/*', indexHtml);
 app.get('/env/*', indexHtml);
 

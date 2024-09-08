@@ -1,4 +1,10 @@
-import { EhApp, EhAppId, EhEnv, EhEnvId, EhSubstitutionType } from '@env-hopper/types';
+import {
+  EhApp,
+  EhAppId,
+  EhEnv,
+  EhEnvId,
+  EhSubstitutionType,
+} from '@env-hopper/types';
 import { EhJumpHistory } from '../../types';
 import { normalizeExternalAppName } from '../../lib/utils';
 

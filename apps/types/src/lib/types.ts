@@ -61,5 +61,8 @@ export interface EhClientConfig {
   apps: EhApp[];
   substitutions: EhSubstitutionType[];
   appVersion: string;
-  customFooterHtml?: string;
+}
+export interface EhCustomization {
+  footerHtml: string;
+  analyticsScript: string;
 }

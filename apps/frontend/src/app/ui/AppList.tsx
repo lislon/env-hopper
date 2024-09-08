@@ -6,6 +6,7 @@ import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
 import { EhApp, EhAppId } from '@env-hopper/types';
 import { Item } from './AutoComplete/common';
 import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
+import { MAX_RECENTLY_USED_ITEMS } from '../lib/constants';
 
 function mapToAutoCompleteItemApp(
   app: EhApp,
@@ -42,7 +43,7 @@ export function AppList({ onOpenChange }: AppListProps) {
     const favSet = new Set(listFavoriteApps);
     const recentSet = new Set(
       recentJumps
-        .slice(0, 2)
+        .slice(0, MAX_RECENTLY_USED_ITEMS)
         .map((jump) => jump.app || '')
         .filter(Boolean),
     );

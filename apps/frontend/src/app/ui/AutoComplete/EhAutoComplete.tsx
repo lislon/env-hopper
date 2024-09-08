@@ -33,6 +33,7 @@ export interface AutoCompleteProps {
   onFavoriteToggle?: (item: Item, isOn: boolean) => void;
   onOpenChange?: (isOpen: boolean) => void;
   onCtrlEnter?: () => void;
+  autoFocus?: boolean;
 }
 
 function getInitialItems(collection: Item[]) {
@@ -98,6 +99,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
 
   const inputProps = getInputProps({
     ref: inputRef,
+    autoFocus: props.autoFocus,
     onFocus: preselectAndShowAllOptions,
     onClick: preselectAndShowAllOptions,
     onKeyDown: (event) => {

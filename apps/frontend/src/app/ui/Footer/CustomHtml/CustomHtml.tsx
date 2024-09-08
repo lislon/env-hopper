@@ -1,15 +1,16 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getConfig } from '../../../api';
+import { EhCustomization } from '@env-hopper/types';
 
-export function CustomHtml() {
-  const { data } = useQuery({
-    queryKey: ['config'],
-    queryFn: getConfig,
-  });
+export interface CustomHtmlProps {
+  customization: EhCustomization;
+}
 
-  if (data?.customFooterHtml) {
-    return <div>${data.customFooterHtml}</div>;
-  }
-  return null;
+export function CustomHtml({ customization: { footerHtml } }: CustomHtmlProps) {
+  return (
+    <>
+      {footerHtml !== '' ? (
+        <div dangerouslySetInnerHTML={{ __html: footerHtml }} />
+      ) : null}
+    </>
+  );
 }

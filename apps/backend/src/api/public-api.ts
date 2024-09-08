@@ -1,12 +1,24 @@
 import express, { Request, Response, Router } from 'express';
 import { dbEnvsGet, dbEnvsSet } from '../database/repo/envs';
-import { EhClientConfig, EhEnv, EhSubstitutionType } from '@env-hopper/types';
+import {
+  EhClientConfig,
+  EhCustomization,
+  EhEnv,
+  EhSubstitutionType,
+} from '@env-hopper/types';
 
 import { dbAppsGet, dbAppsSet } from '../database/repo/apps';
-import { dbSubstitutionsGet, dbSubstitutionsSet } from '../database/repo/substitutions';
+import {
+  dbSubstitutionsGet,
+  dbSubstitutionsSet,
+} from '../database/repo/substitutions';
 import { EhAppBackend } from '../backend-types';
 import { UiReaderMapper } from '../database/mappers';
-import { dbCustomHtmlGet, dbCustomHtmlSet } from '../database/repo/customHtml';
+import {
+  CustomizationResult,
+  dbCustomizationGet,
+  dbCustomizationUpdate,
+} from '../database/repo/customization';
 
 export const publicApi = Router();
 
@@ -21,7 +33,6 @@ publicApi.get(
       apps: (await dbAppsGet()).flatMap(UiReaderMapper.ehApp),
       envs: await dbEnvsGet(),
       appVersion: process.env['APP_VERSION'] || 'vlocal',
-      customFooterHtml: await dbCustomHtmlGet(),
     });
   },
 );
@@ -69,16 +80,26 @@ publicApi.post(
 );
 
 publicApi.get(
-  '/api/customHtml',
-  async (req: Request, res: Response<string>) => {
-    res.send(await dbCustomHtmlGet());
+  '/api/customization',
+  async (req: Request, res: Response<EhCustomization>) => {
+    res.send(await dbCustomizationGet());
   },
 );
 
 publicApi.post(
-  '/api/customHtml',
+  '/api/customization/unstable__footerHtml',
   async (req: Request<string>, res: Response<'OK'>) => {
-    await dbCustomHtmlSet(req.body.toString('utf-8'));
+    await dbCustomizationUpdate({ footerHtml: req.body.toString('utf-8') });
+    res.send('OK');
+  },
+);
+
+publicApi.post(
+  '/api/customization/unstable__analyticsScript',
+  async (req: Request<string>, res: Response<'OK'>) => {
+    await dbCustomizationUpdate({
+      analyticsScript: req.body.toString('utf-8'),
+    });
     res.send('OK');
   },
 );

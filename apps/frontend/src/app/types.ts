@@ -3,6 +3,7 @@ import {
   EhApp,
   EhAppId,
   EhClientConfig,
+  EhCustomization,
   EhEnv,
   EhEnvId,
   EhSubstitutionId,
@@ -28,4 +29,5 @@ export interface EhJumpParams {
 
 export interface EhMainLoaderData {
   config: Promise<EhClientConfig>;
+  customization: Promise<EhCustomization>;
 }

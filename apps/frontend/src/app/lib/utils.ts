@@ -1,4 +1,4 @@
-import { EhApp, EhEnv, EhSubstitutionType } from '@env-hopper/types';
+import { EhApp, EhEnv } from '@env-hopper/types';
 import { EhSubstitutionValue } from '../types';
 
 export function findSubstitutionIdByUrl({
@@ -14,20 +14,6 @@ export function findSubstitutionIdByUrl({
   const urlPattern = getJumpUrlEvenNotComplete({ app, env });
   const match = urlPattern.match(/{{(.+?)}}/);
   return match ? match[1] : undefined;
-}
-
-export function findSubstitutionTypeInApp(
-  app: EhApp | undefined,
-  env: EhEnv | undefined,
-  listSubstitutions: EhSubstitutionType[],
-): EhSubstitutionType | undefined {
-  if (app) {
-    const match = findSubstitutionIdByUrl({ app, env });
-    if (match) {
-      return listSubstitutions.find((v) => v.id === match[1]) || undefined;
-    }
-  }
-  return undefined;
 }
 
 export interface JumpDataParams {

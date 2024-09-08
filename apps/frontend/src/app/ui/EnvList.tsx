@@ -1,11 +1,12 @@
 'use client';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useEhContext } from '../context/EhContext';
 import { EhAutoComplete } from './AutoComplete/EhAutoComplete';
 import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
 import { EhEnv, EhEnvId } from '@env-hopper/types';
 import { Item } from './AutoComplete/common';
 import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
+import { MAX_RECENTLY_USED_ITEMS } from '../lib/constants';
 
 function mapToAutoCompleteItem(
   env: EhEnv,
@@ -39,7 +40,7 @@ export function EnvList({ onOpenChange }: EnvListProps) {
     const favSet = new Set(listFavoriteEnvs);
     const recentSet = new Set(
       recentJumps
-        .slice(0, 2)
+        .slice(0, MAX_RECENTLY_USED_ITEMS)
         .map((jump) => jump.env || '')
         .filter(Boolean),
     );

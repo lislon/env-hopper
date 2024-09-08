@@ -2,7 +2,8 @@ import { useEhContext } from '../../context/EhContext';
 import React, { useMemo } from 'react';
 import { findLastIndex, sortBy } from 'lodash';
 import { EhAppId } from '@env-hopper/types';
-import { InternalCommonBar, MAX_ITEMS_IN_BAR } from './InternalCommonBar';
+import { InternalCommonBar } from './InternalCommonBar';
+import { MAX_QUICK_LINKS } from '../../lib/constants';
 
 export function AppFavoriteBar() {
   const { listFavoriteApps, recentJumps, setApp, getAppById, app } =
@@ -23,7 +24,7 @@ export function AppFavoriteBar() {
     });
     const topRecent = sortBy(collection, 'lastJumpIndex')
       .filter((a) => a.title !== '')
-      .slice(0, MAX_ITEMS_IN_BAR);
+      .slice(0, MAX_QUICK_LINKS);
     return sortBy(topRecent, 'title');
   }, [listFavoriteApps, recentJumps, getAppById]);
 

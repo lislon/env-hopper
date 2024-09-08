@@ -8,8 +8,6 @@ export type FavBarElement<ID extends string | number> = {
   title: string;
 };
 
-export const MAX_ITEMS_IN_BAR = 5;
-
 export interface InternalCommonBarProps<ID extends string | number> {
   activeId: ID | undefined;
   sorted: FavBarElement<ID>[];

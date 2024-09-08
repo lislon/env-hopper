@@ -20,10 +20,10 @@ export function ItemsSections({ items, ...rest }: ItemsSectionProps) {
   const itemsWithIndex = items.map((item, index) => ({ ...item, index }));
 
   const recentSection = itemsWithIndex.filter(
-    (item) => item.section === 'recent'
+    (item) => item.section === 'recent',
   );
   const favSection = itemsWithIndex.filter(
-    (item) => item.section === 'favorite'
+    (item) => item.section === 'favorite',
   );
   const allSection = itemsWithIndex.filter((item) => item.section === 'all');
 

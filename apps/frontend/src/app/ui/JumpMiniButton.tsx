@@ -29,4 +29,5 @@ export function JumpMiniButton({
       </div>
     );
   }
+  return null;
 }

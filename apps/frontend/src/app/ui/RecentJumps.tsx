@@ -56,8 +56,8 @@ export function RecentJumps() {
                       getSubstitutionValueById(
                         jump.env,
                         jump.app,
-                        jump.substitution
-                      )
+                        jump.substitution,
+                      ),
                     )
                   }
                 >
@@ -70,7 +70,7 @@ export function RecentJumps() {
                     substitution={getSubstitutionValueById(
                       jump.env,
                       jump.app,
-                      jump.substitution
+                      jump.substitution,
                     )}
                   />
                 </td>

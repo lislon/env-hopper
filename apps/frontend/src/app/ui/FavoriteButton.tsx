@@ -24,7 +24,7 @@ export function FavoriteButton({
           isSelected
             ? 'fill-yellow-400 stoke-yellow-400 opacity-100'
             : 'hover:stoke-yellow-400 opacity-30 hover:opacity-100',
-          className
+          className,
         )}
       />
     </button>

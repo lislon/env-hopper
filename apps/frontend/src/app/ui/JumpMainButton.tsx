@@ -3,7 +3,7 @@ import { useEhContext } from '../context/EhContext';
 import { getJumpUrl } from '../lib/utils';
 import { JumpUrl } from './JumpUrl';
 import NewWindowIcon from '../../assets/new-window.svg?react';
-import { AppNotes } from './AppNotes';
+import { AppWidgetsPanel } from './Widget/AppWidgetsPanel';
 
 export function JumpMainButton() {
   const { app, env, substitution, substitutionType } = useEhContext();
@@ -21,7 +21,7 @@ export function JumpMainButton() {
             />
           </div>
         </JumpUrl>
-        <AppNotes />
+        <AppWidgetsPanel />
       </div>
     );
   } else {
@@ -32,8 +32,8 @@ export function JumpMainButton() {
             {env === undefined
               ? 'Select an environment'
               : app === undefined
-              ? 'Select an app'
-              : `Enter ${substitutionType?.title}`}
+                ? 'Select an app'
+                : `Enter ${substitutionType?.title}`}
           </div>
         </div>
       </div>

@@ -1,6 +1,9 @@
+/// <reference types="vite-plugin-pwa/client" />
 import {
   EhApp,
   EhAppId,
+  EhClientConfig,
+  EhCustomization,
   EhEnv,
   EhEnvId,
   EhSubstitutionId,
@@ -22,4 +25,9 @@ export interface EhJumpParams {
   app?: EhApp;
   env?: EhEnv;
   substitution?: EhSubstitutionValue;
+}
+
+export interface EhMainLoaderData {
+  config: Promise<EhClientConfig>;
+  customization: Promise<EhCustomization>;
 }

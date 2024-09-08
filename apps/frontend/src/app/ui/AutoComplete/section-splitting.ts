@@ -1,4 +1,5 @@
 import { Item } from './common';
+import { sortBy } from 'lodash';
 
 export type ItemSection = 'favorite' | 'recent' | 'all';
 
@@ -8,9 +9,16 @@ export interface ItemWithSection extends Item {
 
 export function flatmapToItemsWithSections(
   item: Item[],
-  isUserSearching: boolean
+  isUserSearching: boolean,
 ): ItemWithSection[] {
-  return item.flatMap((i) => mapToItemWithSection(i, isUserSearching));
+  return sortBy(
+    item.flatMap((i) => mapToItemWithSection(i, isUserSearching)),
+    [
+      (item) => (item.section === 'recent' ? -1 : 1),
+      (item) => (item.section === 'favorite' ? -1 : 1),
+      (item) => (item.section === 'all' ? -1 : 1),
+    ],
+  );
 }
 
 /**
@@ -20,7 +28,7 @@ export function flatmapToItemsWithSections(
  */
 export function mapToItemWithSection(
   item: Item | null,
-  isUserSearching: boolean
+  isUserSearching: boolean,
 ): ItemWithSection[] {
   if (item === null) {
     return [];

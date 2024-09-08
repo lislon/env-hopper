@@ -1,8 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import App from '../app';
-import { describe, it, vi } from 'vitest';
-import { getConfig } from '../api';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+import type { Router as RemixRouter } from '@remix-run/router';
+
+import { describe, expect, it, vi } from 'vitest';
+import { apiGetConfig } from '../api/apiGetConfig';
 import { userEvent } from '@testing-library/user-event';
 import {
   expectHasHistory,
@@ -27,19 +28,35 @@ import {
   LOCAL_STORAGE_KEY_FAVORITE_ENVS,
   LOCAL_STORAGE_KEY_RECENT_JUMPS,
 } from '../context/EhContext';
+import React from 'react';
+import { getRoutes } from '../routes';
+import { QueryClient } from '@tanstack/react-query';
+import { apiGetCustomization } from '../api/apiGetCustomization';
 
-vi.mock('../api');
+vi.mock('../api/apiGetConfig');
+vi.mock('../api/apiGetCustomization');
 vi.mock('../hooks/useLocalStorage');
 
 export interface GivenProps {
+  url?: string;
   testFixtures: TestFixtures;
 }
 
-async function given({ testFixtures }: GivenProps) {
-  vi.mocked(getConfig).mockResolvedValue({
+export interface GivenReturn {
+  user: ReturnType<typeof userEvent.setup>;
+  router: RemixRouter;
+}
+
+async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
+  vi.mocked(apiGetConfig).mockResolvedValue({
     envs: testFixtures.envs || [],
     apps: testFixtures.apps || [],
-    substitutions: [],
+    substitutions: testFixtures.substitutions || [],
+    appVersion: 'test',
+  });
+  vi.mocked(apiGetCustomization).mockResolvedValue({
+    footerHtml: '',
+    analyticsScript: '',
   });
 
   vi.mocked(useLocalStorage).mockImplementation(useLocalStorageMock);
@@ -56,15 +73,15 @@ async function given({ testFixtures }: GivenProps) {
     localStorageMock[LOCAL_STORAGE_KEY_RECENT_JUMPS] = testFixtures.recentJumps;
   }
 
-  render(
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  );
+  const queryClient = new QueryClient();
+  const router = createMemoryRouter(getRoutes(queryClient), {
+    initialEntries: url ? [url] : undefined,
+  });
+  render(<RouterProvider router={router} />);
 
-  const setup = userEvent.setup();
+  const user = userEvent.setup();
   await testWaitLoading();
-  return setup;
+  return { user, router };
 }
 
 function getRecentSection() {
@@ -87,8 +104,8 @@ function getAllSection() {
 
 describe('Integration tests', () => {
   it('Basic scenario - user can navigate to URL by keyboard', async () => {
-    const user = await given({
-      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.baseline),
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.userNoOptions),
     });
 
     await testFillEnvAndApp(user, '1', 'App1');
@@ -99,9 +116,9 @@ describe('Integration tests', () => {
   });
 
   it('If user opens a autocomplete, but do not type anything, app will appear in every section', async () => {
-    const user = await given({
+    const { user } = await given({
       testFixtures: testMagazineMakeFixtures(
-        TestFeatureMagazine.hasRecentAndFavoriteApp
+        TestFeatureMagazine.hasRecentAndFavoriteApp,
       ),
     });
 
@@ -120,8 +137,8 @@ describe('Integration tests', () => {
   });
 
   it('Recent env are suggested', async () => {
-    const user = await given({
-      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.baseline),
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.userNoOptions),
     });
 
     await testFillEnvAndApp(user, '1', 'App1');
@@ -134,9 +151,9 @@ describe('Integration tests', () => {
   });
 
   it('If toggle favorite recent env, the star icon will be added and selection stays in the recent section', async () => {
-    const user = await given({
+    const { user } = await given({
       testFixtures: testMagazineMakeFixtures(
-        TestFeatureMagazine.hasRecentJumps
+        TestFeatureMagazine.hasRecentJumps,
       ),
     });
 
@@ -150,9 +167,9 @@ describe('Integration tests', () => {
   });
 
   it('favorite env has stars in all sections', async () => {
-    const user = await given({
+    const { user } = await given({
       testFixtures: testMagazineMakeFixtures(
-        TestFeatureMagazine.hasRecentAndFavoriteApp
+        TestFeatureMagazine.hasRecentAndFavoriteApp,
       ),
     });
 
@@ -168,6 +185,96 @@ describe('Integration tests', () => {
 
     within(getAllSection()).getByRole('button', {
       name: /Remove/i,
+    });
+  });
+
+  it('When there is already preselected env and user clicks on it, text will be select-ed and all options will be shown', async () => {
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.userNoOptions),
+    });
+    await testFillEnvAndApp(user, '1', 'App1');
+    const envComboBox = testGetEnvComboBox();
+    await user.click(envComboBox);
+
+    expect(getAllSection()).toBeTruthy();
+    expect([envComboBox.selectionStart, envComboBox.selectionEnd]).toEqual([
+      0,
+      envComboBox.value.length,
+    ]);
+  });
+
+  it('additional substitutions in URL works', async () => {
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(
+        TestFeatureMagazine.hasRecentAndFavoriteApp,
+      ),
+    });
+    await testFillEnvAndApp(user, '1', 'App3');
+
+    const substitutionValue = screen.getByRole('textbox', {
+      name: /Namespace/i,
+    });
+    await user.type(substitutionValue, 'my-namespace');
+
+    const link = screen.getByRole<HTMLAnchorElement>('link', {
+      name: /JUMP .+/,
+    });
+    expect(link.href).toEqual('https://env1.mycompany.com:8250/my-namespace');
+  });
+
+  it('Can use enter to select first suggestion', async () => {
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(
+        TestFeatureMagazine.hasRecentAndFavoriteApp,
+      ),
+    });
+
+    await user.keyboard('env');
+    await user.keyboard('{Enter}');
+    const byRole = screen.getByRole<HTMLInputElement>('combobox', {
+      name: /environment/i,
+    });
+    expect(byRole.value).toEqual('env1');
+  });
+
+  it('Can navigate use arrow keys', async () => {
+    const { user } = await given({
+      url: '/env/env1',
+      testFixtures: testMagazineMakeFixtures(
+        TestFeatureMagazine.hasRecentAndFavoriteApp,
+      ),
+    });
+
+    await user.keyboard('app');
+    await user.keyboard('[ArrowDown]');
+    await user.keyboard('[ArrowDown]');
+    await user.keyboard('{Enter}');
+    const byRole = screen.getByRole<HTMLInputElement>('combobox', {
+      name: /application/i,
+    });
+    expect(byRole.value).toEqual('app2');
+  });
+
+  describe('Tests jumps', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('Can use double enter to jump to specific env or app', async () => {
+      const spyChangeUrl = vi.spyOn(global, 'open');
+      spyChangeUrl.mockReturnValue(null);
+
+      const { user } = await given({
+        url: '/env/env1',
+        testFixtures: testMagazineMakeFixtures(
+          TestFeatureMagazine.hasRecentAndFavoriteApp,
+        ),
+      });
+
+      await user.keyboard('app');
+      await user.keyboard('{Enter}');
+      await user.keyboard('{Enter}');
+      expect(spyChangeUrl.mock.calls[0][0]).toContain('env1');
     });
   });
 });

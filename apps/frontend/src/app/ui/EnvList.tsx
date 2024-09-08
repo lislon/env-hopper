@@ -5,17 +5,19 @@ import { EhAutoComplete } from './AutoComplete/EhAutoComplete';
 import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
 import { EhEnv, EhEnvId } from '@env-hopper/types';
 import { Item } from './AutoComplete/common';
+import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
+import { MAX_RECENTLY_USED_ITEMS } from '../lib/constants';
 
 function mapToAutoCompleteItem(
   env: EhEnv,
   favorites: Set<EhEnvId>,
-  recents: Set<EhEnvId>
+  recents: Set<EhEnvId>,
 ): Item {
   return {
-    id: env.name,
-    title: env.name,
-    favorite: favorites.has(env.name),
-    recent: recents.has(env.name),
+    id: env.id,
+    title: env.id,
+    favorite: favorites.has(env.id),
+    recent: recents.has(env.id),
   };
 }
 
@@ -38,17 +40,23 @@ export function EnvList({ onOpenChange }: EnvListProps) {
     const favSet = new Set(listFavoriteEnvs);
     const recentSet = new Set(
       recentJumps
-        .slice(0, 2)
+        .slice(0, MAX_RECENTLY_USED_ITEMS)
         .map((jump) => jump.env || '')
-        .filter(Boolean)
+        .filter(Boolean),
     );
     return listEnvs.map((env) => mapToAutoCompleteItem(env, favSet, recentSet));
   }, [listEnvs, listFavoriteEnvs, recentJumps]);
 
+  const { autoFocusEnv } = useAutoFocusHelper();
+
+  const autoCompleteFilter = useMemo(
+    () => makeAutoCompleteFilter(items),
+    [items],
+  );
   return (
     <EhAutoComplete
       itemsAll={items}
-      filter={makeAutoCompleteFilter(items)}
+      filter={autoCompleteFilter}
       label="Environment"
       placeholder="Select environment"
       onOpenChange={onOpenChange}
@@ -57,7 +65,8 @@ export function EnvList({ onOpenChange }: EnvListProps) {
       }
       onSelectedItemChange={(envId) => setEnv(getEnvById(envId))}
       onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
-      onCtrlEnter={tryJump}
+      onTryJump={tryJump}
+      autoFocus={autoFocusEnv}
     />
   );
 }

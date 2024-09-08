@@ -2,16 +2,12 @@ import { EhAutoCompleteFilter } from '../ui/AutoComplete/EhAutoComplete';
 import { sortBy } from 'lodash';
 import { Item } from '../ui/AutoComplete/common';
 
-export interface SearchableItem {
-  title: string;
-}
-
 function tokenize(text: string): string[] {
   const camelCaseSecondaryWords = [...text.matchAll(/(?<=[a-z])[A-Z]\w+/g)].map(
-    (x) => x[0].toLowerCase()
+    (x) => x[0].toLowerCase(),
   );
   const primary = [...text.matchAll(/([a-z]+|[0-9]+)/gi)].map((x) =>
-    x[0].toLowerCase()
+    x[0].toLowerCase(),
   );
 
   const leadingZeros = (input: string) => {
@@ -38,7 +34,7 @@ export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
     const results = new Set<Item>();
 
     const prefixMatch = itemsIndex.filter((item) =>
-      item.title.startsWith(searchPattern)
+      item.title.startsWith(searchPattern),
     );
     const prefixMatchSorted = sortBy(prefixMatch, [
       'notFavorite',
@@ -62,7 +58,7 @@ export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
             }
             return false;
           },
-          item.tokens
+          item.tokens,
         );
         return isFound !== false;
       })

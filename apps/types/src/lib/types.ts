@@ -62,7 +62,12 @@ export interface EhClientConfig {
   substitutions: EhSubstitutionType[];
   appVersion: string;
 }
-export interface EhCustomization {
+
+export interface EhCustomPartUnstable {
+  slidesHtml?: string[];
+}
+
+export interface EhCustomization extends EhCustomPartUnstable {
   footerHtml: string;
   analyticsScript: string;
 }

@@ -1,10 +1,10 @@
 import { ItemWithSection } from './section-splitting';
 import { UseComboboxPropGetters } from 'downshift';
 import { Item } from './common';
-import { Section } from '../Section';
 import { Suggestion } from './Suggestion';
 import React from 'react';
 import { AutoCompleteProps } from './EhAutoComplete';
+import { Section } from '../Section';
 
 export interface ItemsSectionProps {
   items: ItemWithSection[];
@@ -12,8 +12,6 @@ export interface ItemsSectionProps {
   selectedItem: ItemWithSection | null;
   getItemProps: UseComboboxPropGetters<Item>['getItemProps'];
   autoCompleteProps: AutoCompleteProps;
-  tmpFavorite: Map<string, boolean>;
-  setTmpFavorite: (tmpFavorite: Map<string, boolean>) => void;
 }
 
 export function ItemsSections({ items, ...rest }: ItemsSectionProps) {
@@ -27,6 +25,37 @@ export function ItemsSections({ items, ...rest }: ItemsSectionProps) {
   );
   const allSection = itemsWithIndex.filter((item) => item.section === 'all');
 
+  const shouldSplitAutocompleteBySections =
+    recentSection.length > 0 || favSection.length > 0;
+
+  return shouldSplitAutocompleteBySections ? (
+    <SplitBySections
+      allSection={allSection}
+      favSection={favSection}
+      recentSection={recentSection}
+      {...rest}
+    />
+  ) : (
+    <SingleSection allSection={allSection} {...rest} />
+  );
+}
+
+export interface ItemWithSectionAndIndex extends ItemWithSection {
+  index: number;
+}
+
+export interface SplitBySectionsProps extends Omit<ItemsSectionProps, 'items'> {
+  recentSection: ItemWithSectionAndIndex[];
+  favSection: ItemWithSectionAndIndex[];
+  allSection: ItemWithSectionAndIndex[];
+}
+
+export function SplitBySections({
+  recentSection,
+  favSection,
+  allSection,
+  ...rest
+}: SplitBySectionsProps) {
   return (
     <>
       {recentSection.length > 0 && (
@@ -65,6 +94,20 @@ export function ItemsSections({ items, ...rest }: ItemsSectionProps) {
           ))}
         </Section>
       )}
+    </>
+  );
+}
+
+export interface SingleSectionProp extends Omit<ItemsSectionProps, 'items'> {
+  allSection: ItemWithSectionAndIndex[];
+}
+
+export function SingleSection({ allSection, ...rest }: SingleSectionProp) {
+  return (
+    <>
+      {allSection.map((item) => (
+        <Suggestion key={item.index} index={item.index} item={item} {...rest} />
+      ))}
     </>
   );
 }

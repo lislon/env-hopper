@@ -3,6 +3,7 @@ import { dbEnvsGet, dbEnvsSet } from '../database/repo/envs';
 import {
   EhClientConfig,
   EhCustomization,
+  EhCustomPartUnstable,
   EhEnv,
   EhSubstitutionType,
 } from '@env-hopper/types';
@@ -15,7 +16,6 @@ import {
 import { EhAppBackend } from '../backend-types';
 import { UiReaderMapper } from '../database/mappers';
 import {
-  CustomizationResult,
   dbCustomizationGet,
   dbCustomizationUpdate,
 } from '../database/repo/customization';
@@ -83,6 +83,14 @@ publicApi.get(
   '/api/customization',
   async (req: Request, res: Response<EhCustomization>) => {
     res.send(await dbCustomizationGet());
+  },
+);
+
+publicApi.post(
+  '/api/customization',
+  async (req: Request<EhCustomPartUnstable>, res: Response<'OK'>) => {
+    await dbCustomizationUpdate({ custom: req.body });
+    res.send('OK');
   },
 );
 

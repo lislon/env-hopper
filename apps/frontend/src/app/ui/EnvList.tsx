@@ -6,7 +6,9 @@ import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
 import { EhEnv, EhEnvId } from '@env-hopper/types';
 import { Item } from './AutoComplete/common';
 import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
-import { MAX_RECENTLY_USED_ITEMS } from '../lib/constants';
+import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../lib/constants';
+import { HomeFavoriteButton } from './HomeFavoriteButton';
+import { getEhUrl } from '../lib/utils';
 
 function mapToAutoCompleteItem(
   env: EhEnv,
@@ -24,8 +26,11 @@ function mapToAutoCompleteItem(
 export interface EnvListProps {
   onOpenChange?: (isOpen: boolean) => void;
 }
+
 export function EnvList({ onOpenChange }: EnvListProps) {
   const {
+    app,
+    substitution,
     setEnv,
     listEnvs,
     listFavoriteEnvs,
@@ -40,19 +45,22 @@ export function EnvList({ onOpenChange }: EnvListProps) {
     const favSet = new Set(listFavoriteEnvs);
     const recentSet = new Set(
       recentJumps
-        .slice(0, MAX_RECENTLY_USED_ITEMS)
+        .slice(0, MAX_RECENTLY_USED_ITEMS_COMBO)
         .map((jump) => jump.env || '')
         .filter(Boolean),
     );
     return listEnvs.map((env) => mapToAutoCompleteItem(env, favSet, recentSet));
   }, [listEnvs, listFavoriteEnvs, recentJumps]);
 
-  const { autoFocusEnv } = useAutoFocusHelper();
+  const autoFocusOn = useAutoFocusHelper();
 
   const autoCompleteFilter = useMemo(
     () => makeAutoCompleteFilter(items),
     [items],
   );
+  const isFavorite = listFavoriteEnvs.includes(env?.id || '');
+  const selectedItem = items.find((i) => i.id === env?.id) || null;
+
   return (
     <EhAutoComplete
       itemsAll={items}
@@ -60,13 +68,23 @@ export function EnvList({ onOpenChange }: EnvListProps) {
       label="Environment"
       placeholder="Select environment"
       onOpenChange={onOpenChange}
-      selectedItem={
-        env ? mapToAutoCompleteItem(env, new Set(), new Set()) : null
-      }
-      onSelectedItemChange={(envId) => setEnv(getEnvById(envId))}
+      selectedItem={selectedItem}
+      onSelectedItemChange={(envId) => {
+        setEnv(getEnvById(envId));
+      }}
       onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
       onTryJump={tryJump}
-      autoFocus={autoFocusEnv}
+      autoFocus={autoFocusOn === 'environments'}
+      tailButtons={
+        env ? (
+          <HomeFavoriteButton
+            isFavorite={isFavorite}
+            onClick={() => toggleFavoriteEnv(env.id, !isFavorite)}
+            title={`${isFavorite ? `Remove ${env.id} from` : `Add ${env.id} to`} favorites`}
+          />
+        ) : undefined
+      }
+      getEhUrl={(id) => getEhUrl(id, app?.id, substitution?.value)}
     />
   );
 }

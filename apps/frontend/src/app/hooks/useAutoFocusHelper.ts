@@ -1,20 +1,23 @@
 import { useEhContext } from '../context/EhContext';
 import { useState } from 'react';
+import { ComboBoxType } from '../types';
 
-export interface AutofocusHelperReturn {
-  autoFocusEnv: boolean;
-  autoFocusApp: boolean;
-  autoFocusSubstitution: boolean;
-}
+export type AutoFocusOn = ComboBoxType | 'substitution';
 
-export function useAutoFocusHelper(): AutofocusHelperReturn {
-  const { env, app, substitution } = useEhContext();
+export function useAutoFocusHelper(): AutoFocusOn {
+  const { env, app, substitution, substitutionType } = useEhContext();
 
-  const [ret] = useState<AutofocusHelperReturn>({
-    autoFocusEnv: env === undefined,
-    autoFocusApp: env !== undefined && app === undefined,
-    autoFocusSubstitution:
-      env !== undefined && app !== undefined && substitution === undefined,
+  const [ret] = useState<AutoFocusOn>(() => {
+    if (env === undefined) {
+      return 'environments';
+    }
+    if (app === undefined) {
+      return 'applications';
+    }
+    if (substitutionType !== undefined && substitution === undefined) {
+      return 'substitution';
+    }
+    return 'environments';
   });
 
   return ret;

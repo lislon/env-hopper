@@ -5,11 +5,11 @@ import UiCredsIcon from './ui-creds.svg?react';
 
 export function UiCredentials({ meta }: { meta: EhAppWidgetUiCreds }) {
   return (
-    <div className="flex">
-      <div
-        className="py-1 pr-2 flex flex-col"
-        title="Credentials for the app UI"
-      >
+    <div
+      className="flex tooltip tooltip-left"
+      data-tip="Credentials for the app UI"
+    >
+      <div className="py-1 pr-2 flex flex-col">
         <div className="w-4 h-4">
           <UiCredsIcon />
         </div>

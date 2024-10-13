@@ -1,46 +1,58 @@
 'use client';
-import React, { createContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
-export type EhTheme = 'system' | 'dark' | 'white';
+export type EhTheme = 'dark' | 'light';
 
 //  createContext is not supported in Server Components
-const ThemeContext = createContext<EhTheme>('system');
+
+export interface ThemeContextValue {
+  userPreference: EhTheme;
+  setUserPreference: (theme: EhTheme) => void;
+}
+
+const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function useTheme() {
-  const [, setPreference] = useLocalStorage<EhTheme>('theme', 'system');
+  const ctx = useContext(ThemeContext);
+  if (ctx === null) {
+    throw new Error('useTheme must be used within a ThemeContextProvider');
+  }
 
   return {
-    currentTheme: getTheme(),
+    currentTheme: ctx.userPreference,
     switchTheme: () => {
       if (getTheme() === 'dark') {
-        switchTheme('white');
-        setPreference('white');
+        switchTheme('light');
+        ctx.setUserPreference('light');
       } else {
         switchTheme('dark');
-        setPreference('dark');
+        ctx.setUserPreference('dark');
       }
     },
   };
 }
 
+function getSystemTheme(): EhTheme {
+  return typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+}
+
 function switchTheme(theme: EhTheme) {
-  document.body.classList.remove('dark');
-  if (
-    theme === 'dark' ||
-    (theme === 'system' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches)
-  ) {
-    document.body.classList.add('dark');
-  }
+  document.querySelector('html')?.setAttribute('data-theme', theme);
 }
 
 function getTheme(): EhTheme {
-  if (document.body.classList.contains('dark')) {
+  const theme =
+    document.querySelector('html')?.getAttribute('data-theme') || undefined;
+  if (theme === undefined) {
+    return getSystemTheme();
+  } else if (theme === 'dark') {
     return 'dark';
   } else {
-    return 'white';
+    return 'light';
   }
 }
 
@@ -49,10 +61,15 @@ export function ThemeContextProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [userPreference] = useLocalStorage<EhTheme>('theme', 'system');
+  const [userPreference, setUserPreference] = useLocalStorage<EhTheme>(
+    'theme',
+    getTheme(),
+  );
   switchTheme(userPreference);
 
   return (
-    <ThemeContext.Provider value={'system'}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={{ userPreference, setUserPreference }}>
+      {children}
+    </ThemeContext.Provider>
   );
 }

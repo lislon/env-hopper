@@ -1,10 +1,9 @@
 import { Home } from './ui/Home';
-import { Layout } from './ui/Layout';
 import React from 'react';
 import { DefaultErrorPage } from './ui/Error/DefaultErrorPage';
 import { NotFoundError } from './ui/Error/NotFoundError';
 import { EhMainLoaderData } from './types';
-import { defer, Outlet } from 'react-router-dom';
+import { defer } from 'react-router-dom';
 import { QueryClient } from '@tanstack/react-query';
 import { ApiQueryMagazine } from './api/ApiQueryMagazine';
 
@@ -25,7 +24,6 @@ export function getRoutes(queryClient: QueryClient) {
     {
       id: 'root',
       path: '/',
-      element: <Layout children={<Outlet />} />,
       errorElement: <DefaultErrorPage />,
       loader,
       children: [

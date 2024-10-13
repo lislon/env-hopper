@@ -70,10 +70,21 @@ export default defineConfig({
       },
     }),
     svgr(),
+    process.env['NODE_ENV'] === 'test' && {
+      name: 'load-svg',
+      enforce: 'pre',
+      transform(_, id) {
+        if (id.endsWith('.svg?react')) {
+          return `export default () => "svg-stub"`;
+        }
+        return undefined;
+      },
+    },
+
     // svgr({ include: '**/*.svg' })
   ],
   define: {
-    APP_VERSION: JSON.stringify(process.env['APP_VERSION'] || 'local v1'),
+    APP_VERSION: JSON.stringify(process.env['APP_VERSION'] || 'Latest'),
   },
 
   // Uncomment this if you are using workers.

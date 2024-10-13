@@ -11,6 +11,7 @@ export interface JumpUrlParams {
   substitution?: EhSubstitutionValue;
   className?: string;
   isMain?: boolean;
+  prefetch?: boolean;
 }
 
 export function JumpUrl({
@@ -20,6 +21,7 @@ export function JumpUrl({
   substitution,
   className,
   isMain,
+  prefetch,
 }: JumpUrlParams) {
   const { recordJump } = useEhContext();
 

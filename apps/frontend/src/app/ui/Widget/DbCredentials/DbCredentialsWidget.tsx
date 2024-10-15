@@ -12,8 +12,11 @@ export function DbCredentialsWidget({
   env?: EhEnv;
 }) {
   return (
-    <div className="flex">
-      <div className="py-1 pr-2" title="Credentials for the db">
+    <div
+      className="flex tooltip tooltip-left"
+      data-tip="Credentials for the app DB"
+    >
+      <div className="py-1 pr-2">
         <div className="w-4 h-4">
           <DbCredsIcon />
         </div>

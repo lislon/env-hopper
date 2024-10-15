@@ -34,7 +34,7 @@ export function RecentJumps() {
           <tbody>
             {recentJumps.map((jump) => (
               <tr
-                key={`${jump.app}-${jump.env}-${jump.substitution}`}
+                key={`${jump.app}-${jump.env}-${jump.substitution || ''}`}
                 className="hover:bg-gray-100 dark:hover:bg-gray-900"
               >
                 <td

@@ -1,4 +1,4 @@
-import { EhApp, EhEnv } from '@env-hopper/types';
+import { EhApp, EhAppId, EhEnv, EhEnvId } from '@env-hopper/types';
 import { EhSubstitutionValue } from '../types';
 
 export function findSubstitutionIdByUrl({
@@ -89,9 +89,39 @@ export function cutApp(fullUrl: string) {
   return fullUrl.split('/').slice(3).join('/');
 }
 
-export function normalizeExternalAppName(appName: string) {
+export function getAppIdByTitle(appName: string) {
   if (appName.indexOf('/') === -1) {
     appName = appName + '/home';
   }
   return appName;
+}
+
+export function getEnvIdByTitle(envTitle: string) {
+  return envTitle;
+}
+
+export function escapeAppId(appId: string) {
+  return encodeURIComponent(appId.replace(/\/home$/, '').replace('/', '@'));
+}
+
+export function escapeSubValue(subValue: string) {
+  return encodeURIComponent(subValue);
+}
+
+export function escapeEnvId(envId: string) {
+  return encodeURIComponent(envId);
+}
+
+export function getEhUrl(
+  envId: EhEnvId | undefined,
+  appId: EhAppId | undefined,
+  substitution: string | undefined,
+) {
+  const portions = [
+    envId ? `env/${escapeEnvId(envId)}` : false,
+    appId ? `app/${escapeAppId(appId)}` : false,
+    substitution ? `sub/${escapeSubValue(substitution)}` : false,
+  ].filter(Boolean);
+
+  return '/' + portions.join('/');
 }

@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useCombobox } from 'downshift';
-import cn from 'classnames';
-import { Item, suggestionHeightClass } from './common';
+import { Item } from './common';
 import {
   flatmapToItemsWithSections,
   ItemWithSection,
@@ -9,6 +8,7 @@ import {
 } from './section-splitting';
 import { ItemsSections } from './ItemsSections';
 import { first, sortBy } from 'lodash';
+import cn from 'classnames';
 
 export type EhAutoCompleteFilter = (
   searchPattern: string,
@@ -22,6 +22,7 @@ export type ShortcutPickSubstitution = { substitutionTitle: string };
 export type ShortcutAction = ShortcutJump | ShortcutPickSubstitution;
 
 export interface AutoCompleteProps {
+  className?: string;
   itemsAll: Item[];
   placeholder?: string;
   label?: string;
@@ -34,6 +35,8 @@ export interface AutoCompleteProps {
   onOpenChange?: (isOpen: boolean) => void;
   onTryJump?: () => void;
   autoFocus?: boolean;
+  tailButtons?: React.ReactNode;
+  getEhUrl: (id: string) => string;
 }
 
 function getInitialItems(collection: Item[]) {
@@ -41,20 +44,24 @@ function getInitialItems(collection: Item[]) {
 }
 
 export function EhAutoComplete(props: AutoCompleteProps) {
-  const [items, setItems] = useState(() => getInitialItems(props.itemsAll));
-
-  const [tmpFavorite, setTmpFavorite] = useState<Map<string, boolean>>(
-    new Map(),
+  const initialItemsWithSections = useMemo(() => {
+    return getInitialItems(props.itemsAll);
+  }, [props.itemsAll]);
+  const [itemsWithSections, setItemsWithSections] = useState(
+    () => initialItemsWithSections,
   );
 
-  const [selectedItemWithSection, setSelectedItemWithSection] =
-    useState<ItemWithSection | null>(null);
-
-  useEffect(() => {
-    setSelectedItemWithSection(
-      first(mapToItemWithSection(props.selectedItem, false)) || null,
+  const selectedItemWithSection = useMemo(() => {
+    const needle = first(mapToItemWithSection(props.selectedItem, false));
+    if (!needle) {
+      return null;
+    }
+    return (
+      initialItemsWithSections.find((v) => {
+        return v.section === needle.section && v.id === needle.id;
+      }) || null
     );
-  }, [props.selectedItem]);
+  }, [initialItemsWithSections, props.selectedItem]);
 
   const {
     isOpen,
@@ -63,35 +70,41 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     getInputProps,
     highlightedIndex,
     getItemProps,
-    getToggleButtonProps,
     selectItem,
     selectedItem,
+    inputValue,
   } = useCombobox<ItemWithSection>({
-    onInputValueChange({ inputValue }) {
-      const userSearching = inputValue !== '';
-      if (!userSearching) {
-        setItems(getInitialItems(props.itemsAll));
-      } else {
-        const items = props.filter(inputValue, props.itemsAll);
-        const itemWithFakeIds = flatmapToItemsWithSections(
-          items,
-          userSearching,
-        );
-        setItems(itemWithFakeIds);
+    onInputValueChange({ inputValue, isOpen, type }) {
+      const userUsesFilter = inputValue !== '';
+      if (isOpen) {
+        if (userUsesFilter) {
+          const matchedIds = new Set(
+            props.filter(inputValue, props.itemsAll).map((i) => i.id),
+          );
+          setItemsWithSections(
+            initialItemsWithSections.filter(
+              (i) => matchedIds.has(i.id) && i.section === 'all',
+            ),
+          );
+        } else {
+          // show all
+          setItemsWithSections(initialItemsWithSections);
+        }
       }
-      if (inputValue === '') {
-        props.onSelectedItemChange(undefined);
-      }
+      // if (inputValue === '') {
+      //   props.onSelectedItemChange(undefined);
+      // }
     },
     onSelectedItemChange({ selectedItem }) {
       props.onSelectedItemChange(selectedItem?.id || undefined);
     },
     selectedItem: selectedItemWithSection,
-    items,
+    items: itemsWithSections,
     itemToString(item) {
       return item ? item.title : '';
     },
   });
+
   const inputRef = React.createRef<HTMLInputElement>();
   const onOpenChange = props.onOpenChange;
 
@@ -101,7 +114,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
 
   function preselectAndShowAllOptions() {
     inputRef.current?.select();
-    setItems(getInitialItems(props.itemsAll));
+    setItemsWithSections(getInitialItems(props.itemsAll));
   }
 
   const inputProps = getInputProps({
@@ -109,64 +122,70 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     autoFocus: props.autoFocus,
     onFocus: preselectAndShowAllOptions,
     onClick: preselectAndShowAllOptions,
+    onBlur: () => {
+      if (inputValue === '') {
+        props.onSelectedItemChange(undefined);
+      }
+    },
     onKeyDown: (event) => {
       if (event.ctrlKey && event.key === 'Enter') {
         props.onTryJump?.();
-      } else if (event.key === 'Enter' && isOpen) {
-        selectItem(items[0]);
-        props.onSelectedItemChange(items[0].id);
+      } else if (
+        event.key === 'Enter' &&
+        isOpen &&
+        itemsWithSections.length > 0 &&
+        highlightedIndex === -1
+      ) {
+        // user has input, and it shows several results, but there is not single line selected. On enter, we want to pick a first result.
+        selectItem(itemsWithSections[0]);
+        props.onSelectedItemChange(itemsWithSections[0].id);
       } else if (event.key === 'Enter' && !isOpen) {
         props.onTryJump?.();
       }
     },
   });
+
   return (
-    <div>
-      <div className="w-full flex flex-col gap-1">
-        {props.label && (
-          <label className="w-fit" {...getLabelProps()}>
-            {props.label}
-          </label>
-        )}
-        <div className="flex shadow-sm">
+    <div className="relative">
+      <div className="w-full relative inline-block">
+        <label className="form-control w-full" {...getLabelProps()}>
+          <div className="label prose">
+            <h4>{props.label}</h4>
+          </div>
           <input
+            type="text"
             placeholder={props.placeholder}
-            className={`border bg-gray-50 dark:border-0 w-full ${suggestionHeightClass} text-xl text-gray-500 rounded-l p-2`}
+            className="input input-bordered w-full"
             {...inputProps}
           />
-          <button
-            aria-label="toggle menu"
-            className="px-2 border-r border-t border-b rounded-r bg-gray-100 dark:bg-gray-700 "
-            type="button"
-            {...getToggleButtonProps()}
-          >
-            {isOpen ? <>&#8593;</> : <>&#8595;</>}
-          </button>
-        </div>
+        </label>
+        <ul
+          tabIndex={0}
+          className={cn(
+            `absolute menu bg-base-200 z-[1] w-full p-2 shadow origin-top transform transition duration-200 ease-out mt-1 max-h-[60vh] flex-nowrap overflow-auto`,
+            {
+              'scale-100': isOpen,
+              'scale-95 invisible opacity-0': !isOpen,
+            },
+          )}
+          {...getMenuProps()}
+        >
+          {itemsWithSections.length > 0 ? (
+            <ItemsSections
+              items={itemsWithSections}
+              highlightedIndex={highlightedIndex}
+              getItemProps={getItemProps}
+              selectedItem={selectedItem}
+              autoCompleteProps={props}
+            />
+          ) : (
+            <div className={'italic text-center p-2'}>
+              No results for '{inputValue}'
+            </div>
+          )}
+        </ul>
       </div>
-      {
-        <div className="relative w-full">
-          <div
-            className={cn(
-              `w-full bg-white dark:bg-gray-900 shadow-2xl p-0 z-10 absolute max-h-[50vh] overflow-y-scroll border border-b-gray-800 dark:border-gray-600 pt-1 hover:cursor-pointer transition`,
-              !(isOpen && items.length) && 'hidden',
-            )}
-            {...getMenuProps()}
-          >
-            {isOpen && (
-              <ItemsSections
-                items={items}
-                highlightedIndex={highlightedIndex}
-                getItemProps={getItemProps}
-                tmpFavorite={tmpFavorite}
-                setTmpFavorite={setTmpFavorite}
-                selectedItem={selectedItem}
-                autoCompleteProps={props}
-              />
-            )}
-          </div>
-        </div>
-      }
+      <div className={'absolute bottom-2 right-4'}>{props.tailButtons}</div>
     </div>
   );
 }

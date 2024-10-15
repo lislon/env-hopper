@@ -31,3 +31,6 @@ export interface EhMainLoaderData {
   config: Promise<EhClientConfig>;
   customization: Promise<EhCustomization>;
 }
+
+export type ComboBoxType = 'environments' | 'applications';
+export type FavoriteOrRecent = 'favorite' | 'recent';

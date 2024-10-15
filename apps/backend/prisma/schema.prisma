@@ -38,7 +38,8 @@ model Substitution {
 }
 
 model UnstableCustomization {
-  syntheticId              Int    @id @default(autoincrement())
+  syntheticId                Int    @id @default(autoincrement())
   unstable__analytics_script String
-  unstable__footer_html    String
+  unstable__footer_html      String
+  unstable__custom           String
 }

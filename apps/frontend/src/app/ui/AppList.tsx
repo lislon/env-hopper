@@ -6,7 +6,9 @@ import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
 import { EhApp, EhAppId } from '@env-hopper/types';
 import { Item } from './AutoComplete/common';
 import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
-import { MAX_RECENTLY_USED_ITEMS } from '../lib/constants';
+import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../lib/constants';
+import { HomeFavoriteButton } from './HomeFavoriteButton';
+import { getEhUrl } from '../lib/utils';
 
 function mapToAutoCompleteItemApp(
   app: EhApp,
@@ -28,6 +30,8 @@ export interface AppListProps {
 export function AppList({ onOpenChange }: AppListProps) {
   const {
     app,
+    env,
+    substitution,
     listApps,
     setApp,
     listFavoriteApps,
@@ -37,13 +41,13 @@ export function AppList({ onOpenChange }: AppListProps) {
     tryJump,
   } = useEhContext();
 
-  const { autoFocusApp } = useAutoFocusHelper();
+  const autoFocusOn = useAutoFocusHelper();
 
   const items = useMemo(() => {
     const favSet = new Set(listFavoriteApps);
     const recentSet = new Set(
       recentJumps
-        .slice(0, MAX_RECENTLY_USED_ITEMS)
+        .slice(0, MAX_RECENTLY_USED_ITEMS_COMBO)
         .map((jump) => jump.app || '')
         .filter(Boolean),
     );
@@ -57,6 +61,7 @@ export function AppList({ onOpenChange }: AppListProps) {
     [items],
   );
 
+  const isFavorite = listFavoriteApps.includes(app?.id || '');
   return (
     <EhAutoComplete
       itemsAll={items}
@@ -64,13 +69,21 @@ export function AppList({ onOpenChange }: AppListProps) {
       label="Application"
       placeholder="Select application"
       onOpenChange={onOpenChange}
-      selectedItem={
-        app ? mapToAutoCompleteItemApp(app, new Set(), new Set()) : null
-      }
+      selectedItem={items.find((i) => i.id === app?.id) || null}
       onTryJump={tryJump}
-      onSelectedItemChange={(envId) => setApp(getAppById(envId))}
-      onFavoriteToggle={(env, isOn) => toggleFavoriteApp(env.id, isOn)}
-      autoFocus={autoFocusApp}
+      onSelectedItemChange={(appId) => setApp(getAppById(appId))}
+      onFavoriteToggle={(app, isOn) => toggleFavoriteApp(app.id, isOn)}
+      autoFocus={autoFocusOn === 'applications'}
+      tailButtons={
+        app ? (
+          <HomeFavoriteButton
+            isFavorite={isFavorite}
+            onClick={() => toggleFavoriteApp(app.id, !isFavorite)}
+            title={`${isFavorite ? `Remove ${app.title} from` : `Add ${app.title} to`} favorites`}
+          />
+        ) : undefined
+      }
+      getEhUrl={(id) => getEhUrl(env?.id, id, substitution?.value)}
     />
   );
 }

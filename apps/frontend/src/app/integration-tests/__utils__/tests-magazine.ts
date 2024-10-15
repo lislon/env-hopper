@@ -6,7 +6,7 @@ import {
   EhSubstitutionType,
 } from '@env-hopper/types';
 import { EhJumpHistory } from '../../types';
-import { normalizeExternalAppName } from '../../lib/utils';
+import { getAppIdByTitle, getEnvIdByTitle } from '../../lib/utils';
 
 export const TestFeatureMagazine = {
   firstTimeUser: {
@@ -25,9 +25,10 @@ export const TestFeatureMagazine = {
     hasRecentJumps: true,
   },
 
-  hasRecentAndFavoriteApp: {
+  hasRecentAndFavorites: {
     hasRecentJumps: true,
     hasFavoritesEnvs: true,
+    hasFavoritesApps: true,
   },
 } as const satisfies { [K in string]: TestTrait };
 
@@ -45,6 +46,12 @@ export interface TestTrait {
    * app1 and env1 is recent jump
    */
   hasRecentJumps?: boolean;
+
+  /**
+   * Override default created envs
+   */
+  existingEnvs?: EhEnv[];
+  existingApps?: EhApp[];
 }
 
 export interface TestFixtures {
@@ -69,11 +76,13 @@ export function testMakeEnv(name: string): EhEnv {
 
 export function testMakeApp(id: string): EhApp {
   return {
-    id: normalizeExternalAppName(`${id}`),
+    id: getAppIdByTitle(`${id}`),
     title: id,
     aliases: [],
     url:
-      'https://{{' + ENV_SUBSTITUTION_VARIABLE + '}}.mycompany.com:8250/login',
+      'https://{{' +
+      ENV_SUBSTITUTION_VARIABLE +
+      `}}.mycompany.com:8250/${id}/login`,
     meta: undefined,
   };
 }
@@ -81,18 +90,21 @@ export function testMakeApp(id: string): EhApp {
 export function testMagazineMakeFixtures(
   features: TestTrait = {},
 ): TestFixtures {
+  const defaultEnvs = ['env1', 'env2', 'env3'].map(testMakeEnv);
+  const defaultApps = [
+    ...['app1', 'app2'].map(testMakeApp),
+    {
+      ...testMakeApp('app3'),
+      url:
+        'https://{{' +
+        ENV_SUBSTITUTION_VARIABLE +
+        '}}.mycompany.com:8250/{{namespace}}',
+    },
+  ];
+
   let testFixtures: TestFixtures = {
-    apps: [
-      ...['app1', 'app2'].map(testMakeApp),
-      {
-        ...testMakeApp('app3'),
-        url:
-          'https://{{' +
-          ENV_SUBSTITUTION_VARIABLE +
-          '}}.mycompany.com:8250/{{namespace}}',
-      },
-    ],
-    envs: ['env1', 'env2', 'env3'].map(testMakeEnv),
+    apps: features.existingApps ?? defaultApps,
+    envs: features.existingEnvs ?? defaultEnvs,
     substitutions: [
       {
         id: 'namespace',
@@ -105,18 +117,24 @@ export function testMagazineMakeFixtures(
   };
 
   if (features.hasFavoritesEnvs) {
-    testFixtures = { ...testFixtures, favoriteEnvs: ['env1'] };
+    testFixtures = {
+      ...testFixtures,
+      favoriteEnvs: ['env1'].map(getEnvIdByTitle),
+    };
   }
   if (features.hasFavoritesApps) {
-    testFixtures = { ...testFixtures, favoriteApps: ['app1'] };
+    testFixtures = {
+      ...testFixtures,
+      favoriteApps: ['app1'].map(getAppIdByTitle),
+    };
   }
   if (features.hasRecentJumps) {
     testFixtures = {
       ...testFixtures,
       recentJumps: [
         {
-          app: 'app1',
-          env: 'env1',
+          app: getAppIdByTitle('app1'),
+          env: getEnvIdByTitle('env1'),
           url: 'https://env1.mycompany.com:8250/login',
         },
       ],

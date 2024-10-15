@@ -1,0 +1,37 @@
+.eh-quick-bar {
+  @apply menu-horizontal menu-xs;
+}
+
+:where(.eh-quick-bar li) {
+  @apply relative flex shrink-0 flex-col flex-wrap items-stretch;
+}
+
+:where(
+    .eh-quick-bar
+      li:not(.menu-title, .disabled)
+      > *:not(ul, details, .menu-title)
+  ),
+:where(
+    .eh-quick-bar
+      li:not(.menu-title, .disabled)
+      > details
+      > summary:not(.menu-title)
+  ) {
+  &:not(summary, .active, .btn).focus,
+  &:not(summary, .active, .btn):focus,
+  &:is(summary):not(.active, .btn):focus-visible {
+    @apply bg-base-content/10 text-base-content cursor-pointer outline-none;
+  }
+  @media (hover: hover) {
+    &:not(.active, .btn):hover {
+      @apply cursor-pointer outline-none;
+      @apply bg-base-content/10;
+    }
+  }
+}
+
+.eh-quick-bar li > *:not(ul, .menu-title, details, .btn):active,
+.eh-quick-bar li > *:not(ul, .menu-title, details, .btn).active,
+.eh-quick-bar li > details > summary:active {
+  @apply bg-neutral-content text-neutral [@media(hover:hover)]:bg-neutral-content [@media(hover:hover)]:text-neutral;
+}

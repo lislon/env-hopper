@@ -16,16 +16,22 @@ export function FavoriteButton({
   title,
 }: StarIconProps) {
   return (
-    <button onClick={onClick} title={title}>
+    <button
+      onClick={(e) => onClick?.(e)}
+      title={title}
+      className={cn(
+        'hover:cursor-pointer hover:drop-shadow-[0_0_5px_rgba(250,204,21,0.9)] ',
+      )}
+    >
       <StarOutlineIcon
-        fill="none"
         className={cn(
-          'w-4 hover:cursor-pointer hover:drop-shadow-[0_0_5px_rgba(250,204,21,0.9)] stroke-yellow-400 ',
+          'w-4',
           isSelected
             ? 'fill-yellow-400 stoke-yellow-400 opacity-100'
-            : 'hover:stoke-yellow-400 opacity-30 hover:opacity-100',
+            : 'hover:stoke-yellow-400 opacity-60 dark:opacity-30 hover:opacity-100 stroke-base-content/30 ',
           className,
         )}
+        fill="none"
       />
     </button>
   );

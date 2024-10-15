@@ -2,21 +2,17 @@ import React from 'react';
 import { EnvList } from './EnvList';
 import { AppList } from './AppList';
 import { SubstitutionList } from './SubstitutionList';
-import { EnvFavoriteBar } from './FavoriteBar/EnvFavoriteBar';
-import { AppFavoriteBar } from './FavoriteBar/AppFavoriteBar';
+import { EnvQuickBar } from './QuickBar/EnvQuickBar';
+import { AppQuickBar } from './QuickBar/AppQuickBar';
 
 export function MainForm() {
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-      }}
-    >
+    <div>
       <div className="flex flex-col gap-3">
         <EnvList />
-        <EnvFavoriteBar />
+        <EnvQuickBar />
         <AppList />
-        <AppFavoriteBar />
+        <AppQuickBar />
         <SubstitutionList />
       </div>
       <input
@@ -24,6 +20,6 @@ export function MainForm() {
         value="Mock button for autocomplete"
         className="hidden"
       />
-    </form>
+    </div>
   );
 }

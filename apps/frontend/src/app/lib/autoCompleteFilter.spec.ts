@@ -122,4 +122,9 @@ describe('env search a bit fuzzy', () => {
     given(['env-001', 'env-1']);
     expectSearchResults('1', ['env-1', 'env-001']);
   });
+
+  it('ru keyboard layout is working too', () => {
+    given(['env-001']);
+    expectSearchResults('утм', ['env-001']);
+  });
 });

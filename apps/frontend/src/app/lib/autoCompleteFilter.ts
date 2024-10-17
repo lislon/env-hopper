@@ -1,6 +1,7 @@
 import { EhAutoCompleteFilter } from '../ui/AutoComplete/EhAutoComplete';
 import { sortBy } from 'lodash';
 import { Item } from '../ui/AutoComplete/common';
+import { fixRuLayout, isRuLayout } from './fixLayout';
 
 function tokenize(text: string): string[] {
   const camelCaseSecondaryWords = [...text.matchAll(/(?<=[a-z])[A-Z]\w+/g)].map(
@@ -30,7 +31,7 @@ export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
     };
   });
 
-  return (searchPatternOrig: string) => {
+  function doSearch(searchPatternOrig: string) {
     const searchPattern = searchPatternOrig.toLowerCase();
     const results = new Set<Item>();
 
@@ -51,26 +52,28 @@ export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
     // token prefix
     const searchTokens = tokenize(searchPattern);
 
-    const prefixedInTokens = itemsIndex.filter((item) => {
-      const isFound = searchTokens.reduce<string[] | false>(
-        (itemTokens, searchToken) => {
-          if (itemTokens !== false) {
-            for (let i = 0; i < itemTokens.length; i++) {
-              if (itemTokens[i].startsWith(searchToken)) {
-                return itemTokens.slice(i + 1);
+    if (searchTokens.length > 0) {
+      const prefixedInTokens = itemsIndex.filter((item) => {
+        const isFound = searchTokens.reduce<string[] | false>(
+          (itemTokens, searchToken) => {
+            if (itemTokens !== false) {
+              for (let i = 0; i < itemTokens.length; i++) {
+                if (itemTokens[i].startsWith(searchToken)) {
+                  return itemTokens.slice(i + 1);
+                }
               }
             }
-          }
-          return false;
-        },
-        item.tokens,
-      );
-      return isFound !== false;
-    });
+            return false;
+          },
+          item.tokens,
+        );
+        return isFound !== false;
+      });
 
-    sortBy(prefixedInTokens, (x) => x.title.length).forEach((x) =>
-      results.add(x.item),
-    );
+      sortBy(prefixedInTokens, (x) => x.title.length).forEach((x) =>
+        results.add(x.item),
+      );
+    }
 
     // substring match (case sensitive)
     const exactSubstring = sortBy(
@@ -91,5 +94,13 @@ export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
       .forEach((x) => results.add(x.item));
 
     return [...results];
+  }
+
+  return (searchPatternOrig: string) => {
+    let results = doSearch(searchPatternOrig);
+    if (results.length === 0 && isRuLayout(searchPatternOrig)) {
+      results = doSearch(fixRuLayout(searchPatternOrig));
+    }
+    return results;
   };
 }

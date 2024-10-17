@@ -13,14 +13,26 @@ const compat = new FlatCompat({
     allConfig: js.configs.all
 });
 
+const GLOB_INCLUDE = ['**/*.{js,ts,tsx}']
+
+const GLOB_EXCLUDE = [
+  '**/.nx/**',
+  '**/build/**',
+  '**/coverage/**',
+  '**/dev-dist/**',
+  '**/snap/**'
+]
+
+
 export default [{
-    ignores: ["**/*", "**/node_modules"],
+    name: 'env-hopper/ignores',
+    ignores: GLOB_EXCLUDE,
 }, {
     plugins: {
         "@nx": nx,
     },
 }, {
-    files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    files: GLOB_INCLUDE,
 
     rules: {
         "@nx/enforce-module-boundaries": ["error", {

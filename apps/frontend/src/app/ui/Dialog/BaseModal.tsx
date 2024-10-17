@@ -8,7 +8,6 @@ export interface BaseDialogProps extends ModalController {
 }
 
 export const BaseModal: FC<BaseDialogProps> = ({
-  close,
   setOpener,
   className,
   children,

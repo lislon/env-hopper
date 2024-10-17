@@ -97,7 +97,6 @@ export async function testToggleFavorite(user: UserType, title: string) {
 export async function testFillEnvAndAppKeyboardOnly(
   user: UserType,
   envName: string,
-  appName: string,
 ) {
   await user.keyboard(envName);
   await user.keyboard('{Enter}');

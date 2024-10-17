@@ -1,6 +1,29 @@
 import { makeAutoCompleteFilter } from './autoCompleteFilter';
 import { Item } from '../ui/AutoComplete/common';
 
+const randomEnvironmentNames = [
+  'uat-0916',
+  'Prod-02a',
+  'Pipeline-delta11',
+  'BUILD-08',
+  'Dev-107',
+  'staging-envc',
+  'Backup-gammae',
+  'Infra-temporale',
+  'STAGING-BETAB',
+  'Backup-21',
+  'Sig-betac',
+  'Prod-production14',
+  'Staging-deployb',
+  'BACKUP-TEMPORAL',
+  'acc-2198',
+  'node-productiona',
+  'shared-21',
+  'Sig-deploy',
+  'SIG-01',
+  'uat-temporal',
+];
+
 describe('env search a bit fuzzy', () => {
   let db: Item[] = [];
 
@@ -24,7 +47,7 @@ describe('env search a bit fuzzy', () => {
 
   it('case 2', () => {
     given(['x abcdev', 'abc-dev']);
-    expectSearchResults('abcdev', ['x abcdev']);
+    expectSearchResults('abcdev', ['x abcdev', 'abc-dev']);
   });
 
   it('case 3', () => {
@@ -46,19 +69,48 @@ describe('env search a bit fuzzy', () => {
     ]);
   });
 
+  it('user can find split text without splitters', () => {
+    given(['Abc-Rev']);
+    expectSearchResults('Abcrev', ['Abc-Rev']);
+  });
+
+  it('case 6', () => {
+    given(randomEnvironmentNames);
+    expectSearchResults('pro14', ['Prod-production14']);
+  });
+
+  it('case 7', () => {
+    given(randomEnvironmentNames);
+    expectSearchResults('B', [
+      'BUILD-08',
+      'Backup-21',
+      'Backup-gammae',
+      'BACKUP-TEMPORAL',
+      'Sig-betac',
+      'STAGING-BETAB',
+      'Staging-deployb',
+    ]);
+  });
+
   it('Case insensitive', () => {
     given(['Abc Review', 'AbcRev']);
-    expectSearchResults('Rev', ['Abc Review', 'AbcRev']);
+    expectSearchResults('Rev', ['AbcRev', 'Abc Review']);
+  });
+
+  it('prefix is priority', () => {
+    given(['EPIC-ENV-A64', 'A64-ENV-01']);
+    expectSearchResults('a64', ['A64-ENV-01', 'EPIC-ENV-A64']);
+  });
+
+  // TODO: treat  numeric/letter boundaries with different priorities compared with separators like '-'
+  it.skip('should respect delimiter', () => {
+    given(['g32pe-01', 'g32-dev-01']);
+    expectSearchResults('g32', ['g32-dev-01', 'g32pe-01']);
   });
 
   it('fuzzy will not match inverted', () => {
     given(['env-33']);
     expectSearchResults('33-env', []);
-  });
-
-  it('favorite should come first', () => {
-    given(['o1', 'o2-favorite', 'o3-favorite', 'o4']);
-    expectSearchResults('o', ['o2-favorite', 'o3-favorite', 'o1', 'o4']);
   });
 
   it('Upper case is a word separator', () => {
@@ -68,6 +120,6 @@ describe('env search a bit fuzzy', () => {
 
   it('Leading zeros can be omitted', () => {
     given(['env-001', 'env-1']);
-    expectSearchResults('1', ['env-001', 'env-1']);
+    expectSearchResults('1', ['env-1', 'env-001']);
   });
 });

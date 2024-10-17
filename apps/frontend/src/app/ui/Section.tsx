@@ -6,7 +6,7 @@ export interface SectionProps {
   id: string;
 }
 
-export function Section({ children, title, id }: SectionProps) {
+export function Section({ children, title }: SectionProps) {
   return (
     <>
       <li className={'menu-title'}>{title}</li>

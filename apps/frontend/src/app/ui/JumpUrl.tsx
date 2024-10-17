@@ -21,7 +21,6 @@ export function JumpUrl({
   substitution,
   className,
   isMain,
-  prefetch,
 }: JumpUrlParams) {
   const { recordJump } = useEhContext();
 

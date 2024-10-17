@@ -23,11 +23,9 @@ export interface InternalCommonBarProps<ID extends string | number> {
 function BarHeaderWithIcon({
   favoriteOrRecent,
   comboboxType,
-  className,
 }: {
   comboboxType: ComboBoxType;
   favoriteOrRecent: FavoriteOrRecent;
-  className?: string;
 }) {
   return (
     <li

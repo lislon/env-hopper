@@ -7,7 +7,7 @@ import {
   mapToItemWithSection,
 } from './section-splitting';
 import { ItemsSections } from './ItemsSections';
-import { first, sortBy } from 'lodash';
+import { first, keyBy, sortBy, uniq } from 'lodash';
 import cn from 'classnames';
 
 export type EhAutoCompleteFilter = (
@@ -47,6 +47,13 @@ export function EhAutoComplete(props: AutoCompleteProps) {
   const initialItemsWithSections = useMemo(() => {
     return getInitialItems(props.itemsAll);
   }, [props.itemsAll]);
+  const sectionItemById = useMemo(() => {
+    return keyBy(
+      initialItemsWithSections.filter((i) => i.section === 'all'),
+      'id',
+    );
+  }, [initialItemsWithSections]);
+
   const [itemsWithSections, setItemsWithSections] = useState(
     () => initialItemsWithSections,
   );
@@ -74,18 +81,17 @@ export function EhAutoComplete(props: AutoCompleteProps) {
     selectedItem,
     inputValue,
   } = useCombobox<ItemWithSection>({
-    onInputValueChange({ inputValue, isOpen, type }) {
+    onInputValueChange({ inputValue, isOpen }) {
       const userUsesFilter = inputValue !== '';
       if (isOpen) {
         if (userUsesFilter) {
-          const matchedIds = new Set(
+          // const matchedIds = new Set(
+          //   props.filter(inputValue, props.itemsAll).map((i) => i.id),
+          // );
+          const matchedIds = uniq(
             props.filter(inputValue, props.itemsAll).map((i) => i.id),
           );
-          setItemsWithSections(
-            initialItemsWithSections.filter(
-              (i) => matchedIds.has(i.id) && i.section === 'all',
-            ),
-          );
+          setItemsWithSections(matchedIds.map((id) => sectionItemById[id]));
         } else {
           // show all
           setItemsWithSections(initialItemsWithSections);

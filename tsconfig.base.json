@@ -22,7 +22,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@env-hopper/types": ["apps/types/src/index.ts"]
+      "@env-hopper/types": ["apps/types/src/index.ts"],
+      "@root": [""]
     }
   },
   "exclude": ["node_modules", "tmp"]

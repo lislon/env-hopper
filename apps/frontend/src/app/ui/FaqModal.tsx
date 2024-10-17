@@ -17,7 +17,7 @@ export interface SlideShared {
   appWithFeatures: EhApp | undefined;
 }
 
-function Slide1(props: SlideShared) {
+function Slide1() {
   return (
     <>
       <h3>What is for?</h3>
@@ -103,7 +103,6 @@ function Slide3({
   sampleApp,
   sampleEnv,
   sharableUrl,
-  url,
 }: SlideShared) {
   return (
     <>
@@ -215,10 +214,10 @@ export function FaqModal(props: BaseDialogProps) {
               const customizationTyped =
                 customization as unknown as EhCustomization;
               const slides = [
-                <Slide1 {...slideProps} />,
+                <Slide1 />,
                 <Slide2 {...slideProps} />,
                 <Slide3 {...slideProps} />,
-                ...(customizationTyped?.slidesHtml?.map((html, index) => (
+                ...(customizationTyped?.slidesHtml?.map((html) => (
                   <SlideRawHtml html={html} />
                 )) || []),
               ].filter(Boolean);

@@ -1,12 +1,21 @@
 import { useEhContext } from '../../context/EhContext';
 import React, { useMemo } from 'react';
-import { EhAppId } from '@env-hopper/types';
-import { BarElement, InternalCommonBar } from './InternalCommonBar';
+import { EhApp, EhAppId } from '@env-hopper/types';
+import {
+  BarElement,
+  InternalCommonBar,
+  QuickBarSharedProps,
+} from './InternalCommonBar';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
 import { uniq } from 'lodash';
 import { getEhUrl } from '../../lib/utils';
+import cn from 'classnames';
 
-export function AppQuickBar() {
+function getTitle(appById: EhApp) {
+  return appById.title || '';
+}
+
+export function AppQuickBar(props: QuickBarSharedProps) {
   const {
     listFavoriteApps,
     setApp,
@@ -18,12 +27,13 @@ export function AppQuickBar() {
   } = useEhContext();
 
   const favorites = useMemo<BarElement<string>[]>(() => {
-    return listFavoriteApps.map((appId) => {
-      return {
-        id: appId,
-        title: getAppById(appId)?.title || '',
-      };
-    });
+    return listFavoriteApps
+      .map((appId) => getAppById(appId))
+      .filter((app) => app !== undefined)
+      .map((app) => ({
+        id: app.id,
+        title: getTitle(app),
+      }));
   }, [listFavoriteApps, getAppById]);
 
   const recent = useMemo<BarElement<string>[]>(() => {
@@ -40,11 +50,13 @@ export function AppQuickBar() {
   }, [recentJumps, getAppById]);
 
   const onClick = (appId: EhAppId) => {
-    setApp(getAppById(appId));
+    const appById = getAppById(appId);
+    setApp(appById);
+    // hasUnresolvedSubstitution()
   };
 
   return (
-    <>
+    <div className={cn(props.className)}>
       <InternalCommonBar
         activeId={app?.id}
         list={recent}
@@ -61,6 +73,6 @@ export function AppQuickBar() {
         favoriteOrRecent={'favorite'}
         getEhLink={(id) => getEhUrl(env?.id, id, substitution?.value)}
       />
-    </>
+    </div>
   );
 }

@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { useEhContext } from '../context/EhContext';
 import { EhAutoComplete } from './AutoComplete/EhAutoComplete';
-import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
+import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter';
 import { EhEnv, EhEnvId } from '@env-hopper/types';
 import { Item } from './AutoComplete/common';
 import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
@@ -25,9 +25,10 @@ function mapToAutoCompleteItem(
 
 export interface EnvListProps {
   onOpenChange?: (isOpen: boolean) => void;
+  className?: string;
 }
 
-export function EnvList({ onOpenChange }: EnvListProps) {
+export function EnvList({ onOpenChange, className }: EnvListProps) {
   const {
     app,
     substitution,
@@ -85,6 +86,7 @@ export function EnvList({ onOpenChange }: EnvListProps) {
         ) : undefined
       }
       getEhUrl={(id) => getEhUrl(id, app?.id, substitution?.value)}
+      className={className}
     />
   );
 }

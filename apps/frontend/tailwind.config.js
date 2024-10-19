@@ -14,13 +14,13 @@ module.exports = {
       {
         light: {
           ...require('daisyui/src/theming/themes')['light'],
-          primary: 'oklch(74.88% 0.149 130.38)',
+          'primary-content': 'oklch(74.88% 0.149 130.38)',
         },
       },
       {
         dark: {
           ...require('daisyui/src/theming/themes')['dark'],
-          primary: 'oklch(34.88% 0.149 130.38)',
+          'primary-content': 'oklch(74.88% 0.149 130.38)',
         },
       },
     ],

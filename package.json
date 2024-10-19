@@ -7,6 +7,7 @@
     "backend:generate": "nx run backend:prisma-g",
     "backend:push": "nx run backend:prisma-p",
     "backend:serve": "nx run backend:serve",
+    "dev": "npm run serve",
     "format": "prettier --write . && nx run-many -t lint --fix --projects=*",
     "frontend:serve": "nx run frontend:serve",
     "lint": "nx run-many -t lint --projects=* && prettier --check .",

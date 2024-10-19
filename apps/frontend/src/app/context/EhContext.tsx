@@ -33,6 +33,7 @@ import { persistQueryClientSave } from '@tanstack/react-query-persist-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { persister } from '../persister';
 import { usePrefetch } from '../hooks/usePrefetch';
+import { FocusControllerEh, useFocusController } from '../lib/focusController';
 
 export const LOCAL_STORAGE_KEY_RECENT_JUMPS = 'recent';
 export const LOCAL_STORAGE_KEY_FAVORITE_ENVS = 'favoriteEnvs';
@@ -40,7 +41,7 @@ export const LOCAL_STORAGE_KEY_FAVORITE_APPS = 'favoriteApps';
 export const LOCAL_STORAGE_KEY_VERSION = 'version';
 export const LOCAL_STORAGE_KEY_WATCHED_TUTORIAL = 'hadWatchedTutorial';
 
-export interface EhContextProps {
+export interface EhContextProps extends FocusControllerEh {
   listEnvs: EhEnv[];
   listApps: EhApp[];
   listSubstitutions: EhSubstitutionType[];
@@ -286,16 +287,29 @@ export function EhContextProvider({
     }
   }, [app, env, prefetch, substitution]);
 
-  const value = useMemo<EhContextProps>(() => {
-    const substitutionName = findSubstitutionIdByUrl({
+  const substitutionName = useMemo(
+    () =>
+      findSubstitutionIdByUrl({
+        app,
+        env: config.envs?.[0],
+      }),
+    [app, config.envs],
+  );
+
+  const substitutionType = useMemo(
+    () =>
+      config.substitutions.find((s) => s.id === substitutionName || undefined),
+    [config.substitutions, substitutionName],
+  );
+
+  const { focusControllerEnv, focusControllerSub, focusControllerApp } =
+    useFocusController({
       app,
-      env: config.envs?.[0],
+      env,
+      substitutionType,
     });
 
-    const substitutionType = config.substitutions.find(
-      (s) => s.id === substitutionName || undefined,
-    );
-
+  const value = useMemo<EhContextProps>(() => {
     const firstApp = app
       ? app
       : config.apps.length > 0
@@ -411,6 +425,9 @@ export function EhContextProvider({
       recentJumps,
       hadWatchedInitialTutorial,
       setHadWatchedInitialTutorial,
+      focusControllerEnv,
+      focusControllerApp,
+      focusControllerSub,
     };
   }, [
     app,
@@ -419,6 +436,7 @@ export function EhContextProvider({
     config.apps,
     env,
     substitution,
+    substitutionType,
     listFavoriteEnvs,
     listFavoriteApps,
     recentJumps,
@@ -427,6 +445,9 @@ export function EhContextProvider({
     setFavoriteAppIds,
     hadWatchedInitialTutorial,
     setHadWatchedInitialTutorial,
+    focusControllerEnv,
+    focusControllerApp,
+    focusControllerSub,
   ]);
 
   return <EhContext.Provider value={value}>{children}</EhContext.Provider>;

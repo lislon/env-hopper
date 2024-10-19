@@ -152,7 +152,7 @@ export function EhAutoComplete(props: AutoCompleteProps) {
   });
 
   return (
-    <div className="relative">
+    <div className={cn('relative', props.className)}>
       <div className="w-full relative inline-block">
         <label className="form-control w-full" {...getLabelProps()}>
           <div className="label prose">

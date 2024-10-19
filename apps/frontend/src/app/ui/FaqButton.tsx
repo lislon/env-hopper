@@ -17,7 +17,7 @@ export function FaqButton({ onClick, catchAttention }: FaqButtonProps) {
           'fill-accent': catchAttention,
         })}
       />
-      What Does This Tool Do?
+      {catchAttention && 'What Does This Tool Do?'}
     </button>
   );
 }

@@ -7,19 +7,19 @@ import { AppQuickBar } from './QuickBar/AppQuickBar';
 
 export function MainForm() {
   return (
-    <div>
-      <div className="flex flex-col gap-3">
-        <EnvList />
-        <EnvQuickBar />
-        <AppList />
-        <AppQuickBar />
-        <SubstitutionList />
+    <>
+      <div className="flex flex-col gap-3 w-full items-center">
+        <EnvList className={'w-full'} />
+        <EnvQuickBar className={'w-full'} />
+        <AppList className={'w-full mt-8'} />
+        <AppQuickBar className={'w-full'} />
+        <SubstitutionList className={'w-full mt-8'} />
       </div>
-      <input
-        type="submit"
-        value="Mock button for autocomplete"
-        className="hidden"
-      />
-    </div>
+      {/*<input*/}
+      {/*  type="submit"*/}
+      {/*  value="Mock button for autocomplete"*/}
+      {/*  className="hidden"*/}
+      {/*/>*/}
+    </>
   );
 }

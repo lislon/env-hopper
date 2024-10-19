@@ -1,12 +1,17 @@
 import { useEhContext } from '../../context/EhContext';
 import React, { useMemo } from 'react';
 import { EhEnvId } from '@env-hopper/types';
-import { BarElement, InternalCommonBar } from './InternalCommonBar';
+import {
+  BarElement,
+  InternalCommonBar,
+  QuickBarSharedProps,
+} from './InternalCommonBar';
 import { MAX_RECENT_ENVS_IN_QUICK_ACCESS } from '../../lib/constants';
 import { getEhUrl } from '../../lib/utils';
 import { uniq } from 'lodash';
+import cn from 'classnames';
 
-export function EnvQuickBar() {
+export function EnvQuickBar(props: QuickBarSharedProps) {
   const {
     listFavoriteEnvs,
     recentJumps,
@@ -44,7 +49,7 @@ export function EnvQuickBar() {
   };
 
   return (
-    <>
+    <div className={cn(props.className)}>
       <InternalCommonBar
         activeId={env?.id}
         list={recent}
@@ -61,6 +66,6 @@ export function EnvQuickBar() {
         favoriteOrRecent={'favorite'}
         getEhLink={(id) => getEhUrl(id, app?.id, substitution?.value)}
       />
-    </>
+    </div>
   );
 }

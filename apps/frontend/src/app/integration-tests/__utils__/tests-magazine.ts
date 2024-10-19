@@ -94,7 +94,7 @@ export function testMagazineMakeFixtures(
   const defaultApps = [
     ...['app1', 'app2'].map(testMakeApp),
     {
-      ...testMakeApp('app3'),
+      ...testMakeApp('app3-sub'),
       url:
         'https://{{' +
         ENV_SUBSTITUTION_VARIABLE +

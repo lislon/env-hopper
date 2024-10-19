@@ -7,20 +7,22 @@ import { apiGetConfig } from '../api/apiGetConfig';
 import { userEvent } from '@testing-library/user-event';
 import {
   ExpandedAutocompleteState,
-  expectHasHistory,
   getOpenedAutocompleteListBox,
-  testClickJumpAndReturnBtn,
+  testClickJumpBtn,
   testFillEnv,
   testFillEnvAndApp,
-  testFillEnvAndAppKeyboardOnly,
   testGetAppComboBox,
   testGetEnvComboBox,
-  testGetJumpButton,
+  testGetJumpButtonLink,
+  testGetJumpButtonText,
+  testGetSubstitution,
   testIsQuickBarVisible,
   testListQuickBarOptions,
+  testQuickBarClick,
   testUserSelectApp,
   testUserSelectEnv,
   testUserToggleHomeFavorite,
+  testUserTypeSubstitution,
   testWaitLoading,
 } from './__utils__/ui-toolbelt';
 import {
@@ -137,7 +139,7 @@ async function givenUserNavigatedTwoAppAndEnvs(
   for (const nav of navigations) {
     const [env, app] = nav.split(/-/);
     await testFillEnvAndApp(user, env, app);
-    await testClickJumpAndReturnBtn(user);
+    await testClickJumpBtn(user);
   }
 }
 
@@ -150,16 +152,14 @@ function testGetComboboxInputEnvironment() {
 describe('Integration tests', () => {
   // jestdom issue with focus change on tab
   it.skip('Basic scenario - user can navigate to URL by keyboard - first time user', async () => {
-    const { user } = await given({
-      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.firstTimeUser),
-    });
-
+    // const { user } = await given({
+    //   testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.firstTimeUser)
+    // });
     // expect(screen.getByRole('textbox', { name: /environment/i })).havF
-    await testFillEnvAndAppKeyboardOnly(user, '1', 'App1');
-    const link = await testClickJumpAndReturnBtn(user);
-
-    expect(link.href).toEqual('https://env1.mycompany.com:8250/app1/login');
-    expectHasHistory('env1', 'app1');
+    // await testFillEnvAndAppKeyboardOnly(user, '1', 'App1');
+    // const link = await testClickJumpAndReturnBtn(user);
+    // expect(link.href).toEqual('https://env1.mycompany.com:8250/app1/login');
+    // expectHasHistory('env1', 'app1');
   });
 
   // with daisy
@@ -183,7 +183,7 @@ describe('Integration tests', () => {
     });
 
     await testFillEnvAndApp(user, '1', 'App1');
-    await testClickJumpAndReturnBtn(user);
+    await testClickJumpBtn(user);
     await user.click(testGetEnvComboBox());
 
     expect(getLogicalAutocompleteOptions().recentSection).toContain('env1');
@@ -209,14 +209,14 @@ describe('Integration tests', () => {
         TestFeatureMagazine.hasRecentAndFavorites,
       ),
     });
-    await testFillEnvAndApp(user, '1', 'App3');
+    await testFillEnvAndApp(user, '1', 'app3-sub');
 
     const substitutionValue = screen.getByRole('textbox', {
       name: /Namespace/i,
     });
     await user.type(substitutionValue, 'my-namespace');
 
-    const link = await testGetJumpButton();
+    const link = await testGetJumpButtonLink();
     expect(link.href).toEqual('https://env1.mycompany.com:8250/my-namespace');
   });
 
@@ -414,5 +414,58 @@ describe('Integration tests', () => {
       const recent = testListQuickBarOptions('environments', 'recent');
       expect(recent).toEqual(['env6', 'env5', 'env4', 'env3', 'env2']);
     });
+  });
+
+  it('after quick selection of app with substitution, should move focus to it and preselect text', async () => {
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(
+        TestFeatureMagazine.hasRecentAndFavorites,
+      ),
+    });
+    await testUserSelectEnv(user, 'env1');
+    await testUserSelectApp(user, 'app3-sub');
+    const substitution = screen.getByRole('textbox', { name: /Namespace/i });
+    expect(document.activeElement).toEqual(substitution);
+  });
+
+  it('should focus substitution text on quick link focus', async () => {
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(
+        TestFeatureMagazine.hasRecentAndFavorites,
+      ),
+    });
+    await testUserSelectEnv(user, 'env1');
+    await testUserSelectApp(user, 'app3-sub');
+    await testUserTypeSubstitution(user, 'namespace1');
+    await testClickJumpBtn(user);
+    await testUserSelectApp(user, 'app1');
+    await testQuickBarClick(user, 'applications', 'recent', 'app3-sub');
+
+    const substitution = testGetSubstitution();
+    expect(document.activeElement).toEqual(substitution);
+    expect(substitution.value).toBe('namespace1');
+    expect(substitution.selectionEnd).toBeGreaterThan(0);
+  });
+
+  it('should show hint on how substitution works', async () => {
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(
+        TestFeatureMagazine.hasRecentAndFavorites,
+      ),
+    });
+    await testUserSelectEnv(user, 'env1');
+    await testUserSelectApp(user, 'app3-sub');
+
+    const substitution = await testGetJumpButtonText();
+    expect(substitution.children[0].tagName).toBe('PRE');
+    expect(substitution.children[0].innerHTML.split('\n'))
+      .toMatchInlineSnapshot(`
+      [
+        "https://env1.mycompany.com:8250/{{namespace}}",
+        "                                  ^^^^^^^^^  ",
+        "",
+        "Select Namespace",
+      ]
+    `);
   });
 });

@@ -15,7 +15,15 @@ export function Header() {
       </div>
       <div className="place-content-center mx-4">
         <div>Env hopper</div>
-        <div className="text-xs text-gray-500">v{APP_VERSION}</div>
+        <div className="text-xs text-gray-500">
+          <Link
+            className={'hover:underline'}
+            title={'View release on GitHub'}
+            to={`https://github.com/lislon/env-hopper/releases/${APP_VERSION.includes('.') ? `tag/v${APP_VERSION}` : ''}`}
+          >
+            v{APP_VERSION}
+          </Link>
+        </div>
       </div>
     </header>
   );

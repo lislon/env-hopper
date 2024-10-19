@@ -6,6 +6,10 @@ import cn from 'classnames';
 import { ComboBoxType, FavoriteOrRecent } from '../../types';
 import { Link } from 'react-router-dom';
 
+export interface QuickBarSharedProps {
+  className?: string;
+}
+
 export type BarElement<ID extends string | number> = {
   id: ID;
   title: string;
@@ -70,7 +74,7 @@ export function InternalCommonBar<ID extends string | number>({
         comboboxType={comboboxType}
         favoriteOrRecent={favoriteOrRecent}
       />
-      <ul className="eh-quick-bar p-0 relative">
+      <ul className="eh-quick-bar p-0 relative flex-wrap">
         {list.map((element) => {
           const isActive = element.id === activeId;
           return (

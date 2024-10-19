@@ -1,6 +1,6 @@
 import { useEhContext } from '../context/EhContext';
 import { Section } from './Section';
-import { JumpMiniButton } from './JumpMiniButton';
+import { JumpMiniButton } from './JumpButton/JumpMiniButton';
 
 export function RecentJumps() {
   const {

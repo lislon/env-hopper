@@ -8,7 +8,7 @@ import { Item } from './AutoComplete/common';
 import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../lib/constants';
 import { HomeFavoriteButton } from './HomeFavoriteButton';
-import { getEhUrl } from '../lib/utils';
+import { formatAppTitle, getEhUrl } from '../lib/utils';
 
 function mapToAutoCompleteItemApp(
   app: EhApp,
@@ -17,7 +17,7 @@ function mapToAutoCompleteItemApp(
 ): Item {
   return {
     id: app.id,
-    title: app.title,
+    title: formatAppTitle(app),
     favorite: favorites.has(app.id),
     recent: recents.has(app.id),
   };
@@ -80,7 +80,7 @@ export function AppList({ onOpenChange, className }: AppListProps) {
           <HomeFavoriteButton
             isFavorite={isFavorite}
             onClick={() => toggleFavoriteApp(app.id, !isFavorite)}
-            title={`${isFavorite ? `Remove ${app.title} from` : `Add ${app.title} to`} favorites`}
+            title={`${isFavorite ? `Remove ${formatAppTitle(app)} from` : `Add ${formatAppTitle(app)} to`} favorites`}
           />
         ) : undefined
       }

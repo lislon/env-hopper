@@ -1,6 +1,6 @@
 import { useEhContext } from '../../context/EhContext';
 import React, { useMemo } from 'react';
-import { EhApp, EhAppId } from '@env-hopper/types';
+import { EhAppId } from '@env-hopper/types';
 import {
   BarElement,
   InternalCommonBar,
@@ -8,12 +8,8 @@ import {
 } from './InternalCommonBar';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
 import { uniq } from 'lodash';
-import { getEhUrl } from '../../lib/utils';
+import { formatAppTitle, getEhUrl } from '../../lib/utils';
 import cn from 'classnames';
-
-function getTitle(appById: EhApp) {
-  return appById.title || '';
-}
 
 export function AppQuickBar(props: QuickBarSharedProps) {
   const {
@@ -32,7 +28,7 @@ export function AppQuickBar(props: QuickBarSharedProps) {
       .filter((app) => app !== undefined)
       .map((app) => ({
         id: app.id,
-        title: getTitle(app),
+        title: formatAppTitle(app),
       }));
   }, [listFavoriteApps, getAppById]);
 
@@ -44,7 +40,7 @@ export function AppQuickBar(props: QuickBarSharedProps) {
       .map((id) => {
         return {
           id: id,
-          title: getAppById(id)?.title || '',
+          title: formatAppTitle(getAppById(id)),
         };
       });
   }, [recentJumps, getAppById]);

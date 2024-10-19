@@ -6,7 +6,6 @@ import {
 } from '../backend-types';
 import { EhApp, EhEnv, EhSubstitutionType } from '@env-hopper/types';
 import { omit } from 'lodash';
-import { formatAppTitle } from '../utils';
 
 export type Jsonify<T, K extends keyof T> = {
   [P in keyof T]: P extends K ? string : T[P];
@@ -77,13 +76,17 @@ export class DbReaderMapper {
 
 export class UiReaderMapper {
   public static ehApp(app: EhAppBackend): EhApp[] {
-    return app.pages.flatMap((page) => ({
-      id: app.id + '/' + page.id,
-      appTitle: app.title,
-      title: formatAppTitle(app, page, app.pages.length === 1 ? '' : page.id),
-      aliases: app.aliases,
-      url: page.url,
-      meta: app.meta,
-    }));
+    return app.pages.flatMap((page) => {
+      const needlePage = app.pages.length === 1 ? '' : page.id;
+      return {
+        id: app.id + '/' + page.id,
+        appTitle: app.title,
+        pageTitle: app.pages.find((p) => p.id === needlePage)?.title,
+        abbr: app.abbr,
+        aliases: app.aliases,
+        url: page.url,
+        meta: app.meta,
+      };
+    });
   }
 }

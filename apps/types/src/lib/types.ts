@@ -4,7 +4,9 @@ export interface EhEnv {
 }
 export interface EhApp {
   id: EhAppId;
-  title: string;
+  appTitle: string;
+  pageTitle?: string;
+  abbr?: string;
   aliases: string[];
   url: string;
   meta: EhAppMeta;

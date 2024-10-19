@@ -1,6 +1,6 @@
 import { useEhContext } from '../../context/EhContext';
 
-import { getJumpUrl } from '../../lib/utils';
+import { formatAppTitle, getJumpUrl } from '../../lib/utils';
 import { JumpALink } from './JumpALink';
 import { AppWidgetsPanel } from '../Widget/AppWidgetsPanel';
 import { MainJumpButtonNotReady } from './MainJumpButtonNotReady';
@@ -37,7 +37,7 @@ export function JumpMainButton() {
             data-testid={'jump-main-button-text'}
           >
             <div>
-              <code>{app?.title}</code>
+              <code>{formatAppTitle(app)}</code>
             </div>
             <div>
               <code>{env?.id}</code>

@@ -21,6 +21,7 @@ import {
   cutApp,
   cutDomain,
   findSubstitutionIdByUrl,
+  formatAppTitle,
   getAppIdByTitle,
   getEhUrl,
   getJumpUrl,
@@ -269,9 +270,9 @@ export function EhContextProvider({
 
   useEffect(() => {
     if (app && env) {
-      document.title = `${env.id} - ${app.title} - Env Hopper`;
+      document.title = `${env.id} - ${formatAppTitle(app)} - Env Hopper`;
     } else if (app) {
-      document.title = `${app.title} - Env Hopper`;
+      document.title = `${formatAppTitle(app)} - Env Hopper`;
     } else if (env) {
       document.title = `${env.id} - Env Hopper`;
     } else {
@@ -287,13 +288,14 @@ export function EhContextProvider({
     }
   }, [app, env, prefetch, substitution]);
 
+  const listEnvs = config.envs;
   const substitutionName = useMemo(
     () =>
       findSubstitutionIdByUrl({
         app,
-        env: config.envs?.[0],
+        env: listEnvs?.[0],
       }),
-    [app, config.envs],
+    [app, listEnvs],
   );
 
   const substitutionType = useMemo(
@@ -309,17 +311,11 @@ export function EhContextProvider({
       substitutionType,
     });
 
+  const listApps = config.apps;
+
   const value = useMemo<EhContextProps>(() => {
-    const firstApp = app
-      ? app
-      : config.apps.length > 0
-        ? config.apps[0]
-        : undefined;
-    const firstEnv = env
-      ? env
-      : config.envs.length > 0
-        ? config.envs[0]
-        : undefined;
+    const firstApp = app ? app : listApps.length > 0 ? listApps[0] : undefined;
+    const firstEnv = env ? env : listEnvs.length > 0 ? listEnvs[0] : undefined;
     const incompleteUrl =
       firstApp &&
       getJumpUrlEvenNotComplete({
@@ -327,6 +323,7 @@ export function EhContextProvider({
         env: firstEnv,
         substitution: substitution,
       });
+
     const domainPart = cutDomain(incompleteUrl || 'https://no-env');
     const appPart = cutApp(incompleteUrl || 'https://no-env/no-app');
 
@@ -361,16 +358,16 @@ export function EhContextProvider({
       setApp,
       app,
       substitutionType,
-      listEnvs: config.envs,
-      listApps: config.apps,
+      listEnvs: listEnvs,
+      listApps: listApps,
       listSubstitutions: config.substitutions,
       substitution,
       setSubstitution,
       getAppById(id: EhAppId): EhApp | undefined {
-        return getAppById(id, config.apps);
+        return getAppById(id, listApps);
       },
       getEnvById(id: EhEnvId): EhEnv | undefined {
-        return getEnvById(id, config.envs);
+        return getEnvById(id, listEnvs);
       },
       recordJump,
       toggleFavoriteEnv(envId, isOn) {
@@ -391,8 +388,8 @@ export function EhContextProvider({
       },
       getSubstitutionValueById(envId, appId, substitution) {
         const substitutionIdByUrl = findSubstitutionIdByUrl({
-          env: getEnvById(envId, config.envs),
-          app: getAppById(appId, config.apps),
+          env: getEnvById(envId, listEnvs),
+          app: getAppById(appId, listApps),
         });
         if (substitutionIdByUrl !== undefined && substitution !== undefined) {
           return {
@@ -431,9 +428,9 @@ export function EhContextProvider({
     };
   }, [
     app,
-    config.envs,
+    listEnvs,
     config.substitutions,
-    config.apps,
+    listApps,
     env,
     substitution,
     substitutionType,

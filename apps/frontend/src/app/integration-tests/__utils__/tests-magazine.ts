@@ -77,7 +77,9 @@ export function testMakeEnv(name: string): EhEnv {
 export function testMakeApp(id: string): EhApp {
   return {
     id: getAppIdByTitle(`${id}`),
-    title: id,
+    appTitle: id,
+    pageTitle: undefined,
+    abbr: undefined,
     aliases: [],
     url:
       'https://{{' +

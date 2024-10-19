@@ -1,5 +1,5 @@
 import { makeAutoCompleteFilter } from './autoCompleteFilter';
-import { Item } from '../ui/AutoComplete/common';
+import { Item } from '../../ui/AutoComplete/common';
 
 const randomEnvironmentNames = [
   'uat-0916',
@@ -126,5 +126,10 @@ describe('env search a bit fuzzy', () => {
   it('ru keyboard layout is working too', () => {
     given(['env-001']);
     expectSearchResults('утм', ['env-001']);
+  });
+
+  it('special symbols will be working if they are standalone', () => {
+    given(['a order', 'b order #', 'c order']);
+    expectSearchResults('order #', ['b order #']);
   });
 });

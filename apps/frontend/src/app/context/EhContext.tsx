@@ -27,7 +27,7 @@ import {
   getJumpUrlEvenNotComplete,
 } from '../lib/utils';
 import { Params, useNavigate, useParams } from 'react-router-dom';
-import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
+import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter';
 import { Item } from '../ui/AutoComplete/common';
 import { persistQueryClientSave } from '@tanstack/react-query-persist-client';
 import { useQueryClient } from '@tanstack/react-query';

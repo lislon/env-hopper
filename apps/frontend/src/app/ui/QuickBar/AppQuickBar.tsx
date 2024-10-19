@@ -51,8 +51,7 @@ export function AppQuickBar(props: QuickBarSharedProps) {
 
   const onClick = (appId: EhAppId) => {
     const appById = getAppById(appId);
-    setApp(appById);
-    // hasUnresolvedSubstitution()
+    setApp(app?.id !== appId ? appById : undefined);
   };
 
   return (

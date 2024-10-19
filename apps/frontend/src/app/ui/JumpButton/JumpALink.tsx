@@ -8,6 +8,7 @@ export interface JumpUrlParams {
   children: ReactNode;
   app?: EhApp;
   env?: EhEnv;
+  id?: string;
   substitution?: EhSubstitutionValue;
   className?: string;
   isMain?: boolean;
@@ -18,6 +19,7 @@ export interface JumpUrlParams {
 export function JumpALink({
   children,
   app,
+  id,
   env,
   substitution,
   className,
@@ -43,6 +45,7 @@ export function JumpALink({
   }
   return (
     <a
+      id={id}
       data-testid={testId}
       href={jumpUrl}
       onClick={onClick}

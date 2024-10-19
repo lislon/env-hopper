@@ -5,6 +5,8 @@ import { JumpALink } from './JumpALink';
 import { AppWidgetsPanel } from '../Widget/AppWidgetsPanel';
 import { MainJumpButtonNotReady } from './MainJumpButtonNotReady';
 
+export const JUMP_MAIN_BTN_ID = 'jump-main-button';
+
 export function JumpMainButton() {
   const { app, env, substitution } = useEhContext();
 
@@ -13,6 +15,7 @@ export function JumpMainButton() {
     return (
       <div className="relative flex justify-center">
         <JumpALink
+          id={JUMP_MAIN_BTN_ID}
           testId={'jump-main-button'}
           app={app}
           env={env}

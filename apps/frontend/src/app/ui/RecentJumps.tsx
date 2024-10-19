@@ -1,5 +1,4 @@
 import { useEhContext } from '../context/EhContext';
-import { Section } from './Section';
 import { JumpMiniButton } from './JumpButton/JumpMiniButton';
 
 export function RecentJumps() {
@@ -14,9 +13,10 @@ export function RecentJumps() {
   } = useEhContext();
 
   return (
-    <div>
-      <Section title="🕒 Last jumps" id="recent-jumps">
-        <table className="w-full table-auto">
+    <div className={'prose'}>
+      <h4>History</h4>
+      <div>
+        <table className="table">
           <thead>
             <tr className="text-left">
               <th scope="col" className="px-2">
@@ -32,25 +32,29 @@ export function RecentJumps() {
             </tr>
           </thead>
           <tbody>
-            {recentJumps.map((jump) => (
+            {recentJumps.slice(0, 10).map((jump) => (
               <tr
                 key={`${jump.app}-${jump.env}-${jump.substitution || ''}`}
-                className="hover:bg-gray-100 dark:hover:bg-gray-900"
+                className="hover"
               >
                 <td
-                  className="px-2 py-2 cursor-pointer hover:underline"
-                  onClick={() => setEnv(getEnvById(jump.env))}
+                  className="link no-underline hover:underline"
+                  onClick={() => {
+                    setEnv(getEnvById(jump.env));
+                  }}
                 >
                   {jump.env}
                 </td>
                 <td
-                  className="px-2 py-2 cursor-pointer hover:underline"
-                  onClick={() => setApp(getAppById(jump.app))}
+                  className="link no-underline hover:underline"
+                  onClick={() => {
+                    setApp(getAppById(jump.app));
+                  }}
                 >
                   {jump.app}
                 </td>
                 <td
-                  className="px-2 py-2 cursor-pointer hover:underline"
+                  // className="px-2 py-2 cursor-pointer hover:underline"
                   onClick={() =>
                     setSubstitution(
                       getSubstitutionValueById(
@@ -78,7 +82,7 @@ export function RecentJumps() {
             ))}
           </tbody>
         </table>
-      </Section>
+      </div>
     </div>
   );
 }

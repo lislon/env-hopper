@@ -468,4 +468,18 @@ describe('Integration tests', () => {
       ]
     `);
   });
+
+  // router issue
+  it.skip('should deselect environment when user clicks on recent item', async () => {
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(
+        TestFeatureMagazine.hasRecentAndFavorites,
+      ),
+    });
+    expect(testGetEnvComboBox().value).toBe('');
+    await testQuickBarClick(user, 'environments', 'recent', 'env1');
+    expect(testGetEnvComboBox().value).toBe('env1');
+    await testQuickBarClick(user, 'environments', 'recent', 'env1');
+    expect(testGetEnvComboBox().value).toBe('');
+  });
 });

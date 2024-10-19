@@ -15,11 +15,6 @@ export function MainForm() {
         <AppQuickBar className={'w-full'} />
         <SubstitutionList className={'w-full mt-8'} />
       </div>
-      {/*<input*/}
-      {/*  type="submit"*/}
-      {/*  value="Mock button for autocomplete"*/}
-      {/*  className="hidden"*/}
-      {/*/>*/}
     </>
   );
 }

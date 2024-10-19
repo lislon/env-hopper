@@ -37,6 +37,7 @@ export interface AutoCompleteProps {
   autoFocus?: boolean;
   tailButtons?: React.ReactNode;
   getEhUrl: (id: string) => string;
+  id?: string;
 }
 
 function getInitialItems(collection: Item[]) {

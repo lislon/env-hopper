@@ -45,7 +45,8 @@ export function EnvQuickBar(props: QuickBarSharedProps) {
   }, [recentJumps]);
 
   const onClick = (envId: EhEnvId) => {
-    setEnv(getEnvById(envId));
+    const newEnv = getEnvById(envId);
+    setEnv(newEnv?.id === env?.id ? undefined : newEnv);
   };
 
   return (

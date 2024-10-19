@@ -26,7 +26,7 @@ export function JumpMainButton() {
           <div className="absolute top-0 bottom-0 right-0 flex items-center text-xl text-primary-content">
             <div
               className={
-                'mr-12 group-hover:motion-safe:scale-y-90 group-hover:motion-safe:rotate-2 origin-bottom transition-transform duration-0'
+                'mr-12 group-hover:motion-safe:-translate-x-0.5 group-hover:motion-safe:translate-y-0.5  group-hover:motion-safe:scale-y-90 group-hover:motion-safe:rotate-2 origin-bottom transition-transform motion-safe:duration-100'
               }
             >
               JUMP

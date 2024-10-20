@@ -132,3 +132,8 @@ export function formatAppTitle(app: EhApp | undefined) {
   }
   return [app.abbr, app.appTitle, app.pageTitle].filter(Boolean).join(' :: ');
 }
+
+export const seconds = (s: number) => s * 1000;
+export const minutes = (m: number) => seconds(m * 60);
+export const hours = (h: number) => minutes(h * 60);
+export const days = (d: number) => hours(d * 24);

@@ -63,6 +63,7 @@ export interface EhClientConfig {
   apps: EhApp[];
   substitutions: EhSubstitutionType[];
   appVersion: string;
+  forceRefresh?: true;
 }
 
 export interface EhCustomPartUnstable {

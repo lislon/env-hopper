@@ -40,6 +40,7 @@ import React from 'react';
 import { getRoutes } from '../routes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { apiGetCustomization } from '../api/apiGetCustomization';
+import { EhServerSyncContextProvider } from '../context/EhServerSyncContext';
 
 vi.mock('../api/apiGetConfig');
 vi.mock('../api/apiGetCustomization');
@@ -57,12 +58,13 @@ export interface GivenReturn {
 }
 
 async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
-  vi.mocked(apiGetConfig).mockResolvedValue({
+  const config = {
     envs: testFixtures.envs || [],
     apps: testFixtures.apps || [],
     substitutions: testFixtures.substitutions || [],
     appVersion: 'test',
-  });
+  };
+  vi.mocked(apiGetConfig).mockResolvedValue(config);
   vi.mocked(apiGetCustomization).mockResolvedValue({
     footerHtml: '',
     analyticsScript: '',
@@ -88,12 +90,14 @@ async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
   }
 
   const queryClient = new QueryClient();
-  const router = createMemoryRouter(getRoutes(queryClient), {
+  const router = createMemoryRouter(getRoutes(), {
     initialEntries: url ? [url] : undefined,
   });
   render(
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <EhServerSyncContextProvider config={config} error={null}>
+        <RouterProvider router={router} />
+      </EhServerSyncContextProvider>
     </QueryClientProvider>,
   );
 

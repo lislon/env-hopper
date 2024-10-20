@@ -254,7 +254,7 @@ export function EhContextProvider({
 
   const [, setVersion] = useLocalStorage<string>(LOCAL_STORAGE_KEY_VERSION, '');
   useEffect(() => {
-    setVersion(APP_VERSION);
+    setVersion(import.meta.env.VITE_APP_VERSION);
   }, [setVersion]);
 
   useEffect(() => {

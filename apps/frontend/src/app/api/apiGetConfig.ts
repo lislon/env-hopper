@@ -1,7 +1,10 @@
 import { EhClientConfig } from '@env-hopper/types';
+import { EH_COMMON_HEADERS } from './apiCommon';
 
 export async function apiGetConfig(): Promise<EhClientConfig> {
-  return fetch(`/api/config`).then(async (res) => {
+  return fetch(`/api/config`, {
+    headers: EH_COMMON_HEADERS,
+  }).then(async (res) => {
     if (res.ok) {
       return res.json();
     }

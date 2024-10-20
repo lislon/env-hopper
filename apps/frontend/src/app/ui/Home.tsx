@@ -11,7 +11,6 @@ import { FaqModal } from './FaqModal';
 import { ApiQueryMagazine } from '../api/ApiQueryMagazine';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingScreen } from './LoadingScreen';
-import { EhServerSyncContextProvider } from '../context/EhServerSyncContext';
 
 function HomeWithContext() {
   const [openFaq, faqDialog] = useModal();
@@ -47,7 +46,7 @@ function HomeWithContext() {
   );
 }
 
-function HomeWithDataFetchingStatus() {
+export function Home() {
   const q = useQuery(ApiQueryMagazine.getConfig());
   const { isSuccess, data: config, isError, error } = q;
 
@@ -69,14 +68,5 @@ function HomeWithDataFetchingStatus() {
         <HomeWithContext />
       </EhContextProvider>
     </Suspense>
-  );
-}
-
-export function Home() {
-  const { error, data: config } = useQuery(ApiQueryMagazine.getConfig());
-  return (
-    <EhServerSyncContextProvider error={error} config={config}>
-      <HomeWithDataFetchingStatus />
-    </EhServerSyncContextProvider>
   );
 }

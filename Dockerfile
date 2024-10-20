@@ -6,7 +6,7 @@ COPY package*.json /app/
 RUN npm ci --quiet
 COPY . /app/
 ARG configuration=production
-RUN NX_SKIP_NX_CACHE=true APP_VERSION=${APP_VERSION} npx nx run-many -t build -p backend frontend
+RUN NX_SKIP_NX_CACHE=true VITE_APP_VERSION=${APP_VERSION} npx nx run-many -t build -p backend frontend
 RUN mv /app/dist/apps/frontend /app/dist/apps/backend/assets
 
 FROM node:21-alpine AS express-js

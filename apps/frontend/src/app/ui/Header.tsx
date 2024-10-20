@@ -1,11 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useEhServerSync } from '../context/EhServerSyncContext';
+import cn from 'classnames';
 
-export function Header() {
-  const { error } = useEhServerSync();
+export interface HeaderProps {
+  className?: string;
+}
+export function Header({ className }: HeaderProps) {
+  const { error, needRefresh, refresh } = useEhServerSync();
+  const APP_VERSION = import.meta.env.VITE_APP_VERSION;
   return (
-    <header className="flex items-center">
+    <header className={cn('flex items-center', className)}>
       <div className="px-4 sm:my-4">
         <Link to="/" title="Home Page">
           <img
@@ -40,6 +45,11 @@ export function Header() {
         >
           degraded
         </div>
+      )}
+      {needRefresh && (
+        <button className="btn btn-outline" onClick={refresh}>
+          Update available, click to reload
+        </button>
       )}
     </header>
   );

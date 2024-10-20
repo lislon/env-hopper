@@ -1,6 +1,7 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { Header } from '../Header';
 import { ThemeContextProvider } from '../../context/ThemeContext';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 export interface LayoutProps {
   children: React.ReactNode;
@@ -22,16 +23,13 @@ export function Layout({
           {headerButtons}
         </div>
         <Header />
-        <Suspense
-          fallback={<span className="loading loading-ball loading-lg"></span>}
-        >
-          {children}
-        </Suspense>
+        {children}
         <footer className="mt-8 w-full p-4 flex justify-end items-end gap-4 flex-grow">
           {footer}
         </footer>
       </div>
       {modalsAndAnalytics}
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </ThemeContextProvider>
   );
 }

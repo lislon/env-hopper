@@ -35,9 +35,6 @@ import {
 import { Params, useNavigate, useParams } from 'react-router-dom';
 import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter';
 import { Item } from '../ui/AutoComplete/common';
-import { persistQueryClientSave } from '@tanstack/react-query-persist-client';
-import { useQueryClient } from '@tanstack/react-query';
-import { persister } from '../persister';
 import { usePrefetch } from '../hooks/usePrefetch';
 import { FocusControllerEh, useFocusController } from '../lib/focusController';
 import { MAX_HISTORY_JUMPS } from '../lib/constants';
@@ -193,6 +190,7 @@ export function EhContextProvider({
 }: {
   children: React.ReactNode;
   config: EhClientConfig;
+  error: Error | null;
 }) {
   const navigate = useNavigate();
   const params = useParams();
@@ -200,15 +198,6 @@ export function EhContextProvider({
   const [initialEnvAppSubBased] = useState(() => {
     return getPreselectedBasedOnParams(params, config);
   });
-
-  const queryClient = useQueryClient();
-  useEffect(() => {
-    persistQueryClientSave({
-      queryClient,
-      persister,
-      buster: APP_VERSION,
-    }).then();
-  }, [queryClient, config]);
 
   const [env, setEnv] = useState<EhEnv | undefined>(initialEnvAppSubBased.env);
   const [app, setApp] = useState<EhApp | undefined>(initialEnvAppSubBased.app);

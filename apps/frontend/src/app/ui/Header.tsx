@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useEhServerSync } from '../context/EhServerSyncContext';
 
 export function Header() {
+  const { error } = useEhServerSync();
   return (
-    <header className="flex">
+    <header className="flex items-center">
       <div className="px-4 sm:my-4">
         <Link to="/" title="Home Page">
           <img
@@ -31,6 +33,14 @@ export function Header() {
         {/*  <div className={"invisible 2xl:visible"}>2xl</div>*/}
         {/*</div>*/}
       </div>
+      {error && (
+        <div
+          className="badge badge-warning badge-outline text-xs cursor-defaul tooltip"
+          data-tip={'Working in offline mode: ' + error?.message}
+        >
+          degraded
+        </div>
+      )}
     </header>
   );
 }

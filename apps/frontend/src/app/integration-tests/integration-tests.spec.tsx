@@ -88,7 +88,7 @@ async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
   }
 
   const queryClient = new QueryClient();
-  const router = createMemoryRouter(getRoutes(queryClient), {
+  const router = createMemoryRouter(getRoutes(), {
     initialEntries: url ? [url] : undefined,
   });
   render(

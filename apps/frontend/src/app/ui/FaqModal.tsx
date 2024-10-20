@@ -1,7 +1,11 @@
 import { BaseDialogProps, BaseModal } from './Dialog/BaseModal';
 import { useEhContext } from '../context/EhContext';
 import { first } from 'lodash';
-import { getEhUrl, getJumpUrlEvenNotComplete } from '../lib/utils';
+import {
+  formatAppTitle,
+  getEhUrl,
+  getJumpUrlEvenNotComplete,
+} from '../lib/utils';
 import { Await, Link, useRouteLoaderData } from 'react-router-dom';
 import { EhMainLoaderData } from '../types';
 import React from 'react';
@@ -58,10 +62,10 @@ function Slide2(props: SlideShared) {
           </li>
           <li>
             Choose <strong>Application</strong>, i.e.{' '}
-            <code>{props.sampleApp.title}</code>
+            <code>{formatAppTitle(props.sampleApp)}</code>
           </li>
           <li>
-            The link will be generated to {props.sampleApp.title} on{' '}
+            The link will be generated to {formatAppTitle(props.sampleApp)} on{' '}
             {props.sampleEnv.id} environment:{' '}
             <Link
               to={props.url}
@@ -130,7 +134,7 @@ function Slide3({
               </span>{' '}
               Some apps, like{' '}
               <Link to={getEhUrl(sampleEnv?.id, appWithFeatures.id, undefined)}>
-                {appWithFeatures.title}
+                {formatAppTitle(appWithFeatures)}
               </Link>
               , also show user/password for UI well as for service database.
             </li>
@@ -142,7 +146,7 @@ function Slide3({
               </span>{' '}
               Env-hopper URLs are sharable. Pre-select an app, leave the
               environment empty, copy the URL from the browser. Example for{' '}
-              <code>{sampleApp?.title}</code>:
+              <code>{formatAppTitle(sampleApp)}</code>:
               <ReadonlyCopyField value={sharableUrl} />
               and paste it in documentation / manuals / chats. Once user clicks
               on it, he can select the environment and proceed to given app.

@@ -77,7 +77,9 @@ export function testMakeEnv(name: string): EhEnv {
 export function testMakeApp(id: string): EhApp {
   return {
     id: getAppIdByTitle(`${id}`),
-    title: id,
+    appTitle: id,
+    pageTitle: undefined,
+    abbr: undefined,
     aliases: [],
     url:
       'https://{{' +
@@ -94,7 +96,7 @@ export function testMagazineMakeFixtures(
   const defaultApps = [
     ...['app1', 'app2'].map(testMakeApp),
     {
-      ...testMakeApp('app3'),
+      ...testMakeApp('app3-sub'),
       url:
         'https://{{' +
         ENV_SUBSTITUTION_VARIABLE +

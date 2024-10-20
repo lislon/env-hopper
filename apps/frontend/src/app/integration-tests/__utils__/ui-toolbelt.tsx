@@ -2,7 +2,6 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { getAppIdByTitle } from '../../lib/utils';
 import { ComboBoxType, FavoriteOrRecent } from '../../types';
-import { expect } from 'vitest';
 
 export type UserType = ReturnType<typeof userEvent.setup>;
 
@@ -26,18 +25,31 @@ export function testGetAppComboBox() {
   });
 }
 
+export function testGetSubstitution() {
+  return screen.getByTestId<HTMLInputElement>('substitution-input');
+}
+
+export async function testUserTypeSubstitution(
+  user: UserType,
+  substitution: string,
+) {
+  const combo = testGetSubstitution();
+  await user.click(combo);
+  await user.keyboard(substitution);
+}
+
 export async function testUserSelectApp(user: UserType, appName: string) {
   const combo = testGetAppComboBox();
   await user.click(combo);
   await user.keyboard(appName);
-  await user.keyboard('{Enter}{Tab}');
+  await user.keyboard('{Enter}');
 }
 
 export async function testUserSelectEnv(user: UserType, envName: string) {
   const combo = testGetEnvComboBox();
   await user.click(combo);
   await user.keyboard(envName);
-  await user.keyboard('{Enter}{Tab}');
+  await user.keyboard('{Enter}');
 }
 
 function testGetHomeFavoriteButton(type: ComboBoxType): HTMLElement {
@@ -75,13 +87,28 @@ export function testIsQuickBarVisible(
   return favorite !== null;
 }
 
+export async function testQuickBarClick(
+  user: UserType,
+  type: ComboBoxType,
+  favOrRecent: FavoriteOrRecent,
+  envName: string,
+) {
+  const quickBar = testGetQuickBar(type, favOrRecent);
+  const envButton = within(quickBar).getByText(envName);
+  await user.click(envButton);
+}
+
+function testGetQuickBar(type: ComboBoxType, favOrRecent: FavoriteOrRecent) {
+  return screen.getByTestId(`quick-bar-${type}-${favOrRecent}`);
+}
+
 export function testListQuickBarOptions(
   type: ComboBoxType,
   favOrRecent: FavoriteOrRecent,
 ): string[] {
-  const favoriteBar = screen.getByTestId(`quick-bar-${type}-${favOrRecent}`);
+  const quickBar = testGetQuickBar(type, favOrRecent);
   const findAllByRole: HTMLAnchorElement[] =
-    within(favoriteBar).queryAllByRole<HTMLAnchorElement>('link');
+    within(quickBar).queryAllByRole<HTMLAnchorElement>('link');
   return [...findAllByRole]
     .map((btn) => btn.textContent)
     .filter((b) => b !== null);
@@ -128,23 +155,16 @@ export async function testFillEnvAndApp(
   await testFillApp(user, appName);
 }
 
-export async function testGetJumpButton(): Promise<HTMLLinkElement> {
-  const link = await waitFor(() => {
-    const jumpButtons = screen.getAllByText(/^jump$/i);
-    const realJumpButton = jumpButtons.find(
-      (b) => !b.className.includes('tooltip'),
-    );
-    if (realJumpButton) {
-      expect(realJumpButton.parentElement?.tagName).toBe('A');
-      return realJumpButton.parentElement as HTMLLinkElement;
-    }
-    throw new Error('Jump button not found');
-  });
-  return link;
+export async function testGetJumpButtonText(): Promise<HTMLElement> {
+  return screen.getByTestId<HTMLElement>('jump-main-button-text');
 }
 
-export async function testClickJumpAndReturnBtn(user: UserType) {
-  const link = await testGetJumpButton();
+export async function testGetJumpButtonLink(): Promise<HTMLLinkElement> {
+  return screen.getByTestId<HTMLLinkElement>('jump-main-button');
+}
+
+export async function testClickJumpBtn(user: UserType) {
+  const link = await testGetJumpButtonLink();
   await user.click(link);
   return link;
 }

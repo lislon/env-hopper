@@ -23,6 +23,7 @@ export type ShortcutAction = ShortcutJump | ShortcutPickSubstitution;
 
 export interface AutoCompleteProps {
   className?: string;
+  inputClassName?: string;
   itemsAll: Item[];
   placeholder?: string;
   label?: string;
@@ -35,8 +36,9 @@ export interface AutoCompleteProps {
   onOpenChange?: (isOpen: boolean) => void;
   onTryJump?: () => void;
   autoFocus?: boolean;
-  tailButtons?: React.ReactNode;
+  favoriteButton?: React.ReactNode;
   getEhUrl: (id: string) => string;
+  id?: string;
 }
 
 function getInitialItems(collection: Item[]) {
@@ -152,18 +154,28 @@ export function EhAutoComplete(props: AutoCompleteProps) {
   });
 
   return (
-    <div className="relative">
+    <div className={cn('relative', props.className)}>
       <div className="w-full relative inline-block">
-        <label className="form-control w-full" {...getLabelProps()}>
+        <label
+          className="form-control w-full relative px-1"
+          {...getLabelProps()}
+        >
           <div className="label prose">
             <h4>{props.label}</h4>
           </div>
           <input
             type="text"
             placeholder={props.placeholder}
-            className="input input-bordered w-full"
+            className={cn(
+              'input input-bordered w-full',
+              { ['pr-10']: props.favoriteButton !== undefined },
+              props.inputClassName,
+            )}
             {...inputProps}
           />
+          <div className={'absolute bottom-0 right-4 h-[3rem] flex'}>
+            {props.favoriteButton}
+          </div>
         </label>
         <ul
           tabIndex={0}
@@ -191,7 +203,6 @@ export function EhAutoComplete(props: AutoCompleteProps) {
           )}
         </ul>
       </div>
-      <div className={'absolute bottom-2 right-4'}>{props.tailButtons}</div>
     </div>
   );
 }

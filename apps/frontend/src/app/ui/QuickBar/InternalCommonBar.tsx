@@ -6,6 +6,10 @@ import cn from 'classnames';
 import { ComboBoxType, FavoriteOrRecent } from '../../types';
 import { Link } from 'react-router-dom';
 
+export interface QuickBarSharedProps {
+  className?: string;
+}
+
 export type BarElement<ID extends string | number> = {
   id: ID;
   title: string;
@@ -28,7 +32,7 @@ function BarHeaderWithIcon({
   favoriteOrRecent: FavoriteOrRecent;
 }) {
   return (
-    <li
+    <div
       className={'menu-title tooltip tooltip-left flex gap-1 px-1 pt-1'}
       data-tip={`Click on ${favoriteOrRecent === 'favorite' ? 'favorite' : 'recently used'} ${comboboxType === 'applications' ? 'app' : 'env'} for quick preselect`}
     >
@@ -46,7 +50,7 @@ function BarHeaderWithIcon({
           className={cn('w-4', 'fill-gray-500 dark:fill-gray-200 opacity-100')}
         />
       )}
-    </li>
+    </div>
   );
 }
 
@@ -62,7 +66,7 @@ export function InternalCommonBar<ID extends string | number>({
     return null;
   }
   return (
-    <section
+    <div
       className="flex items-start"
       data-testid={`quick-bar-${comboboxType}-${favoriteOrRecent}`}
     >
@@ -70,7 +74,7 @@ export function InternalCommonBar<ID extends string | number>({
         comboboxType={comboboxType}
         favoriteOrRecent={favoriteOrRecent}
       />
-      <ul className="eh-quick-bar p-0 relative">
+      <ul className="eh-quick-bar p-0 relative overflow-hidden flex-wrap">
         {list.map((element) => {
           const isActive = element.id === activeId;
           return (
@@ -95,6 +99,6 @@ export function InternalCommonBar<ID extends string | number>({
           );
         })}
       </ul>
-    </section>
+    </div>
   );
 }

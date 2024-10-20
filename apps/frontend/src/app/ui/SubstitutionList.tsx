@@ -1,7 +1,8 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useEhContext } from '../context/EhContext';
 import { EhEnv, EhSubstitutionType } from '@env-hopper/types';
+import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
 
 function getAutoCompleteAttr(
   substitutionType: EhSubstitutionType,
@@ -33,39 +34,65 @@ function getAutoCompleteName(
   return `context-eh-${substitutionType.id}`;
 }
 
-export function SubstitutionList() {
-  const { substitutionType, substitution, setSubstitution, env, tryJump } =
-    useEhContext();
-  if (!substitutionType) {
-    return undefined;
-  }
+export interface SubstitutionListProps {
+  className?: string;
+}
+
+export function SubstitutionList(props: SubstitutionListProps) {
+  const {
+    substitutionType,
+    substitution,
+    setSubstitution,
+    env,
+    tryJump,
+    focusControllerSub,
+  } = useEhContext();
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const autoFocusOn = useAutoFocusHelper();
+
+  useEffect(() => {
+    focusControllerSub?.setupFocusFn(() => {
+      inputRef.current?.focus();
+    });
+  }, []);
+
   return (
-    <div>
-      <label className="w-fit" id={'context-label'}>
-        {substitutionType?.title}
-      </label>
-      <div className="flex shadow-sm border dark:border-0 dark:bg-black gap-0.5">
-        <input
-          aria-labelledby="context-label"
-          type="text"
-          placeholder={`Enter ${substitutionType?.title}`}
-          autoComplete={getAutoCompleteAttr(substitutionType, env)}
-          name={getAutoCompleteName(substitutionType, env)}
-          className="w-full h-10 text-gray-500 p-2 text-xl rounded"
-          value={substitution?.value || ''}
-          onChange={(e) =>
-            setSubstitution({
-              value: e.target.value,
-              name: substitutionType?.id,
-            })
-          }
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              tryJump();
+    substitutionType && (
+      <div className={props.className}>
+        <label className="form-control w-full relative p-1">
+          <div className="label prose">
+            <h4>{substitutionType?.title}</h4>
+          </div>
+
+          <input
+            aria-labelledby="context-label"
+            data-testid="substitution-input"
+            ref={inputRef}
+            type="text"
+            onFocus={() => {
+              inputRef.current?.select();
+            }}
+            autoFocus={autoFocusOn === 'substitutions'}
+            placeholder={`Enter ${substitutionType?.title}`}
+            autoComplete={getAutoCompleteAttr(substitutionType, env)}
+            name={getAutoCompleteName(substitutionType, env)}
+            className="input input-bordered"
+            value={substitution?.value || ''}
+            onChange={(e) =>
+              setSubstitution({
+                value: e.target.value,
+                name: substitutionType?.id,
+              })
             }
-          }}
-        />
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                tryJump();
+              }
+            }}
+          />
+        </label>
       </div>
-    </div>
+    )
   );
 }

@@ -34,6 +34,7 @@ export function getRoutes(queryClient: QueryClient) {
           'env/:envId/app/:appId',
           'env/:envId/app/:appId/sub/:subValue',
           'app/:appId/sub/:subValue',
+          'env/:envId/sub/:subValue',
         ].map((path) => ({
           path,
           element: <Home />,

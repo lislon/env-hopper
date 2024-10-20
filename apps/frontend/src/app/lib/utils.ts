@@ -125,3 +125,10 @@ export function getEhUrl(
 
   return '/' + portions.join('/');
 }
+
+export function formatAppTitle(app: EhApp | undefined) {
+  if (app === undefined) {
+    return '';
+  }
+  return [app.abbr, app.appTitle, app.pageTitle].filter(Boolean).join(' :: ');
+}

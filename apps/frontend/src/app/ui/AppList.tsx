@@ -2,13 +2,14 @@
 import React, { useMemo } from 'react';
 import { useEhContext } from '../context/EhContext';
 import { EhAutoComplete } from './AutoComplete/EhAutoComplete';
-import { makeAutoCompleteFilter } from '../lib/autoCompleteFilter';
+import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter';
 import { EhApp, EhAppId } from '@env-hopper/types';
 import { Item } from './AutoComplete/common';
 import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../lib/constants';
 import { HomeFavoriteButton } from './HomeFavoriteButton';
-import { getEhUrl } from '../lib/utils';
+import { formatAppTitle, getEhUrl } from '../lib/utils';
+import cn from 'classnames';
 
 function mapToAutoCompleteItemApp(
   app: EhApp,
@@ -17,7 +18,7 @@ function mapToAutoCompleteItemApp(
 ): Item {
   return {
     id: app.id,
-    title: app.title,
+    title: formatAppTitle(app),
     favorite: favorites.has(app.id),
     recent: recents.has(app.id),
   };
@@ -25,9 +26,10 @@ function mapToAutoCompleteItemApp(
 
 export interface AppListProps {
   onOpenChange?: (isOpen: boolean) => void;
+  className?: string;
 }
 
-export function AppList({ onOpenChange }: AppListProps) {
+export function AppList({ onOpenChange, className }: AppListProps) {
   const {
     app,
     env,
@@ -39,6 +41,7 @@ export function AppList({ onOpenChange }: AppListProps) {
     toggleFavoriteApp,
     getAppById,
     tryJump,
+    highlightAutoComplete,
   } = useEhContext();
 
   const autoFocusOn = useAutoFocusHelper();
@@ -74,16 +77,21 @@ export function AppList({ onOpenChange }: AppListProps) {
       onSelectedItemChange={(appId) => setApp(getAppById(appId))}
       onFavoriteToggle={(app, isOn) => toggleFavoriteApp(app.id, isOn)}
       autoFocus={autoFocusOn === 'applications'}
-      tailButtons={
+      favoriteButton={
         app ? (
           <HomeFavoriteButton
             isFavorite={isFavorite}
             onClick={() => toggleFavoriteApp(app.id, !isFavorite)}
-            title={`${isFavorite ? `Remove ${app.title} from` : `Add ${app.title} to`} favorites`}
+            title={`${isFavorite ? `Remove from` : `Add to`} favorites`}
           />
         ) : undefined
       }
       getEhUrl={(id) => getEhUrl(env?.id, id, substitution?.value)}
+      className={className}
+      inputClassName={cn({
+        ['border-4 border-accent animate-bounce']:
+          highlightAutoComplete === 'applications',
+      })}
     />
   );
 }

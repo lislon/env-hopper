@@ -4,22 +4,23 @@ import { AppList } from './AppList';
 import { SubstitutionList } from './SubstitutionList';
 import { EnvQuickBar } from './QuickBar/EnvQuickBar';
 import { AppQuickBar } from './QuickBar/AppQuickBar';
+import { JumpMainButton } from './JumpButton/JumpMainButton';
+import { AppWidgetsPanel } from './Widget/AppWidgetsPanel';
+import { History } from './History';
 
 export function MainForm() {
   return (
-    <div>
-      <div className="flex flex-col gap-3">
-        <EnvList />
-        <EnvQuickBar />
-        <AppList />
-        <AppQuickBar />
-        <SubstitutionList />
+    <div className={'flex flex-col gap-3 w-full'}>
+      <div className="grid grid-areas-layout-sm md:grid-areas-layout-md grid-cols-layout-sm md:grid-cols-layout-md  2xl:grid-cols-layout-2xl grid-rows-layout w-full gap-4 p-4">
+        <EnvList className={'grid-in-e-input'} />
+        <EnvQuickBar className={'grid-in-e-bar'} />
+        <AppList className={'grid-in-a-input mt-4'} />
+        <AppQuickBar className={'grid-in-a-bar'} />
+        <SubstitutionList className={'grid-in-s-input mt-4'} />
+        <JumpMainButton className="grid-in-jump overflow-hidden px-4 w-full max-w-[1000px] justify-self-center mt-4" />
+        <AppWidgetsPanel className={'grid-in-widgets'} />
+        <History className={'grid-in-history'} />
       </div>
-      <input
-        type="submit"
-        value="Mock button for autocomplete"
-        className="hidden"
-      />
     </div>
   );
 }

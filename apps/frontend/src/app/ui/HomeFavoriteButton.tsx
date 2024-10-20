@@ -1,5 +1,6 @@
 import React from 'react';
-import { FavoriteButton } from './FavoriteButton';
+import StarOutlineIcon from '../../assets/favorite-star.svg?react';
+import cn from 'classnames';
 
 export interface HomeFavoriteButtonProps {
   isFavorite: boolean;
@@ -13,13 +14,21 @@ export function HomeFavoriteButton({
   onClick,
 }: HomeFavoriteButtonProps) {
   return (
-    <div className="tooltip tooltip-right" data-tip={title}>
-      <FavoriteButton
-        title={title}
-        className={'w-5 h-5'}
-        isSelected={isFavorite}
-        onClick={onClick}
+    <button
+      className="tooltip tooltip-left"
+      data-tip={title}
+      onClick={() => onClick?.()}
+      title={title}
+    >
+      <StarOutlineIcon
+        className={cn(
+          'w-5 h-5 hover:cursor-pointer hover:drop-shadow-[0_0_5px_rgba(250,204,21,0.9)] ',
+          isFavorite
+            ? 'fill-yellow-400 stoke-yellow-400 opacity-100'
+            : 'hover:stoke-yellow-400 opacity-60 dark:opacity-30 hover:opacity-100 stroke-base-content/30 ',
+        )}
+        fill="none"
       />
-    </div>
+    </button>
   );
 }

@@ -1,12 +1,29 @@
 import { useEhContext } from '../../context/EhContext';
 import React, { useMemo } from 'react';
-import { EhAppId } from '@env-hopper/types';
-import { BarElement, InternalCommonBar } from './InternalCommonBar';
+import { EhApp, EhAppId } from '@env-hopper/types';
+import {
+  BarElement,
+  InternalCommonBar,
+  QuickBarSharedProps,
+} from './InternalCommonBar';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
 import { uniq } from 'lodash';
 import { getEhUrl } from '../../lib/utils';
+import cn from 'classnames';
 
-export function AppQuickBar() {
+export function formatAppTitleShort(app: EhApp | undefined) {
+  if (app === undefined) {
+    return '';
+  }
+  return [
+    app.abbr ? app.abbr : app.appTitle,
+    app.pageTitle === 'Home' ? null : app.pageTitle,
+  ]
+    .filter(Boolean)
+    .join(' :: ');
+}
+
+export function AppQuickBar(props: QuickBarSharedProps) {
   const {
     listFavoriteApps,
     setApp,
@@ -18,12 +35,13 @@ export function AppQuickBar() {
   } = useEhContext();
 
   const favorites = useMemo<BarElement<string>[]>(() => {
-    return listFavoriteApps.map((appId) => {
-      return {
-        id: appId,
-        title: getAppById(appId)?.title || '',
-      };
-    });
+    return listFavoriteApps
+      .map((appId) => getAppById(appId))
+      .filter((app) => app !== undefined)
+      .map((app) => ({
+        id: app.id,
+        title: formatAppTitleShort(app),
+      }));
   }, [listFavoriteApps, getAppById]);
 
   const recent = useMemo<BarElement<string>[]>(() => {
@@ -34,17 +52,18 @@ export function AppQuickBar() {
       .map((id) => {
         return {
           id: id,
-          title: getAppById(id)?.title || '',
+          title: formatAppTitleShort(getAppById(id)),
         };
       });
   }, [recentJumps, getAppById]);
 
   const onClick = (appId: EhAppId) => {
-    setApp(getAppById(appId));
+    const appById = getAppById(appId);
+    setApp(appById);
   };
 
   return (
-    <>
+    <div className={cn(props.className, 'flex flex-col gap-2')}>
       <InternalCommonBar
         activeId={app?.id}
         list={recent}
@@ -61,6 +80,6 @@ export function AppQuickBar() {
         favoriteOrRecent={'favorite'}
         getEhLink={(id) => getEhUrl(env?.id, id, substitution?.value)}
       />
-    </>
+    </div>
   );
 }

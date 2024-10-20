@@ -17,7 +17,7 @@ export function Layout({
 }: LayoutProps) {
   return (
     <ThemeContextProvider>
-      <div className="flex min-h-screen flex-col items-center w-full transition">
+      <div className="flex min-h-screen flex-col sm:items-center w-full transition">
         <div className="absolute top-0 left-0 right-0 p-2 flex justify-end gap-2">
           {headerButtons}
         </div>

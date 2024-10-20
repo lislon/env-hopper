@@ -46,11 +46,11 @@ export function EnvQuickBar(props: QuickBarSharedProps) {
 
   const onClick = (envId: EhEnvId) => {
     const newEnv = getEnvById(envId);
-    setEnv(newEnv?.id === env?.id ? undefined : newEnv);
+    setEnv(newEnv);
   };
 
   return (
-    <div className={cn(props.className)}>
+    <div className={cn(props.className, 'flex flex-col gap-2')}>
       <InternalCommonBar
         activeId={env?.id}
         list={recent}

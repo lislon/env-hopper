@@ -14,6 +14,7 @@ import { HomeFavoriteButton } from './HomeFavoriteButton';
 import { getEhUrl } from '../lib/utils';
 import { tokenize } from '../lib/autoComplete/tokenize';
 import { shuffle, sortBy } from 'lodash';
+import cn from 'classnames';
 
 function mapToAutoCompleteItem(
   env: EhEnv,
@@ -54,15 +55,16 @@ function findGoodExample(
   });
   if (found) {
     const [firstToken, ...restTokens] = found.tokens;
+    const lastToken = restTokens.slice(-1)[0];
     let firstShortestToken = firstToken;
-    for (let i = 3; i < found.tokens[0].length; i++) {
-      const search = getSearch([firstToken.slice(0, i), ...restTokens]);
+    for (let i = 3; i < firstToken.length; i++) {
+      const search = getSearch([firstToken.slice(0, i), lastToken]);
       if (autoCompleteFilter(search, items)?.length === 1) {
-        firstShortestToken = search;
+        firstShortestToken = firstToken.slice(0, i);
         break;
       }
     }
-    return getSearch([firstShortestToken, ...restTokens]);
+    return getSearch([firstShortestToken, lastToken]);
   } else {
     return undefined;
   }
@@ -80,6 +82,7 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
     toggleFavoriteEnv,
     recentJumps,
     tryJump,
+    highlightAutoComplete,
   } = useEhContext();
 
   const items = useMemo(() => {
@@ -140,17 +143,21 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
       onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
       onTryJump={tryJump}
       autoFocus={autoFocusOn === 'environments'}
-      tailButtons={
+      favoriteButton={
         env ? (
           <HomeFavoriteButton
             isFavorite={isFavorite}
             onClick={() => toggleFavoriteEnv(env.id, !isFavorite)}
-            title={`${isFavorite ? `Remove ${env.id} from` : `Add ${env.id} to`} favorites`}
+            title={`${isFavorite ? `Remove from` : `Add to`} favorites`}
           />
         ) : undefined
       }
       getEhUrl={(id) => getEhUrl(id, app?.id, substitution?.value)}
       className={className}
+      inputClassName={cn({
+        ['border-4 border-accent animate-bounce']:
+          highlightAutoComplete === 'environments',
+      })}
     />
   );
 }

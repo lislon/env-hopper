@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useEhContext } from '../context/EhContext';
 import { EhEnv, EhSubstitutionType } from '@env-hopper/types';
+import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
 
 function getAutoCompleteAttr(
   substitutionType: EhSubstitutionType,
@@ -48,6 +49,8 @@ export function SubstitutionList(props: SubstitutionListProps) {
   } = useEhContext();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const autoFocusOn = useAutoFocusHelper();
+
   useEffect(() => {
     focusControllerSub?.setupFocusFn(() => {
       inputRef.current?.focus();
@@ -57,10 +60,11 @@ export function SubstitutionList(props: SubstitutionListProps) {
   return (
     substitutionType && (
       <div className={props.className}>
-        <label className="w-fit" id={'context-label'}>
-          {substitutionType?.title}
-        </label>
-        <div className="flex shadow-sm border dark:border-0 dark:bg-black gap-0.5">
+        <label className="form-control w-full relative p-1">
+          <div className="label prose">
+            <h4>{substitutionType?.title}</h4>
+          </div>
+
           <input
             aria-labelledby="context-label"
             data-testid="substitution-input"
@@ -69,10 +73,11 @@ export function SubstitutionList(props: SubstitutionListProps) {
             onFocus={() => {
               inputRef.current?.select();
             }}
+            autoFocus={autoFocusOn === 'substitutions'}
             placeholder={`Enter ${substitutionType?.title}`}
             autoComplete={getAutoCompleteAttr(substitutionType, env)}
             name={getAutoCompleteName(substitutionType, env)}
-            className="w-full h-10 text-gray-500 p-2 text-xl rounded"
+            className="input input-bordered"
             value={substitution?.value || ''}
             onChange={(e) =>
               setSubstitution({
@@ -86,7 +91,7 @@ export function SubstitutionList(props: SubstitutionListProps) {
               }
             }}
           />
-        </div>
+        </label>
       </div>
     )
   );

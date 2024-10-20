@@ -1,6 +1,6 @@
 import { useEhContext } from '../../context/EhContext';
 import React, { useMemo } from 'react';
-import { EhAppId } from '@env-hopper/types';
+import { EhApp, EhAppId } from '@env-hopper/types';
 import {
   BarElement,
   InternalCommonBar,
@@ -8,8 +8,20 @@ import {
 } from './InternalCommonBar';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
 import { uniq } from 'lodash';
-import { formatAppTitle, getEhUrl } from '../../lib/utils';
+import { getEhUrl } from '../../lib/utils';
 import cn from 'classnames';
+
+export function formatAppTitleShort(app: EhApp | undefined) {
+  if (app === undefined) {
+    return '';
+  }
+  return [
+    app.abbr ? app.abbr : app.appTitle,
+    app.pageTitle === 'Home' ? null : app.pageTitle,
+  ]
+    .filter(Boolean)
+    .join(' :: ');
+}
 
 export function AppQuickBar(props: QuickBarSharedProps) {
   const {
@@ -28,7 +40,7 @@ export function AppQuickBar(props: QuickBarSharedProps) {
       .filter((app) => app !== undefined)
       .map((app) => ({
         id: app.id,
-        title: formatAppTitle(app),
+        title: formatAppTitleShort(app),
       }));
   }, [listFavoriteApps, getAppById]);
 
@@ -40,18 +52,18 @@ export function AppQuickBar(props: QuickBarSharedProps) {
       .map((id) => {
         return {
           id: id,
-          title: formatAppTitle(getAppById(id)),
+          title: formatAppTitleShort(getAppById(id)),
         };
       });
   }, [recentJumps, getAppById]);
 
   const onClick = (appId: EhAppId) => {
     const appById = getAppById(appId);
-    setApp(app?.id !== appId ? appById : undefined);
+    setApp(appById);
   };
 
   return (
-    <div className={cn(props.className)}>
+    <div className={cn(props.className, 'flex flex-col gap-2')}>
       <InternalCommonBar
         activeId={app?.id}
         list={recent}

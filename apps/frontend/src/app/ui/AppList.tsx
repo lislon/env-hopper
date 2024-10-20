@@ -9,6 +9,7 @@ import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../lib/constants';
 import { HomeFavoriteButton } from './HomeFavoriteButton';
 import { formatAppTitle, getEhUrl } from '../lib/utils';
+import cn from 'classnames';
 
 function mapToAutoCompleteItemApp(
   app: EhApp,
@@ -40,6 +41,7 @@ export function AppList({ onOpenChange, className }: AppListProps) {
     toggleFavoriteApp,
     getAppById,
     tryJump,
+    highlightAutoComplete,
   } = useEhContext();
 
   const autoFocusOn = useAutoFocusHelper();
@@ -75,17 +77,21 @@ export function AppList({ onOpenChange, className }: AppListProps) {
       onSelectedItemChange={(appId) => setApp(getAppById(appId))}
       onFavoriteToggle={(app, isOn) => toggleFavoriteApp(app.id, isOn)}
       autoFocus={autoFocusOn === 'applications'}
-      tailButtons={
+      favoriteButton={
         app ? (
           <HomeFavoriteButton
             isFavorite={isFavorite}
             onClick={() => toggleFavoriteApp(app.id, !isFavorite)}
-            title={`${isFavorite ? `Remove ${formatAppTitle(app)} from` : `Add ${formatAppTitle(app)} to`} favorites`}
+            title={`${isFavorite ? `Remove from` : `Add to`} favorites`}
           />
         ) : undefined
       }
       getEhUrl={(id) => getEhUrl(env?.id, id, substitution?.value)}
       className={className}
+      inputClassName={cn({
+        ['border-4 border-accent animate-bounce']:
+          highlightAutoComplete === 'applications',
+      })}
     />
   );
 }

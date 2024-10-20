@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 export function Header() {
   return (
     <header className="flex">
-      <div className="my-4">
+      <div className="px-4 sm:my-4">
         <Link to="/" title="Home Page">
           <img
             src="/grasshopper-lsn.svg"
@@ -24,6 +24,12 @@ export function Header() {
             v{APP_VERSION}
           </Link>
         </div>
+        {/*<div className={"flex gap-1"}>*/}
+        {/*  <div className={"invisible sm:visible"}>sm</div>*/}
+        {/*  <div className={"invisible lg:visible"}>lg</div>*/}
+        {/*  <div className={"invisible xl:visible"}>xl</div>*/}
+        {/*  <div className={"invisible 2xl:visible"}>2xl</div>*/}
+        {/*</div>*/}
       </div>
     </header>
   );

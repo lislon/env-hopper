@@ -73,6 +73,7 @@
     "@nx/webpack": "20.0.1",
     "@nx/workspace": "20.0.1",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.7",
+    "@savvywombat/tailwindcss-grid-areas": "^4.0.0",
     "@semantic-release/npm": "^12.0.1",
     "@svgr/webpack": "^8.0.1",
     "@swc-node/register": "~1.10.0",

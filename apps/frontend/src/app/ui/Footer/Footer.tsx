@@ -10,7 +10,7 @@ export function Footer() {
   const loaderData = useRouteLoaderData('root') as EhMainLoaderData;
 
   return (
-    <footer className="mt-8 w-full p-4 flex justify-end items-end gap-4 flex-grow">
+    <>
       <ErrorBoundary fallback={<div></div>}>
         <Await resolve={loaderData.customization}>
           {(customization) => <CustomHtml customization={customization} />}
@@ -18,6 +18,6 @@ export function Footer() {
       </ErrorBoundary>
 
       <GitHubLink />
-    </footer>
+    </>
   );
 }

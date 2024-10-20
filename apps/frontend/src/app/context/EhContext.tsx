@@ -15,7 +15,12 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { EhJumpHistory, EhJumpParams, EhSubstitutionValue } from '../types';
+import {
+  ComboBoxType,
+  EhJumpHistory,
+  EhJumpParams,
+  EhSubstitutionValue,
+} from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import {
   cutApp,
@@ -35,6 +40,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { persister } from '../persister';
 import { usePrefetch } from '../hooks/usePrefetch';
 import { FocusControllerEh, useFocusController } from '../lib/focusController';
+import { MAX_HISTORY_JUMPS } from '../lib/constants';
 
 export const LOCAL_STORAGE_KEY_RECENT_JUMPS = 'recent';
 export const LOCAL_STORAGE_KEY_FAVORITE_ENVS = 'favoriteEnvs';
@@ -80,6 +86,8 @@ export interface EhContextProps extends FocusControllerEh {
   appPart: string;
   hadWatchedInitialTutorial: boolean;
   setHadWatchedInitialTutorial: (yesOrNo: boolean) => void;
+  highlightAutoComplete: ComboBoxType | undefined;
+  setHighlightAutoComplete: (highlight: ComboBoxType | undefined) => void;
 }
 
 //  createContext is not supported in Server Components
@@ -93,19 +101,11 @@ export function useEhContext(): EhContextProps {
   return ctx;
 }
 
-const MAX_HISTORY_JUMPS = 100;
-
-type RecordJumpParams = {
-  app: EhApp | undefined;
-  env: EhEnv | undefined;
-  substitution: EhSubstitutionValue | undefined;
-};
-
-function getAppById(id: string | undefined, ehApps: EhApp[]) {
+function doGetAppById(id: string | undefined, ehApps: EhApp[]) {
   return ehApps.find((app) => app.id === id) || undefined;
 }
 
-function getEnvById(id: string | undefined, ehEnvs: EhEnv[]) {
+function doGetEnvById(id: string | undefined, ehEnvs: EhEnv[]) {
   return ehEnvs.find((env) => env.id === id) || undefined;
 }
 
@@ -152,7 +152,7 @@ function getPreselectedBasedOnParams(
   if ('envId' in routerParams) {
     let strictMatch;
     [env, strictMatch] = getByIdRelaxed<EhEnv>(
-      getEnvById,
+      doGetEnvById,
       routerParams['envId'],
       config.envs,
     );
@@ -164,7 +164,7 @@ function getPreselectedBasedOnParams(
   if ('appId' in routerParams) {
     let strictMatch;
     [app, strictMatch] = getByIdRelaxed<EhApp>(
-      getAppById,
+      doGetAppById,
       routerParams['appId'] !== undefined
         ? unescapeAppId(routerParams['appId'])
         : undefined,
@@ -313,21 +313,39 @@ export function EhContextProvider({
 
   const listApps = config.apps;
 
-  const value = useMemo<EhContextProps>(() => {
-    const firstApp = app ? app : listApps.length > 0 ? listApps[0] : undefined;
-    const firstEnv = env ? env : listEnvs.length > 0 ? listEnvs[0] : undefined;
-    const incompleteUrl =
-      firstApp &&
-      getJumpUrlEvenNotComplete({
-        app: firstApp,
-        env: firstEnv,
-        substitution: substitution,
-      });
+  const getAppById = useCallback(
+    (id: EhAppId) => {
+      return doGetAppById(id, listApps);
+    },
+    [listApps],
+  );
 
-    const domainPart = cutDomain(incompleteUrl || 'https://no-env');
-    const appPart = cutApp(incompleteUrl || 'https://no-env/no-app');
+  const getEnvById = useCallback(
+    (id: EhEnvId) => {
+      return doGetEnvById(id, listEnvs);
+    },
+    [listApps],
+  );
 
-    const recordJump = function ({ app, env, substitution }: RecordJumpParams) {
+  const [highlightAutoComplete, setHighlightAutoComplete] = useState<
+    ComboBoxType | undefined
+  >();
+
+  const firstApp = app ? app : listApps.length > 0 ? listApps[0] : undefined;
+  const firstEnv = env ? env : listEnvs.length > 0 ? listEnvs[0] : undefined;
+  const incompleteUrl =
+    firstApp &&
+    getJumpUrlEvenNotComplete({
+      app: firstApp,
+      env: firstEnv,
+      substitution: substitution,
+    });
+
+  const domainPart = cutDomain(incompleteUrl || 'https://no-env');
+  const appPart = cutApp(incompleteUrl || 'https://no-env/no-app');
+
+  const recordJump = useCallback<EhContextProps['recordJump']>(
+    ({ app, env, substitution }) => {
       const jumpUrl = getJumpUrl({
         app: app,
         env: env,
@@ -348,29 +366,34 @@ export function EhContextProvider({
           MAX_HISTORY_JUMPS,
         );
       });
-    };
+    },
+    [getJumpUrl, setRecentJumps],
+  );
 
-    return {
-      setEnv,
-      env,
-      listFavoriteEnvs,
-      listFavoriteApps,
-      setApp,
-      app,
-      substitutionType,
-      listEnvs: listEnvs,
-      listApps: listApps,
-      listSubstitutions: config.substitutions,
-      substitution,
-      setSubstitution,
-      getAppById(id: EhAppId): EhApp | undefined {
-        return getAppById(id, listApps);
-      },
-      getEnvById(id: EhEnvId): EhEnv | undefined {
-        return getEnvById(id, listEnvs);
-      },
-      recordJump,
-      toggleFavoriteEnv(envId, isOn) {
+  const value: EhContextProps = {
+    setEnv,
+    env,
+    listFavoriteEnvs,
+    listFavoriteApps,
+    setApp,
+    app,
+    substitutionType,
+    listEnvs: listEnvs,
+    listApps: listApps,
+    listSubstitutions: config.substitutions,
+    substitution,
+    setSubstitution,
+    highlightAutoComplete,
+    setHighlightAutoComplete: useCallback<
+      EhContextProps['setHighlightAutoComplete']
+    >((highlight) => {
+      setHighlightAutoComplete(highlight);
+    }, []),
+    getAppById,
+    getEnvById,
+    recordJump,
+    toggleFavoriteEnv: useCallback<EhContextProps['toggleFavoriteEnv']>(
+      (envId, isOn) => {
         setFavoriteEnvIds((old) => {
           return [
             ...(isOn ? [envId] : []),
@@ -378,7 +401,10 @@ export function EhContextProvider({
           ];
         });
       },
-      toggleFavoriteApp(appId, isOn) {
+      [setFavoriteAppIds],
+    ),
+    toggleFavoriteApp: useCallback<EhContextProps['toggleFavoriteApp']>(
+      (appId, isOn) => {
         setFavoriteAppIds((old) => {
           return [
             ...(isOn ? [appId] : []),
@@ -386,10 +412,15 @@ export function EhContextProvider({
           ];
         });
       },
-      getSubstitutionValueById(envId, appId, substitution) {
+      [setFavoriteAppIds],
+    ),
+    getSubstitutionValueById: useCallback<
+      EhContextProps['getSubstitutionValueById']
+    >(
+      (envId, appId, substitution) => {
         const substitutionIdByUrl = findSubstitutionIdByUrl({
-          env: getEnvById(envId, listEnvs),
-          app: getAppById(appId, listApps),
+          env: doGetEnvById(envId, listEnvs),
+          app: doGetAppById(appId, listApps),
         });
         if (substitutionIdByUrl !== undefined && substitution !== undefined) {
           return {
@@ -399,53 +430,35 @@ export function EhContextProvider({
         }
         return undefined;
       },
-      tryJump() {
-        const jumpUrl = getJumpUrl({ app, env, substitution });
-        if (!jumpUrl) {
-          return undefined;
-        }
-        recordJump({
-          app: app,
-          env: env,
-          substitution,
-        });
-        window.open(jumpUrl, '_blank')?.focus();
-      },
-      reset() {
-        setEnv(undefined);
-        setApp(undefined);
-        setSubstitution(undefined);
-        setRecentJumps([]);
-      },
-      domainPart,
-      appPart,
-      recentJumps,
-      hadWatchedInitialTutorial,
-      setHadWatchedInitialTutorial,
-      focusControllerEnv,
-      focusControllerApp,
-      focusControllerSub,
-    };
-  }, [
-    app,
-    listEnvs,
-    config.substitutions,
-    listApps,
-    env,
-    substitution,
-    substitutionType,
-    listFavoriteEnvs,
-    listFavoriteApps,
+      [findSubstitutionIdByUrl],
+    ),
+    tryJump: useCallback(() => {
+      const jumpUrl = getJumpUrl({ app, env, substitution });
+      if (!jumpUrl) {
+        return undefined;
+      }
+      recordJump({
+        app: app,
+        env: env,
+        substitution,
+      });
+      window.open(jumpUrl, '_blank')?.focus();
+    }, [getJumpUrl, recordJump, app, env, substitution]),
+    reset: useCallback(() => {
+      setEnv(undefined);
+      setApp(undefined);
+      setSubstitution(undefined);
+      setRecentJumps([]);
+    }, []),
+    domainPart,
+    appPart,
     recentJumps,
-    setRecentJumps,
-    setFavoriteEnvIds,
-    setFavoriteAppIds,
     hadWatchedInitialTutorial,
     setHadWatchedInitialTutorial,
     focusControllerEnv,
     focusControllerApp,
     focusControllerSub,
-  ]);
+  };
 
   return <EhContext.Provider value={value}>{children}</EhContext.Provider>;
 }

@@ -1,8 +1,10 @@
-import { Item } from './common';
+import { SourceItem } from './common';
 import React from 'react';
-import { AutoCompleteProps } from './EhAutoComplete';
+import { EhAutoCompleteProps } from './EhAutoComplete';
 
-export function ShortcutLink(props: AutoCompleteProps & { item: Item }) {
+export function ShortcutLink(
+  props: EhAutoCompleteProps & { item: SourceItem },
+) {
   const shortcutAction = props.shortcutAction?.(props.item.id);
   if (shortcutAction === undefined) {
     return undefined;

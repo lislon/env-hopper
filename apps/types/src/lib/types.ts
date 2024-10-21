@@ -4,7 +4,9 @@ export interface EhEnv {
 }
 export interface EhApp {
   id: EhAppId;
-  title: string;
+  appTitle: string;
+  pageTitle?: string;
+  abbr?: string;
   aliases: string[];
   url: string;
   meta: EhAppMeta;
@@ -56,15 +58,24 @@ export type EhAppId = string;
 export type EhPageId = string;
 export type EhSubstitutionId = string;
 
+/**
+ * Last used substitutions for the app.
+ */
+export type EhLastUsedSubs = Record<EhSubstitutionId, string>;
+
 export interface EhClientConfig {
   envs: EhEnv[];
   apps: EhApp[];
   substitutions: EhSubstitutionType[];
   appVersion: string;
+  forceRefresh?: true;
 }
 
 export interface EhCustomPartUnstable {
   slidesHtml?: string[];
+  widgetTitle?: string;
+  widgetUrl?: string;
+  widgetSvg?: string;
 }
 
 export interface EhCustomization extends EhCustomPartUnstable {

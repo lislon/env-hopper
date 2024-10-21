@@ -3,10 +3,12 @@ import {
   EhAppId,
   EhEnv,
   EhEnvId,
+  EhLastUsedSubs,
   EhSubstitutionType,
 } from '@env-hopper/types';
 import { EhJumpHistory } from '../../types';
 import { getAppIdByTitle, getEnvIdByTitle } from '../../lib/utils';
+import { normalizeAppId } from './ui-toolbelt';
 
 export const TestFeatureMagazine = {
   firstTimeUser: {
@@ -61,6 +63,9 @@ export interface TestFixtures {
   favoriteApps?: EhAppId[];
   favoriteEnvs?: EhEnvId[];
   recentJumps?: EhJumpHistory[];
+  lastApp?: EhAppId;
+  lastEnv?: EhEnvId;
+  lastSubs?: EhLastUsedSubs;
 }
 
 const ENV_SUBSTITUTION_VARIABLE = 'env.id';
@@ -74,15 +79,49 @@ export function testMakeEnv(name: string): EhEnv {
   };
 }
 
-export function testMakeApp(id: string): EhApp {
+export function testMakeRecentJump(
+  env: EhEnvId,
+  app: EhAppId,
+  substitution?: string,
+): EhJumpHistory {
+  return {
+    env: getEnvIdByTitle(env),
+    app: getAppIdByTitle(app),
+    url: `mock`,
+    substitution: substitution,
+  };
+}
+
+export function testMakeLastUsedApp(
+  app: EhAppId | undefined,
+): EhAppId | undefined {
+  return app ? normalizeAppId(app) : undefined;
+}
+
+export function testMakeLastUsedEnv(
+  env: EhEnvId | undefined,
+): EhEnvId | undefined {
+  return env;
+}
+
+export interface TestMakeAppOptions {
+  substitution?: string;
+}
+export function testMakeApp(
+  id: string,
+  { substitution }: TestMakeAppOptions = {},
+): EhApp {
+  const wrapSub = (s: string) => '{{' + s + '}}';
   return {
     id: getAppIdByTitle(`${id}`),
-    title: id,
+    appTitle: id,
+    pageTitle: undefined,
+    abbr: undefined,
     aliases: [],
     url:
       'https://{{' +
       ENV_SUBSTITUTION_VARIABLE +
-      `}}.mycompany.com:8250/${id}/login`,
+      `}}.mycompany.com:8250/${id}/${substitution ? `${wrapSub(substitution)}/` : ''}login`,
     meta: undefined,
   };
 }
@@ -92,9 +131,9 @@ export function testMagazineMakeFixtures(
 ): TestFixtures {
   const defaultEnvs = ['env1', 'env2', 'env3'].map(testMakeEnv);
   const defaultApps = [
-    ...['app1', 'app2'].map(testMakeApp),
+    ...['app1', 'app2'].map((id) => testMakeApp(id)),
     {
-      ...testMakeApp('app3'),
+      ...testMakeApp('app3-sub'),
       url:
         'https://{{' +
         ENV_SUBSTITUTION_VARIABLE +
@@ -109,6 +148,10 @@ export function testMagazineMakeFixtures(
       {
         id: 'namespace',
         title: 'Namespace',
+      },
+      {
+        id: 'orderId',
+        title: 'Order ID',
       },
     ],
     favoriteApps: [],

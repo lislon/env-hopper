@@ -40,5 +40,13 @@ const server = app.listen(port, () => {
 });
 server.on('error', console.error);
 
-process.on('SIGTERM', process.exit);
-process.on('SIGINT', process.exit);
+const cleanup = (code: number | null) => {
+  console.log('server process cleanup');
+  server.close();
+  process.exit(code ?? 0);
+};
+
+process.on('exit', (code) => cleanup(code));
+// callback value is signal string, exit with 0
+process.on('SIGINT', () => cleanup(0));
+process.on('SIGTERM', () => cleanup(0));

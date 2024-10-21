@@ -1,7 +1,6 @@
-import { Await, useRouteLoaderData } from 'react-router-dom';
-import { EhMainLoaderData } from '../types';
 import React, { useEffect } from 'react';
-import { ErrorBoundary } from 'react-error-boundary';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { ApiQueryMagazine } from '../api/ApiQueryMagazine';
 
 function InsertJs({ js }: { js: string }) {
   useEffect(() => {
@@ -17,13 +16,16 @@ function InsertJs({ js }: { js: string }) {
 }
 
 export function Analytics() {
-  const loaderData = useRouteLoaderData('root') as EhMainLoaderData;
+  const { data: customization } = useSuspenseQuery(
+    ApiQueryMagazine.getCustomization(),
+  );
 
   return (
-    <ErrorBoundary fallback={<div></div>}>
-      <Await resolve={loaderData.customization}>
-        {(customization) => <InsertJs js={customization.analyticsScript} />}
-      </Await>
-    </ErrorBoundary>
+    <InsertJs
+      js={customization.analyticsScript.replace(
+        '{{APP_VERSION}}',
+        import.meta.env.VITE_APP_VERSION,
+      )}
+    />
   );
 }

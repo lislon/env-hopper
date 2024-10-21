@@ -1,17 +1,17 @@
 import React from 'react';
 import cn from 'classnames';
-import { Item } from './common';
+import { SourceItem } from './common';
 import { UseComboboxPropGetters } from 'downshift';
-import { AutoCompleteProps } from './EhAutoComplete';
+import { EhAutoCompleteProps } from './EhAutoComplete';
 import { Link } from 'react-router-dom';
 
 export interface SuggestionProps {
   index: number;
-  item: Item;
+  item: SourceItem;
   highlightedIndex: number;
-  selectedItem: Item | null;
-  getItemProps: UseComboboxPropGetters<Item>['getItemProps'];
-  autoCompleteProps: AutoCompleteProps;
+  selectedItem: SourceItem | null;
+  getItemProps: UseComboboxPropGetters<SourceItem>['getItemProps'];
+  autoCompleteProps: EhAutoCompleteProps;
 }
 
 export function Suggestion({

@@ -5,6 +5,9 @@ dist
 tmp
 /out-tsc
 
+# https://github.com/vitejs/vite/issues/13267
+vite.config.mts.timestamp-*.mjs
+
 # dependencies
 node_modules
 

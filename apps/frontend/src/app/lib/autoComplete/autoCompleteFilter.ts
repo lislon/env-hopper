@@ -1,24 +1,12 @@
-import { EhAutoCompleteFilter } from '../ui/AutoComplete/EhAutoComplete';
+import { EhAutoCompleteFilter } from '../../ui/AutoComplete/EhAutoComplete';
 import { sortBy } from 'lodash';
-import { Item } from '../ui/AutoComplete/common';
+import { SourceItem } from '../../ui/AutoComplete/common';
+import { fixRuLayout, isRuLayout } from '../fixLayout';
+import { tokenize } from './tokenize';
 
-function tokenize(text: string): string[] {
-  const camelCaseSecondaryWords = [...text.matchAll(/(?<=[a-z])[A-Z]\w+/g)].map(
-    (x) => x[0].toLowerCase(),
-  );
-  const primary = [...text.matchAll(/([a-z]+|[0-9]+)/gi)].map((x) =>
-    x[0].toLowerCase(),
-  );
-
-  const leadingZeros = (input: string) => {
-    const match = input.match(/^0+(.+)/);
-    return match ? [input, match[1]] : [input];
-  };
-
-  return [...camelCaseSecondaryWords, ...primary].flatMap(leadingZeros);
-}
-
-export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
+export function makeAutoCompleteFilter(
+  items: SourceItem[],
+): EhAutoCompleteFilter {
   const itemsIndex = items.map((item) => {
     const lower = item.title.toLowerCase();
     return {
@@ -30,9 +18,9 @@ export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
     };
   });
 
-  return (searchPatternOrig: string) => {
+  function doSearch(searchPatternOrig: string) {
     const searchPattern = searchPatternOrig.toLowerCase();
-    const results = new Set<Item>();
+    const results = new Set<SourceItem>();
 
     // prefix match exact case sensitive
     const exactPrefix = sortBy(
@@ -51,26 +39,28 @@ export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
     // token prefix
     const searchTokens = tokenize(searchPattern);
 
-    const prefixedInTokens = itemsIndex.filter((item) => {
-      const isFound = searchTokens.reduce<string[] | false>(
-        (itemTokens, searchToken) => {
-          if (itemTokens !== false) {
-            for (let i = 0; i < itemTokens.length; i++) {
-              if (itemTokens[i].startsWith(searchToken)) {
-                return itemTokens.slice(i + 1);
+    if (searchTokens.length > 0) {
+      const prefixedInTokens = itemsIndex.filter((item) => {
+        const isFound = searchTokens.reduce<string[] | false>(
+          (itemTokens, searchToken) => {
+            if (itemTokens !== false) {
+              for (let i = 0; i < itemTokens.length; i++) {
+                if (itemTokens[i].startsWith(searchToken)) {
+                  return itemTokens.slice(i + 1);
+                }
               }
             }
-          }
-          return false;
-        },
-        item.tokens,
-      );
-      return isFound !== false;
-    });
+            return false;
+          },
+          item.tokens,
+        );
+        return isFound !== false;
+      });
 
-    sortBy(prefixedInTokens, (x) => x.title.length).forEach((x) =>
-      results.add(x.item),
-    );
+      sortBy(prefixedInTokens, (x) => x.title.length).forEach((x) =>
+        results.add(x.item),
+      );
+    }
 
     // substring match (case sensitive)
     const exactSubstring = sortBy(
@@ -91,5 +81,13 @@ export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
       .forEach((x) => results.add(x.item));
 
     return [...results];
+  }
+
+  return (searchPatternOrig: string) => {
+    let results = doSearch(searchPatternOrig);
+    if (results.length === 0 && isRuLayout(searchPatternOrig)) {
+      results = doSearch(fixRuLayout(searchPatternOrig));
+    }
+    return results;
   };
 }

@@ -1,8 +1,10 @@
 import React from 'react';
 import GitHubIconForDark from './github-mark-white.svg?react';
 import GitHubIconForLight from './github-mark.svg?react';
+import { useTheme } from '../../../context/ThemeContext';
 
 export function GitHubLink() {
+  const { currentTheme } = useTheme();
   return (
     <div>
       <a
@@ -12,16 +14,12 @@ export function GitHubLink() {
       >
         <div className="flex justify-center items-center gap-1">
           <div>
-            <GitHubIconForDark
-              width="16px"
-              height="16px"
-              className="hidden dark:block"
-            />
-            <GitHubIconForLight
-              width="16px"
-              height="16px"
-              className="dark:hidden"
-            />
+            {currentTheme === 'dark' && (
+              <GitHubIconForDark width="16px" height="16px" />
+            )}
+            {currentTheme === 'light' && (
+              <GitHubIconForLight width="16px" height="16px" />
+            )}
           </div>
           lislon/env-hopper
         </div>

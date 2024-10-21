@@ -9,21 +9,56 @@ module.exports = {
     ),
   ],
   darkMode: 'selector',
+  theme: {
+    extend: {
+      gridTemplateAreas: {
+        'layout-md': [
+          '   .    e-input   widgets',
+          '   .    e-bar     widgets',
+          '   .    a-input   widgets',
+          '   .    a-bar      a-bar ',
+          '   .    s-input      .   ',
+          '  jump   jump       jump  ',
+          'history history   history ',
+        ],
+        'layout-sm': [
+          'e-input',
+          'e-bar  ',
+          'a-input',
+          'a-bar  ',
+          's-input',
+          '  jump ',
+          'widgets',
+          'history',
+        ],
+      },
+      gridTemplateColumns: {
+        'layout-2xl':
+          'minmax(250px, 1fr) minmax(auto, 800px) minmax(250px, 1fr)',
+        'layout-md': '1fr minmax(auto, 800px) 1fr',
+        'layout-sm': '1fr',
+      },
+    },
+  },
   daisyui: {
     themes: [
       {
         light: {
           ...require('daisyui/src/theming/themes')['light'],
-          primary: 'oklch(74.88% 0.149 130.38)',
+          'primary-content': 'oklch(74.88% 0.149 130.38)',
         },
       },
       {
         dark: {
           ...require('daisyui/src/theming/themes')['dark'],
-          primary: 'oklch(34.88% 0.149 130.38)',
+          'primary-content': 'oklch(74.88% 0.149 130.38)',
         },
       },
     ],
   },
-  plugins: [require('@tailwindcss/typography'), require('daisyui')],
+  plugins: [
+    require('@savvywombat/tailwindcss-grid-areas'),
+    require('@tailwindcss/typography'),
+    require('daisyui'),
+  ],
 };

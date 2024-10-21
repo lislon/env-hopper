@@ -8,6 +8,7 @@ export default [
   ...rootConfig,
   {
     files: ['src/**/*.{ts,tsx}', 'tests/**/*.{ts,tsx}'],
+    ...pluginReact.configs.recommended,
   },
   {
     plugins: {

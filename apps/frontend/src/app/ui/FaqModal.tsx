@@ -1,13 +1,17 @@
 import { BaseDialogProps, BaseModal } from './Dialog/BaseModal';
 import { useEhContext } from '../context/EhContext';
 import { first } from 'lodash';
-import { getEhUrl, getJumpUrlEvenNotComplete } from '../lib/utils';
-import { Await, Link, useRouteLoaderData } from 'react-router-dom';
-import { EhMainLoaderData } from '../types';
+import {
+  formatAppTitle,
+  getEhUrl,
+  getJumpUrlEvenNotComplete,
+} from '../lib/utils';
+import { Link } from 'react-router-dom';
 import React from 'react';
 import { EhApp, EhCustomization, EhEnv } from '@env-hopper/types';
 import { ReadonlyCopyField } from './ReadonlyCopyField';
-import { ErrorBoundary } from 'react-error-boundary';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { ApiQueryMagazine } from '../api/ApiQueryMagazine';
 
 export interface SlideShared {
   sampleEnv: EhEnv | undefined;
@@ -58,10 +62,10 @@ function Slide2(props: SlideShared) {
           </li>
           <li>
             Choose <strong>Application</strong>, i.e.{' '}
-            <code>{props.sampleApp.title}</code>
+            <code>{formatAppTitle(props.sampleApp)}</code>
           </li>
           <li>
-            The link will be generated to {props.sampleApp.title} on{' '}
+            The link will be generated to {formatAppTitle(props.sampleApp)} on{' '}
             {props.sampleEnv.id} environment:{' '}
             <Link
               to={props.url}
@@ -130,7 +134,7 @@ function Slide3({
               </span>{' '}
               Some apps, like{' '}
               <Link to={getEhUrl(sampleEnv?.id, appWithFeatures.id, undefined)}>
-                {appWithFeatures.title}
+                {formatAppTitle(appWithFeatures)}
               </Link>
               , also show user/password for UI well as for service database.
             </li>
@@ -142,7 +146,7 @@ function Slide3({
               </span>{' '}
               Env-hopper URLs are sharable. Pre-select an app, leave the
               environment empty, copy the URL from the browser. Example for{' '}
-              <code>{sampleApp?.title}</code>:
+              <code>{formatAppTitle(sampleApp)}</code>:
               <ReadonlyCopyField value={sharableUrl} />
               and paste it in documentation / manuals / chats. Once user clicks
               on it, he can select the environment and proceed to given app.
@@ -158,15 +162,6 @@ function SlideRawHtml({ html }: { html: string }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function SlideSimpleText({ title, text }: { title: string; text: string }) {
-  return (
-    <>
-      <h3>{title}</h3>
-      <p>{text}</p>
-    </>
-  );
-}
-
 function hrefToSlide(slideIndex: number) {
   return (
     window.location.pathname + window.location.search + `#about-${slideIndex}`
@@ -175,7 +170,9 @@ function hrefToSlide(slideIndex: number) {
 
 export function FaqModal(props: BaseDialogProps) {
   const { listEnvs, listApps } = useEhContext();
-  const loaderData = useRouteLoaderData('root') as EhMainLoaderData;
+  const { data: customization } = useSuspenseQuery(
+    ApiQueryMagazine.getCustomization(),
+  );
 
   const sampleEnv = first(listEnvs);
   const sampleApp = first(listApps);
@@ -198,72 +195,53 @@ export function FaqModal(props: BaseDialogProps) {
     appWithFeatures,
   };
 
+  const customizationTyped = customization as unknown as EhCustomization;
+  const slides = [
+    <Slide1 />,
+    <Slide2 {...slideProps} />,
+    <Slide3 {...slideProps} />,
+    ...(customizationTyped?.slidesHtml?.map((html) => (
+      <SlideRawHtml html={html} />
+    )) || []),
+  ].filter(Boolean);
+
   return (
     <BaseModal {...props} className={'prose max-w-[800px]'}>
       <div className="carousel w-full transition">
-        <ErrorBoundary
-          fallback={
-            <SlideSimpleText
-              title={'Error'}
-              text={'Sorry! Something is wrong'}
-            />
-          }
-        >
-          <Await resolve={loaderData.customization}>
-            {(customization) => {
-              const customizationTyped =
-                customization as unknown as EhCustomization;
-              const slides = [
-                <Slide1 />,
-                <Slide2 {...slideProps} />,
-                <Slide3 {...slideProps} />,
-                ...(customizationTyped?.slidesHtml?.map((html) => (
-                  <SlideRawHtml html={html} />
-                )) || []),
-              ].filter(Boolean);
-
-              return (
-                <>
-                  {' '}
-                  {slides.map((childrenSlide, slideIndex) => {
-                    slideIndex++;
-                    return (
-                      <div
-                        key={slideIndex}
-                        id={`about-${slideIndex}`}
-                        className="carousel-item relative w-full"
-                      >
-                        <div className="mx-32">{childrenSlide}</div>
-                        <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
-                          {slideIndex - 1 > 0 ? (
-                            <a
-                              href={hrefToSlide(slideIndex - 1)}
-                              className="btn btn-circle"
-                            >
-                              ❮
-                            </a>
-                          ) : (
-                            <div />
-                          )}
-                          {slideIndex < slides.length ? (
-                            <a
-                              href={hrefToSlide(slideIndex + 1)}
-                              className="btn btn-circle"
-                            >
-                              ❯
-                            </a>
-                          ) : (
-                            <div />
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </>
-              );
-            }}
-          </Await>
-        </ErrorBoundary>
+        {slides.map((childrenSlide, slideIndex) => {
+          slideIndex++;
+          return (
+            <div
+              key={slideIndex}
+              id={`about-${slideIndex}`}
+              className="carousel-item relative w-full"
+            >
+              <div className="mx-32">{childrenSlide}</div>
+              <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
+                {slideIndex - 1 > 0 ? (
+                  <a
+                    href={hrefToSlide(slideIndex - 1)}
+                    className="btn btn-circle"
+                  >
+                    ❮
+                  </a>
+                ) : (
+                  <div />
+                )}
+                {slideIndex < slides.length ? (
+                  <a
+                    href={hrefToSlide(slideIndex + 1)}
+                    className="btn btn-circle"
+                  >
+                    ❯
+                  </a>
+                ) : (
+                  <div />
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </BaseModal>
   );

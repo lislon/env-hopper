@@ -1,5 +1,12 @@
-import { EhApp, EhAppId, EhEnv, EhEnvId } from '@env-hopper/types';
+import {
+  EhApp,
+  EhAppId,
+  EhEnv,
+  EhEnvId,
+  EhSubstitutionId,
+} from '@env-hopper/types';
 import { EhSubstitutionValue } from '../types';
+import { normalizeAppId } from '../integration-tests/__utils__/ui-toolbelt';
 
 export function findSubstitutionIdByUrl({
   app,
@@ -7,7 +14,7 @@ export function findSubstitutionIdByUrl({
 }: {
   app: EhApp | undefined;
   env: EhEnv | undefined;
-}) {
+}): EhSubstitutionId | undefined {
   if (app === undefined) {
     return undefined;
   }
@@ -89,11 +96,8 @@ export function cutApp(fullUrl: string) {
   return fullUrl.split('/').slice(3).join('/');
 }
 
-export function getAppIdByTitle(appName: string) {
-  if (appName.indexOf('/') === -1) {
-    appName = appName + '/home';
-  }
-  return appName;
+export function getAppIdByTitle(appName: string): EhAppId {
+  return normalizeAppId(appName);
 }
 
 export function getEnvIdByTitle(envTitle: string) {

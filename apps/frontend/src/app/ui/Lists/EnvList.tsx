@@ -1,20 +1,21 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useEhContext } from '../context/EhContext';
+import { useEhContext } from '../../context/EhContext';
 import {
   EhAutoComplete,
   EhAutoCompleteFilter,
-} from './AutoComplete/EhAutoComplete';
-import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter';
+} from '../AutoComplete/EhAutoComplete';
+import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter';
 import { EhEnv, EhEnvId } from '@env-hopper/types';
-import { Item } from './AutoComplete/common';
-import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
-import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../lib/constants';
-import { HomeFavoriteButton } from './HomeFavoriteButton';
-import { getEhUrl } from '../lib/utils';
-import { tokenize } from '../lib/autoComplete/tokenize';
+import { Item } from '../AutoComplete/common';
+import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
+import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
+import { HomeFavoriteButton } from '../HomeFavoriteButton';
+import { getEhUrl } from '../../lib/utils';
+import { tokenize } from '../../lib/autoComplete/tokenize';
 import { shuffle, sortBy } from 'lodash';
 import cn from 'classnames';
+import { AUTOCOMPLETE_ATTENTION_CLASSNAME } from './commonList';
 
 function mapToAutoCompleteItem(
   env: EhEnv,
@@ -73,7 +74,6 @@ function findGoodExample(
 export function EnvList({ onOpenChange, className }: EnvListProps) {
   const {
     app,
-    substitution,
     setEnv,
     listEnvs,
     listFavoriteEnvs,
@@ -152,12 +152,12 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
           />
         ) : undefined
       }
-      getEhUrl={(id) => getEhUrl(id, app?.id, substitution?.value)}
-      className={className}
-      inputClassName={cn({
-        ['border-4 border-accent animate-bounce']:
-          highlightAutoComplete === 'environments',
-      })}
+      getEhUrl={(id) => getEhUrl(id, app?.id, undefined)}
+      className={cn(
+        className,
+        highlightAutoComplete === 'environments' &&
+          AUTOCOMPLETE_ATTENTION_CLASSNAME,
+      )}
     />
   );
 }

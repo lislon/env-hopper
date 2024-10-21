@@ -22,22 +22,25 @@ function HomeWithContext() {
     setHadWatchedInitialTutorial(true);
   };
 
+  const isFaqEnabled = import.meta.env.VITE_ABOUT_ENABLED === 'true';
   return (
     <Layout
       footer={<Footer />}
       headerButtons={
         <>
-          <FaqButton
-            onClick={onFaqButton}
-            catchAttention={!hadWatchedInitialTutorial}
-          />
+          {isFaqEnabled && (
+            <FaqButton
+              onClick={onFaqButton}
+              catchAttention={!hadWatchedInitialTutorial}
+            />
+          )}
           <ThemeSwitcher />
         </>
       }
       modalsAndAnalytics={
         <>
           <Analytics />
-          <FaqModal {...faqDialog} />
+          {isFaqEnabled && <FaqModal {...faqDialog} />}
         </>
       }
     >

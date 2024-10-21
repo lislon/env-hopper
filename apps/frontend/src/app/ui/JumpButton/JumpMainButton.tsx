@@ -4,6 +4,7 @@ import { formatAppTitle, getJumpUrl } from '../../lib/utils';
 import { JumpALink } from './JumpALink';
 import { MainJumpButtonNotReady } from './MainJumpButtonNotReady';
 import cn from 'classnames';
+import { useState } from 'react';
 
 export const JUMP_MAIN_BTN_ID = 'jump-main-button';
 
@@ -13,6 +14,8 @@ export interface JumpMainButtonProps {
 
 export function JumpMainButton({ className }: JumpMainButtonProps) {
   const { app, env, substitution } = useEhContext();
+
+  const [isHovered, setIsHovered] = useState<boolean>(false);
 
   const url = getJumpUrl({ app, env, substitution });
   return (
@@ -52,8 +55,12 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
           </div>
         </JumpALink>
       ) : (
-        <div className="border border-dashed border-black dark:border-white rounded flex justify-center p-4 flex-col cursor-not-allowed w-full">
-          <MainJumpButtonNotReady />
+        <div
+          className="border border-dashed border-black dark:border-white rounded flex justify-center p-4 flex-col cursor-not-allowed w-full"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <MainJumpButtonNotReady isHovered={isHovered} />
         </div>
       )}
     </div>

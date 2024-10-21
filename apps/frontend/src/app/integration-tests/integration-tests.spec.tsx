@@ -2,12 +2,13 @@ import { render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import type { Router as RemixRouter } from '@remix-run/router';
 
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiGetConfig } from '../api/apiGetConfig';
 import { userEvent } from '@testing-library/user-event';
 import {
   ExpandedAutocompleteState,
   getOpenedAutocompleteListBox,
+  normalizeAppId,
   testClickJumpBtn,
   testFillEnv,
   testFillEnvAndApp,
@@ -15,7 +16,7 @@ import {
   testGetEnvComboBox,
   testGetJumpButtonLink,
   testGetJumpButtonText,
-  testGetSubstitution,
+  testGetSubstitutionInput,
   testIsQuickBarVisible,
   testListQuickBarOptions,
   testQuickBarClick,
@@ -29,11 +30,18 @@ import {
   TestFeatureMagazine,
   TestFixtures,
   testMagazineMakeFixtures,
+  testMakeApp,
   testMakeEnv,
+  testMakeLastUsedApp,
+  testMakeLastUsedEnv,
+  testMakeRecentJump,
 } from './__utils__/tests-magazine';
 import {
   LOCAL_STORAGE_KEY_FAVORITE_APPS,
   LOCAL_STORAGE_KEY_FAVORITE_ENVS,
+  LOCAL_STORAGE_KEY_LAST_USED_APP,
+  LOCAL_STORAGE_KEY_LAST_USED_ENV,
+  LOCAL_STORAGE_KEY_LAST_USED_SUBS,
   LOCAL_STORAGE_KEY_RECENT_JUMPS,
 } from '../context/EhContext';
 import React from 'react';
@@ -69,7 +77,7 @@ async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
     footerHtml: '',
     analyticsScript: '',
   });
-
+  localStorage.clear();
   if (testFixtures.favoriteApps) {
     localStorage.setItem(
       LOCAL_STORAGE_KEY_FAVORITE_APPS,
@@ -86,6 +94,26 @@ async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
     localStorage.setItem(
       LOCAL_STORAGE_KEY_RECENT_JUMPS,
       JSON.stringify(testFixtures.recentJumps),
+    );
+  }
+
+  if (testFixtures.lastApp) {
+    localStorage.setItem(
+      LOCAL_STORAGE_KEY_LAST_USED_APP,
+      JSON.stringify(normalizeAppId(testFixtures.lastApp)),
+    );
+  }
+  if (testFixtures.lastEnv) {
+    localStorage.setItem(
+      LOCAL_STORAGE_KEY_LAST_USED_ENV,
+      JSON.stringify(testFixtures.lastEnv),
+    );
+  }
+
+  if (testFixtures.lastSubs) {
+    localStorage.setItem(
+      LOCAL_STORAGE_KEY_LAST_USED_SUBS,
+      JSON.stringify(testFixtures.lastSubs),
     );
   }
 
@@ -207,7 +235,7 @@ describe('Integration tests', () => {
     ]);
   });
 
-  it('additional substitutions in URL works', async () => {
+  it('Additional substitutions in URL works', async () => {
     const { user } = await given({
       testFixtures: testMagazineMakeFixtures(
         TestFeatureMagazine.hasRecentAndFavorites,
@@ -262,6 +290,7 @@ describe('Integration tests', () => {
     });
 
     await user.keyboard('app');
+    screen.debug();
     await user.keyboard('[ArrowDown]');
     await user.keyboard('[ArrowDown]');
     await user.keyboard('{Enter}');
@@ -445,7 +474,7 @@ describe('Integration tests', () => {
     await testUserSelectApp(user, 'app1');
     await testQuickBarClick(user, 'applications', 'recent', 'app3-sub');
 
-    const substitution = testGetSubstitution();
+    const substitution = testGetSubstitutionInput();
     expect(document.activeElement).toEqual(substitution);
     expect(substitution.value).toBe('namespace1');
     expect(substitution.selectionEnd).toBeGreaterThan(0);
@@ -485,5 +514,52 @@ describe('Integration tests', () => {
     expect(testGetEnvComboBox().value).toBe('env1');
     await testQuickBarClick(user, 'environments', 'recent', 'env1');
     expect(testGetEnvComboBox().value).toBe('');
+  });
+
+  it('should prepopulate last used values', async () => {
+    await given({
+      testFixtures: {
+        ...testMagazineMakeFixtures(TestFeatureMagazine.firstTimeUser),
+        lastEnv: 'env1',
+        lastApp: 'app3-sub',
+        lastSubs: { namespace: 'namespace1' },
+      },
+    });
+    expect(testGetEnvComboBox().value).toBe('env1');
+    expect(testGetAppComboBox().value).toBe('app3-sub');
+    expect(testGetSubstitutionInput().value).toBe('namespace1');
+  });
+
+  describe('should not reuse wrong substitution when user select type of app', () => {
+    let user: UserType;
+    beforeEach(async () => {
+      const ret = await given({
+        testFixtures: {
+          ...testMagazineMakeFixtures(TestFeatureMagazine.firstTimeUser),
+          apps: [
+            testMakeApp('appA', { substitution: 'namespace' }),
+            testMakeApp('appB', { substitution: 'orderId' }),
+          ],
+          recentJumps: [
+            testMakeRecentJump('env1', 'appA', 'namespace1'),
+            testMakeRecentJump('env2', 'appB', 'order1'),
+          ],
+          lastApp: testMakeLastUsedApp('appA'),
+          lastEnv: testMakeLastUsedEnv('env1'),
+          lastSubs: { namespace: 'namespace1' },
+        },
+      });
+      user = ret.user;
+    });
+
+    it('should work in quickbar', async () => {
+      await testQuickBarClick(user, 'applications', 'recent', 'appB');
+      expect(testGetSubstitutionInput().value).toBe('');
+    });
+
+    it('should work in app autocomplete', async () => {
+      await testUserSelectApp(user, 'appB');
+      expect(testGetSubstitutionInput().value).toBe('');
+    });
   });
 });

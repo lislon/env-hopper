@@ -1,3 +1,5 @@
+import { Dispatch, SetStateAction } from 'react';
+
 export interface EhEnv {
   id: EhEnvId;
   meta: Record<string, string>;
@@ -58,6 +60,11 @@ export type EhAppId = string;
 export type EhPageId = string;
 export type EhSubstitutionId = string;
 
+/**
+ * Last used substitutions for the app.
+ */
+export type EhLastUsedSubs = Record<EhSubstitutionId, string>;
+
 export interface EhClientConfig {
   envs: EhEnv[];
   apps: EhApp[];
@@ -74,3 +81,5 @@ export interface EhCustomization extends EhCustomPartUnstable {
   footerHtml: string;
   analyticsScript: string;
 }
+
+export type Updater<S> = Dispatch<SetStateAction<S>>;

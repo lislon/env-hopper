@@ -26,7 +26,6 @@ export function UnstableCustomWidget({ className }: UnstableCustomWidgetProps) {
     ApiQueryMagazine.getCustomization(),
   );
 
-  console.log(customization);
   if (env?.meta && customization?.widgetTitle && customization?.widgetUrl) {
     const urlReplaced = replaceVars(customization?.widgetUrl, env);
     const titleReplaced = replaceVars(customization?.widgetTitle, env);

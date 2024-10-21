@@ -191,6 +191,7 @@ export function getOpenedAutocompleteListBox() {
 
 export interface ExpandedAutocompleteState {
   recentSection: string[];
+  sameSubSection: string[];
   favoriteSection: string[];
   allSection: string[];
 }

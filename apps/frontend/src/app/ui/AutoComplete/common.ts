@@ -1,8 +1,11 @@
-export interface Item {
+import { EhSubstitutionId } from '@env-hopper/types';
+
+export interface SourceItem {
   id: string;
   title: string;
   favorite?: boolean;
   recent?: boolean;
+  substitutionId?: EhSubstitutionId;
 }
 
-export const suggestionHeightClass = 'h-10';
+export const SAME_SECTION_MIN_ITEMS = 1;

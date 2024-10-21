@@ -1,21 +1,23 @@
-import { Item } from './common';
+import { SourceItem } from './common';
 import { sortBy } from 'lodash';
+import { EhSubstitutionId } from '@env-hopper/types';
 
-export type ItemSection = 'favorite' | 'recent' | 'all';
+export type ItemSection = 'favorite' | 'recent' | 'all' | 'same_substitution';
 
-export interface ItemWithSection extends Item {
+export interface SectionedItem extends SourceItem {
   section: ItemSection;
 }
 
 export function flatmapToItemsWithSections(
-  item: Item[],
-  isUserSearching: boolean,
-): ItemWithSection[] {
+  item: SourceItem[],
+  activeSubId: EhSubstitutionId | undefined,
+): SectionedItem[] {
   return sortBy(
-    item.flatMap((i) => mapToItemWithSection(i, isUserSearching)),
+    item.flatMap((i) => spreadItemOnSections(i, activeSubId)),
     [
       (item) => (item.section === 'recent' ? -1 : 1),
       (item) => (item.section === 'favorite' ? -1 : 1),
+      (item) => (item.section === 'same_substitution' ? -1 : 1),
       (item) => (item.section === 'all' ? -1 : 1),
     ],
   );
@@ -23,48 +25,27 @@ export function flatmapToItemsWithSections(
 
 /**
  * If the app is in the favorite and recent list, we want to show it in both sections.
- * @param item - the item to map
- * @param isUserSearching - true if autocomplete now has user filter. In this case, we want to show only one item.
  */
-export function mapToItemWithSection(
-  item: Item | null,
-  isUserSearching: boolean,
-): ItemWithSection[] {
+export function spreadItemOnSections(
+  item: SourceItem | null,
+  activeSubId: EhSubstitutionId | undefined,
+): SectionedItem[] {
   if (item === null) {
     return [];
   }
 
-  if (item.favorite && item.recent) {
-    if (isUserSearching) {
-      return [{ ...item, section: 'recent' }];
-    }
+  // TODO: Do not copy
+  const result: SectionedItem[] = [{ ...item, section: 'all' }];
 
-    return [
-      { ...item, section: 'recent' },
-      { ...item, section: 'favorite' },
-      { ...item, section: 'all' },
-    ];
-  }
-  if (isUserSearching) {
-    return [
-      {
-        ...item,
-        section: item.recent ? 'recent' : item.favorite ? 'favorite' : 'all',
-      },
-    ];
-  }
   if (item.favorite) {
-    return [
-      { ...item, section: 'favorite' },
-      { ...item, section: 'all' },
-    ];
+    result.push({ ...item, section: 'favorite' });
   }
   if (item.recent) {
-    return [
-      { ...item, section: 'recent' },
-      { ...item, section: 'all' },
-    ];
+    result.push({ ...item, section: 'recent' });
+  }
+  if (activeSubId !== undefined && item.substitutionId === activeSubId) {
+    result.push({ ...item, section: 'same_substitution' });
   }
 
-  return [{ ...item, section: 'all' }];
+  return result;
 }

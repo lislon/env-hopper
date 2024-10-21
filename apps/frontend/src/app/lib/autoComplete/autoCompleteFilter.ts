@@ -1,10 +1,12 @@
 import { EhAutoCompleteFilter } from '../../ui/AutoComplete/EhAutoComplete';
 import { sortBy } from 'lodash';
-import { Item } from '../../ui/AutoComplete/common';
+import { SourceItem } from '../../ui/AutoComplete/common';
 import { fixRuLayout, isRuLayout } from '../fixLayout';
 import { tokenize } from './tokenize';
 
-export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
+export function makeAutoCompleteFilter(
+  items: SourceItem[],
+): EhAutoCompleteFilter {
   const itemsIndex = items.map((item) => {
     const lower = item.title.toLowerCase();
     return {
@@ -18,7 +20,7 @@ export function makeAutoCompleteFilter(items: Item[]): EhAutoCompleteFilter {
 
   function doSearch(searchPatternOrig: string) {
     const searchPattern = searchPatternOrig.toLowerCase();
-    const results = new Set<Item>();
+    const results = new Set<SourceItem>();
 
     // prefix match exact case sensitive
     const exactPrefix = sortBy(

@@ -1,5 +1,5 @@
 import { makeAutoCompleteFilter } from './autoCompleteFilter';
-import { Item } from '../../ui/AutoComplete/common';
+import { SourceItem } from '../../ui/AutoComplete/common';
 
 const randomEnvironmentNames = [
   'uat-0916',
@@ -25,7 +25,7 @@ const randomEnvironmentNames = [
 ];
 
 describe('env search a bit fuzzy', () => {
-  let db: Item[] = [];
+  let db: SourceItem[] = [];
 
   function toItem(title: string) {
     return { title, id: '', favorite: title.includes('favorite') };

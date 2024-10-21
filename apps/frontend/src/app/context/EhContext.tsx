@@ -35,7 +35,7 @@ import {
 } from '../lib/utils';
 import { Params, useNavigate, useParams } from 'react-router-dom';
 import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter';
-import { Item } from '../ui/AutoComplete/common';
+import { SourceItem } from '../ui/AutoComplete/common';
 import { usePrefetch } from '../hooks/usePrefetch';
 import { FocusControllerEh, useFocusController } from '../lib/focusController';
 import { MAX_HISTORY_JUMPS } from '../lib/constants';
@@ -126,7 +126,7 @@ function getByIdRelaxed<T extends { id: string }>(
       return [exactMatchResult, true];
     }
 
-    const items: Item[] = options.map((e) => ({ title: e.id, id: e.id }));
+    const items: SourceItem[] = options.map((e) => ({ title: e.id, id: e.id }));
     const found = makeAutoCompleteFilter(items)(id.toLowerCase(), items);
     if (found.length === 1) {
       return [primarySearch(found[0].id, options), false];
@@ -297,7 +297,6 @@ export function EhContextProvider({
 
     setEnv(env);
     setApp(app);
-    console.log('setSubstitution url', substitution);
     setSubstitution(substitution);
   }, [config, routerParams, fixUrlBasedOnSelection]);
 
@@ -453,7 +452,6 @@ export function EhContextProvider({
     substitution,
     setSubstitution: useCallback<EhContextProps['setSubstitution']>(
       (substitution) => {
-        console.log('setSubstitution user', substitution);
         setSubstitution(substitution);
         if (substitution?.name) {
           setLastUsedSubs((prev) => {

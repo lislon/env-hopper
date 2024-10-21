@@ -3,25 +3,35 @@ import React, { useMemo } from 'react';
 import { useEhContext } from '../../context/EhContext';
 import { EhAutoComplete } from '../AutoComplete/EhAutoComplete';
 import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter';
-import { EhApp, EhAppId } from '@env-hopper/types';
-import { Item } from '../AutoComplete/common';
+import { EhApp, EhAppId, EhEnv } from '@env-hopper/types';
+import { SourceItem } from '../AutoComplete/common';
 import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
 import { HomeFavoriteButton } from '../HomeFavoriteButton';
-import { formatAppTitle, getEhUrl } from '../../lib/utils';
+import {
+  findSubstitutionIdByUrl,
+  formatAppTitle,
+  getEhUrl,
+} from '../../lib/utils';
 import cn from 'classnames';
-import { AUTOCOMPLETE_ATTENTION_CLASSNAME } from './commonList';
+import {
+  AUTOCOMPLETE_ATTENTION_CLASSNAME,
+  mapToSectionedItems,
+} from './commonList';
+import { first } from 'lodash';
 
 function mapToAutoCompleteItemApp(
   app: EhApp,
   favorites: Set<EhAppId>,
   recents: Set<EhAppId>,
-): Item {
+  env: EhEnv | undefined,
+): SourceItem {
   return {
     id: app.id,
     title: formatAppTitle(app),
     favorite: favorites.has(app.id),
     recent: recents.has(app.id),
+    substitutionId: findSubstitutionIdByUrl({ app, env }),
   };
 }
 
@@ -35,6 +45,7 @@ export function AppList({ onOpenChange, className }: AppListProps) {
     app,
     env,
     listApps,
+    listEnvs,
     setApp,
     listFavoriteApps,
     recentJumps,
@@ -42,9 +53,13 @@ export function AppList({ onOpenChange, className }: AppListProps) {
     getAppById,
     tryJump,
     highlightAutoComplete,
+    substitutionType,
+    substitution,
   } = useEhContext();
 
   const autoFocusOn = useAutoFocusHelper();
+
+  const firstEnv = first(listEnvs);
 
   const items = useMemo(() => {
     const favSet = new Set(listFavoriteApps);
@@ -54,10 +69,10 @@ export function AppList({ onOpenChange, className }: AppListProps) {
         .map((jump) => jump.app || '')
         .filter(Boolean),
     );
-    return listApps.map((env) =>
-      mapToAutoCompleteItemApp(env, favSet, recentSet),
+    return listApps.map((app) =>
+      mapToAutoCompleteItemApp(app, favSet, recentSet, firstEnv),
     );
-  }, [listApps, listFavoriteApps, recentJumps]);
+  }, [listApps, listFavoriteApps, recentJumps, firstEnv]);
 
   const autoCompleteFilter = useMemo(
     () => makeAutoCompleteFilter(items),
@@ -65,15 +80,30 @@ export function AppList({ onOpenChange, className }: AppListProps) {
   );
 
   const isFavorite = listFavoriteApps.includes(app?.id || '');
+
+  const hasSubstitutionValue = !!substitution?.value;
+  const allSectionedItems = useMemo(() => {
+    return mapToSectionedItems(
+      items,
+      hasSubstitutionValue ? substitutionType?.id : undefined,
+    );
+  }, [items, substitutionType, hasSubstitutionValue]);
+
   return (
     <EhAutoComplete
+      allSectionedItems={allSectionedItems}
+      tmpSameSubstitutionTitle={
+        substitutionType?.title
+          ? `${substitutionType?.title}: ${substitution?.value}`
+          : undefined
+      }
       itemsAll={items}
       filter={autoCompleteFilter}
       label="Application"
       placeholder="Select application"
       onOpenChange={onOpenChange}
       selectedItem={items.find((i) => i.id === app?.id) || null}
-      onTryJump={tryJump}
+      onPrimaryAction={tryJump}
       onSelectedItemChange={(appId) => setApp(getAppById(appId))}
       onFavoriteToggle={(app, isOn) => toggleFavoriteApp(app.id, isOn)}
       autoFocus={autoFocusOn === 'applications'}

@@ -134,6 +134,8 @@ async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
   return { user, router };
 }
 
+type SectionType = keyof ExpandedAutocompleteState;
+
 function getLogicalAutocompleteOptions(): ExpandedAutocompleteState {
   const openedAutocompleteElement = getOpenedAutocompleteListBox();
   const listItems = within(openedAutocompleteElement).getAllByText(/.+/i);
@@ -141,23 +143,18 @@ function getLogicalAutocompleteOptions(): ExpandedAutocompleteState {
   const output: ExpandedAutocompleteState = {
     recentSection: [],
     favoriteSection: [],
+    sameSubSection: [],
     allSection: [],
   };
-  let currentSection: keyof ExpandedAutocompleteState = 'allSection';
+  let currentSection: SectionType = 'allSection';
 
-  const recentSection = '🕒 Recent';
-  const favoriteSection = '⭐ Favorite';
-  const allSection = '🗂️ All';
+  const keys = Object.keys(output) as unknown as SectionType[];
   for (const item of listItems) {
-    const innerHTML = item.innerHTML;
-    if (innerHTML.includes(recentSection)) {
-      currentSection = 'recentSection';
-    } else if (innerHTML.includes(favoriteSection)) {
-      currentSection = 'favoriteSection';
-    } else if (innerHTML.includes(allSection)) {
-      currentSection = 'allSection';
+    const sectionType = item.getAttribute('data-testid') as SectionType | null;
+    if (sectionType !== null && keys.includes(sectionType)) {
+      currentSection = sectionType;
     } else {
-      output[currentSection].push(innerHTML);
+      output[currentSection].push(item.innerHTML);
     }
   }
 
@@ -219,6 +216,39 @@ describe('Integration tests', () => {
     await user.click(testGetEnvComboBox());
 
     expect(getLogicalAutocompleteOptions().recentSection).toContain('env1');
+  });
+
+  it('Recent app are suggested', async () => {
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.userNoOptions),
+    });
+
+    await testFillEnvAndApp(user, '1', 'App1');
+    await testClickJumpBtn(user);
+    await user.click(testGetAppComboBox());
+
+    expect(getLogicalAutocompleteOptions().recentSection).toContain('app1');
+  });
+
+  it('Same substitution are suggested', async () => {
+    const { user } = await given({
+      testFixtures: {
+        ...testMagazineMakeFixtures(TestFeatureMagazine.userNoOptions),
+        apps: [
+          testMakeApp('appA', { substitution: 'namespace' }),
+          testMakeApp('appB', { substitution: 'namespace' }),
+        ],
+        lastApp: testMakeLastUsedApp('appA'),
+        lastEnv: testMakeLastUsedEnv('env1'),
+        lastSubs: { namespace: 'namespace1' },
+      },
+    });
+
+    await user.click(testGetAppComboBox());
+    expect(getLogicalAutocompleteOptions().sameSubSection).toEqual([
+      'appA',
+      'appB',
+    ]);
   });
 
   it('When there is already preselected env and user clicks on it, text will be select-ed and all options will be shown', async () => {

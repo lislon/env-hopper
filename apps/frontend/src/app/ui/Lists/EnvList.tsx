@@ -7,7 +7,7 @@ import {
 } from '../AutoComplete/EhAutoComplete';
 import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter';
 import { EhEnv, EhEnvId } from '@env-hopper/types';
-import { Item } from '../AutoComplete/common';
+import { SourceItem } from '../AutoComplete/common';
 import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
 import { HomeFavoriteButton } from '../HomeFavoriteButton';
@@ -15,13 +15,16 @@ import { getEhUrl } from '../../lib/utils';
 import { tokenize } from '../../lib/autoComplete/tokenize';
 import { shuffle, sortBy } from 'lodash';
 import cn from 'classnames';
-import { AUTOCOMPLETE_ATTENTION_CLASSNAME } from './commonList';
+import {
+  AUTOCOMPLETE_ATTENTION_CLASSNAME,
+  mapToSectionedItems,
+} from './commonList';
 
 function mapToAutoCompleteItem(
   env: EhEnv,
   favorites: Set<EhEnvId>,
   recents: Set<EhEnvId>,
-): Item {
+): SourceItem {
   return {
     id: env.id,
     title: env.id,
@@ -38,7 +41,7 @@ export interface EnvListProps {
 function findGoodExample(
   envIds: EhEnvId[],
   autoCompleteFilter: EhAutoCompleteFilter,
-  items: Item[],
+  items: SourceItem[],
 ): string | undefined {
   function getSearch(tokens: string[]) {
     if (tokens.length >= 2) {
@@ -129,8 +132,13 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
     }
   }, [recentJumps, listEnvs, autoCompleteFilter]);
 
+  const allSectionedItems = useMemo(() => {
+    return mapToSectionedItems(items, undefined);
+  }, [items]);
+
   return (
     <EhAutoComplete
+      allSectionedItems={allSectionedItems}
       itemsAll={items}
       filter={autoCompleteFilter}
       label="Environment"
@@ -141,7 +149,7 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
         setEnv(getEnvById(envId));
       }}
       onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
-      onTryJump={tryJump}
+      onPrimaryAction={tryJump}
       autoFocus={autoFocusOn === 'environments'}
       favoriteButton={
         env ? (

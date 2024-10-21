@@ -1,15 +1,16 @@
 'use client';
 import React, { useMemo } from 'react';
-import { useEhContext } from '../context/EhContext';
-import { EhAutoComplete } from './AutoComplete/EhAutoComplete';
-import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter';
+import { useEhContext } from '../../context/EhContext';
+import { EhAutoComplete } from '../AutoComplete/EhAutoComplete';
+import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter';
 import { EhApp, EhAppId } from '@env-hopper/types';
-import { Item } from './AutoComplete/common';
-import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
-import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../lib/constants';
-import { HomeFavoriteButton } from './HomeFavoriteButton';
-import { formatAppTitle, getEhUrl } from '../lib/utils';
+import { Item } from '../AutoComplete/common';
+import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
+import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
+import { HomeFavoriteButton } from '../HomeFavoriteButton';
+import { formatAppTitle, getEhUrl } from '../../lib/utils';
 import cn from 'classnames';
+import { AUTOCOMPLETE_ATTENTION_CLASSNAME } from './commonList';
 
 function mapToAutoCompleteItemApp(
   app: EhApp,
@@ -33,7 +34,6 @@ export function AppList({ onOpenChange, className }: AppListProps) {
   const {
     app,
     env,
-    substitution,
     listApps,
     setApp,
     listFavoriteApps,
@@ -86,12 +86,12 @@ export function AppList({ onOpenChange, className }: AppListProps) {
           />
         ) : undefined
       }
-      getEhUrl={(id) => getEhUrl(env?.id, id, substitution?.value)}
-      className={className}
-      inputClassName={cn({
-        ['border-4 border-accent animate-bounce']:
-          highlightAutoComplete === 'applications',
-      })}
+      getEhUrl={(id) => getEhUrl(env?.id, id, undefined)}
+      className={cn(
+        className,
+        highlightAutoComplete === 'applications' &&
+          AUTOCOMPLETE_ATTENTION_CLASSNAME,
+      )}
     />
   );
 }

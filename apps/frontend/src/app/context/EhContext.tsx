@@ -5,6 +5,7 @@ import {
   EhClientConfig,
   EhEnv,
   EhEnvId,
+  EhLastUsedSubs,
   EhSubstitutionType,
 } from '@env-hopper/types';
 import React, {
@@ -38,12 +39,16 @@ import { Item } from '../ui/AutoComplete/common';
 import { usePrefetch } from '../hooks/usePrefetch';
 import { FocusControllerEh, useFocusController } from '../lib/focusController';
 import { MAX_HISTORY_JUMPS } from '../lib/constants';
+import { omit } from 'lodash';
 
 export const LOCAL_STORAGE_KEY_RECENT_JUMPS = 'recent';
 export const LOCAL_STORAGE_KEY_FAVORITE_ENVS = 'favoriteEnvs';
 export const LOCAL_STORAGE_KEY_FAVORITE_APPS = 'favoriteApps';
 export const LOCAL_STORAGE_KEY_VERSION = 'version';
 export const LOCAL_STORAGE_KEY_WATCHED_TUTORIAL = 'hadWatchedTutorial';
+export const LOCAL_STORAGE_KEY_LAST_USED_ENV = 'lastUsedEnv';
+export const LOCAL_STORAGE_KEY_LAST_USED_APP = 'lastUsedApp';
+export const LOCAL_STORAGE_KEY_LAST_USED_SUBS = 'lastUsedSubs';
 
 export interface EhContextProps extends FocusControllerEh {
   listEnvs: EhEnv[];
@@ -130,6 +135,14 @@ function getByIdRelaxed<T extends { id: string }>(
   return [undefined, false];
 }
 
+export interface PreselectedBasedOnParams {
+  routerParams: Readonly<Params<string>>;
+  config: EhClientConfig;
+  lastUsedEnv: EhEnvId | undefined;
+  lastUsedApp: EhAppId | undefined;
+  lastUsedSubs: EhLastUsedSubs | undefined;
+}
+
 export interface PreselectedBasedOnParamsReturn {
   urlWasFixed: boolean;
   env: EhEnv | undefined;
@@ -137,14 +150,36 @@ export interface PreselectedBasedOnParamsReturn {
   substitution: EhSubstitutionValue | undefined;
 }
 
-function getPreselectedBasedOnParams(
-  routerParams: Readonly<Params<string>>,
-  config: EhClientConfig,
-): PreselectedBasedOnParamsReturn {
-  let env: EhEnv | undefined = undefined,
-    app: EhApp | undefined = undefined,
-    sub = undefined;
+function getSubstitutionBasedOnAppAndLastUsed(
+  app: EhApp | undefined,
+  listEnvs: EhEnv[],
+  lastUsedSubs: EhLastUsedSubs | undefined,
+): EhSubstitutionValue | undefined {
+  const subId = findSubstitutionIdByUrl({
+    app,
+    env: listEnvs?.[0],
+  });
+  if (subId && lastUsedSubs?.[subId] !== undefined) {
+    return {
+      name: subId,
+      value: lastUsedSubs[subId],
+    };
+  }
+  return undefined;
+}
+
+function getPreselectedBasedOnParams({
+  routerParams,
+  config,
+  lastUsedEnv,
+  lastUsedApp,
+  lastUsedSubs,
+}: PreselectedBasedOnParams): PreselectedBasedOnParamsReturn {
+  let env: EhEnv | undefined = undefined;
+  let app: EhApp | undefined = undefined;
+  let sub = undefined;
   let urlWasFixed = false;
+  const listEnvs = config.envs;
 
   if ('envId' in routerParams) {
     let strictMatch;
@@ -156,6 +191,8 @@ function getPreselectedBasedOnParams(
     if (!strictMatch) {
       urlWasFixed = true;
     }
+  } else if (lastUsedEnv !== undefined) {
+    [env] = getByIdRelaxed(doGetEnvById, lastUsedEnv, config.envs);
   }
 
   if ('appId' in routerParams) {
@@ -170,6 +207,8 @@ function getPreselectedBasedOnParams(
     if (!strictMatch) {
       urlWasFixed = true;
     }
+  } else if (lastUsedApp !== undefined) {
+    [app] = getByIdRelaxed(doGetAppById, lastUsedApp, config.apps);
   }
 
   if ('subValue' in routerParams && routerParams['subValue'] !== undefined) {
@@ -180,7 +219,10 @@ function getPreselectedBasedOnParams(
         value: routerParams['subValue'],
       };
     }
+  } else if (lastUsedSubs !== undefined) {
+    sub = getSubstitutionBasedOnAppAndLastUsed(app, listEnvs, lastUsedSubs);
   }
+
   return { urlWasFixed, env, app, substitution: sub };
 }
 
@@ -193,10 +235,27 @@ export function EhContextProvider({
   error: Error | null;
 }) {
   const navigate = useNavigate();
-  const params = useParams();
+  const routerParams = useParams();
+  const [lastUsedApp, setLastUsedApp] = useLocalStorage<EhAppId | undefined>(
+    LOCAL_STORAGE_KEY_LAST_USED_APP,
+    undefined,
+  );
+  const [lastUsedEnv, setLastUsedEnv] = useLocalStorage<EhEnvId | undefined>(
+    LOCAL_STORAGE_KEY_LAST_USED_ENV,
+    undefined,
+  );
+  const [lastUsedSubs, setLastUsedSubs] = useLocalStorage<
+    EhLastUsedSubs | undefined
+  >(LOCAL_STORAGE_KEY_LAST_USED_SUBS, undefined);
 
   const [initialEnvAppSubBased] = useState(() => {
-    return getPreselectedBasedOnParams(params, config);
+    return getPreselectedBasedOnParams({
+      routerParams,
+      config,
+      lastUsedApp,
+      lastUsedSubs,
+      lastUsedEnv,
+    });
   });
 
   const [env, setEnv] = useState<EhEnv | undefined>(initialEnvAppSubBased.env);
@@ -222,8 +281,13 @@ export function EhContextProvider({
 
   useEffect(() => {
     const { app, env, substitution, urlWasFixed } = getPreselectedBasedOnParams(
-      params,
-      config,
+      {
+        routerParams,
+        config,
+        lastUsedApp,
+        lastUsedSubs,
+        lastUsedEnv,
+      },
     );
 
     if (urlWasFixed) {
@@ -233,8 +297,9 @@ export function EhContextProvider({
 
     setEnv(env);
     setApp(app);
+    console.log('setSubstitution url', substitution);
     setSubstitution(substitution);
-  }, [config, params, fixUrlBasedOnSelection]);
+  }, [config, routerParams, fixUrlBasedOnSelection]);
 
   const [recentJumps, setRecentJumps] = useLocalStorage<EhJumpHistory[]>(
     LOCAL_STORAGE_KEY_RECENT_JUMPS,
@@ -360,18 +425,50 @@ export function EhContextProvider({
   );
 
   const value: EhContextProps = {
-    setEnv,
+    setEnv: useCallback<EhContextProps['setEnv']>(
+      (env) => {
+        setEnv(env);
+        setLastUsedEnv(env?.id);
+      },
+      [setEnv, setLastUsedEnv],
+    ),
     env,
     listFavoriteEnvs,
     listFavoriteApps,
-    setApp,
+    setApp: useCallback<EhContextProps['setApp']>(
+      (app) => {
+        setApp(app);
+        setLastUsedApp(app?.id);
+        const substitutionBasedOnAppAndLastUsed =
+          getSubstitutionBasedOnAppAndLastUsed(app, listEnvs, lastUsedSubs);
+        setSubstitution(substitutionBasedOnAppAndLastUsed);
+      },
+      [setApp, setLastUsedApp, lastUsedSubs, listEnvs],
+    ),
     app,
     substitutionType,
     listEnvs: listEnvs,
     listApps: listApps,
     listSubstitutions: config.substitutions,
     substitution,
-    setSubstitution,
+    setSubstitution: useCallback<EhContextProps['setSubstitution']>(
+      (substitution) => {
+        console.log('setSubstitution user', substitution);
+        setSubstitution(substitution);
+        if (substitution?.name) {
+          setLastUsedSubs((prev) => {
+            if (substitution.value === '') {
+              return prev ? omit(prev, substitution.name) : undefined;
+            }
+            return {
+              ...prev,
+              [substitution.name]: substitution.value,
+            };
+          });
+        }
+      },
+      [],
+    ),
     highlightAutoComplete,
     setHighlightAutoComplete: useCallback<
       EhContextProps['setHighlightAutoComplete']

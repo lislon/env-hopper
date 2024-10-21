@@ -1,8 +1,8 @@
 'use client';
 import React, { useEffect, useRef } from 'react';
-import { useEhContext } from '../context/EhContext';
+import { useEhContext } from '../../context/EhContext';
 import { EhEnv, EhSubstitutionType } from '@env-hopper/types';
-import { useAutoFocusHelper } from '../hooks/useAutoFocusHelper';
+import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
 
 function getAutoCompleteAttr(
   substitutionType: EhSubstitutionType,

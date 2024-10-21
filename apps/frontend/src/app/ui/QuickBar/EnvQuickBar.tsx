@@ -12,15 +12,8 @@ import { uniq } from 'lodash';
 import cn from 'classnames';
 
 export function EnvQuickBar(props: QuickBarSharedProps) {
-  const {
-    listFavoriteEnvs,
-    recentJumps,
-    setEnv,
-    getEnvById,
-    env,
-    app,
-    substitution,
-  } = useEhContext();
+  const { listFavoriteEnvs, recentJumps, setEnv, getEnvById, env, app } =
+    useEhContext();
 
   const favorites = useMemo<BarElement<string>[]>(() => {
     return listFavoriteEnvs.map((envId) => {
@@ -57,7 +50,7 @@ export function EnvQuickBar(props: QuickBarSharedProps) {
         onClick={onClick}
         comboboxType={'environments'}
         favoriteOrRecent={'recent'}
-        getEhLink={(id) => getEhUrl(id, app?.id, substitution?.value)}
+        getEhLink={(id) => getEhUrl(id, app?.id, undefined)}
       />
       <InternalCommonBar
         activeId={env?.id}
@@ -65,7 +58,7 @@ export function EnvQuickBar(props: QuickBarSharedProps) {
         onClick={onClick}
         comboboxType={'environments'}
         favoriteOrRecent={'favorite'}
-        getEhLink={(id) => getEhUrl(id, app?.id, substitution?.value)}
+        getEhLink={(id) => getEhUrl(id, app?.id, undefined)}
       />
     </div>
   );

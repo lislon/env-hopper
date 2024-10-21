@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
 
     server: {
       port: 4000,
+      strictPort: true,
       host: 'localhost',
       proxy: {
         '/api': 'http://localhost:4001'

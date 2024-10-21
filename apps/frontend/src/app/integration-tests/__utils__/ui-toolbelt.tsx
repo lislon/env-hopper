@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { getAppIdByTitle } from '../../lib/utils';
 import { ComboBoxType, FavoriteOrRecent } from '../../types';
+import { EhAppId } from '@env-hopper/types';
 
 export type UserType = ReturnType<typeof userEvent.setup>;
 
@@ -25,7 +26,7 @@ export function testGetAppComboBox() {
   });
 }
 
-export function testGetSubstitution() {
+export function testGetSubstitutionInput() {
   return screen.getByTestId<HTMLInputElement>('substitution-input');
 }
 
@@ -33,7 +34,7 @@ export async function testUserTypeSubstitution(
   user: UserType,
   substitution: string,
 ) {
-  const combo = testGetSubstitution();
+  const combo = testGetSubstitutionInput();
   await user.click(combo);
   await user.keyboard(substitution);
 }
@@ -192,4 +193,8 @@ export interface ExpandedAutocompleteState {
   recentSection: string[];
   favoriteSection: string[];
   allSection: string[];
+}
+
+export function normalizeAppId(app: EhAppId): EhAppId {
+  return app.includes('/') ? app : `${app}/home`;
 }

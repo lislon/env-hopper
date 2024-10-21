@@ -1,7 +1,7 @@
 import React from 'react';
-import { EnvList } from './EnvList';
-import { AppList } from './AppList';
-import { SubstitutionList } from './SubstitutionList';
+import { EnvList } from './Lists/EnvList';
+import { AppList } from './Lists/AppList';
+import { SubstitutionList } from './Lists/SubstitutionList';
 import { EnvQuickBar } from './QuickBar/EnvQuickBar';
 import { AppQuickBar } from './QuickBar/AppQuickBar';
 import { JumpMainButton } from './JumpButton/JumpMainButton';
@@ -17,7 +17,7 @@ export function MainForm() {
         <AppList className={'grid-in-a-input mt-4'} />
         <AppQuickBar className={'grid-in-a-bar'} />
         <SubstitutionList className={'grid-in-s-input mt-4'} />
-        <JumpMainButton className="grid-in-jump overflow-hidden px-4 w-full max-w-[1000px] justify-self-center mt-4" />
+        <JumpMainButton className="grid-in-jump overflow-hidden px-8 py-4 w-full max-w-[1000px] justify-self-center mt-4" />
         <AppWidgetsPanel className={'grid-in-widgets'} />
         <History className={'grid-in-history mt-4 w-full'} />
       </div>

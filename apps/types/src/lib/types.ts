@@ -1,5 +1,3 @@
-import { Dispatch, SetStateAction } from 'react';
-
 export interface EhEnv {
   id: EhEnvId;
   meta: Record<string, string>;
@@ -75,11 +73,12 @@ export interface EhClientConfig {
 
 export interface EhCustomPartUnstable {
   slidesHtml?: string[];
+  widgetTitle?: string;
+  widgetUrl?: string;
+  widgetSvg?: string;
 }
 
 export interface EhCustomization extends EhCustomPartUnstable {
   footerHtml: string;
   analyticsScript: string;
 }
-
-export type Updater<S> = Dispatch<SetStateAction<S>>;

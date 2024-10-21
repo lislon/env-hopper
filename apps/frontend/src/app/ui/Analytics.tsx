@@ -20,5 +20,12 @@ export function Analytics() {
     ApiQueryMagazine.getCustomization(),
   );
 
-  return <InsertJs js={customization.analyticsScript} />;
+  return (
+    <InsertJs
+      js={customization.analyticsScript.replace(
+        '{{APP_VERSION}}',
+        import.meta.env.VITE_APP_VERSION,
+      )}
+    />
+  );
 }

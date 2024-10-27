@@ -9,7 +9,10 @@ export function LoadingScreen({ failureCount }: LoadingFallbackProps) {
     <>
       <div className="flex flex-col items-center w-full h-full">
         <span className="loading loading-bars loading-lg"></span>
-        Loading... {failureCount ? `Attempt ${failureCount}` : ''}
+        <div>Loading...</div>
+        {failureCount && failureCount > 1 ? (
+          <div className={'mt-2 text-xs'}>Attempt {failureCount}</div>
+        ) : null}
       </div>
     </>
   );

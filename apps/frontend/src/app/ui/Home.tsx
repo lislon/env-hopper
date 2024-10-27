@@ -49,27 +49,52 @@ function HomeWithContext() {
   );
 }
 
-export function Home() {
+function OtherMode() {
   const q = useQuery(ApiQueryMagazine.getConfig());
-  const { isSuccess, data: config, isError, error } = q;
+  const { isError, error, isLoading, failureCount } = q;
 
-  if (isError && config === undefined) {
-    return <Layout>Error: {error?.message}</Layout>;
-  }
-
-  if (!isSuccess) {
+  if (isLoading) {
     return (
       <Layout>
-        <LoadingScreen />
+        <LoadingScreen failureCount={failureCount} />
       </Layout>
     );
   }
 
-  return (
-    <Suspense fallback={<LoadingScreen />}>
-      <EhContextProvider config={config} error={error}>
-        <HomeWithContext />
-      </EhContextProvider>
-    </Suspense>
-  );
+  if (isError) {
+    return (
+      <Layout>
+        <div>Sorry, something is wrong: {error?.message}</div>
+        <div className={'mt-4'}>
+          Please try to{' '}
+          <button className={'btn'} onClick={() => window.location.reload()}>
+            refresh
+          </button>{' '}
+          the page
+        </div>
+      </Layout>
+    );
+  } else {
+    return (
+      <Layout>
+        Sorry, no data from backend available, please try to refresh
+      </Layout>
+    );
+  }
+}
+
+export function Home() {
+  const { data: config, error } = useQuery(ApiQueryMagazine.getConfig());
+
+  if (config !== undefined) {
+    return (
+      <Suspense fallback={<LoadingScreen />}>
+        <EhContextProvider config={config} error={error}>
+          <HomeWithContext />
+        </EhContextProvider>
+      </Suspense>
+    );
+  } else {
+    return <OtherMode />;
+  }
 }

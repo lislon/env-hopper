@@ -14,7 +14,7 @@
         "outputPath": "dist/apps/backend",
         "format": ["cjs"],
         "bundle": false,
-        "main": "apps/backend/src/main.ts",
+        "main": "apps/backend/src/server.ts",
         "tsConfig": "apps/backend/tsconfig.app.json",
         "assets": ["apps/backend/src/assets"],
         "generatePackageJson": true,
@@ -28,7 +28,7 @@
       "configurations": {
         "development": {},
         "production": {
-          "main": "apps/backend/src/main.ts",
+          "main": "apps/backend/src/server.ts",
           "esbuildOptions": {
             "sourcemap": false,
             "outExtension": {

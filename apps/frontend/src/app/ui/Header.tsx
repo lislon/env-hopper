@@ -7,7 +7,7 @@ export interface HeaderProps {
   className?: string;
 }
 export function Header({ className }: HeaderProps) {
-  const { error, needRefresh, refresh } = useEhServerSync();
+  const { error, needRefresh, refresh, isDegraded } = useEhServerSync();
   const APP_VERSION = import.meta.env.VITE_APP_VERSION;
   return (
     <header className={cn('flex items-center', className)}>
@@ -38,7 +38,7 @@ export function Header({ className }: HeaderProps) {
         {/*  <div className={"invisible 2xl:visible"}>2xl</div>*/}
         {/*</div>*/}
       </div>
-      {error && (
+      {isDegraded && (
         <div
           className="badge badge-warning badge-outline text-xs cursor-defaul tooltip"
           data-tip={'Working in offline mode: ' + error?.message}

@@ -16,6 +16,7 @@ export default [
       '@eslint-react': pluginReact,
     },
     rules: {
+      ...pluginReactHooks.configs.recommended.rules,
       // '@eslint-react/no-unstable-context-value': 'off',
       // '@eslint-react/no-unstable-default-props': 'off',
       // '@eslint-react/dom/no-missing-button-type': 'off',

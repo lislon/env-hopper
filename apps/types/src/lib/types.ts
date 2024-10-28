@@ -82,3 +82,10 @@ export interface EhCustomization extends EhCustomPartUnstable {
   footerHtml: string;
   analyticsScript: string;
 }
+
+export interface EhStatJump {
+  date: string;
+  envId: EhEnvId;
+  appId: EhAppId;
+  sub?: string;
+}

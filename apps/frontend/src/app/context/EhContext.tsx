@@ -28,10 +28,10 @@ import {
   cutDomain,
   findSubstitutionIdByUrl,
   formatAppTitle,
-  getAppIdByTitle,
   getEhUrl,
   getJumpUrl,
   getJumpUrlEvenNotComplete,
+  unescapeAppId,
 } from '../lib/utils';
 import { Params, useNavigate, useParams } from 'react-router-dom';
 import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter';
@@ -40,6 +40,8 @@ import { usePrefetch } from '../hooks/usePrefetch';
 import { FocusControllerEh, useFocusController } from '../lib/focusController';
 import { MAX_HISTORY_JUMPS } from '../lib/constants';
 import { omit } from 'lodash';
+import { useMutation } from '@tanstack/react-query';
+import { apiPostStatsJump } from '../api/apiPostStatsJump';
 
 export const LOCAL_STORAGE_KEY_RECENT_JUMPS = 'recent';
 export const LOCAL_STORAGE_KEY_FAVORITE_ENVS = 'favoriteEnvs';
@@ -49,6 +51,7 @@ export const LOCAL_STORAGE_KEY_WATCHED_TUTORIAL = 'hadWatchedTutorial';
 export const LOCAL_STORAGE_KEY_LAST_USED_ENV = 'lastUsedEnv';
 export const LOCAL_STORAGE_KEY_LAST_USED_APP = 'lastUsedApp';
 export const LOCAL_STORAGE_KEY_LAST_USED_SUBS = 'lastUsedSubs';
+export const LOCAL_STORAGE_KEY_USER_ID = 'userId';
 
 export interface EhContextProps extends FocusControllerEh {
   listEnvs: EhEnv[];
@@ -109,10 +112,6 @@ function doGetAppById(id: string | undefined, ehApps: EhApp[]) {
 
 function doGetEnvById(id: string | undefined, ehEnvs: EhEnv[]) {
   return ehEnvs.find((env) => env.id === id) || undefined;
-}
-
-export function unescapeAppId(appIdFromUrl: string) {
-  return getAppIdByTitle(appIdFromUrl.replace('@', '/'));
 }
 
 function getByIdRelaxed<T extends { id: string }>(
@@ -256,6 +255,13 @@ export function EhContextProvider({
       lastUsedSubs,
       lastUsedEnv,
     });
+  });
+  useLocalStorage<string | undefined>(LOCAL_STORAGE_KEY_USER_ID, () =>
+    crypto.randomUUID(),
+  );
+
+  const mutationJump = useMutation({
+    mutationFn: apiPostStatsJump,
   });
 
   const [env, setEnv] = useState<EhEnv | undefined>(initialEnvAppSubBased.env);
@@ -418,6 +424,13 @@ export function EhContextProvider({
           0,
           MAX_HISTORY_JUMPS,
         );
+      });
+
+      mutationJump.mutate({
+        appId: app?.id || '',
+        envId: env?.id || '',
+        sub: substitution?.value,
+        date: new Date().toISOString(),
       });
     },
     [getJumpUrl, setRecentJumps],

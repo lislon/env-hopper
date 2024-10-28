@@ -1,10 +1,6 @@
 # EnvHopper
 
-Env Hopper is web application to navigate between different environments (stagings) in organizations.
-
-to simplify navigation between staging environments and applications within your company.
-
-No more manual URL typing or multiple tabs. Just select your environment, specify the application, and jump with ease.
+Env Hopper allow to keep a list of parameterized bookmarks for browser and it aimed to ease the work of QAs when they need to switch from one webapp to another or to switch between environments.
 
 # Stage of project
 

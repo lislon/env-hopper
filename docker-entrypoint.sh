@@ -3,6 +3,6 @@ set -e
 
 if [ "$1" = 'start' ]; then
     npx prisma migrate deploy
-    exec node ./main.js "$@"
+    exec node ./server.js "$@"
 fi
 exec "$@"

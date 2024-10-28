@@ -14,8 +14,11 @@ import { LoadingScreen } from './LoadingScreen';
 
 function HomeWithContext() {
   const [openFaq, faqDialog] = useModal();
-  const { hadWatchedInitialTutorial, setHadWatchedInitialTutorial } =
-    useEhContext();
+  const {
+    hadWatchedInitialTutorial,
+    setHadWatchedInitialTutorial,
+    recentJumps,
+  } = useEhContext();
 
   const onFaqButton = () => {
     openFaq();
@@ -31,7 +34,9 @@ function HomeWithContext() {
           {isFaqEnabled && (
             <FaqButton
               onClick={onFaqButton}
-              catchAttention={!hadWatchedInitialTutorial}
+              catchAttention={
+                !hadWatchedInitialTutorial && recentJumps.length <= 1
+              }
             />
           )}
           <ThemeSwitcher />

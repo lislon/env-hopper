@@ -43,3 +43,14 @@ model UnstableCustomization {
   unstable__footer_html      String
   unstable__custom           String
 }
+
+model StatsJump {
+  id         Int    @id @default(autoincrement())
+  userId     String
+  envId      String
+  appId      String
+  sub        String @default("")
+  appVersion String
+  jumpDate   String
+  createdAt  String
+}

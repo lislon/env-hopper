@@ -7,13 +7,11 @@ import 'express-async-errors';
 import express, { RequestHandler } from 'express';
 import * as path from 'path';
 import { publicApi } from './api/public-api';
-import { loggerMiddleware } from './logger';
 
 const app = express();
 app.get('/health', (_, res) => {
   res.send('ok');
 });
-app.use(loggerMiddleware);
 app.use(publicApi);
 
 const assets = process.env['ASSETS_DIR'] || path.join(__dirname, 'assets');

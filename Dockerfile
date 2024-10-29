@@ -1,4 +1,4 @@
-FROM node:21-alpine as build-stage
+FROM node:22-alpine as build-stage
 ARG APP_VERSION
 WORKDIR /app
 COPY package*.json /app/
@@ -9,7 +9,7 @@ ARG configuration=production
 RUN NX_SKIP_NX_CACHE=true VITE_APP_VERSION=${APP_VERSION} npx nx run-many -t build -p backend frontend
 RUN mv /app/dist/apps/frontend /app/dist/apps/backend/assets
 
-FROM node:21-alpine AS express-js
+FROM node:22-alpine AS express-js
 ARG APP_VERSION
 RUN apk add --no-cache bash
 WORKDIR /app

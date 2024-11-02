@@ -1,35 +1,82 @@
 import { ReadonlyCopyField } from '../../ReadonlyCopyField';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import UiCredsIcon from './ui-creds.svg?react';
-import { useEhContext } from '../../../context/EhContext';
+import {
+  LOCAL_STORAGE_KEY_UI_PASS_TABS_POSITIONS,
+  useEhContext,
+} from '../../../context/EhContext';
 import cn from 'classnames';
 import {
+  EhApp,
   EhAppWidgetUiCredsMany,
   EhAppWidgetUiCredsOne,
 } from '@env-hopper/types';
 import { isArray } from 'lodash';
+import { useLocalStorage } from '../../../hooks/useLocalStorage';
 
 export interface UiCredentialsProps {
   className?: string;
 }
 
 function isMultiPass(
-  ui: EhAppWidgetUiCredsOne | EhAppWidgetUiCredsMany,
+  ui: EhAppWidgetUiCredsOne | EhAppWidgetUiCredsMany | undefined,
 ): ui is EhAppWidgetUiCredsMany {
   return isArray(ui);
 }
 
-export function UiCredentials({ className }: UiCredentialsProps) {
-  const { app } = useEhContext();
-  const ui = app?.meta?.ui;
+interface UiPassTab {
+  appTitle: string;
+  tabNo: number;
+}
 
-  const [tabNo, setTabNo] = useState(0);
-  if (!ui) {
+function getInitialSelectedTab(
+  uiPassTabs: UiPassTab[],
+  app: EhApp | undefined,
+  uis: unknown[],
+): number {
+  const tabNo = uiPassTabs.find((p) => p.appTitle === app?.appTitle)?.tabNo;
+  if (tabNo && tabNo > uis.length) {
+    return tabNo;
+  }
+  return 0;
+}
+
+export function UiCredentials({ className }: UiCredentialsProps) {
+  const { app, listApps } = useEhContext();
+  const ui = app?.meta?.ui;
+  const uis = isMultiPass(ui) ? ui : [ui];
+
+  const [uiPassTabs, setPassTabs] = useLocalStorage<UiPassTab[]>(
+    LOCAL_STORAGE_KEY_UI_PASS_TABS_POSITIONS,
+    () => [],
+  );
+  const [tabNo, setTabNo] = useState(() =>
+    getInitialSelectedTab(uiPassTabs, app, uis),
+  );
+
+  useEffect(() => {
+    if (app !== undefined) {
+      const newUiTabs = uiPassTabs
+        .filter((p) => p.appTitle !== app.appTitle)
+        .filter(
+          (p) => listApps.find((a) => a.appTitle === p.appTitle) !== undefined,
+        );
+      if (tabNo !== 0) {
+        newUiTabs.push({ appTitle: app.appTitle, tabNo });
+      }
+      setPassTabs(newUiTabs);
+    }
+  }, [tabNo, app, listApps]);
+
+  useEffect(() => {
+    getInitialSelectedTab(uiPassTabs, app, uis);
+  }, [uiPassTabs, app?.appTitle, ui]);
+
+  const tabContent = uis[tabNo];
+
+  if (!tabContent) {
     return null;
   }
-
-  const uis = isMultiPass(ui) ? ui : [ui];
-  const tabContent = uis[tabNo];
 
   return (
     <div

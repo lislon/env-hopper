@@ -52,6 +52,7 @@ export const LOCAL_STORAGE_KEY_LAST_USED_ENV = 'lastUsedEnv';
 export const LOCAL_STORAGE_KEY_LAST_USED_APP = 'lastUsedApp';
 export const LOCAL_STORAGE_KEY_LAST_USED_SUBS = 'lastUsedSubs';
 export const LOCAL_STORAGE_KEY_USER_ID = 'userId';
+export const LOCAL_STORAGE_KEY_UI_PASS_TABS_POSITIONS = 'lastUiTabs';
 
 export interface EhContextProps extends FocusControllerEh {
   listEnvs: EhEnv[];

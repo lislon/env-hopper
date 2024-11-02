@@ -14,7 +14,7 @@ export interface EhApp {
 
 export type EhAppMeta =
   | {
-      ui?: EhAppWidgetUiCreds;
+      ui?: EhAppWidgetUiCredsOne | EhAppWidgetUiCredsMany;
       db?: EhAppWidgetDbCreds;
     }
   | undefined;
@@ -22,10 +22,14 @@ export type EhAppMeta =
 /**
  * Hint for the user what the username and password are.
  */
-export interface EhAppWidgetUiCreds {
+export interface EhAppWidgetUiCredsOne {
+  label?: string;
+  desc?: string;
   username: string;
   password: string;
 }
+
+export type EhAppWidgetUiCredsMany = EhAppWidgetUiCredsOne[];
 
 export interface EhAppWidgetDbCreds {
   url: string;

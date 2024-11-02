@@ -17,7 +17,7 @@ export function MainForm() {
         <AppList className={'grid-in-a-input mt-4'} />
         <AppQuickBar className={'grid-in-a-bar'} />
         <SubstitutionList className={'grid-in-s-input mt-4'} />
-        <JumpMainButton className="grid-in-jump overflow-hidden px-8 py-4 w-full max-w-[1000px] justify-self-center mt-4" />
+        <JumpMainButton className="grid-in-jump px-8 py-4 w-full max-w-[1000px] justify-self-center mt-4" />
         <AppWidgetsPanel className={'grid-in-widgets'} />
         <History className={'grid-in-history mt-4 w-full'} />
       </div>

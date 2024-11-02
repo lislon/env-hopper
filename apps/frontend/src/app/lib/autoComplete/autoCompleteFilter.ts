@@ -1,22 +1,38 @@
 import { EhAutoCompleteFilter } from '../../ui/AutoComplete/EhAutoComplete';
-import { sortBy } from 'lodash';
+import { ListIteratee, Many, sortBy } from 'lodash';
 import { SourceItem } from '../../ui/AutoComplete/common';
 import { fixRuLayout, isRuLayout } from '../fixLayout';
 import { tokenize } from './tokenize';
 
+type IndexType = {
+  title: string;
+  titleOrig: string;
+  tokens: string[];
+  notFavorite: boolean;
+  notRecent: boolean;
+  item: SourceItem;
+};
+
 export function makeAutoCompleteFilter(
   items: SourceItem[],
 ): EhAutoCompleteFilter {
-  const itemsIndex = items.map((item) => {
+  const itemsIndex: IndexType[] = items.map((item) => {
     const lower = item.title.toLowerCase();
     return {
       title: lower,
       titleOrig: item.title,
       tokens: tokenize(item.title),
       notFavorite: !item.favorite,
+      notRecent: !item.recent,
       item,
     };
   });
+  const recentFavWinSort = ['notFavorite', 'notRecent'];
+  const shortestWinSort = (x: IndexType) => x.title.length;
+  const sorts: Many<ListIteratee<IndexType>> = [
+    ...recentFavWinSort,
+    shortestWinSort,
+  ];
 
   function doSearch(searchPatternOrig: string) {
     const searchPattern = searchPatternOrig.toLowerCase();
@@ -25,14 +41,14 @@ export function makeAutoCompleteFilter(
     // prefix match exact case sensitive
     const exactPrefix = sortBy(
       itemsIndex.filter((item) => item.titleOrig.startsWith(searchPatternOrig)),
-      (x) => x.title.length,
+      sorts,
     );
     exactPrefix.forEach((x) => results.add(x.item));
 
     // prefix case insensitive
     const caseRelaxedPrefix = sortBy(
       itemsIndex.filter((item) => item.title.startsWith(searchPattern)),
-      ['notFavorite', (x) => x.title.length],
+      sorts,
     );
     caseRelaxedPrefix.forEach((x) => results.add(x.item));
 
@@ -57,14 +73,13 @@ export function makeAutoCompleteFilter(
         return isFound !== false;
       });
 
-      sortBy(prefixedInTokens, (x) => x.title.length).forEach((x) =>
-        results.add(x.item),
-      );
+      sortBy(prefixedInTokens, sorts).forEach((x) => results.add(x.item));
     }
 
     // substring match (case sensitive)
     const exactSubstring = sortBy(
       itemsIndex.filter((item) => item.titleOrig.includes(searchPatternOrig)),
+      sorts,
       (x) => x.titleOrig.indexOf(searchPatternOrig),
     );
     exactSubstring.forEach((x) => results.add(x.item));
@@ -72,6 +87,7 @@ export function makeAutoCompleteFilter(
     // substring match (case insensitive)
     const relaxSubstring = sortBy(
       itemsIndex.filter((item) => item.title.includes(searchPattern)),
+      sorts,
       (x) => x.title.indexOf(searchPattern),
     );
     relaxSubstring.forEach((x) => results.add(x.item));

@@ -27,8 +27,13 @@ const randomEnvironmentNames = [
 describe('env search a bit fuzzy', () => {
   let db: SourceItem[] = [];
 
-  function toItem(title: string) {
-    return { title, id: '', favorite: title.includes('favorite') };
+  function toItem(title: string): SourceItem {
+    return {
+      title,
+      id: '',
+      favorite: title.includes('favorite'),
+      recent: title.includes('recent'),
+    };
   }
 
   function given(strings: string[]) {
@@ -131,5 +136,32 @@ describe('env search a bit fuzzy', () => {
   it('special symbols will be working if they are standalone', () => {
     given(['a order', 'b order #', 'c order']);
     expectSearchResults('order #', ['b order #']);
+  });
+
+  it('favorites, then recent, are priority - case sensitive', () => {
+    given(['a order', 'a order - recent', 'a order - favorite']);
+    expectSearchResults('a', [
+      'a order - favorite',
+      'a order - recent',
+      'a order',
+    ]);
+  });
+
+  it('favorites, then recent, are priority - case insensitive', () => {
+    given(['A order', 'A order - recent', 'A order - favorite']);
+    expectSearchResults('a', [
+      'A order - favorite',
+      'A order - recent',
+      'A order',
+    ]);
+  });
+
+  it('favorites, then recent, are priority - substring', () => {
+    given(['A order', 'A order - recent', 'A order - favorite']);
+    expectSearchResults('rd', [
+      'A order - favorite',
+      'A order - recent',
+      'A order',
+    ]);
   });
 });

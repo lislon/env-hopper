@@ -29,7 +29,6 @@ export function UiCredentials({ className }: UiCredentialsProps) {
   }
 
   const uis = isMultiPass(ui) ? ui : [ui];
-  console.log(uis);
   const tabContent = uis[tabNo];
 
   return (

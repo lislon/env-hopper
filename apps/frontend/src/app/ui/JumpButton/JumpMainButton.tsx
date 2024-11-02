@@ -30,7 +30,7 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
           isMain={true}
           className="btn btn-outline px-8 py-4 h-auto shadow-xl group indicator relative hover:bg-base-content/10 hover:text-base-content w-full"
         >
-          <div className="absolute top-0 bottom-0 right-0 flex items-center text-xl text-primary-content invisible lg:visible">
+          <div className="absolute top-0 bottom-0 right-0 flex items-center text-xl text-eh-green invisible lg:visible">
             <div
               className={
                 'mr-12 group-hover:motion-safe:-translate-x-0.5 group-hover:motion-safe:translate-y-0.5  group-hover:motion-safe:scale-y-90 group-hover:motion-safe:rotate-2 origin-bottom transition-transform motion-safe:duration-100'

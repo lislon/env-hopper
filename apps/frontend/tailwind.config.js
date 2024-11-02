@@ -11,6 +11,9 @@ module.exports = {
   darkMode: 'selector',
   theme: {
     extend: {
+      colors: {
+        'eh-green': 'oklch(74.88% 0.149 130.38)',
+      },
       gridTemplateAreas: {
         'layout-md': [
           '   .    e-input   widgets',
@@ -45,13 +48,11 @@ module.exports = {
       {
         light: {
           ...require('daisyui/src/theming/themes')['light'],
-          'primary-content': 'oklch(74.88% 0.149 130.38)',
         },
       },
       {
         dark: {
           ...require('daisyui/src/theming/themes')['dark'],
-          'primary-content': 'oklch(74.88% 0.149 130.38)',
         },
       },
     ],

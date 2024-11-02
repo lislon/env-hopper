@@ -7,6 +7,7 @@ import { AppQuickBar } from './QuickBar/AppQuickBar';
 import { JumpMainButton } from './JumpButton/JumpMainButton';
 import { AppWidgetsPanel } from './Widget/AppWidgetsPanel';
 import { History } from './History';
+import { ErrorBoundary } from 'react-error-boundary';
 
 export function MainForm() {
   return (
@@ -18,7 +19,9 @@ export function MainForm() {
         <AppQuickBar className={'grid-in-a-bar'} />
         <SubstitutionList className={'grid-in-s-input mt-4'} />
         <JumpMainButton className="grid-in-jump px-8 py-4 w-full max-w-[1000px] justify-self-center mt-4" />
-        <AppWidgetsPanel className={'grid-in-widgets'} />
+        <ErrorBoundary fallback={<div></div>}>
+          <AppWidgetsPanel className={'grid-in-widgets'} />
+        </ErrorBoundary>
         <History className={'grid-in-history mt-4 w-full'} />
       </div>
     </div>

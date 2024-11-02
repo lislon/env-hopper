@@ -50,12 +50,10 @@ export default defineConfig(({ mode }) => {
             {
               src: 'env-hopper-square.svg',
               sizes: '150x150'
-              // sizes: '72x72 96x96 192x192 256x256',
             },
             {
               src: 'env-hopper-square.svg',
               sizes: '150x150',
-              // sizes: '72x72 96x96 192x192 256x256',
               purpose: 'maskable'
             },
             {

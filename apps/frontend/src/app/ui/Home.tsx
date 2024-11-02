@@ -80,6 +80,10 @@ function OtherMode() {
       </Layout>
     );
   } else {
+    if (q.status === 'pending' && q.fetchStatus === 'idle') {
+      // very initial state
+      return null;
+    }
     return (
       <Layout>
         Sorry, no data from backend available, please try to refresh

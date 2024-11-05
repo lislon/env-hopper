@@ -80,7 +80,7 @@ jobs:
             APP_VERSION=${{ needs.build.outputs.new-release-version }}
 
       - name: Attest image
-        uses: actions/attest-build-provenance@v1.4.3
+        uses: actions/attest-build-provenance@v1.4.4
         with:
           subject-name: ghcr.io/${{ github.repository }}
           subject-digest: ${{ steps.push-step.outputs.digest }}

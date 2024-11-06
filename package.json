@@ -81,7 +81,7 @@
     "@svgr/webpack": "^8.0.1",
     "@swc-node/register": "~1.10.0",
     "@swc/cli": "~0.5.0",
-    "@swc/core": "~1.8.0",
+    "@swc/core": "~1.9.0",
     "@swc/helpers": "~0.5.2",
     "@testing-library/react": "16.0.1",
     "@testing-library/user-event": "^14.5.2",

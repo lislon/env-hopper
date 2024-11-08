@@ -1,6 +1,12 @@
+export type EhAppOverride = Partial<Pick<EhApp, 'meta' | 'widgets'>>;
+
+export type EnvType = 'stage' | 'prod';
+
 export interface EhEnv {
   id: EhEnvId;
   meta: Record<string, string>;
+  appOverride?: EhAppOverride;
+  envType?: EnvType;
 }
 export interface EhApp {
   id: EhAppId;
@@ -9,15 +15,16 @@ export interface EhApp {
   abbr?: string;
   aliases: string[];
   url: string;
-  meta: EhAppMeta;
+  meta?: EhAppMeta;
+  widgets?: EhAppWidgets;
 }
 
-export type EhAppMeta =
-  | {
-      ui?: EhAppWidgetUiCredsOne | EhAppWidgetUiCredsMany;
-      db?: EhAppWidgetDbCreds;
-    }
-  | undefined;
+export interface EhAppWidgets {
+  ui?: EhAppWidgetUiCredsOne | EhAppWidgetUiCredsMany;
+  db?: EhAppWidgetDbCreds;
+}
+
+export type EhAppMeta = Record<string, string>;
 
 /**
  * Hint for the user what the username and password are.
@@ -80,6 +87,20 @@ export interface EhCustomPartUnstable {
   widgetTitle?: string;
   widgetUrl?: string;
   widgetSvg?: string;
+  icons?: EhIcon[];
+  appLinkTypes: AppLinkType[];
+}
+
+export interface AppLinkType {
+  typeId: string;
+  iconId?: string;
+  urlDecoded: string;
+  title: string;
+}
+
+export interface EhIcon {
+  iconId: string;
+  svg: string;
 }
 
 export interface EhCustomization extends EhCustomPartUnstable {

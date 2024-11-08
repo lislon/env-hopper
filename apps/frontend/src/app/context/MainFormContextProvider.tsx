@@ -27,6 +27,7 @@ import {
   cutDomain,
   findSubstitutionIdByUrl,
   formatAppTitle,
+  getAppWithEnvOverrides,
   getJumpUrl,
   getJumpUrlEvenNotComplete,
   unescapeAppId,
@@ -77,7 +78,7 @@ export function useMainAppFormContext(): EhMainFormContextProps &
   const ehContext = useEhContext();
   const mainFormContext = useContext(EhMainFormContext);
   if (mainFormContext === undefined) {
-    throw new Error('EhContext is not provided');
+    throw new Error('EhMainFormContext is not provided');
   }
   return { ...ehContext, ...mainFormContext };
 }
@@ -225,8 +226,15 @@ export function MainFormContextProvider({
     });
   });
 
-  const [env, setEnv] = useState<EhEnv | undefined>(initialEnvAppSubBased.env);
-  const [app, setApp] = useState<EhApp | undefined>(initialEnvAppSubBased.app);
+  const [env, setEnv] = useState<EhEnv | undefined>(
+    () => initialEnvAppSubBased.env,
+  );
+  const [app, setApp] = useState<EhApp | undefined>(() =>
+    getAppWithEnvOverrides(
+      initialEnvAppSubBased.app,
+      initialEnvAppSubBased.env,
+    ),
+  );
   const [substitution, setSubstitution] = useState<
     EhSubstitutionValue | undefined
   >(initialEnvAppSubBased.substitution);
@@ -323,20 +331,21 @@ export function MainFormContextProvider({
     setEnv: useCallback<EhMainFormContextProps['setEnv']>(
       (env) => {
         setEnv(env);
+        setApp(getAppWithEnvOverrides(doGetAppById(app?.id, listApps), env));
         setLastUsedEnv(env?.id);
       },
-      [setEnv, setLastUsedEnv],
+      [setEnv, setLastUsedEnv, setApp, app],
     ),
     env,
     setApp: useCallback<EhMainFormContextProps['setApp']>(
       (app) => {
-        setApp(app);
+        setApp(getAppWithEnvOverrides(doGetAppById(app?.id, listApps), env));
         setLastUsedApp(app?.id);
         const substitutionBasedOnAppAndLastUsed =
           getSubstitutionBasedOnAppAndLastUsed(app, listEnvs, lastUsedSubs);
         setSubstitution(substitutionBasedOnAppAndLastUsed);
       },
-      [setApp, setLastUsedApp, lastUsedSubs, listEnvs],
+      [setApp, setLastUsedApp, lastUsedSubs, listEnvs, env],
     ),
     app,
     substitutionType,

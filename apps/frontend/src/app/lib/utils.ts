@@ -27,20 +27,76 @@ export interface JumpDataParamsForce extends JumpDataParams {
   app: EhApp;
 }
 
-export function hasUnresolvedSubstitution(app: EhApp, env: EhEnv) {
-  return replaceSubstitutionsFromMeta(app.url, env).includes('{{');
+export function hasUnresolvedSubstitution(str: string) {
+  return str.includes('{{');
 }
 
-export function replaceSubstitutionsFromMeta(
-  string: string,
+export type EhAppForInterpolate = Pick<EhApp, 'meta'>;
+
+export function interpolateWidgetStr(
+  str: string,
+  env: EhEnv | undefined,
+  app: EhAppForInterpolate | undefined,
+) {
+  let result = str;
+  let hasChanges = true;
+
+  for (
+    let outerIteration = 0;
+    hasChanges && outerIteration < 10;
+    outerIteration++
+  ) {
+    hasChanges = false;
+    let start = result.indexOf('{{');
+
+    for (let iteration = 0; start !== -1 && iteration < 10; iteration++) {
+      const end = result.indexOf('}}', start + 2);
+      if (end === -1) break; // Stop if there's no matching '}}'
+
+      // Extract the placeholder key
+      const placeholder = result.slice(start + 2, end);
+
+      // Resolve the value
+      let replacement: string | undefined;
+      if (placeholder.startsWith('env.meta.') && env?.meta) {
+        const key = placeholder.replace('env.meta.', '');
+        replacement = env.meta[key];
+      } else if (placeholder === 'env.id' && env) {
+        replacement = env.id;
+      } else if (placeholder.startsWith('app.meta.') && app?.meta) {
+        const key = placeholder.replace('app.meta.', '');
+        replacement = app.meta[key];
+      }
+
+      if (replacement !== undefined) {
+        // Replace the placeholder with its value
+        result = result.slice(0, start) + replacement + result.slice(end + 2);
+        hasChanges = true; // Mark that a replacement occurred
+      } else {
+        // Leave the unresolved placeholder as it is
+        start = end + 2;
+      }
+
+      // Look for the next '{{'
+      start = result.indexOf('{{', start);
+    }
+  }
+
+  return result;
+}
+
+export function getAppWithEnvOverrides(
+  appOrig: EhApp | undefined,
   env: EhEnv | undefined,
 ) {
-  if (env !== undefined) {
-    Object.entries(env.meta).forEach(([key, value]) => {
-      string = string.replace('{{' + key + '}}', value);
-    });
+  if (appOrig && env?.appOverride?.meta !== undefined) {
+    return {
+      ...appOrig,
+      meta: { ...appOrig.meta, ...env.appOverride.meta },
+      widgets: { ...appOrig.widgets, ...env.appOverride.widgets },
+    };
   }
-  return string;
+  return appOrig;
 }
 
 export function getJumpUrlEvenNotComplete({
@@ -50,7 +106,7 @@ export function getJumpUrlEvenNotComplete({
 }: JumpDataParamsForce) {
   let url = app.url;
   if (env !== undefined) {
-    url = replaceSubstitutionsFromMeta(url, env);
+    url = interpolateWidgetStr(url, env, app);
   }
 
   if (substitution !== undefined && substitution.name.trim() !== '') {
@@ -75,7 +131,7 @@ export function getJumpUrl({ app, env, substitution }: JumpDataParams) {
   }
   if (
     isSubstitutionNotProvided(substitution) &&
-    hasUnresolvedSubstitution(app, env)
+    hasUnresolvedSubstitution(interpolateWidgetStr(app.url, env, app))
   ) {
     return undefined;
   }
@@ -112,4 +168,22 @@ export const days = (d: number) => hours(d * 24);
 
 export function unescapeAppId(appIdFromUrl: string) {
   return getAppIdByTitle(appIdFromUrl.replace('@', '/'));
+}
+
+export interface SensitiveDataCtx {
+  env: EhEnv | undefined;
+}
+
+export function isNeedMaskSensitiveData({ env }: SensitiveDataCtx) {
+  return env?.envType === 'prod';
+}
+
+export function maskSensitiveDataIfNeeded<T extends string | undefined>(
+  value: T,
+  ctx: SensitiveDataCtx,
+): T {
+  if (isNeedMaskSensitiveData(ctx) && value !== undefined) {
+    return '*masked*' as T;
+  }
+  return value;
 }

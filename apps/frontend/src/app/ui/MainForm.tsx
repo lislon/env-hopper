@@ -5,7 +5,7 @@ import { SubstitutionList } from './Lists/SubstitutionList';
 import { EnvQuickBar } from './QuickBar/EnvQuickBar';
 import { AppQuickBar } from './QuickBar/AppQuickBar';
 import { JumpMainButton } from './JumpButton/JumpMainButton';
-import { AppWidgetsPanel } from './Widget/AppWidgetsPanel';
+import { AppLoginPassWidgetsPanel } from './Widget/AppLoginPassWidgetsPanel';
 import { History } from './History';
 import { ErrorBoundary } from 'react-error-boundary';
 import { MainFormContextProvider } from '../context/MainFormContextProvider';
@@ -26,9 +26,10 @@ export function MainForm({ envAppSubState }: MainFormProps) {
           <SubstitutionList className={'grid-in-s-input mt-4'} />
           <JumpMainButton className="grid-in-jump px-8 py-4 w-full max-w-[1000px] justify-self-center mt-4" />
           <ErrorBoundary fallback={<div></div>}>
-            <AppWidgetsPanel className={'grid-in-widgets'} />
+            <AppLoginPassWidgetsPanel className={'grid-in-ui-widget'} />
           </ErrorBoundary>
           <History className={'grid-in-history mt-4 w-full'} />
+          {/*<AppProfileWidgetPanel className={'grid-in-a-widgets'} />*/}
         </div>
       </div>
     </MainFormContextProvider>

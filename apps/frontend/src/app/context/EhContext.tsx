@@ -10,7 +10,11 @@ import {
 import React, { createContext, useCallback, useContext } from 'react';
 import { EhJumpHistory, EhJumpParams, EhSubstitutionValue } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { findSubstitutionIdByUrl, getJumpUrl } from '../lib/utils';
+import {
+  findSubstitutionIdByUrl,
+  getJumpUrl,
+  maskSensitiveDataIfNeeded,
+} from '../lib/utils';
 import { MAX_HISTORY_JUMPS } from '../lib/constants';
 import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { apiPostStatsJump } from '../api/apiPostStatsJump';
@@ -76,7 +80,7 @@ export interface EhContextProviderProps {
   children: React.ReactNode;
 }
 
-export function EhGeneralContextProvider({ children }: EhContextProviderProps) {
+export function EhContextProvider({ children }: EhContextProviderProps) {
   const { data: config } = useSuspenseQuery(ApiQueryMagazine.getConfig());
 
   useLocalStorage<string | undefined>(LOCAL_STORAGE_KEY_USER_ID, () =>
@@ -122,10 +126,16 @@ export function EhGeneralContextProvider({ children }: EhContextProviderProps) {
 
   const recordJump = useCallback<EhContextProps['recordJump']>(
     ({ app, env, substitution }) => {
+      const substitutionMasked = substitution
+        ? {
+            name: substitution.name,
+            value: maskSensitiveDataIfNeeded(substitution.value, { env }),
+          }
+        : undefined;
       const jumpUrl = getJumpUrl({
         app: app,
         env: env,
-        substitution: substitution,
+        substitution: substitutionMasked,
       });
       if (jumpUrl === undefined) {
         return;
@@ -133,7 +143,7 @@ export function EhGeneralContextProvider({ children }: EhContextProviderProps) {
       const newJump: EhJumpHistory = {
         app: app?.id,
         env: env?.id,
-        substitution: substitution?.value,
+        substitution: substitutionMasked?.value,
         url: jumpUrl,
       };
       setRecentJumps((old) => {
@@ -146,7 +156,7 @@ export function EhGeneralContextProvider({ children }: EhContextProviderProps) {
       mutationJump.mutate({
         appId: app?.id || '',
         envId: env?.id || '',
-        sub: substitution?.value,
+        sub: substitutionMasked?.value,
         date: new Date().toISOString(),
       });
     },

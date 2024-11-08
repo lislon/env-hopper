@@ -36,8 +36,12 @@ export function dejsonify<T, K extends keyof T>(
   const result: T = {} as T;
   Object.keys(data).forEach((key) => {
     if (jsonFields.includes(key as K)) {
-      // @ts-expect-error quick dirty solution
-      result[key] = JSON.parse(data[key]);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
+      if (data[key] !== undefined) {
+        // @ts-expect-error quick dirty solution
+        result[key] = JSON.parse(data[key]);
+      }
     } else {
       // @ts-expect-error quick dirty solution
       result[key] = data[key];
@@ -48,11 +52,11 @@ export function dejsonify<T, K extends keyof T>(
 
 export class DbWriterMapper {
   public static ehApp(data: EhAppBackend): EhAppDb {
-    return jsonify(data, ['meta', 'aliases', 'pages']);
+    return jsonify(data, ['meta', 'aliases', 'pages', 'widgets']);
   }
 
   public static ehEnv(data: EhEnv): EhEnvDb {
-    return jsonify(data, ['meta']);
+    return jsonify(data, ['meta', 'appOverride']);
   }
 
   public static ehSubstitution(data: EhSubstitutionType): EhSubstitutionDb {
@@ -62,11 +66,14 @@ export class DbWriterMapper {
 
 export class DbReaderMapper {
   public static ehApp(app: EhAppDb): EhAppBackend {
-    return omit(dejsonify(app, ['aliases', 'meta', 'pages']), 'syntheticId');
+    return omit(
+      dejsonify(app, ['aliases', 'meta', 'pages', 'widgets']),
+      'syntheticId',
+    );
   }
 
   public static ehEnv(data: EhEnvDb): EhEnv {
-    return omit(dejsonify(data, ['meta']), 'syntheticId');
+    return omit(dejsonify(data, ['meta', 'appOverride']), 'syntheticId');
   }
 
   public static ehSubstitution(data: EhSubstitutionDb): EhSubstitutionType {
@@ -86,6 +93,7 @@ export class UiReaderMapper {
         aliases: app.aliases,
         url: page.url,
         meta: app.meta,
+        widgets: app.widgets,
       };
     });
   }

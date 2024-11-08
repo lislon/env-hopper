@@ -7,8 +7,8 @@ import { ReadonlyCopyField } from './ReadonlyCopyField';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { ApiQueryMagazine } from '../api/ApiQueryMagazine';
 import { getEhToOptions } from '../lib/route-utils';
-import { useMainAppFormContext } from '../context/MainFormContextProvider';
 import { Link } from '@tanstack/react-router';
+import { useEhContext } from '../context/EhContext';
 
 export interface SlideShared {
   sampleEnv: EhEnv | undefined;
@@ -171,7 +171,7 @@ function hrefToSlide(slideIndex: number) {
 }
 
 export function FaqModal(props: BaseDialogProps) {
-  const { listEnvs, listApps } = useMainAppFormContext();
+  const { listEnvs, listApps } = useEhContext();
   const { data: customization } = useSuspenseQuery(
     ApiQueryMagazine.getCustomization(),
   );
@@ -190,7 +190,9 @@ export function FaqModal(props: BaseDialogProps) {
   // const sharableUrlNormalized =
   //   sharableUrl && new URL(sharableUrl, document.baseURI).href;
 
-  const appWithFeatures = listApps.find((app) => app.meta?.ui && app.meta?.db);
+  const appWithFeatures = listApps.find(
+    (app) => app.widgets?.ui && app.widgets?.db,
+  );
   const slideProps: SlideShared = {
     sampleEnv,
     sampleApp,

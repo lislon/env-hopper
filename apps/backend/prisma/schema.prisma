@@ -14,19 +14,22 @@ datasource db {
 }
 
 model Environment {
-  syntheticId Int    @id @default(autoincrement())
-  id          String @unique
+  syntheticId Int     @id @default(autoincrement())
+  id          String  @unique
   meta        String
+  appOverride String?
+  envType     String?
 }
 
 model Application {
-  syntheticId Int    @id @default(autoincrement())
-  id          String @unique
-  title       String @unique
-  abbr        String @default("")
-  aliases     String @default("[]")
-  pages       String @default("[]")
-  meta        String @default("{}")
+  syntheticId Int     @id @default(autoincrement())
+  id          String  @unique
+  title       String  @unique
+  abbr        String  @default("")
+  aliases     String  @default("[]")
+  pages       String  @default("[]")
+  meta        String  @default("{}")
+  widgets     String?
 }
 
 model Substitution {
@@ -42,6 +45,8 @@ model UnstableCustomization {
   unstable__analytics_script String
   unstable__footer_html      String
   unstable__custom           String
+  unstable__icons            String
+  unstable__appLinkTypes     String
 }
 
 model StatsJump {

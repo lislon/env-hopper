@@ -67,6 +67,13 @@
         "cwd": "apps/backend"
       }
     },
+    "prisma-m": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma migrate deploy",
+        "cwd": "apps/backend"
+      }
+    },
     "prisma-p": {
       "executor": "nx:run-commands",
       "options": {

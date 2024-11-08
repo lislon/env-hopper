@@ -7,6 +7,7 @@ import {
   EhCustomization,
   EhCustomPartUnstable,
   EhEnv,
+  EhIcon,
   EhStatJump,
   EhSubstitutionType,
 } from '@env-hopper/types';
@@ -41,7 +42,7 @@ publicApi.get(
       substitutions: await dbSubstitutionsGet(),
       apps: (await dbAppsGet()).flatMap(UiReaderMapper.ehApp),
       envs: await dbEnvsGet(),
-      appVersion: process.env['APP_VERSION'] || 'vlocal',
+      appVersion: process.env['APP_VERSION'] || 'local',
     });
   },
 );
@@ -129,6 +130,26 @@ publicApi.post(
     await dbCustomizationUpdate({
       analyticsScript: req.body.toString('utf-8'),
     });
+    res.send('OK');
+  },
+);
+
+publicApi.post(
+  '/api/customization/unstable__icon/:iconId',
+  async (req: Request, res: Response<'OK'>) => {
+    console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
+
+    const customization = await dbCustomizationGet();
+    const icons: EhIcon[] = [
+      ...(customization.icons?.filter(
+        (icon) => icon.iconId !== req.params['iconId'],
+      ) || []),
+      {
+        iconId: req.params['iconId'],
+        svg: req.body.toString('utf-8'),
+      },
+    ];
+    await dbCustomizationUpdate({ icons });
     res.send('OK');
   },
 );

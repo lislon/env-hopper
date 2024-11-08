@@ -1,9 +1,9 @@
 import React from 'react';
 import { ReadonlyCopyField } from '../../ReadonlyCopyField';
 import DbCredsIcon from './db-creds.svg?react';
-import { replaceSubstitutionsFromMeta } from '../../../lib/utils';
 import cn from 'classnames';
 import { useMainAppFormContext } from '../../../context/MainFormContextProvider';
+import { interpolateWidgetStr } from '../../../lib/utils';
 
 export interface DbCredentialsWidgetProps {
   className?: string;
@@ -13,7 +13,7 @@ export function DbCredentialsWidget({ className }: DbCredentialsWidgetProps) {
   const { app, env } = useMainAppFormContext();
 
   return (
-    app?.meta?.db &&
+    app?.widgets?.db &&
     env && (
       <div
         className={cn('flex tooltip tooltip-left', className)}
@@ -28,14 +28,14 @@ export function DbCredentialsWidget({ className }: DbCredentialsWidgetProps) {
           <div className="grid text-sm grid-rows-2 gap-1 items-center">
             <div>
               <ReadonlyCopyField
-                value={replaceSubstitutionsFromMeta(app.meta.db.url, env)}
+                value={interpolateWidgetStr(app.widgets.db.url, env, app)}
               />
             </div>
             <div>
-              <ReadonlyCopyField value={app.meta.db.username} />
+              <ReadonlyCopyField value={app.widgets.db.username} />
             </div>
             <div>
-              <ReadonlyCopyField value={app.meta.db.password} />
+              <ReadonlyCopyField value={app.widgets.db.password} />
             </div>
           </div>
         </div>

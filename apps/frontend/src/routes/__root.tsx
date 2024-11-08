@@ -3,19 +3,16 @@ import { TanStackRouterDevtools } from '@tanstack/router-devtools';
 import React from 'react';
 import { NotFoundError } from '../app/ui/Error/NotFoundError';
 import { LoadingScreen } from '../app/ui/Layout/LoadingScreen';
-import { Layout } from '../app/ui/Layout/Layout';
 import { DefaultErrorPage } from '../app/ui/Error/DefaultErrorPage';
-import { EhGeneralContextProvider } from '../app/context/EhContext';
+import { EhContextProvider } from '../app/context/EhContext';
 
 export const Route = createRootRoute({
   component: () => {
     return (
-      <EhGeneralContextProvider>
-        <Layout>
-          <Outlet />
-          {import.meta.env.MODE === 'dev' ? <TanStackRouterDevtools /> : null}
-        </Layout>
-      </EhGeneralContextProvider>
+      <EhContextProvider>
+        <Outlet />
+        {import.meta.env.MODE === 'dev' ? <TanStackRouterDevtools /> : null}
+      </EhContextProvider>
     );
   },
   errorComponent: (errorProps) => <DefaultErrorPage {...errorProps} />,

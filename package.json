@@ -106,7 +106,7 @@
     "jest-transformer-svg": "^2.0.2",
     "jsdom": "~25.0.0",
     "nx": "20.0.12",
-    "postcss": "8.4.48",
+    "postcss": "8.4.49",
     "prettier": "^3.0.0",
     "prisma": "^5.19.1",
     "react-refresh": "^0.14.0",

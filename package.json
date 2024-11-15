@@ -123,6 +123,6 @@
     "webpack-cli": "^5.1.4"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.26.0"
+    "@rollup/rollup-linux-x64-gnu": "4.27.0"
   }
 }

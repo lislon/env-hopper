@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useEhContext } from '../../context/EhContext';
 import {
   EhAutoComplete,
   EhAutoCompleteFilter,
@@ -11,7 +10,6 @@ import { SourceItem } from '../AutoComplete/common';
 import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
 import { HomeFavoriteButton } from '../HomeFavoriteButton';
-import { getEhUrl } from '../../lib/utils';
 import { tokenize } from '../../lib/autoComplete/tokenize';
 import { shuffle, sortBy } from 'lodash';
 import cn from 'classnames';
@@ -19,6 +17,7 @@ import {
   AUTOCOMPLETE_ATTENTION_CLASSNAME,
   mapToSectionedItems,
 } from './commonList';
+import { useMainAppFormContext } from '../../context/MainFormContextProvider';
 
 function mapToAutoCompleteItem(
   env: EhEnv,
@@ -76,7 +75,6 @@ function findGoodExample(
 
 export function EnvList({ onOpenChange, className }: EnvListProps) {
   const {
-    app,
     setEnv,
     listEnvs,
     listFavoriteEnvs,
@@ -86,7 +84,7 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
     recentJumps,
     tryJump,
     highlightAutoComplete,
-  } = useEhContext();
+  } = useMainAppFormContext();
 
   const items = useMemo(() => {
     const favSet = new Set(listFavoriteEnvs);
@@ -155,12 +153,12 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
         env ? (
           <HomeFavoriteButton
             isFavorite={isFavorite}
+            testId={`env-favorite-button`}
             onClick={() => toggleFavoriteEnv(env.id, !isFavorite)}
             title={`${isFavorite ? `Remove from` : `Add to`} favorites`}
           />
         ) : undefined
       }
-      getEhUrl={(id) => getEhUrl(id, app?.id, undefined)}
       className={cn(
         className,
         highlightAutoComplete === 'environments' &&

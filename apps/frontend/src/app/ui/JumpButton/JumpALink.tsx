@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { getJumpUrl } from '../../lib/utils';
 import { EhApp, EhEnv } from '@env-hopper/types';
 import { EhSubstitutionValue } from '../../types';
-import { useEhContext } from '../../context/EhContext';
+import { useMainAppFormContext } from '../../context/MainFormContextProvider';
 
 export interface JumpUrlParams {
   children: ReactNode;
@@ -26,7 +26,7 @@ export function JumpALink({
   isMain,
   testId,
 }: JumpUrlParams) {
-  const { recordJump } = useEhContext();
+  const { recordJump } = useMainAppFormContext();
 
   const onClick = () => {
     if (!app || !env) {

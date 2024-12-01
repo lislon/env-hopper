@@ -1,4 +1,3 @@
-import { useEhContext } from '../../context/EhContext';
 import React, { useMemo } from 'react';
 import { EhAppId } from '@env-hopper/types';
 import {
@@ -8,13 +7,13 @@ import {
 } from './InternalCommonBar';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
 import { uniq } from 'lodash';
-import { getEhUrl } from '../../lib/utils';
 import cn from 'classnames';
 import { formatAppTitleShort } from '../../lib/format/FormatAppTitleShort';
+import { useMainAppFormContext } from '../../context/MainFormContextProvider';
 
 export function AppQuickBar(props: QuickBarSharedProps) {
-  const { listFavoriteApps, setApp, getAppById, app, recentJumps, env } =
-    useEhContext();
+  const { listFavoriteApps, setApp, getAppById, app, recentJumps } =
+    useMainAppFormContext();
 
   const favorites = useMemo<BarElement<string>[]>(() => {
     return listFavoriteApps
@@ -52,7 +51,6 @@ export function AppQuickBar(props: QuickBarSharedProps) {
         onClick={onClick}
         comboboxType={'applications'}
         favoriteOrRecent={'recent'}
-        getEhLink={(id) => getEhUrl(env?.id, id, undefined)}
       />
       <InternalCommonBar
         activeId={app?.id}
@@ -60,7 +58,6 @@ export function AppQuickBar(props: QuickBarSharedProps) {
         onClick={onClick}
         comboboxType={'applications'}
         favoriteOrRecent={'favorite'}
-        getEhLink={(id) => getEhUrl(env?.id, id, undefined)}
       />
     </div>
   );

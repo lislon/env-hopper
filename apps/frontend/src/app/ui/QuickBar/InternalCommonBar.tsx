@@ -4,7 +4,6 @@ import StarOutlineIcon from '../../../assets/favorite-star.svg?react';
 import RecentIcon from '../../../assets/recent.svg?react';
 import cn from 'classnames';
 import { ComboBoxType, FavoriteOrRecent } from '../../types';
-import { Link } from 'react-router-dom';
 
 export interface QuickBarSharedProps {
   className?: string;
@@ -21,7 +20,6 @@ export interface InternalCommonBarProps<ID extends string | number> {
   onClick: (id: ID) => void;
   comboboxType: ComboBoxType;
   favoriteOrRecent: FavoriteOrRecent;
-  getEhLink: (id: ID) => string;
 }
 
 function BarHeaderWithIcon({
@@ -60,7 +58,6 @@ export function InternalCommonBar<ID extends string | number>({
   list,
   comboboxType,
   favoriteOrRecent,
-  getEhLink,
 }: InternalCommonBarProps<ID>) {
   if (list.length === 0) {
     return null;
@@ -87,14 +84,14 @@ export function InternalCommonBar<ID extends string | number>({
                 }
               }}
             >
-              <Link
-                to={getEhLink(element.id)}
-                className={cn('duration-0', {
+              <button
+                className={cn({
                   active: isActive,
                 })}
+                onClick={() => onClick(element.id)}
               >
                 {element.title}
-              </Link>
+              </button>
             </li>
           );
         })}

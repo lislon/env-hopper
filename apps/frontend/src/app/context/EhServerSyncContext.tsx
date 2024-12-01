@@ -5,8 +5,11 @@ import React, {
   useContext,
   useEffect,
 } from 'react';
-import { EhClientConfig } from '@env-hopper/types';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { useQuery } from '@tanstack/react-query';
+import { ApiQueryMagazine } from '../api/ApiQueryMagazine';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { LOCAL_STORAGE_KEY_VERSION } from '../lib/local-storage-constants';
 
 export interface EhServerSyncContext {
   isDegraded: boolean;
@@ -29,13 +32,11 @@ export function useEhServerSync(): EhServerSyncContext {
 
 export function EhServerSyncContextProvider({
   children,
-  config,
-  error,
 }: {
   children: React.ReactNode;
-  config: EhClientConfig | undefined;
-  error: Error | null;
 }) {
+  const { data: config, error } = useQuery(ApiQueryMagazine.getConfig());
+
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
@@ -58,6 +59,13 @@ export function EhServerSyncContextProvider({
       refresh();
     }
   }, [needRefresh, config?.forceRefresh]);
+
+  const [, setVersion] = useLocalStorage<string>(LOCAL_STORAGE_KEY_VERSION, '');
+  useEffect(() => {
+    if (config?.appVersion) {
+      setVersion(config.appVersion);
+    }
+  }, [config, setVersion]);
 
   const isDegraded = error !== null && config !== undefined;
   const value = { error, isDegraded, needRefresh, refresh };

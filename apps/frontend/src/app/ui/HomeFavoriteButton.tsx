@@ -6,12 +6,14 @@ export interface HomeFavoriteButtonProps {
   isFavorite: boolean;
   onClick: () => void;
   title: string;
+  testId?: string;
 }
 
 export function HomeFavoriteButton({
   isFavorite,
   title,
   onClick,
+  testId,
 }: HomeFavoriteButtonProps) {
   return (
     <button
@@ -19,6 +21,7 @@ export function HomeFavoriteButton({
       data-tip={title}
       onClick={() => onClick?.()}
       title={title}
+      data-testid={testId}
     >
       <StarOutlineIcon
         className={cn(

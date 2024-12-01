@@ -1,9 +1,9 @@
-import { useEhContext } from '../context/EhContext';
 import { useState } from 'react';
 import { ComboBoxType } from '../types';
+import { useMainAppFormContext } from '../context/MainFormContextProvider';
 
 export function useAutoFocusHelper(): ComboBoxType {
-  const { env, app, substitution, substitutionType } = useEhContext();
+  const { env, app, substitution, substitutionType } = useMainAppFormContext();
 
   const [ret] = useState<ComboBoxType>(() => {
     if (env === undefined) {

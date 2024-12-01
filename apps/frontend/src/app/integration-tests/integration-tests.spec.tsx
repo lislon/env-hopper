@@ -1,8 +1,12 @@
-import { render, screen, within } from '@testing-library/react';
-import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import type { Router as RemixRouter } from '@remix-run/router';
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, Mock, vi } from 'vitest';
 import { apiGetConfig } from '../api/apiGetConfig';
 import { userEvent } from '@testing-library/user-event';
 import {
@@ -36,6 +40,8 @@ import {
   testMakeLastUsedEnv,
   testMakeRecentJump,
 } from './__utils__/tests-magazine';
+import React, { act } from 'react';
+import { apiGetCustomization } from '../api/apiGetCustomization';
 import {
   LOCAL_STORAGE_KEY_FAVORITE_APPS,
   LOCAL_STORAGE_KEY_FAVORITE_ENVS,
@@ -43,27 +49,32 @@ import {
   LOCAL_STORAGE_KEY_LAST_USED_ENV,
   LOCAL_STORAGE_KEY_LAST_USED_SUBS,
   LOCAL_STORAGE_KEY_RECENT_JUMPS,
-} from '../context/EhContext';
-import React from 'react';
-import { getRoutes } from '../routes';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { apiGetCustomization } from '../api/apiGetCustomization';
-import { EhServerSyncContextProvider } from '../context/EhServerSyncContext';
-
-vi.mock('../api/apiGetConfig');
-vi.mock('../api/apiGetCustomization');
+} from '../lib/local-storage-constants';
+import { App } from '../../App';
+import { createQueryClient } from '../api/createQueryClient';
+import { createEhRouter } from '../../createEhRouter';
+import { createMemoryHistory, RouterHistory } from '@tanstack/react-router';
+import { EhClientConfig } from '@env-hopper/types';
+import sleep from 'sleep-promise';
 
 export interface GivenProps {
   url?: string;
   testFixtures: TestFixtures;
+  overrideBackendMock?: (
+    getConfigMock: Mock<() => Promise<EhClientConfig>>,
+    config: Awaited<ReturnType<typeof apiGetConfig>>,
+  ) => void;
 }
 
 export type UserType = ReturnType<typeof userEvent.setup>;
 
 export interface GivenReturn {
   user: UserType;
-  router: RemixRouter;
+  getUrl: () => string;
+  getRouterState: () => string;
 }
+
+let history: RouterHistory;
 
 async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
   const config = {
@@ -72,6 +83,7 @@ async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
     substitutions: testFixtures.substitutions || [],
     appVersion: 'test',
   };
+
   vi.mocked(apiGetConfig).mockResolvedValue(config);
   vi.mocked(apiGetCustomization).mockResolvedValue({
     footerHtml: '',
@@ -117,21 +129,29 @@ async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
     );
   }
 
-  const queryClient = new QueryClient();
-  const router = createMemoryRouter(getRoutes(), {
-    initialEntries: url ? [url] : undefined,
+  const queryClient = createQueryClient();
+  history = createMemoryHistory({
+    initialEntries: url ? [url] : ['/'],
   });
-  render(
-    <QueryClientProvider client={queryClient}>
-      <EhServerSyncContextProvider config={config} error={null}>
-        <RouterProvider router={router} />
-      </EhServerSyncContextProvider>
-    </QueryClientProvider>,
-  );
+  const router = createEhRouter({
+    history,
+    context: {
+      queryClient: queryClient,
+    },
+  });
+
+  render(<App router={router} queryClient={queryClient} />);
 
   const user = userEvent.setup();
+  await waitFor(() => {
+    expect(router.state.status).toStrictEqual('idle');
+  });
   await testWaitLoading();
-  return { user, router };
+  return {
+    user,
+    getUrl: () => router.state.location.pathname,
+    getRouterState: () => router.state.status,
+  };
 }
 
 type SectionType = keyof ExpandedAutocompleteState;
@@ -178,18 +198,31 @@ function testGetComboboxInputEnvironment() {
   });
 }
 
+beforeAll(() => {
+  vi.mock('../api/apiGetConfig');
+  vi.mock('../api/apiGetCustomization');
+});
+
+afterEach(() => {
+  vi.clearAllMocks();
+
+  history.destroy();
+  window.history.replaceState(null, 'root', '/');
+  cleanup();
+});
+
 describe('Integration tests', () => {
   // jestdom issue with focus change on tab
-  it.skip('Basic scenario - user can navigate to URL by keyboard - first time user', async () => {
-    // const { user } = await given({
-    //   testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.firstTimeUser)
-    // });
-    // expect(screen.getByRole('textbox', { name: /environment/i })).havF
-    // await testFillEnvAndAppKeyboardOnly(user, '1', 'App1');
-    // const link = await testClickJumpAndReturnBtn(user);
-    // expect(link.href).toEqual('https://env1.mycompany.com:8250/app1/login');
-    // expectHasHistory('env1', 'app1');
-  });
+  // it.skip('Basic scenario - user can navigate to URL by keyboard - first time user', async () => {
+  //   const { user } = await given({
+  //     testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.firstTimeUser)
+  //   });
+  //   expect(screen.getByRole('textbox', { name: /environment/i })).havF
+  //   await testFillEnvAndAppKeyboardOnly(user, '1', 'App1');
+  //   const link = await testClickJumpAndReturnBtn(user);
+  //   expect(link.href).toEqual('https://env1.mycompany.com:8250/app1/login');
+  //   expectHasHistory('env1', 'app1');
+  // });
 
   // with daisy
   it('If user opens a autocomplete, but do not type anything, app will appear in every section', async () => {
@@ -199,7 +232,9 @@ describe('Integration tests', () => {
       ),
     });
 
-    await user.click(testGetEnvComboBox());
+    await act(async () => {
+      await user.click(testGetEnvComboBox());
+    });
     const autocomplete = getLogicalAutocompleteOptions();
     expect(autocomplete.recentSection).toContain('env1');
     expect(autocomplete.favoriteSection).toContain('env1');
@@ -210,10 +245,12 @@ describe('Integration tests', () => {
     const { user } = await given({
       testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.userNoOptions),
     });
-
     await testFillEnvAndApp(user, '1', 'App1');
     await testClickJumpBtn(user);
-    await user.click(testGetEnvComboBox());
+    await act(async () => {
+      await user.click(testGetEnvComboBox());
+      await sleep(1000);
+    });
 
     expect(getLogicalAutocompleteOptions().recentSection).toContain('env1');
   });
@@ -251,7 +288,7 @@ describe('Integration tests', () => {
     ]);
   });
 
-  it('When there is already preselected env and user clicks on it, text will be select-ed and all options will be shown', async () => {
+  it('When there is already preselected env and user clicks on it, text will be selected and all options will be shown', async () => {
     const { user } = await given({
       testFixtures: testMagazineMakeFixtures(TestFeatureMagazine.userNoOptions),
     });
@@ -266,20 +303,47 @@ describe('Integration tests', () => {
   });
 
   it('Additional substitutions in URL works', async () => {
-    const { user } = await given({
+    const { user, getRouterState } = await given({
       testFixtures: testMagazineMakeFixtures(
         TestFeatureMagazine.hasRecentAndFavorites,
       ),
     });
-    await testFillEnvAndApp(user, '1', 'app3-sub');
+    const comboBox = testGetEnvComboBox();
+    await act(async () => {
+      await user.click(comboBox);
+    });
+    await act(async () => {
+      await user.keyboard('1');
+    });
+    await act(async () => {
+      await user.keyboard('{Enter}');
+    });
+    const comboBox1 = testGetAppComboBox();
+    await act(async () => {
+      await user.click(comboBox1);
+    });
+    await act(async () => {
+      await user.keyboard('app3-sub');
+    });
+    await act(async () => {
+      await user.keyboard('{Enter}');
+    });
+
+    await act(async () => {
+      console.log('state', getRouterState());
+    });
+    console.log('state', getRouterState());
 
     const substitutionValue = screen.getByRole('textbox', {
       name: /Namespace/i,
     });
-    await user.type(substitutionValue, 'my-namespace');
-
-    const link = await testGetJumpButtonLink();
-    expect(link.href).toEqual('https://env1.mycompany.com:8250/my-namespace');
+    await act(async () => {
+      await user.type(substitutionValue, 'my-namespace');
+    });
+    await waitFor(async () => {
+      const link = testGetJumpButtonLink();
+      expect(link.href).toEqual('https://env1.mycompany.com:8250/my-namespace');
+    });
   });
 
   it('Can use enter to select first suggestion', async () => {
@@ -297,18 +361,18 @@ describe('Integration tests', () => {
 
   // migrate to tanstack router
   it.skip('Can remove selection', async () => {
-    const { user, router } = await given({
+    const { user, getUrl } = await given({
       testFixtures: testMagazineMakeFixtures(
         TestFeatureMagazine.hasRecentAndFavorites,
       ),
     });
     await testFillEnv(user, 'env1');
-    expect(router.state.location.pathname).toEqual('/env/env1');
+    expect(getUrl()).toEqual('/env/env1');
     await user.click(testGetEnvComboBox());
     await user.keyboard('{Backspace}{Esc}');
     await user.click(testGetAppComboBox());
 
-    expect(router.state.location.pathname).toEqual('/');
+    expect(getUrl()).toEqual('/');
   });
 
   it('Can navigate use arrow keys', async () => {
@@ -331,10 +395,6 @@ describe('Integration tests', () => {
   });
 
   describe('Tests jumps', () => {
-    afterEach(() => {
-      vi.restoreAllMocks();
-    });
-
     it('Can use double enter to jump to specific env or app', async () => {
       const spyChangeUrl = vi.spyOn(global, 'open');
       spyChangeUrl.mockReturnValue(null);
@@ -519,7 +579,7 @@ describe('Integration tests', () => {
     await testUserSelectEnv(user, 'env1');
     await testUserSelectApp(user, 'app3-sub');
 
-    const substitution = await testGetJumpButtonText();
+    const substitution = testGetJumpButtonText();
     expect(substitution.children[0].tagName).toBe('PRE');
     expect(substitution.children[0].innerHTML.split('\n'))
       .toMatchInlineSnapshot(`
@@ -560,6 +620,32 @@ describe('Integration tests', () => {
     expect(testGetSubstitutionInput().value).toBe('namespace1');
   });
 
+  it('should autofix url when app name is changed', async () => {
+    const { getUrl } = await given({
+      testFixtures: {
+        ...testMagazineMakeFixtures(TestFeatureMagazine.firstTimeUser),
+      },
+      url: '/env/en1/app/ap3',
+    });
+    expect(getUrl()).toBe('/env/env1/app/app3-sub');
+  });
+
+  it.skip('can work offline in degraded mode when server has error', async () => {
+    const { getUrl } = await given({
+      testFixtures: {
+        ...testMagazineMakeFixtures(TestFeatureMagazine.firstTimeUser),
+      },
+      url: '/',
+      overrideBackendMock: (apiGetConfigMock, config) => {
+        apiGetConfigMock.mockResolvedValueOnce(config);
+        apiGetConfigMock.mockRejectedValueOnce(new Error('Server error'));
+      },
+    });
+    expect(getUrl()).toBe('/');
+    await testWaitLoading();
+    expect(getUrl()).toBe('/');
+  });
+
   describe('should not reuse wrong substitution when user select type of app', () => {
     let user: UserType;
     beforeEach(async () => {
@@ -582,7 +668,7 @@ describe('Integration tests', () => {
       user = ret.user;
     });
 
-    it('should work in quickbar', async () => {
+    it('should work in quick-bar', async () => {
       await testQuickBarClick(user, 'applications', 'recent', 'appB');
       expect(testGetSubstitutionInput().value).toBe('');
     });

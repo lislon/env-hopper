@@ -1,9 +1,10 @@
 import { EhClientConfig } from '@env-hopper/types';
-import { EH_COMMON_STATIC_HEADERS, ehCommonDynamicHeaders } from './apiCommon';
+import { ehCommonDynamicHeaders } from './apiCommon';
 
 export async function apiGetConfig(): Promise<EhClientConfig> {
-  return fetch(`/api/config`, {
-    headers: { ...EH_COMMON_STATIC_HEADERS, ...ehCommonDynamicHeaders() },
+  const url = `${import.meta.env.VITE_API_BASE_URL}api/config`;
+  return fetch(url, {
+    headers: ehCommonDynamicHeaders(),
   }).then(async (res) => {
     if (res.ok) {
       return res.json();

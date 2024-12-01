@@ -1,6 +1,5 @@
 'use client';
 import React, { useMemo } from 'react';
-import { useEhContext } from '../../context/EhContext';
 import { EhAutoComplete } from '../AutoComplete/EhAutoComplete';
 import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter';
 import { EhApp, EhAppId, EhEnv } from '@env-hopper/types';
@@ -8,17 +7,14 @@ import { SourceItem } from '../AutoComplete/common';
 import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
 import { HomeFavoriteButton } from '../HomeFavoriteButton';
-import {
-  findSubstitutionIdByUrl,
-  formatAppTitle,
-  getEhUrl,
-} from '../../lib/utils';
+import { findSubstitutionIdByUrl, formatAppTitle } from '../../lib/utils';
 import cn from 'classnames';
 import {
   AUTOCOMPLETE_ATTENTION_CLASSNAME,
   mapToSectionedItems,
 } from './commonList';
 import { first } from 'lodash';
+import { useMainAppFormContext } from '../../context/MainFormContextProvider';
 
 function mapToAutoCompleteItemApp(
   app: EhApp,
@@ -43,7 +39,6 @@ export interface AppListProps {
 export function AppList({ onOpenChange, className }: AppListProps) {
   const {
     app,
-    env,
     listApps,
     listEnvs,
     setApp,
@@ -55,7 +50,7 @@ export function AppList({ onOpenChange, className }: AppListProps) {
     highlightAutoComplete,
     substitutionType,
     substitution,
-  } = useEhContext();
+  } = useMainAppFormContext();
 
   const autoFocusOn = useAutoFocusHelper();
 
@@ -104,19 +99,22 @@ export function AppList({ onOpenChange, className }: AppListProps) {
       onOpenChange={onOpenChange}
       selectedItem={items.find((i) => i.id === app?.id) || null}
       onPrimaryAction={tryJump}
-      onSelectedItemChange={(appId) => setApp(getAppById(appId))}
+      onSelectedItemChange={(appId) => {
+        const appById = getAppById(appId);
+        setApp(appById);
+      }}
       onFavoriteToggle={(app, isOn) => toggleFavoriteApp(app.id, isOn)}
       autoFocus={autoFocusOn === 'applications'}
       favoriteButton={
         app ? (
           <HomeFavoriteButton
             isFavorite={isFavorite}
+            testId={`app-favorite-button`}
             onClick={() => toggleFavoriteApp(app.id, !isFavorite)}
             title={`${isFavorite ? `Remove from` : `Add to`} favorites`}
           />
         ) : undefined
       }
-      getEhUrl={(id) => getEhUrl(env?.id, id, undefined)}
       className={cn(
         className,
         highlightAutoComplete === 'applications' &&

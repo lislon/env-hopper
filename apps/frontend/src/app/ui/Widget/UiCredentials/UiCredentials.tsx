@@ -1,10 +1,6 @@
 import { ReadonlyCopyField } from '../../ReadonlyCopyField';
 import React, { useEffect, useState } from 'react';
 import UiCredsIcon from './ui-creds.svg?react';
-import {
-  LOCAL_STORAGE_KEY_UI_PASS_TABS_POSITIONS,
-  useEhContext,
-} from '../../../context/EhContext';
 import cn from 'classnames';
 import {
   EhApp,
@@ -13,6 +9,8 @@ import {
 } from '@env-hopper/types';
 import { isArray } from 'lodash';
 import { useLocalStorage } from '../../../hooks/useLocalStorage';
+import { LOCAL_STORAGE_KEY_UI_PASS_TABS_POSITIONS } from '../../../lib/local-storage-constants';
+import { useMainAppFormContext } from '../../../context/MainFormContextProvider';
 
 export interface UiCredentialsProps {
   className?: string;
@@ -42,7 +40,7 @@ function getInitialSelectedTab(
 }
 
 export function UiCredentials({ className }: UiCredentialsProps) {
-  const { app, listApps } = useEhContext();
+  const { listApps, app } = useMainAppFormContext();
   const ui = app?.meta?.ui;
   const uis = isMultiPass(ui) ? ui : [ui];
 

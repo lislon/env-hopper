@@ -1,6 +1,6 @@
-import { useEhContext } from '../context/EhContext';
 import { JumpMiniButton } from './JumpButton/JumpMiniButton';
 import cn from 'classnames';
+import { useMainAppFormContext } from '../context/MainFormContextProvider';
 
 export interface RecentJumpsProps {
   className?: string;
@@ -15,7 +15,7 @@ export function History({ className }: RecentJumpsProps) {
     setApp,
     setEnv,
     setSubstitution,
-  } = useEhContext();
+  } = useMainAppFormContext();
 
   return (
     <div className={cn('flex justify-center', className)}>

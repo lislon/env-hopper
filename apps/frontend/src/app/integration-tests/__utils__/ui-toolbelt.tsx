@@ -1,4 +1,9 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import {
+  act,
+  screen,
+  waitForElementToBeRemoved,
+  within,
+} from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { getAppIdByTitle } from '../../lib/utils';
 import { ComboBoxType, FavoriteOrRecent } from '../../types';
@@ -7,11 +12,19 @@ import { EhAppId } from '@env-hopper/types';
 export type UserType = ReturnType<typeof userEvent.setup>;
 
 export async function testWaitLoading() {
-  await waitFor(() =>
-    screen.getByRole('combobox', {
-      name: /environment/i,
-    }),
-  );
+  if (screen.queryByText('Loading...') !== null) {
+    await waitForElementToBeRemoved(() => screen.queryByText('Loading...'));
+  }
+
+  if (screen.queryByText('Loading widget...') !== null) {
+    await waitForElementToBeRemoved(() =>
+      screen.queryByText('Loading widget...'),
+    );
+  }
+
+  // await screen.findByRole('combobox', {
+  //   name: /environment/i
+  // });
 }
 
 export function testGetEnvComboBox() {
@@ -35,8 +48,10 @@ export async function testUserTypeSubstitution(
   substitution: string,
 ) {
   const combo = testGetSubstitutionInput();
-  await user.click(combo);
-  await user.keyboard(substitution);
+  await act(async () => {
+    await user.click(combo);
+    await user.keyboard(substitution);
+  });
 }
 
 export async function testUserSelectApp(user: UserType, appName: string) {
@@ -54,17 +69,23 @@ export async function testUserSelectEnv(user: UserType, envName: string) {
 }
 
 function testGetHomeFavoriteButton(type: ComboBoxType): HTMLElement {
-  const appSelectionForm = screen.getByRole('heading', {
-    name: type === 'applications' ? /^Application$/ : /^Environment$/,
-  });
-
-  const comboBoxOuterElement =
-    appSelectionForm?.parentElement?.parentElement?.parentElement
-      ?.parentElement;
-  if (!comboBoxOuterElement) {
-    throw new Error('Should not happen parentElement is null');
-  }
-  return within(comboBoxOuterElement).getByRole('button');
+  // const appSelectionForm = screen.getByRole('heading', {
+  //   name: type === 'applications' ? /^Application$/ : /^Environment$/,
+  // });
+  //
+  // const comboBoxOuterElement =
+  //   appSelectionForm?.parentElement?.parentElement?.parentElement
+  //     ?.parentElement;
+  // if (!comboBoxOuterElement) {
+  //   throw new Error('Should not happen parentElement is null');
+  // }
+  //
+  return screen.getByTestId(
+    type === 'applications' ? 'app-favorite-button' : 'env-favorite-button',
+  );
+  // return within(comboBoxOuterElement).getByRole('button', {
+  //   name: /Add to favorites/i,
+  // });
 }
 
 export async function testUserToggleHomeFavorite(
@@ -72,7 +93,9 @@ export async function testUserToggleHomeFavorite(
   type: ComboBoxType,
 ) {
   const favoriteButton = testGetHomeFavoriteButton(type);
-  await user.click(favoriteButton);
+  await act(async () => {
+    await user.click(favoriteButton);
+  });
 }
 
 function getTitleQuickBar(type: ComboBoxType, favOrRecent: FavoriteOrRecent) {
@@ -96,7 +119,9 @@ export async function testQuickBarClick(
 ) {
   const quickBar = testGetQuickBar(type, favOrRecent);
   const envButton = within(quickBar).getByText(envName);
-  await user.click(envButton);
+  await act(async () => {
+    await user.click(envButton);
+  });
 }
 
 function testGetQuickBar(type: ComboBoxType, favOrRecent: FavoriteOrRecent) {
@@ -108,8 +133,8 @@ export function testListQuickBarOptions(
   favOrRecent: FavoriteOrRecent,
 ): string[] {
   const quickBar = testGetQuickBar(type, favOrRecent);
-  const findAllByRole: HTMLAnchorElement[] =
-    within(quickBar).queryAllByRole<HTMLAnchorElement>('link');
+  const findAllByRole: HTMLButtonElement[] =
+    within(quickBar).queryAllByRole<HTMLButtonElement>('button');
   return [...findAllByRole]
     .map((btn) => btn.textContent)
     .filter((b) => b !== null);
@@ -135,16 +160,31 @@ export async function testFillEnvAndAppKeyboardOnly(
   // await user.keyboard(appName);
   // await user.keyboard('{Enter}');
 }
+
 export async function testFillEnv(user: UserType, envName: string) {
-  await user.click(testGetEnvComboBox());
-  await user.keyboard(envName);
-  await user.keyboard('{Enter}');
+  const comboBox = testGetEnvComboBox();
+  await act(async () => {
+    await user.click(comboBox);
+  });
+  await act(async () => {
+    await user.keyboard(envName);
+  });
+  await act(async () => {
+    await user.keyboard('{Enter}');
+  });
 }
 
 export async function testFillApp(user: UserType, appName: string) {
-  await user.click(testGetAppComboBox());
-  await user.keyboard(appName);
-  await user.keyboard('{Enter}');
+  const comboBox = testGetAppComboBox();
+  await act(async () => {
+    await user.click(comboBox);
+  });
+  await act(async () => {
+    await user.keyboard(appName);
+  });
+  await act(async () => {
+    await user.keyboard('{Enter}');
+  });
 }
 
 export async function testFillEnvAndApp(
@@ -156,17 +196,19 @@ export async function testFillEnvAndApp(
   await testFillApp(user, appName);
 }
 
-export async function testGetJumpButtonText(): Promise<HTMLElement> {
+export function testGetJumpButtonText(): HTMLElement {
   return screen.getByTestId<HTMLElement>('jump-main-button-text');
 }
 
-export async function testGetJumpButtonLink(): Promise<HTMLLinkElement> {
+export function testGetJumpButtonLink(): HTMLLinkElement {
   return screen.getByTestId<HTMLLinkElement>('jump-main-button');
 }
 
 export async function testClickJumpBtn(user: UserType) {
-  const link = await testGetJumpButtonLink();
-  await user.click(link);
+  const link = testGetJumpButtonLink();
+  await act(async () => {
+    await user.click(link);
+  });
   return link;
 }
 

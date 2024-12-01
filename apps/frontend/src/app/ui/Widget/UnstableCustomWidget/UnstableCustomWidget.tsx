@@ -1,10 +1,10 @@
 import React from 'react';
 import cn from 'classnames';
-import { useEhContext } from '../../../context/EhContext';
-import { Link } from 'react-router-dom';
 import { EhEnv } from '@env-hopper/types';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { ApiQueryMagazine } from '../../../api/ApiQueryMagazine';
+import { Link } from '@tanstack/react-router';
+import { useMainAppFormContext } from '../../../context/MainFormContextProvider';
 
 export interface UnstableCustomWidgetProps {
   className?: string;
@@ -20,7 +20,7 @@ function replaceVars(str: string, env: EhEnv) {
 }
 
 export function UnstableCustomWidget({ className }: UnstableCustomWidgetProps) {
-  const { env } = useEhContext();
+  const { env } = useMainAppFormContext();
 
   const { data: customization } = useSuspenseQuery(
     ApiQueryMagazine.getCustomization(),

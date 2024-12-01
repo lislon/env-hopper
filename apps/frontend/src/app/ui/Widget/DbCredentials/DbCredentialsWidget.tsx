@@ -3,14 +3,14 @@ import { ReadonlyCopyField } from '../../ReadonlyCopyField';
 import DbCredsIcon from './db-creds.svg?react';
 import { replaceSubstitutionsFromMeta } from '../../../lib/utils';
 import cn from 'classnames';
-import { useEhContext } from '../../../context/EhContext';
+import { useMainAppFormContext } from '../../../context/MainFormContextProvider';
 
 export interface DbCredentialsWidgetProps {
   className?: string;
 }
 
 export function DbCredentialsWidget({ className }: DbCredentialsWidgetProps) {
-  const { app, env } = useEhContext();
+  const { app, env } = useMainAppFormContext();
 
   return (
     app?.meta?.db &&

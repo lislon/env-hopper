@@ -1,10 +1,9 @@
-import { useEhContext } from '../../context/EhContext';
-
 import { formatAppTitle, getJumpUrl } from '../../lib/utils';
 import { JumpALink } from './JumpALink';
 import { MainJumpButtonNotReady } from './MainJumpButtonNotReady';
 import cn from 'classnames';
 import { useState } from 'react';
+import { useMainAppFormContext } from '../../context/MainFormContextProvider';
 
 export const JUMP_MAIN_BTN_ID = 'jump-main-button';
 
@@ -13,7 +12,7 @@ export interface JumpMainButtonProps {
 }
 
 export function JumpMainButton({ className }: JumpMainButtonProps) {
-  const { app, env, substitution } = useEhContext();
+  const { app, env, substitution } = useMainAppFormContext();
 
   const [isHovered, setIsHovered] = useState<boolean>(false);
 

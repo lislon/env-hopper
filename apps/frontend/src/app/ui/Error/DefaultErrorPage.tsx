@@ -1,16 +1,12 @@
-import { useRouteError } from 'react-router-dom';
-import { Layout } from '../Layout/Layout';
 import { useQuery } from '@tanstack/react-query';
 import { ApiQueryMagazine } from '../../api/ApiQueryMagazine';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
-import { LOCAL_STORAGE_KEY_VERSION } from '../../context/EhContext';
 import { useEffect, useState } from 'react';
 import { useEhServerSync } from '../../context/EhServerSyncContext';
+import { ErrorComponentProps } from '@tanstack/react-router/src/route';
+import { LOCAL_STORAGE_KEY_VERSION } from '../../lib/local-storage-constants';
 
-export function DefaultErrorPage() {
-  const error = useRouteError();
-  console.error(error);
-
+export function DefaultErrorPage({ error }: ErrorComponentProps) {
   const { data: config } = useQuery(ApiQueryMagazine.getConfig());
   const [localAppVersion] = useLocalStorage(
     LOCAL_STORAGE_KEY_VERSION,
@@ -36,7 +32,7 @@ export function DefaultErrorPage() {
     !isDegraded;
 
   return (
-    <Layout>
+    <>
       <div className={'mt-8 text-center prose !max-w-none'} role="alert">
         {isProbablyWillResolvedAfterUpdate && (
           <div>
@@ -60,14 +56,15 @@ export function DefaultErrorPage() {
           <>
             <h1>Oops!</h1>
             <p>Sorry, an unexpected error has occurred. :( </p>
-            {error instanceof Error && 'message' in error && (
-              <pre className={'text-left mt-8 text-sm'}>
-                {<i>{error.message}</i>}
-              </pre>
-            )}
+            <pre className={'text-left mt-8 text-sm'}>
+              {<i>{error.message}</i>}
+            </pre>
+            <pre className={'text-left mt-8 text-sm'}>
+              {<i>{error.stack}</i>}
+            </pre>
           </>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

@@ -1,9 +1,9 @@
-import { useEhContext } from '../../context/EhContext';
 import { getJumpUrlEvenNotComplete } from '../../lib/utils';
 import { ComboBoxType } from '../../types';
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import cn from 'classnames';
 import { debounce } from 'lodash';
+import { useMainAppFormContext } from '../../context/MainFormContextProvider';
 
 function AttentionWord({
   word,
@@ -39,7 +39,7 @@ export function MainJumpButtonNotReady({
     substitutionType,
     setHighlightAutoComplete,
     highlightAutoComplete,
-  } = useEhContext();
+  } = useMainAppFormContext();
 
   let sub: React.ReactNode | null = null;
 

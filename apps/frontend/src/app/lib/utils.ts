@@ -1,10 +1,4 @@
-import {
-  EhApp,
-  EhAppId,
-  EhEnv,
-  EhEnvId,
-  EhSubstitutionId,
-} from '@env-hopper/types';
+import { EhApp, EhAppId, EhEnv, EhSubstitutionId } from '@env-hopper/types';
 import { EhSubstitutionValue } from '../types';
 import { normalizeAppId } from '../integration-tests/__utils__/ui-toolbelt';
 
@@ -102,32 +96,6 @@ export function getAppIdByTitle(appName: string): EhAppId {
 
 export function getEnvIdByTitle(envTitle: string) {
   return envTitle;
-}
-
-export function escapeAppId(appId: string) {
-  return encodeURIComponent(appId.replace(/\/home$/, '').replace('/', '@'));
-}
-
-export function escapeSubValue(subValue: string) {
-  return encodeURIComponent(subValue);
-}
-
-export function escapeEnvId(envId: string) {
-  return encodeURIComponent(envId);
-}
-
-export function getEhUrl(
-  envId: EhEnvId | undefined,
-  appId: EhAppId | undefined,
-  substitution: string | undefined,
-) {
-  const portions = [
-    envId ? `env/${escapeEnvId(envId)}` : false,
-    appId ? `app/${escapeAppId(appId)}` : false,
-    substitution ? `sub/${escapeSubValue(substitution)}` : false,
-  ].filter(Boolean);
-
-  return '/' + portions.join('/');
 }
 
 export function formatAppTitle(app: EhApp | undefined) {

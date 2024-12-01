@@ -1,5 +1,5 @@
 'use client';
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useLayoutEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
 export type EhTheme = 'dark' | 'light';
@@ -65,7 +65,9 @@ export function ThemeContextProvider({
     'theme',
     getTheme(),
   );
-  switchTheme(userPreference);
+  useLayoutEffect(() => {
+    switchTheme(userPreference);
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ userPreference, setUserPreference }}>

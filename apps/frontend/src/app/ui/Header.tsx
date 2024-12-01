@@ -1,14 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useEhServerSync } from '../context/EhServerSyncContext';
 import cn from 'classnames';
+import { Link } from '@tanstack/react-router';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { LOCAL_STORAGE_KEY_VERSION } from '../lib/local-storage-constants';
 
 export interface HeaderProps {
   className?: string;
 }
 export function Header({ className }: HeaderProps) {
   const { error, needRefresh, refresh, isDegraded } = useEhServerSync();
-  const APP_VERSION = import.meta.env.VITE_APP_VERSION;
+
+  const [installedAppVersion] = useLocalStorage<string | undefined>(
+    LOCAL_STORAGE_KEY_VERSION,
+    undefined,
+  );
+
   return (
     <header className={cn('flex items-center', className)}>
       <div className="px-4 sm:my-4">
@@ -26,9 +33,9 @@ export function Header({ className }: HeaderProps) {
           <Link
             className={'hover:underline'}
             title={'View release on GitHub'}
-            to={`https://github.com/lislon/env-hopper/releases/${APP_VERSION.includes('.') ? `tag/v${APP_VERSION}` : ''}`}
+            to={`https://github.com/lislon/env-hopper/releases/${installedAppVersion?.includes('.') ? `tag/v${installedAppVersion}` : ''}`}
           >
-            v{APP_VERSION}
+            {installedAppVersion ? `v${installedAppVersion}` : 'versions'}
           </Link>
         </div>
         {/*<div className={"flex gap-1"}>*/}

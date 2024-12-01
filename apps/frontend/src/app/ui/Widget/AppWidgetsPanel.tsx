@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { UiCredentials } from './UiCredentials/UiCredentials';
 import { DbCredentialsWidget } from './DbCredentials/DbCredentialsWidget';
 import cn from 'classnames';
@@ -19,7 +19,9 @@ export function AppWidgetsPanel({ className }: AppWidgetsPanelProps) {
         <DbCredentialsWidget />
       </ErrorBoundary>
       <ErrorBoundary fallback={<div>Something went wrong</div>}>
-        <UnstableCustomWidget />
+        <Suspense fallback={<>Loading widget...</>}>
+          <UnstableCustomWidget />
+        </Suspense>
       </ErrorBoundary>
     </div>
   );

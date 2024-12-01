@@ -1,4 +1,3 @@
-import { useEhContext } from '../../context/EhContext';
 import React, { useMemo } from 'react';
 import { EhEnvId } from '@env-hopper/types';
 import {
@@ -7,13 +6,13 @@ import {
   QuickBarSharedProps,
 } from './InternalCommonBar';
 import { MAX_RECENT_ENVS_IN_QUICK_ACCESS } from '../../lib/constants';
-import { getEhUrl } from '../../lib/utils';
 import { uniq } from 'lodash';
 import cn from 'classnames';
+import { useMainAppFormContext } from '../../context/MainFormContextProvider';
 
 export function EnvQuickBar(props: QuickBarSharedProps) {
-  const { listFavoriteEnvs, recentJumps, setEnv, getEnvById, env, app } =
-    useEhContext();
+  const { listFavoriteEnvs, recentJumps, setEnv, getEnvById, env } =
+    useMainAppFormContext();
 
   const favorites = useMemo<BarElement<string>[]>(() => {
     return listFavoriteEnvs.map((envId) => {
@@ -50,7 +49,6 @@ export function EnvQuickBar(props: QuickBarSharedProps) {
         onClick={onClick}
         comboboxType={'environments'}
         favoriteOrRecent={'recent'}
-        getEhLink={(id) => getEhUrl(id, app?.id, undefined)}
       />
       <InternalCommonBar
         activeId={env?.id}
@@ -58,7 +56,6 @@ export function EnvQuickBar(props: QuickBarSharedProps) {
         onClick={onClick}
         comboboxType={'environments'}
         favoriteOrRecent={'favorite'}
-        getEhLink={(id) => getEhUrl(id, app?.id, undefined)}
       />
     </div>
   );

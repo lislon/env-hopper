@@ -1,8 +1,8 @@
 'use client';
 import React, { useEffect, useRef } from 'react';
-import { useEhContext } from '../../context/EhContext';
 import { EhEnv, EhSubstitutionType } from '@env-hopper/types';
 import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
+import { useMainAppFormContext } from '../../context/MainFormContextProvider';
 
 function getAutoCompleteAttr(
   substitutionType: EhSubstitutionType,
@@ -46,7 +46,7 @@ export function SubstitutionList(props: SubstitutionListProps) {
     env,
     tryJump,
     focusControllerSub,
-  } = useEhContext();
+  } = useMainAppFormContext();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const autoFocusOn = useAutoFocusHelper();

@@ -7,7 +7,7 @@ export class ApiQueryMagazine {
   static getConfig() {
     return queryOptions<EhClientConfig, Error>({
       queryKey: ['config'],
-      queryFn: apiGetConfig,
+      queryFn: () => apiGetConfig(),
       staleTime: 0,
     });
   }

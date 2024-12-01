@@ -28,7 +28,7 @@ export interface EhAutoCompleteProps {
   onPrimaryAction?: () => void;
   autoFocus?: boolean;
   favoriteButton?: React.ReactNode;
-  getEhUrl: (id: string) => string;
+  // getEhUrl: (id: string) => ToOptions;
   id?: string;
   allSectionedItems: SectionedItem[];
   tmpSameSubstitutionTitle?: string;
@@ -127,7 +127,7 @@ export function EhAutoComplete(props: EhAutoCompleteProps) {
         displayedItems.length > 0 &&
         highlightedIndex === -1
       ) {
-        // user has input, and it shows several results, but there is not single line selected. On enter, we want to pick a first result.
+        // user has input, and it shows several results, but there is not a single line selected. On enter, we want to pick a first result.
         selectItem(displayedItems[0]);
         props.onSelectedItemChange(displayedItems[0].id);
       } else if (event.key === 'Enter' && !isOpen) {

@@ -1,17 +1,14 @@
 import { BaseDialogProps, BaseModal } from './Dialog/BaseModal';
-import { useEhContext } from '../context/EhContext';
 import { first } from 'lodash';
-import {
-  formatAppTitle,
-  getEhUrl,
-  getJumpUrlEvenNotComplete,
-} from '../lib/utils';
-import { Link } from 'react-router-dom';
+import { formatAppTitle, getJumpUrlEvenNotComplete } from '../lib/utils';
 import React from 'react';
 import { EhApp, EhCustomization, EhEnv } from '@env-hopper/types';
 import { ReadonlyCopyField } from './ReadonlyCopyField';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { ApiQueryMagazine } from '../api/ApiQueryMagazine';
+import { getEhToOptions } from '../lib/route-utils';
+import { useMainAppFormContext } from '../context/MainFormContextProvider';
+import { Link } from '@tanstack/react-router';
 
 export interface SlideShared {
   sampleEnv: EhEnv | undefined;
@@ -133,7 +130,12 @@ function Slide3({
                 🔐
               </span>{' '}
               Some apps, like{' '}
-              <Link to={getEhUrl(sampleEnv?.id, appWithFeatures.id, undefined)}>
+              <Link
+                {...getEhToOptions({
+                  envId: sampleEnv?.id,
+                  appId: appWithFeatures.id,
+                })}
+              >
                 {formatAppTitle(appWithFeatures)}
               </Link>
               , also show user/password for UI well as for service database.
@@ -169,7 +171,7 @@ function hrefToSlide(slideIndex: number) {
 }
 
 export function FaqModal(props: BaseDialogProps) {
-  const { listEnvs, listApps } = useEhContext();
+  const { listEnvs, listApps } = useMainAppFormContext();
   const { data: customization } = useSuspenseQuery(
     ApiQueryMagazine.getCustomization(),
   );
@@ -181,10 +183,12 @@ export function FaqModal(props: BaseDialogProps) {
     sampleEnv &&
     sampleApp &&
     getJumpUrlEvenNotComplete({ app: sampleApp, env: sampleEnv });
-  const sharableUrl =
-    sampleApp && getEhUrl(sampleApp?.id, undefined, undefined);
-  const sharableUrlNormalized =
-    sharableUrl && new URL(sharableUrl, document.baseURI).href;
+  // const sharableUrl = sampleApp && getEhToOptions({ appId: sampleApp?.id });
+
+  const sharableUrlNormalized = undefined;
+  // TODO: Fix me
+  // const sharableUrlNormalized =
+  //   sharableUrl && new URL(sharableUrl, document.baseURI).href;
 
   const appWithFeatures = listApps.find((app) => app.meta?.ui && app.meta?.db);
   const slideProps: SlideShared = {

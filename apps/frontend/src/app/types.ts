@@ -34,3 +34,9 @@ export interface EhMainLoaderData {
 
 export type ComboBoxType = 'environments' | 'applications' | 'substitutions';
 export type FavoriteOrRecent = 'favorite' | 'recent';
+
+export interface EhEnvAppSubSelectedState {
+  envId?: EhEnvId;
+  appId?: EhAppId;
+  subValue?: string;
+}

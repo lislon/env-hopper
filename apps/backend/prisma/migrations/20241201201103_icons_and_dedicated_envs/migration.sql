@@ -18,7 +18,7 @@ CREATE TABLE "new_UnstableCustomization" (
     "unstable__appLinkTypes" TEXT NOT NULL
 );
 INSERT INTO "new_UnstableCustomization" ("syntheticId", "unstable__analytics_script", "unstable__custom", "unstable__footer_html", "unstable__appLinkTypes", "unstable__icons")
-SELECT "syntheticId", "unstable__analytics_script", "unstable__custom", "unstable__footer_html", '[]' AS unstable__appLinkTypes, '{}' AS unstable__icons FROM "UnstableCustomization";
+SELECT "syntheticId", "unstable__analytics_script", "unstable__custom", "unstable__footer_html", '[]' AS unstable__appLinkTypes, '[]' AS unstable__icons FROM "UnstableCustomization";
 DROP TABLE "UnstableCustomization";
 ALTER TABLE "new_UnstableCustomization" RENAME TO "UnstableCustomization";
 PRAGMA foreign_keys=ON;

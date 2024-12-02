@@ -1,51 +1,71 @@
 import React from 'react';
 import cn from 'classnames';
-import { EhEnv } from '@env-hopper/types';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { ApiQueryMagazine } from '../../../api/ApiQueryMagazine';
-import { Link } from '@tanstack/react-router';
 import { useMainAppFormContext } from '../../../context/MainFormContextProvider';
+import {
+  hasUnresolvedSubstitution,
+  interpolateWidgetStr,
+} from '../../../lib/utils';
 
-export interface UnstableCustomWidgetProps {
+export interface LinkTypeWidgetProps {
   className?: string;
+  iconRaw?: string;
+  title?: string;
+  url: string;
 }
 
-function replaceVars(str: string, env: EhEnv) {
-  let replaced = str;
-  for (const [key, value] of Object.entries(env?.meta)) {
-    replaced = replaced.replace(`{{env.meta.${key}}}`, value);
-  }
-  replaced = replaced.replace('{{env.id}}', env.id);
-  return replaced;
+function LinkTypeWidget({
+  className,
+  url,
+  title,
+  iconRaw,
+}: LinkTypeWidgetProps) {
+  return (
+    <a className="link text-sm" href={url} target={'_blank'}>
+      <div className={cn('flex items-center gap-2', className)}>
+        {iconRaw && (
+          <div
+            className="w-4 h-4"
+            dangerouslySetInnerHTML={{ __html: iconRaw }}
+          />
+        )}
+        <div>{title}</div>
+      </div>
+    </a>
+  );
 }
 
-export function UnstableCustomWidget({ className }: UnstableCustomWidgetProps) {
-  const { env } = useMainAppFormContext();
+export function UnstableCustomWidget() {
+  const { env, app } = useMainAppFormContext();
 
   const { data: customization } = useSuspenseQuery(
     ApiQueryMagazine.getCustomization(),
   );
 
-  if (env?.meta && customization?.widgetTitle && customization?.widgetUrl) {
-    const urlReplaced = replaceVars(customization?.widgetUrl, env);
-    const titleReplaced = replaceVars(customization?.widgetTitle, env);
+  return (
+    <ul className={'flex flex-col gap-2 mt-4'}>
+      {customization.appLinkTypes
+        .map((linkType) => {
+          const iconRaw = customization.icons?.find(
+            (icon) => icon.iconId === linkType.iconId,
+          )?.svg;
+          const url = interpolateWidgetStr(linkType.urlDecoded, env, app);
+          if (!url || hasUnresolvedSubstitution(url)) {
+            return null;
+          }
 
-    if (!urlReplaced.includes('{{') && !titleReplaced.includes('{{')) {
-      return (
-        <Link className="link text-sm" to={urlReplaced} target={'_blank'}>
-          <div className={cn('flex items-center gap-2', className)}>
-            {customization?.widgetSvg && (
-              <div className="w-4 h-4">
-                <div
-                  dangerouslySetInnerHTML={{ __html: customization?.widgetSvg }}
-                />
-              </div>
-            )}
-            <div>{titleReplaced}</div>
-          </div>
-        </Link>
-      );
-    }
-  }
-  return null;
+          return (
+            <li key={linkType.typeId}>
+              <LinkTypeWidget
+                iconRaw={iconRaw}
+                title={interpolateWidgetStr(linkType.title, env, app)}
+                url={encodeURI(url)}
+              />
+            </li>
+          );
+        })
+        .filter(Boolean)}
+    </ul>
+  );
 }

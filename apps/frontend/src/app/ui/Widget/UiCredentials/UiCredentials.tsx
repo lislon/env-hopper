@@ -41,7 +41,7 @@ function getInitialSelectedTab(
 
 export function UiCredentials({ className }: UiCredentialsProps) {
   const { listApps, app } = useMainAppFormContext();
-  const ui = app?.meta?.ui;
+  const ui = app?.widgets?.ui;
   const uis = isMultiPass(ui) ? ui : [ui];
 
   const [uiPassTabs, setPassTabs] = useLocalStorage<UiPassTab[]>(

@@ -1,6 +1,7 @@
 import {
   EhAppId,
   EhAppMeta,
+  EhAppWidgets,
   EhEnv,
   EhPageId,
   EhSubstitutionType,
@@ -20,8 +21,12 @@ export interface EhAppBackend {
   aliases: string[];
   pages: EhAppPageBackend[];
   meta: EhAppMeta;
+  widgets?: EhAppWidgets;
 }
 
-export type EhEnvDb = Jsonify<EhEnv, 'meta'>;
-export type EhAppDb = Jsonify<EhAppBackend, 'aliases' | 'meta' | 'pages'>;
+export type EhEnvDb = Jsonify<EhEnv, 'meta' | 'appOverride'>;
+export type EhAppDb = Jsonify<
+  EhAppBackend,
+  'aliases' | 'meta' | 'pages' | 'widgets'
+>;
 export type EhSubstitutionDb = EhSubstitutionType;

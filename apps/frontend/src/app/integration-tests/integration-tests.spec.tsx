@@ -14,6 +14,7 @@ import {
   getOpenedAutocompleteListBox,
   normalizeAppId,
   testClickJumpBtn,
+  testFillApp,
   testFillEnv,
   testFillEnvAndApp,
   testGetAppComboBox,
@@ -88,6 +89,8 @@ async function given({ url, testFixtures }: GivenProps): Promise<GivenReturn> {
   vi.mocked(apiGetCustomization).mockResolvedValue({
     footerHtml: '',
     analyticsScript: '',
+    appLinkTypes: [],
+    icons: [],
   });
   localStorage.clear();
   if (testFixtures.favoriteApps) {
@@ -195,6 +198,12 @@ async function givenUserNavigatedTwoAppAndEnvs(
 function testGetComboboxInputEnvironment() {
   return screen.getByRole<HTMLInputElement>('combobox', {
     name: /environment/i,
+  });
+}
+
+function testGetComboboxInputApplication() {
+  return screen.getByRole<HTMLInputElement>('combobox', {
+    name: /application/i,
   });
 }
 
@@ -359,8 +368,22 @@ describe('Integration tests', () => {
     expect(byRole.value).toEqual('env1');
   });
 
-  // migrate to tanstack router
-  it.skip('Can remove selection', async () => {
+  it('Can switch between envs, but app will still intact', async () => {
+    const { user } = await given({
+      testFixtures: testMagazineMakeFixtures(
+        TestFeatureMagazine.hasRecentAndFavorites,
+      ),
+    });
+
+    await testFillEnvAndApp(user, 'env1', 'App1');
+    await testFillApp(user, 'App2');
+    await testFillEnv(user, 'env2');
+
+    expect(testGetComboboxInputEnvironment().value).toEqual('env2');
+    expect(testGetComboboxInputApplication().value).toEqual('app2');
+  });
+
+  it('Can remove selection', async () => {
     const { user, getUrl } = await given({
       testFixtures: testMagazineMakeFixtures(
         TestFeatureMagazine.hasRecentAndFavorites,

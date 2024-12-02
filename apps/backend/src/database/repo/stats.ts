@@ -14,7 +14,7 @@ export async function dbStatsJumpsGet({
 }: {
   limit: number;
 }): Promise<StatsJump[]> {
-  return await prisma.statsJump.findMany({
+  return prisma.statsJump.findMany({
     orderBy: [
       {
         id: 'desc',

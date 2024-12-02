@@ -1,5 +1,4 @@
 import React, { Suspense } from 'react';
-import { MainForm } from './MainForm';
 import { useModal } from '../hooks/useModal';
 import { Layout } from './Layout/Layout';
 import { Footer } from './Footer/Footer';
@@ -9,16 +8,20 @@ import { Analytics } from './Analytics';
 import { FaqModal } from './FaqModal';
 import { ApiQueryMagazine } from '../api/ApiQueryMagazine';
 import { useQuery } from '@tanstack/react-query';
-import { useMainAppFormContext } from '../context/MainFormContextProvider';
 import { LoadingScreen } from './Layout/LoadingScreen';
+import { useEhContext } from '../context/EhContext';
 
-function HomeWithContext() {
+export interface MainLayoutProps {
+  children: React.ReactNode;
+}
+
+function HomeWithContext({ children }: MainLayoutProps) {
   const [openFaq, faqDialog] = useModal();
   const {
     hadWatchedInitialTutorial,
     setHadWatchedInitialTutorial,
     recentJumps,
-  } = useMainAppFormContext();
+  } = useEhContext();
 
   const onFaqButton = () => {
     openFaq();
@@ -49,7 +52,7 @@ function HomeWithContext() {
         </>
       }
     >
-      <MainForm envAppSubState={{}} />
+      {children}
     </Layout>
   );
 }
@@ -92,13 +95,13 @@ function OtherMode() {
   }
 }
 
-export function Home() {
+export function MainLayout(props: MainLayoutProps) {
   const { data: config } = useQuery(ApiQueryMagazine.getConfig());
 
   if (config !== undefined) {
     return (
       <Suspense fallback={<LoadingScreen />}>
-        <HomeWithContext />
+        <HomeWithContext {...props} />
       </Suspense>
     );
   } else {

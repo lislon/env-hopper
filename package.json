@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "backend:generate": "nx run backend:prisma-g",
+    "backend:migrate": "nx run backend:prisma-m",
     "backend:push": "nx run backend:prisma-p",
     "backend:serve": "nx run backend:serve",
     "dev": "npm run serve",

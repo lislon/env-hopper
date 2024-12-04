@@ -83,6 +83,7 @@ export default defineConfig(({ mode }) => {
       outDir: '../../dist/apps/frontend',
       emptyOutDir: true,
       reportCompressedSize: true,
+      sourcemap: true,
       commonjsOptions: {
         transformMixedEsModules: true,
       },

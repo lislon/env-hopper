@@ -8,6 +8,7 @@
     "backend:migrate": "nx run backend:prisma-m",
     "backend:push": "nx run backend:prisma-p",
     "backend:serve": "nx run backend:serve",
+    "build": "nx run-many -t build --projects=*",
     "dev": "npm run serve",
     "format": "prettier --write . && nx run-many -t lint --fix --projects=*",
     "frontend:serve": "nx run frontend:serve",

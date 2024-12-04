@@ -1,10 +1,13 @@
 name: 'env-hopper'
 services:
-#  env-hopper-db:
-#    image: postgres:latest
-#    restart: unless-stopped
-#    ports:
-#      - "5440:5432"
-#    container_name: env-hopper-db
-#    environment:
-#      POSTGRES_PASSWORD: postgres
+  env-hopper-preview:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "4002:4002"
+    container_name: env-hopper-preview
+    volumes:
+      - ./db:/var/db/
+    environment:
+      PORT: 4002

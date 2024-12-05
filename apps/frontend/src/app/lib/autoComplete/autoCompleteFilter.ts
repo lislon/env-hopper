@@ -96,6 +96,11 @@ export function makeAutoCompleteFilter(
       .filter((item) => item.tokens.join('').includes(searchPattern))
       .forEach((x) => results.add(x.item));
 
+    const searchString = searchTokens.join('');
+    itemsIndex
+      .filter((item) => item.tokens.join('').includes(searchString))
+      .forEach((x) => results.add(x.item));
+
     return [...results];
   }
 

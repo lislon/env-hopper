@@ -57,7 +57,7 @@ describe('env search a bit fuzzy', () => {
 
   it('case 3', () => {
     given(['x abcdev', 'abcXXX-devXXX']);
-    expectSearchResults('abc-dev', ['abcXXX-devXXX']);
+    expectSearchResults('abc-dev', ['abcXXX-devXXX', 'x abcdev']);
   });
 
   it('case 4', () => {
@@ -163,5 +163,10 @@ describe('env search a bit fuzzy', () => {
       'A order - recent',
       'A order',
     ]);
+  });
+
+  it('doubl dashes', () => {
+    given(['abc-uat-01']);
+    expectSearchResults('abcuat-01', ['abc-uat-01']);
   });
 });

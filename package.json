@@ -127,7 +127,7 @@
     "vite-plugin-pwa": "^0.21.0",
     "vite-plugin-svgr": "^4.2.0",
     "vitest": "^2.0.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^6.0.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.29.0"

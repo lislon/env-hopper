@@ -60,7 +60,7 @@ jobs:
           fetch-depth: 0
       - run: echo "The new release version is ${{ needs.build.outputs.new-release-version }}"
       - name: Log into ghcr.io
-        uses: docker/login-action@7ca345011ac4304463197fac0e56eab1bc7e6af0
+        uses: docker/login-action@327cd5a69de6c009b9ce71bce8395f28e651bf99
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

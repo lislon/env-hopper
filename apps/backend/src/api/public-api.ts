@@ -28,8 +28,8 @@ import { StatsJump } from '@prisma/client';
 
 export const publicApi = Router();
 
-publicApi.use(express.json());
-publicApi.use(express.raw({ type: '*/*', limit: '10mb' }));
+publicApi.use(express.json({ limit: '20mb' }));
+publicApi.use(express.raw({ type: '*/*', limit: '20mb' }));
 
 publicApi.get(
   '/api/config',

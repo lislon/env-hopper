@@ -1,0 +1,61 @@
+{
+  "name": "@env-hopper/frontend-build-vite",
+  "version": "0.1.0",
+  "description": "Vite build config for Env Hopper frontend",
+  "homepage": "https://github.com/lislon/env-hopper",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lislon/env-hopper.git",
+    "directory": "packages/frontend-build-vite"
+  },
+  "license": "MIT",
+  "author": "Igor Golovin",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "my-custom-condition": "./src/index.ts",
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "clean": "premove ./dist ./coverage ./dist-ts",
+    "compile": "tsc --build",
+    "test:eslint": "eslint ./src"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "catalog:",
+    "vite-plugin-pwa": "catalog:",
+    "vite-plugin-svgr": "catalog:",
+    "@tanstack/react-router-devtools": "catalog:",
+    "@tanstack/router-plugin": "catalog:",
+    "@tailwindcss/vite": "catalog:"
+
+  },
+  "devDependencies": {
+    "@env-hopper/shared-core": "workspace:*",
+    "@types/node": "catalog:",
+    "esbuild": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  },
+  "peerDependencies": {
+    "vite": "catalog:",
+    "vite-plugin-svgr": "catalog:"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

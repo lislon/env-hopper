@@ -1,0 +1,35 @@
+{
+  "name": "@env-hopper/backend-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "clean": "premove ./dist ./coverage ./dist-ts",
+    "start": "node dist/index.js",
+    "build": "pnpm run clean && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --sourcemap",
+    "dev": "node node_modules/vite/bin/vite.js",
+    "compile": "tsc --build",
+    "test:eslint": "eslint ./src",
+    "test:unit": "vitest"
+  },
+  "dependencies": {
+    "@env-hopper/backend-core": "workspace:*",
+    "@trpc/server": "catalog:",
+    "cross-env": "catalog:",
+    "express": "catalog:",
+    "radashi": "catalog:",
+    "rand-seed": "^3.0.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/express": "catalog:",
+    "@types/node": "catalog:",
+    "esbuild": "catalog:",
+    "tsup": "^8.5.0",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-node": "catalog:"
+  }
+}

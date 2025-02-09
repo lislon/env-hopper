@@ -1,4 +1,15 @@
-# Add files here to ignore them from prettier formatting
-/dist
-/coverage
-/.nx/cache
+**/.next
+**/.nx/cache
+**/build
+**/coverage
+**/dist
+pnpm-lock.yaml
+**/snapshots
+**/.vercel
+**/.vinxi
+**/.output
+**/node_modules
+node_modules
+
+**/test-results
+/.nx/workspace-data

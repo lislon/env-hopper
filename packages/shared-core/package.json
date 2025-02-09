@@ -1,0 +1,53 @@
+{
+  "name": "@env-hopper/shared-core",
+  "version": "0.1.0",
+  "description": "Shared core utilities for Env Hopper",
+  "homepage": "https://github.com/lislon/env-hopper",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lislon/env-hopper.git",
+    "directory": "packages/shared-core"
+  },
+  "license": "MIT",
+  "author": "Igor Golovin",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "my-custom-condition": "./src/index.ts",
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "clean": "premove ./dist ./coverage ./dist-ts",
+    "compile": "tsc --build",
+    "test:eslint": "eslint ./src",
+    "test:unit": "vitest",
+    "test:unit:dev": "pnpm run test:unit --watch",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "eta": "^3.5.0"
+  },
+  "devDependencies": {
+    "@env-hopper/backend-core": "workspace:*",
+    "@types/node": "catalog:",
+    "esbuild": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

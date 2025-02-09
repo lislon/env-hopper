@@ -1,14 +1,14 @@
+
 message="$(cat $1)"
-requiredPattern="^(fix|feat|chore|docs|style|refactor|test): .*$"
-if ! [[ $message =~ $requiredPattern ]];
-then
+requiredPattern="^(fix|feat|chore|docs|style|refactor|test|release): .*$"
+if ! echo "$message" | grep -Eq "$requiredPattern"; then
   echo "-"
   echo "-"
   echo "-"
   echo "🚨 Wrong commit message! 😕"
   echo "The commit message must have this format:"
   echo "<verb in imperative mood> <what was done>"
-  echo "Allowed verbs in imperative mood: fix|feat|chore|docs|style|refactor|test"
+  echo "Allowed verbs in imperative mood: fix|feat|chore|docs|style|refactor|test|release"
   echo "Example: feat: add login button"
   echo "-"
   echo "Your commit message was:"

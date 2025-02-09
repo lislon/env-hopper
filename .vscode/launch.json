@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "backend-example - Debug",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/examples/backend-example",
+      "program": "${workspaceFolder}/examples/backend-example/node_modules/.bin/vite",
+      "args": []
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "backend-example - Debug 2",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/examples/backend-example",
+      "program": "${workspaceFolder}/examples/backend-example/node_modules/.bin/vite",
+      "args": []
+    }
+  ]
+}

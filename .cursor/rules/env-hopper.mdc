@@ -1,0 +1,14 @@
+---
+description: 
+globs: *.tsx,*.ts,*.css,*.json
+alwaysApply: false
+---
+
+# Rules when exporting functions in ts
+
+
+- Don't use default export, prefer named export
+- We use pnpm
+- Don't use !important in css
+- always use braces `{` for `if`, even if single line
+- Don't use index.ts to re-export, unless it's a index.ts that specified in package.json as an main export

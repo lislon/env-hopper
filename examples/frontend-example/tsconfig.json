@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "esModuleInterop": false,
+    "types": ["vite/client", "vitest"],
+    "outDir": "./dist-ts",
+    "rootDir": ".",
+    "paths": {
+      "~/*": ["./node_modules/@env-hopper/frontend-core/src/*"]
+    }
+  },
+  "include": ["src", "*.config.ts", "*.config.js", "package.json"]
+}

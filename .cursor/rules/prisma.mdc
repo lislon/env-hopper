@@ -1,0 +1,12 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Prisma Development Rules
+
+- When updating Prisma schema or models, always use:
+  pnpm prisma db push --force-reset
+  for development.
+- It is allowed to modify a single migration file if needed.
+- Never create multiple new migration files for incremental changes during development.

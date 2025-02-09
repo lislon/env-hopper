@@ -1,0 +1,1 @@
+C:/Users/lislo/src/other/env-hopper/eslint.config.js

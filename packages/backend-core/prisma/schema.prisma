@@ -1,0 +1,52 @@
+// Prisma schema for backend
+
+datasource db {
+  provider = "postgresql"
+  url      = env("EH_CORE_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model App {
+  id           Int                @id @default(autoincrement())
+  name         String             @unique
+  displayName  String
+  services     DeployableService[]
+  uiPageGroups UIPageGroup[]
+}
+
+model DeployableService {
+  id          Int    @id @default(autoincrement())
+  name        String
+  displayName String
+  app         App    @relation(fields: [appId], references: [id])
+  appId       Int
+}
+
+model UIPageGroup {
+  id          Int      @id @default(autoincrement())
+  name        String
+  displayName String
+  app         App      @relation(fields: [appId], references: [id])
+  appId       Int
+  pages       UIPage[]
+}
+
+model UIPage {
+  id            Int        @id @default(autoincrement())
+  name          String
+  displayName   String
+  uiPageGroup   UIPageGroup @relation(fields: [uiPageGroupId], references: [id])
+  uiPageGroupId Int
+}
+
+model User {
+  id        Int    @id @default(autoincrement())
+  uid       String @unique
+  username  String @unique
+  email     String @unique
+  firstName String
+  lastName  String
+}

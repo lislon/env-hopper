@@ -1,0 +1,109 @@
+{
+  "name": "@env-hopper/frontend-core",
+  "version": "0.0.0-semantically-released",
+  "description": "Frontend core library for Env Hopper",
+  "homepage": "https://github.com/lislon/env-hopper",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lislon/env-hopper.git",
+    "directory": "packages/frontend-core"
+  },
+  "license": "MIT",
+  "author": "Igor Golovin",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "my-custom-condition": "./src/index.tsx",
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "clean": "premove ./dist ./coverage ./dist-ts",
+    "dev": "vite",
+    "build": "vite build",
+    "compile": "tsc --build && tsc-alias",
+    "test:eslint": "eslint ./src",
+    "test:unit": "vitest",
+    "test:unit:dev": "pnpm run test:unit --watch"
+  },
+  "dependencies": {
+    "@radix-ui/react-collapsible": "^1.1.11",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-dropdown-menu": "^2.1.15",
+    "@radix-ui/react-popover": "^1.1.14",
+    "@radix-ui/react-scroll-area": "^1.2.9",
+    "@radix-ui/react-separator": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.12",
+    "@tanstack/query-sync-storage-persister": "catalog:",
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-virtual": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "@trpc/tanstack-react-query": "catalog:",
+    "autoprefixer": "^10.4.21",
+    "autosuggest-highlight": "^3.3.4",
+    "class-variance-authority": "^0.7.1",
+    "classnames": "^2.5.1",
+    "clsx": "^2.1.1",
+    "dexie": "^4.0.11",
+    "dexie-react-hooks": "^1.1.7",
+    "downshift": "^9.0.6",
+    "flexsearch": "^0.8.204",
+    "framer-motion": "^12.23.0",
+    "http-errors": "^2.0.0",
+    "lucide-react": "^0.523.0",
+    "next-themes": "^0.4.6",
+    "postcss": "^8.5.3",
+    "radashi": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-error-boundary": "^6.0.0",
+    "react-idle-timer": "^5.7.2",
+    "react-router-dom": "7.0.2",
+    "slate": "^0.117.0",
+    "slate-react": "^0.117.1",
+    "sleep-promise": "^9.1.0",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss": "catalog:",
+    "tslib": "catalog:"
+  },
+  "devDependencies": {
+    "@env-hopper/backend-core": "workspace:*",
+    "@env-hopper/shared-core": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/react-router-devtools": "catalog:",
+    "@tanstack/router-plugin": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/ui": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "tsc-alias": "^1.8.16",
+    "tw-animate-css": "^1.3.5",
+    "vite": "catalog:",
+    "vite-plugin-pwa": "catalog:",
+    "vite-plugin-svgr": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "tailwindcss": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-svgr": "catalog:"
+  }
+}

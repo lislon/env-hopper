@@ -1,103 +1,113 @@
 name: CI
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: override release tag
+        required: false
   push:
     branches:
       - main
       - alpha
-      - beta
-  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: lislon
   IMAGE_NAME: ${{ github.repository }}
 
+permissions:
+  contents: write
+  id-token: write
+
 jobs:
-  build:
+  test-and-publish:
+    name: Test, Build and Publish
+    if: github.repository_owner == 'lislon'
     runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - run: npm ci
-      - uses: nrwl/nx-set-shas@v4
-      - name: get next release version
-        id: get-next-version
-        run: npx semantic-release --dry-run
+      - name: Setup Tools
+        uses: tanstack/config/.github/setup@main
+      - name: Generate Prisma files for backend-core
+        run: pnpm run prisma:generate
+      - name: Run Tests
+        run: pnpm run test:ci --parallel=3
+      - name: Publish
+        run: |
+          git config --global user.name 'Igor Golovin'
+          git config --global user.email 'lislon@users.noreply.github.com'
+          npm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+          pnpm run cipublish
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: export APP_VERSION=${{ steps.get-next-version.outputs.new-release-version || '0.0.0-ci' }}
-        # https://github.com/nrwl/nx/issues/28205
-      - name: lint test build
-        run: npx nx affected --targets=lint,test,build --verbose
-        env:
-          NX_DISABLE_DB: true
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          TAG: ${{ inputs.tag }}
     outputs:
       new-release-published: ${{ steps.get-next-version.outputs.new-release-published }}
       new-release-version: ${{ steps.get-next-version.outputs.new-release-version }}
       new-release-git-tag: ${{ steps.get-next-version.outputs.new-release-git-tag }}
 
-  push:
-    needs: build
-    if: ${{ needs.build.outputs.new-release-published == 'true' &&
-      contains('refs/heads/main,refs/heads/beta,refs/heads/alpha', github.ref)
-      && github.event_name == 'push' }}
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
-      attestations: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - run: echo "The new release version is ${{ needs.build.outputs.new-release-version }}"
-      - name: Log into ghcr.io
-        uses: docker/login-action@7ca345011ac4304463197fac0e56eab1bc7e6af0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+  # push:
+  #   needs: test-and-publish
+  #   if: ${{ needs.build.outputs.new-release-published == 'true' &&
+  #     contains('refs/heads/main,refs/heads/beta,refs/heads/alpha', github.ref)
+  #     && github.event_name == 'push' }}
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     packages: write
+  #     contents: read
+  #     attestations: write
+  #     id-token: write
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #     - run: echo "The new release version is ${{ needs.build.outputs.new-release-version }}"
+  #     - name: Log into ghcr.io
+  #       uses: docker/login-action@7ca345011ac4304463197fac0e56eab1bc7e6af0
+  #       with:
+  #         registry: ghcr.io
+  #         username: ${{ github.actor }}
+  #         password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push image
-        id: push-step
-        uses: docker/build-push-action@11be14d908760a0756f045980728ec5fb7880f74
-        with:
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:v${{ needs.build.outputs.new-release-version }}
-            ghcr.io/${{ github.repository }}:${{ github.ref == 'refs/heads/main' && 'latest' || 'alpha' }}
-          context: .
-          build-args: |
-            APP_VERSION=${{ needs.build.outputs.new-release-version }}
+  #     - name: Build and push image
+  #       id: push-step
+  #       uses: docker/build-push-action@11be14d908760a0756f045980728ec5fb7880f74
+  #       with:
+  #         push: true
+  #         tags: |
+  #           ghcr.io/${{ github.repository }}:v${{ needs.build.outputs.new-release-version }}
+  #           ghcr.io/${{ github.repository }}:${{ github.ref == 'refs/heads/main' && 'latest' || 'alpha' }}
+  #         context: .
+  #         build-args: |
+  #           APP_VERSION=${{ needs.build.outputs.new-release-version }}
 
-      - name: Attest image
-        uses: actions/attest-build-provenance@v2.0.1
-        with:
-          subject-name: ghcr.io/${{ github.repository }}
-          subject-digest: ${{ steps.push-step.outputs.digest }}
-          push-to-registry: true
+  #     - name: Attest image
+  #       uses: actions/attest-build-provenance@v2.0.1
+  #       with:
+  #         subject-name: ghcr.io/${{ github.repository }}
+  #         subject-digest: ${{ steps.push-step.outputs.digest }}
+  #         push-to-registry: true
 
-  release:
-    runs-on: ubuntu-latest
-    needs: push
-    permissions:
-      actions: read
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - run: npm ci
-      - run: npx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # release:
+  #   runs-on: ubuntu-latest
+  #   needs: push
+  #   permissions:
+  #     actions: read
+  #     contents: write
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         cache: 'npm'
+  #     - run: pnpm ci
+  #     - run: npx semantic-release
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -19,16 +19,15 @@ COPY --from=build-stage /app/docker-entrypoint.sh .
 
 RUN npx prisma generate \
   # Prune non-used files
-  && npm prune --production \
+  && pnpm prune --production \
   # Clean Prisma non-used files https://github.com/prisma/prisma/issues/11577
   && rm -rf node_modules/.cache/ \
   # Remove cache
-  && rm -rf /root/.cache/ \
-  && rm -rf /root/.npm/
+  && rm -rf /root/.cache/
 
 ENV NODE_ENV production
 ENV PORT 4000
-ENV DATABASE_URL file:/var/db/sqlite.db
+ENV EH_CORE_DATABASE_URL file:/var/db/sqlite.db
 ENV ASSETS_DIR /app/assets
 ENV APP_VERSION ${APP_VERSION}
 

@@ -10,4 +10,4 @@ export default {
     'semantic-release-export-data',
     '@semantic-release/github',
   ],
-};
+}

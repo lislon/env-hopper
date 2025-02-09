@@ -1,0 +1,1 @@
+export { frontendViteConfig } from './frontendViteConfig'

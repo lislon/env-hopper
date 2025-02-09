@@ -5,9 +5,24 @@ services:
       context: .
     restart: unless-stopped
     ports:
-      - "4002:4002"
+      - '4002:4002'
     container_name: env-hopper-preview
     volumes:
       - ./db:/var/db/
     environment:
       PORT: 4002
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: env-hopper
+      POSTGRES_PASSWORD: env-hopper
+      POSTGRES_DB: env-hopper
+    ports:
+      - '5532:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:

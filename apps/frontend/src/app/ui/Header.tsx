@@ -1,9 +1,10 @@
 import React from 'react';
 import { useEhServerSync } from '../context/EhServerSyncContext';
 import cn from 'classnames';
-import { Link } from '@tanstack/react-router';
+import { Link, useMatch, useMatches } from '@tanstack/react-router';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { LOCAL_STORAGE_KEY_VERSION } from '../lib/local-storage-constants';
+import { useHeader } from '../context/HeaderContext';
 
 export interface HeaderProps {
   className?: string;
@@ -15,6 +16,9 @@ export function Header({ className }: HeaderProps) {
     LOCAL_STORAGE_KEY_VERSION,
     undefined,
   );
+
+  const { backButton } = useHeader();
+
 
   return (
     <header className={cn('flex items-center', className)}>

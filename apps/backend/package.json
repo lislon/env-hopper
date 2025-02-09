@@ -1,38 +1,24 @@
 {
-  "name": "@env-hopper/source",
+  "name": "@env-hopper/backend-core",
   "version": "0.0.0-semantically-released",
   "private": true,
   "author": "Igor Golovin",
   "license": "MIT",
   "type": "module",
+  "module": "esnext",
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
-    "backend:generate": "nx run backend:prisma-g",
-    "backend:migrate": "nx run backend:prisma-m",
-    "backend:push": "nx run backend:prisma-p",
-    "backend:serve": "nx run backend:serve",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate",
+    "push": "prisma db push",
+    "serve": "tsx src/server.ts",
     "build": "nx run-many -t build --projects=*",
-    "dev": "pnpm run serve",
-    "format": "prettier --write . && nx run-many -t lint --fix --projects=*",
+    "dev": "npm run serve",
+    "format": "prettier --write .",
     "frontend:serve": "nx run frontend:serve",
-    "lint": "nx run-many -t lint --projects=* && prettier --check .",
+    "lint": "prettier --check . && eslint .",
     "prepare": "husky",
-    "preview": "nx run-many -t preview --projects=backend,frontend",
-    "serve": "nx run-many -t serve --projects=backend,frontend",
-    "test": "nx run-many -t test --projects=*",
+    "test": "echo NoTest",
     "test:build": "publint --strict && attw --ignore-rules no-resolution --pack ."
-  },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "prettier --write",
-      "eslint  --max-warnings=0 --fix"
-    ],
-    "*.{json,html,md,css,scss}": [
-      "prettier --write"
-    ],
-    "package.json": [
-      "npx sort-package-json"
-    ]
   },
   "dependencies": {
     "@arethetypeswrong/cli": "^0.17.1",
@@ -59,7 +45,7 @@
     "globals": "^15.11.0",
     "http-errors": "^2.0.0",
     "lint-staged": "^15.2.10",
-    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "prisma": "5.22.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -94,13 +80,13 @@
     "@swc/cli": "~0.5.0",
     "@swc/core": "~1.10.0",
     "@swc/helpers": "~0.5.2",
-    "@tanstack/config": "^0.14.2",
     "@tanstack/router-devtools": "^1.79.0",
     "@tanstack/router-plugin": "^1.79.0",
     "@testing-library/react": "16.1.0",
     "@testing-library/user-event": "^14.5.2",
     "@types/autosuggest-highlight": "^3.2.3",
     "@types/lodash": "^4.17.5",
+    "@types/lodash-es": "^4.17.12",
     "@types/node": "~22.10.0",
     "@types/react": "18.3.14",
     "@types/react-dom": "18.3.2",
@@ -141,6 +127,5 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.28.1"
-  },
-  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
+  }
 }

@@ -1,14 +1,14 @@
 {
   "name": "backend",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/backend/src",
+  "sourceRoot": "src",
   "projectType": "application",
   "tags": [],
   "targets": {
     "prisma-generate": {
       "executor": "@nx-tools/nx-prisma:generate",
       "options": {
-        "schema": "apps/backend/prisma/schema.prisma"
+        "schema": "prisma/schema.prisma"
       }
     },
     "build": {
@@ -58,27 +58,6 @@
         "production": {
           "buildTarget": "backend:build:production"
         }
-      }
-    },
-    "prisma-g": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "prisma generate",
-        "cwd": "apps/backend"
-      }
-    },
-    "prisma-m": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "prisma migrate deploy",
-        "cwd": "apps/backend"
-      }
-    },
-    "prisma-p": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "prisma db push",
-        "cwd": "apps/backend"
       }
     }
   }

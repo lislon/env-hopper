@@ -5,11 +5,18 @@ import {
   EhSubstitutionDb,
 } from '../backend-types';
 import { EhApp, EhEnv, EhSubstitutionType } from '@env-hopper/types';
-import { omit } from 'lodash';
+import { omit } from 'lodash-es';
 
 export type Jsonify<T, K extends keyof T> = {
   [P in keyof T]: P extends K ? string : T[P];
 };
+
+type Identity<T> = { [P in keyof T]: T[P] };
+export type AllowNulls<T, K extends keyof T> = Identity<
+  Pick<T, Exclude<keyof T, K>> & {
+    [P in K]: T[P] | null;
+  }
+>;
 
 export function jsonify<T, K extends keyof T>(
   data: T,
@@ -65,15 +72,29 @@ export class DbWriterMapper {
 }
 
 export class DbReaderMapper {
-  public static ehApp(app: EhAppDb): EhAppBackend {
+  public static ehApp(app: AllowNulls<EhAppDb, 'widgets'>): EhAppBackend {
+    const appNoNulls = { ...app, widgets: app.widgets ?? '[]' };
+
     return omit(
-      dejsonify(app, ['aliases', 'meta', 'pages', 'widgets']),
+      dejsonify<EhAppBackend, 'aliases' | 'meta' | 'pages' | 'widgets'>(
+        appNoNulls,
+        ['aliases', 'meta', 'pages', 'widgets'],
+      ),
       'syntheticId',
     );
   }
 
-  public static ehEnv(data: EhEnvDb): EhEnv {
-    return omit(dejsonify(data, ['meta', 'appOverride']), 'syntheticId');
+  public static ehEnv(
+    data: AllowNulls<EhEnvDb, 'envType' | 'appOverride'>,
+  ): EhEnv {
+    const { envType, ...x } = data;
+    const envNoNulls: EhEnvDb = {
+      ...x,
+      appOverride: x.appOverride ?? undefined,
+      ...(envType === 'prod' ? { envType: 'prod' } : {}),
+    };
+
+    return omit(dejsonify(envNoNulls, ['meta', 'appOverride']), 'syntheticId');
   }
 
   public static ehSubstitution(data: EhSubstitutionDb): EhSubstitutionType {

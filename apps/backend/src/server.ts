@@ -14,7 +14,8 @@ app.get('/health', (_, res) => {
 });
 app.use(publicApi);
 
-const assets = process.env['ASSETS_DIR'] || path.join(__dirname, 'assets');
+const assets =
+  process.env['ASSETS_DIR'] || path.join(import.meta.dirname, 'assets');
 
 app.use(
   '/',

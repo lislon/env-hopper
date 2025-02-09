@@ -8,7 +8,7 @@ import {
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
 import { uniq } from 'lodash';
 import cn from 'classnames';
-import { formatAppTitleShort } from '../../lib/format/FormatAppTitleShort';
+import { formatAppPageTitleShort } from '../../lib/format/formatAppPageTitleShort';
 import { useMainAppFormContext } from '../../context/MainFormContextProvider';
 
 export function AppQuickBar(props: QuickBarSharedProps) {
@@ -21,7 +21,7 @@ export function AppQuickBar(props: QuickBarSharedProps) {
       .filter((app) => app !== undefined)
       .map((app) => ({
         id: app.id,
-        title: formatAppTitleShort(app),
+        title: formatAppPageTitleShort(app),
       }));
   }, [listFavoriteApps, getAppById]);
 
@@ -33,7 +33,7 @@ export function AppQuickBar(props: QuickBarSharedProps) {
       .map((id) => {
         return {
           id: id,
-          title: formatAppTitleShort(getAppById(id)),
+          title: formatAppPageTitleShort(getAppById(id)),
         };
       });
   }, [recentJumps, getAppById]);

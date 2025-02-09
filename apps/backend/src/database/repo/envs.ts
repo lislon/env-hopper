@@ -1,7 +1,6 @@
 import prisma from '../prisma';
 import { DbReaderMapper, DbWriterMapper } from '../mappers';
 import { EhEnv } from '@env-hopper/types';
-import { EhEnvDb } from '../../backend-types';
 
 export async function dbEnvsSet(data: EhEnv[]): Promise<void> {
   await prisma.$transaction([
@@ -18,14 +17,5 @@ export async function dbEnvsGet(): Promise<EhEnv[]> {
       },
     ],
   });
-  return rows
-    .map(({ envType, ...x }) => {
-      const newVar: EhEnvDb = {
-        ...x,
-        appOverride: x.appOverride ?? undefined,
-        ...(envType === 'prod' ? { envType: 'prod' } : {}),
-      };
-      return newVar;
-    })
-    .map(DbReaderMapper.ehEnv);
+  return rows.map(DbReaderMapper.ehEnv);
 }

@@ -10,264 +10,267 @@
 
 // Import Routes
 
-import { Route as rootRoute } from './routes/__root';
-import { Route as LayoutImport } from './routes/_layout';
-import { Route as LayoutIndexImport } from './routes/_layout/index';
-import { Route as LayoutEnvEnvIdImport } from './routes/_layout/env/$envId';
-import { Route as LayoutAppAppIdImport } from './routes/_layout/app/$appId';
-import { Route as LayoutEnvEnvIdSubSubValueImport } from './routes/_layout/env/$envId/sub/$subValue';
-import { Route as LayoutEnvEnvIdAppAppIdImport } from './routes/_layout/env/$envId/app/$appId';
-import { Route as LayoutAppAppIdSubSubValueImport } from './routes/_layout/app/$appId/sub/$subValue';
-import { Route as LayoutEnvEnvIdAppAppIdSubSubValueImport } from './routes/_layout/env/$envId/app/$appId/sub/$subValue';
+import { Route as rootRoute } from './routes/__root'
+import { Route as LayoutImport } from './routes/_layout'
+import { Route as LayoutIndexImport } from './routes/_layout/index'
+import { Route as LayoutAppAppIdImport } from './routes/_layout/app/$appId'
+import { Route as LayoutEnvEnvIdIndexImport } from './routes/_layout/env/$envId/index'
+import { Route as LayoutEnvEnvIdSubSubValueImport } from './routes/_layout/env/$envId/sub/$subValue'
+import { Route as LayoutAppAppIdSubSubValueImport } from './routes/_layout/app/$appId/sub/$subValue'
+import { Route as LayoutEnvEnvIdAppAppIdIndexImport } from './routes/_layout/env/$envId/app/$appId/index'
+import { Route as LayoutEnvEnvIdAppAppIdConfigIndexImport } from './routes/_layout/env/$envId/app/$appId/config/index'
+import { Route as LayoutEnvEnvIdAppAppIdSubSubValueImport } from './routes/_layout/env/$envId/app/$appId/sub/$subValue'
 
 // Create/Update Routes
 
 const LayoutRoute = LayoutImport.update({
   id: '/_layout',
   getParentRoute: () => rootRoute,
-} as any);
+} as any)
 
 const LayoutIndexRoute = LayoutIndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LayoutRoute,
-} as any);
-
-const LayoutEnvEnvIdRoute = LayoutEnvEnvIdImport.update({
-  id: '/env/$envId',
-  path: '/env/$envId',
-  getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
 
 const LayoutAppAppIdRoute = LayoutAppAppIdImport.update({
   id: '/app/$appId',
   path: '/app/$appId',
   getParentRoute: () => LayoutRoute,
-} as any);
+} as any)
+
+const LayoutEnvEnvIdIndexRoute = LayoutEnvEnvIdIndexImport.update({
+  id: '/env/$envId/',
+  path: '/env/$envId/',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 const LayoutEnvEnvIdSubSubValueRoute = LayoutEnvEnvIdSubSubValueImport.update({
-  id: '/sub/$subValue',
-  path: '/sub/$subValue',
-  getParentRoute: () => LayoutEnvEnvIdRoute,
-} as any);
-
-const LayoutEnvEnvIdAppAppIdRoute = LayoutEnvEnvIdAppAppIdImport.update({
-  id: '/app/$appId',
-  path: '/app/$appId',
-  getParentRoute: () => LayoutEnvEnvIdRoute,
-} as any);
+  id: '/env/$envId/sub/$subValue',
+  path: '/env/$envId/sub/$subValue',
+  getParentRoute: () => LayoutRoute,
+} as any)
 
 const LayoutAppAppIdSubSubValueRoute = LayoutAppAppIdSubSubValueImport.update({
   id: '/sub/$subValue',
   path: '/sub/$subValue',
   getParentRoute: () => LayoutAppAppIdRoute,
-} as any);
+} as any)
+
+const LayoutEnvEnvIdAppAppIdIndexRoute =
+  LayoutEnvEnvIdAppAppIdIndexImport.update({
+    id: '/env/$envId/app/$appId/',
+    path: '/env/$envId/app/$appId/',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+
+const LayoutEnvEnvIdAppAppIdConfigIndexRoute =
+  LayoutEnvEnvIdAppAppIdConfigIndexImport.update({
+    id: '/env/$envId/app/$appId/config/',
+    path: '/env/$envId/app/$appId/config/',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 
 const LayoutEnvEnvIdAppAppIdSubSubValueRoute =
   LayoutEnvEnvIdAppAppIdSubSubValueImport.update({
-    id: '/sub/$subValue',
-    path: '/sub/$subValue',
-    getParentRoute: () => LayoutEnvEnvIdAppAppIdRoute,
-  } as any);
+    id: '/env/$envId/app/$appId/sub/$subValue',
+    path: '/env/$envId/app/$appId/sub/$subValue',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/_layout': {
-      id: '/_layout';
-      path: '';
-      fullPath: '';
-      preLoaderRoute: typeof LayoutImport;
-      parentRoute: typeof rootRoute;
-    };
+      id: '/_layout'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof LayoutImport
+      parentRoute: typeof rootRoute
+    }
     '/_layout/': {
-      id: '/_layout/';
-      path: '/';
-      fullPath: '/';
-      preLoaderRoute: typeof LayoutIndexImport;
-      parentRoute: typeof LayoutImport;
-    };
+      id: '/_layout/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof LayoutIndexImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/app/$appId': {
-      id: '/_layout/app/$appId';
-      path: '/app/$appId';
-      fullPath: '/app/$appId';
-      preLoaderRoute: typeof LayoutAppAppIdImport;
-      parentRoute: typeof LayoutImport;
-    };
-    '/_layout/env/$envId': {
-      id: '/_layout/env/$envId';
-      path: '/env/$envId';
-      fullPath: '/env/$envId';
-      preLoaderRoute: typeof LayoutEnvEnvIdImport;
-      parentRoute: typeof LayoutImport;
-    };
+      id: '/_layout/app/$appId'
+      path: '/app/$appId'
+      fullPath: '/app/$appId'
+      preLoaderRoute: typeof LayoutAppAppIdImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/env/$envId/': {
+      id: '/_layout/env/$envId/'
+      path: '/env/$envId'
+      fullPath: '/env/$envId'
+      preLoaderRoute: typeof LayoutEnvEnvIdIndexImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/app/$appId/sub/$subValue': {
-      id: '/_layout/app/$appId/sub/$subValue';
-      path: '/sub/$subValue';
-      fullPath: '/app/$appId/sub/$subValue';
-      preLoaderRoute: typeof LayoutAppAppIdSubSubValueImport;
-      parentRoute: typeof LayoutAppAppIdImport;
-    };
-    '/_layout/env/$envId/app/$appId': {
-      id: '/_layout/env/$envId/app/$appId';
-      path: '/app/$appId';
-      fullPath: '/env/$envId/app/$appId';
-      preLoaderRoute: typeof LayoutEnvEnvIdAppAppIdImport;
-      parentRoute: typeof LayoutEnvEnvIdImport;
-    };
+      id: '/_layout/app/$appId/sub/$subValue'
+      path: '/sub/$subValue'
+      fullPath: '/app/$appId/sub/$subValue'
+      preLoaderRoute: typeof LayoutAppAppIdSubSubValueImport
+      parentRoute: typeof LayoutAppAppIdImport
+    }
     '/_layout/env/$envId/sub/$subValue': {
-      id: '/_layout/env/$envId/sub/$subValue';
-      path: '/sub/$subValue';
-      fullPath: '/env/$envId/sub/$subValue';
-      preLoaderRoute: typeof LayoutEnvEnvIdSubSubValueImport;
-      parentRoute: typeof LayoutEnvEnvIdImport;
-    };
+      id: '/_layout/env/$envId/sub/$subValue'
+      path: '/env/$envId/sub/$subValue'
+      fullPath: '/env/$envId/sub/$subValue'
+      preLoaderRoute: typeof LayoutEnvEnvIdSubSubValueImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/env/$envId/app/$appId/': {
+      id: '/_layout/env/$envId/app/$appId/'
+      path: '/env/$envId/app/$appId'
+      fullPath: '/env/$envId/app/$appId'
+      preLoaderRoute: typeof LayoutEnvEnvIdAppAppIdIndexImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/env/$envId/app/$appId/sub/$subValue': {
-      id: '/_layout/env/$envId/app/$appId/sub/$subValue';
-      path: '/sub/$subValue';
-      fullPath: '/env/$envId/app/$appId/sub/$subValue';
-      preLoaderRoute: typeof LayoutEnvEnvIdAppAppIdSubSubValueImport;
-      parentRoute: typeof LayoutEnvEnvIdAppAppIdImport;
-    };
+      id: '/_layout/env/$envId/app/$appId/sub/$subValue'
+      path: '/env/$envId/app/$appId/sub/$subValue'
+      fullPath: '/env/$envId/app/$appId/sub/$subValue'
+      preLoaderRoute: typeof LayoutEnvEnvIdAppAppIdSubSubValueImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/env/$envId/app/$appId/config/': {
+      id: '/_layout/env/$envId/app/$appId/config/'
+      path: '/env/$envId/app/$appId/config'
+      fullPath: '/env/$envId/app/$appId/config'
+      preLoaderRoute: typeof LayoutEnvEnvIdAppAppIdConfigIndexImport
+      parentRoute: typeof LayoutImport
+    }
   }
 }
 
 // Create and export the route tree
 
 interface LayoutAppAppIdRouteChildren {
-  LayoutAppAppIdSubSubValueRoute: typeof LayoutAppAppIdSubSubValueRoute;
+  LayoutAppAppIdSubSubValueRoute: typeof LayoutAppAppIdSubSubValueRoute
 }
 
 const LayoutAppAppIdRouteChildren: LayoutAppAppIdRouteChildren = {
   LayoutAppAppIdSubSubValueRoute: LayoutAppAppIdSubSubValueRoute,
-};
+}
 
 const LayoutAppAppIdRouteWithChildren = LayoutAppAppIdRoute._addFileChildren(
   LayoutAppAppIdRouteChildren,
-);
-
-interface LayoutEnvEnvIdAppAppIdRouteChildren {
-  LayoutEnvEnvIdAppAppIdSubSubValueRoute: typeof LayoutEnvEnvIdAppAppIdSubSubValueRoute;
-}
-
-const LayoutEnvEnvIdAppAppIdRouteChildren: LayoutEnvEnvIdAppAppIdRouteChildren =
-  {
-    LayoutEnvEnvIdAppAppIdSubSubValueRoute:
-      LayoutEnvEnvIdAppAppIdSubSubValueRoute,
-  };
-
-const LayoutEnvEnvIdAppAppIdRouteWithChildren =
-  LayoutEnvEnvIdAppAppIdRoute._addFileChildren(
-    LayoutEnvEnvIdAppAppIdRouteChildren,
-  );
-
-interface LayoutEnvEnvIdRouteChildren {
-  LayoutEnvEnvIdAppAppIdRoute: typeof LayoutEnvEnvIdAppAppIdRouteWithChildren;
-  LayoutEnvEnvIdSubSubValueRoute: typeof LayoutEnvEnvIdSubSubValueRoute;
-}
-
-const LayoutEnvEnvIdRouteChildren: LayoutEnvEnvIdRouteChildren = {
-  LayoutEnvEnvIdAppAppIdRoute: LayoutEnvEnvIdAppAppIdRouteWithChildren,
-  LayoutEnvEnvIdSubSubValueRoute: LayoutEnvEnvIdSubSubValueRoute,
-};
-
-const LayoutEnvEnvIdRouteWithChildren = LayoutEnvEnvIdRoute._addFileChildren(
-  LayoutEnvEnvIdRouteChildren,
-);
+)
 
 interface LayoutRouteChildren {
-  LayoutIndexRoute: typeof LayoutIndexRoute;
-  LayoutAppAppIdRoute: typeof LayoutAppAppIdRouteWithChildren;
-  LayoutEnvEnvIdRoute: typeof LayoutEnvEnvIdRouteWithChildren;
+  LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutAppAppIdRoute: typeof LayoutAppAppIdRouteWithChildren
+  LayoutEnvEnvIdIndexRoute: typeof LayoutEnvEnvIdIndexRoute
+  LayoutEnvEnvIdSubSubValueRoute: typeof LayoutEnvEnvIdSubSubValueRoute
+  LayoutEnvEnvIdAppAppIdIndexRoute: typeof LayoutEnvEnvIdAppAppIdIndexRoute
+  LayoutEnvEnvIdAppAppIdSubSubValueRoute: typeof LayoutEnvEnvIdAppAppIdSubSubValueRoute
+  LayoutEnvEnvIdAppAppIdConfigIndexRoute: typeof LayoutEnvEnvIdAppAppIdConfigIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutAppAppIdRoute: LayoutAppAppIdRouteWithChildren,
-  LayoutEnvEnvIdRoute: LayoutEnvEnvIdRouteWithChildren,
-};
+  LayoutEnvEnvIdIndexRoute: LayoutEnvEnvIdIndexRoute,
+  LayoutEnvEnvIdSubSubValueRoute: LayoutEnvEnvIdSubSubValueRoute,
+  LayoutEnvEnvIdAppAppIdIndexRoute: LayoutEnvEnvIdAppAppIdIndexRoute,
+  LayoutEnvEnvIdAppAppIdSubSubValueRoute:
+    LayoutEnvEnvIdAppAppIdSubSubValueRoute,
+  LayoutEnvEnvIdAppAppIdConfigIndexRoute:
+    LayoutEnvEnvIdAppAppIdConfigIndexRoute,
+}
 
 const LayoutRouteWithChildren =
-  LayoutRoute._addFileChildren(LayoutRouteChildren);
+  LayoutRoute._addFileChildren(LayoutRouteChildren)
 
 export interface FileRoutesByFullPath {
-  '': typeof LayoutRouteWithChildren;
-  '/': typeof LayoutIndexRoute;
-  '/app/$appId': typeof LayoutAppAppIdRouteWithChildren;
-  '/env/$envId': typeof LayoutEnvEnvIdRouteWithChildren;
-  '/app/$appId/sub/$subValue': typeof LayoutAppAppIdSubSubValueRoute;
-  '/env/$envId/app/$appId': typeof LayoutEnvEnvIdAppAppIdRouteWithChildren;
-  '/env/$envId/sub/$subValue': typeof LayoutEnvEnvIdSubSubValueRoute;
-  '/env/$envId/app/$appId/sub/$subValue': typeof LayoutEnvEnvIdAppAppIdSubSubValueRoute;
+  '': typeof LayoutRouteWithChildren
+  '/': typeof LayoutIndexRoute
+  '/app/$appId': typeof LayoutAppAppIdRouteWithChildren
+  '/env/$envId': typeof LayoutEnvEnvIdIndexRoute
+  '/app/$appId/sub/$subValue': typeof LayoutAppAppIdSubSubValueRoute
+  '/env/$envId/sub/$subValue': typeof LayoutEnvEnvIdSubSubValueRoute
+  '/env/$envId/app/$appId': typeof LayoutEnvEnvIdAppAppIdIndexRoute
+  '/env/$envId/app/$appId/sub/$subValue': typeof LayoutEnvEnvIdAppAppIdSubSubValueRoute
+  '/env/$envId/app/$appId/config': typeof LayoutEnvEnvIdAppAppIdConfigIndexRoute
 }
 
 export interface FileRoutesByTo {
-  '/': typeof LayoutIndexRoute;
-  '/app/$appId': typeof LayoutAppAppIdRouteWithChildren;
-  '/env/$envId': typeof LayoutEnvEnvIdRouteWithChildren;
-  '/app/$appId/sub/$subValue': typeof LayoutAppAppIdSubSubValueRoute;
-  '/env/$envId/app/$appId': typeof LayoutEnvEnvIdAppAppIdRouteWithChildren;
-  '/env/$envId/sub/$subValue': typeof LayoutEnvEnvIdSubSubValueRoute;
-  '/env/$envId/app/$appId/sub/$subValue': typeof LayoutEnvEnvIdAppAppIdSubSubValueRoute;
+  '/': typeof LayoutIndexRoute
+  '/app/$appId': typeof LayoutAppAppIdRouteWithChildren
+  '/env/$envId': typeof LayoutEnvEnvIdIndexRoute
+  '/app/$appId/sub/$subValue': typeof LayoutAppAppIdSubSubValueRoute
+  '/env/$envId/sub/$subValue': typeof LayoutEnvEnvIdSubSubValueRoute
+  '/env/$envId/app/$appId': typeof LayoutEnvEnvIdAppAppIdIndexRoute
+  '/env/$envId/app/$appId/sub/$subValue': typeof LayoutEnvEnvIdAppAppIdSubSubValueRoute
+  '/env/$envId/app/$appId/config': typeof LayoutEnvEnvIdAppAppIdConfigIndexRoute
 }
 
 export interface FileRoutesById {
-  __root__: typeof rootRoute;
-  '/_layout': typeof LayoutRouteWithChildren;
-  '/_layout/': typeof LayoutIndexRoute;
-  '/_layout/app/$appId': typeof LayoutAppAppIdRouteWithChildren;
-  '/_layout/env/$envId': typeof LayoutEnvEnvIdRouteWithChildren;
-  '/_layout/app/$appId/sub/$subValue': typeof LayoutAppAppIdSubSubValueRoute;
-  '/_layout/env/$envId/app/$appId': typeof LayoutEnvEnvIdAppAppIdRouteWithChildren;
-  '/_layout/env/$envId/sub/$subValue': typeof LayoutEnvEnvIdSubSubValueRoute;
-  '/_layout/env/$envId/app/$appId/sub/$subValue': typeof LayoutEnvEnvIdAppAppIdSubSubValueRoute;
+  __root__: typeof rootRoute
+  '/_layout': typeof LayoutRouteWithChildren
+  '/_layout/': typeof LayoutIndexRoute
+  '/_layout/app/$appId': typeof LayoutAppAppIdRouteWithChildren
+  '/_layout/env/$envId/': typeof LayoutEnvEnvIdIndexRoute
+  '/_layout/app/$appId/sub/$subValue': typeof LayoutAppAppIdSubSubValueRoute
+  '/_layout/env/$envId/sub/$subValue': typeof LayoutEnvEnvIdSubSubValueRoute
+  '/_layout/env/$envId/app/$appId/': typeof LayoutEnvEnvIdAppAppIdIndexRoute
+  '/_layout/env/$envId/app/$appId/sub/$subValue': typeof LayoutEnvEnvIdAppAppIdSubSubValueRoute
+  '/_layout/env/$envId/app/$appId/config/': typeof LayoutEnvEnvIdAppAppIdConfigIndexRoute
 }
 
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | ''
     | '/'
     | '/app/$appId'
     | '/env/$envId'
     | '/app/$appId/sub/$subValue'
-    | '/env/$envId/app/$appId'
     | '/env/$envId/sub/$subValue'
-    | '/env/$envId/app/$appId/sub/$subValue';
-  fileRoutesByTo: FileRoutesByTo;
+    | '/env/$envId/app/$appId'
+    | '/env/$envId/app/$appId/sub/$subValue'
+    | '/env/$envId/app/$appId/config'
+  fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/app/$appId'
     | '/env/$envId'
     | '/app/$appId/sub/$subValue'
-    | '/env/$envId/app/$appId'
     | '/env/$envId/sub/$subValue'
-    | '/env/$envId/app/$appId/sub/$subValue';
+    | '/env/$envId/app/$appId'
+    | '/env/$envId/app/$appId/sub/$subValue'
+    | '/env/$envId/app/$appId/config'
   id:
     | '__root__'
     | '/_layout'
     | '/_layout/'
     | '/_layout/app/$appId'
-    | '/_layout/env/$envId'
+    | '/_layout/env/$envId/'
     | '/_layout/app/$appId/sub/$subValue'
-    | '/_layout/env/$envId/app/$appId'
     | '/_layout/env/$envId/sub/$subValue'
-    | '/_layout/env/$envId/app/$appId/sub/$subValue';
-  fileRoutesById: FileRoutesById;
+    | '/_layout/env/$envId/app/$appId/'
+    | '/_layout/env/$envId/app/$appId/sub/$subValue'
+    | '/_layout/env/$envId/app/$appId/config/'
+  fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-  LayoutRoute: typeof LayoutRouteWithChildren;
+  LayoutRoute: typeof LayoutRouteWithChildren
 }
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
-};
+}
 
 export const routeTree = rootRoute
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
 /* ROUTE_MANIFEST_START
 {
@@ -283,7 +286,11 @@ export const routeTree = rootRoute
       "children": [
         "/_layout/",
         "/_layout/app/$appId",
-        "/_layout/env/$envId"
+        "/_layout/env/$envId/",
+        "/_layout/env/$envId/sub/$subValue",
+        "/_layout/env/$envId/app/$appId/",
+        "/_layout/env/$envId/app/$appId/sub/$subValue",
+        "/_layout/env/$envId/app/$appId/config/"
       ]
     },
     "/_layout/": {
@@ -297,32 +304,29 @@ export const routeTree = rootRoute
         "/_layout/app/$appId/sub/$subValue"
       ]
     },
-    "/_layout/env/$envId": {
-      "filePath": "_layout/env/$envId.tsx",
-      "parent": "/_layout",
-      "children": [
-        "/_layout/env/$envId/app/$appId",
-        "/_layout/env/$envId/sub/$subValue"
-      ]
+    "/_layout/env/$envId/": {
+      "filePath": "_layout/env/$envId/index.tsx",
+      "parent": "/_layout"
     },
     "/_layout/app/$appId/sub/$subValue": {
       "filePath": "_layout/app/$appId/sub/$subValue.tsx",
       "parent": "/_layout/app/$appId"
     },
-    "/_layout/env/$envId/app/$appId": {
-      "filePath": "_layout/env/$envId/app/$appId.tsx",
-      "parent": "/_layout/env/$envId",
-      "children": [
-        "/_layout/env/$envId/app/$appId/sub/$subValue"
-      ]
-    },
     "/_layout/env/$envId/sub/$subValue": {
       "filePath": "_layout/env/$envId/sub/$subValue.tsx",
-      "parent": "/_layout/env/$envId"
+      "parent": "/_layout"
+    },
+    "/_layout/env/$envId/app/$appId/": {
+      "filePath": "_layout/env/$envId/app/$appId/index.tsx",
+      "parent": "/_layout"
     },
     "/_layout/env/$envId/app/$appId/sub/$subValue": {
       "filePath": "_layout/env/$envId/app/$appId/sub/$subValue.tsx",
-      "parent": "/_layout/env/$envId/app/$appId"
+      "parent": "/_layout"
+    },
+    "/_layout/env/$envId/app/$appId/config/": {
+      "filePath": "_layout/env/$envId/app/$appId/config/index.tsx",
+      "parent": "/_layout"
     }
   }
 }

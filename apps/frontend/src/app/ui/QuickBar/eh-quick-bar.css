@@ -7,8 +7,8 @@
 }
 
 :where(
-    .eh-quick-bar
-      li:not(.menu-title, .disabled)
+    .eh-quick-bar,
+      li:not(.menu-title, .disabled),
       > *:not(ul, details, .menu-title)
   ),
 :where(

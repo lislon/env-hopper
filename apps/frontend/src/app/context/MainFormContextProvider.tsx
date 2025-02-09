@@ -1,26 +1,7 @@
 'use client';
-import {
-  EhApp,
-  EhAppId,
-  EhClientConfig,
-  EhEnv,
-  EhEnvId,
-  EhLastUsedSubs,
-  EhSubstitutionType,
-} from '@env-hopper/types';
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import {
-  ComboBoxType,
-  EhEnvAppSubSelectedState,
-  EhSubstitutionValue,
-} from '../types';
+import { EhApp, EhAppId, EhEnv, EhEnvId, EhLastUsedSubs, EhSubstitutionType } from '@env-hopper/types';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { ComboBoxType, EhEnvAppSubSelectedState, EhSubstitutionValue } from '../types';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import {
   cutApp,
@@ -29,11 +10,8 @@ import {
   formatAppTitle,
   getAppWithEnvOverrides,
   getJumpUrl,
-  getJumpUrlEvenNotComplete,
-  unescapeAppId,
+  getJumpUrlEvenNotComplete, getPreselectedBasedOnParams, getSubstitutionBasedOnAppAndLastUsed
 } from '../lib/utils';
-import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter';
-import { SourceItem } from '../ui/AutoComplete/common';
 import { usePrefetch } from '../hooks/usePrefetch';
 import { FocusControllerEh, useFocusController } from '../lib/focusController';
 import { omit } from 'lodash';
@@ -42,14 +20,9 @@ import { getEhToOptions } from '../lib/route-utils';
 import {
   LOCAL_STORAGE_KEY_LAST_USED_APP,
   LOCAL_STORAGE_KEY_LAST_USED_ENV,
-  LOCAL_STORAGE_KEY_LAST_USED_SUBS,
+  LOCAL_STORAGE_KEY_LAST_USED_SUBS
 } from '../lib/local-storage-constants';
-import {
-  doGetAppById,
-  doGetEnvById,
-  EhContextProps,
-  useEhContext,
-} from './EhContext';
+import { doGetAppById, EhContextProps, useEhContext } from './EhContext';
 
 export interface EhMainFormContextProps extends FocusControllerEh {
   setEnv: (env: EhEnv | undefined) => void;
@@ -81,115 +54,6 @@ export function useMainAppFormContext(): EhMainFormContextProps &
     throw new Error('EhMainFormContext is not provided');
   }
   return { ...ehContext, ...mainFormContext };
-}
-
-function getByIdRelaxed<T extends { id: string }>(
-  primarySearch: (id: string | undefined, ehEnvs: T[]) => T | undefined,
-  id: string | undefined,
-  options: T[],
-): [T | undefined, boolean] {
-  if (id !== undefined) {
-    const exactMatchResult = primarySearch(id, options);
-    if (exactMatchResult !== undefined) {
-      return [exactMatchResult, true];
-    }
-
-    const items: SourceItem[] = options.map((e) => ({ title: e.id, id: e.id }));
-    const found = makeAutoCompleteFilter(items)(id.toLowerCase(), items);
-    if (found.length === 1) {
-      return [primarySearch(found[0].id, options), false];
-    }
-  }
-  return [undefined, false];
-}
-
-export interface PreselectedBasedOnParams {
-  urlParams: EhEnvAppSubSelectedState;
-  config: EhClientConfig;
-  lastUsedEnv: EhEnvId | undefined;
-  lastUsedApp: EhAppId | undefined;
-  lastUsedSubs: EhLastUsedSubs | undefined;
-}
-
-export interface PreselectedBasedOnParamsReturn {
-  urlWasFixed: boolean;
-  env: EhEnv | undefined;
-  app: EhApp | undefined;
-  substitution: EhSubstitutionValue | undefined;
-}
-
-function getSubstitutionBasedOnAppAndLastUsed(
-  app: EhApp | undefined,
-  listEnvs: EhEnv[],
-  lastUsedSubs: EhLastUsedSubs | undefined,
-): EhSubstitutionValue | undefined {
-  const subId = findSubstitutionIdByUrl({
-    app,
-    env: listEnvs?.[0],
-  });
-  if (subId && lastUsedSubs?.[subId] !== undefined) {
-    return {
-      name: subId,
-      value: lastUsedSubs[subId],
-    };
-  }
-  return undefined;
-}
-
-function getPreselectedBasedOnParams({
-  urlParams,
-  config,
-  lastUsedEnv,
-  lastUsedApp,
-  lastUsedSubs,
-}: PreselectedBasedOnParams): PreselectedBasedOnParamsReturn {
-  let env: EhEnv | undefined = undefined;
-  let app: EhApp | undefined = undefined;
-  let sub = undefined;
-  let urlWasFixed = false;
-  const listEnvs = config.envs;
-
-  if (urlParams.envId !== undefined) {
-    let strictMatch;
-    [env, strictMatch] = getByIdRelaxed<EhEnv>(
-      doGetEnvById,
-      urlParams.envId,
-      config.envs,
-    );
-    if (!strictMatch) {
-      urlWasFixed = true;
-    }
-  } else if (lastUsedEnv !== undefined) {
-    [env] = getByIdRelaxed(doGetEnvById, lastUsedEnv, config.envs);
-  }
-
-  if (urlParams.appId !== undefined) {
-    let strictMatch;
-    [app, strictMatch] = getByIdRelaxed<EhApp>(
-      doGetAppById,
-      unescapeAppId(urlParams.appId),
-      config.apps,
-    );
-    if (!strictMatch) {
-      urlWasFixed = true;
-    }
-  } else if (lastUsedApp !== undefined) {
-    [app] = getByIdRelaxed(doGetAppById, lastUsedApp, config.apps);
-  }
-
-  if (urlParams.subValue !== undefined) {
-    const subName = findSubstitutionIdByUrl({ app, env });
-    if (subName !== undefined) {
-      sub = {
-        name: subName,
-        value: urlParams.subValue,
-      };
-    }
-  } else if (lastUsedSubs !== undefined) {
-    sub = getSubstitutionBasedOnAppAndLastUsed(app, listEnvs, lastUsedSubs);
-  }
-
-  return { urlWasFixed, env, app, substitution: sub };
 }
 
 export interface MainFormContextProviderProps {
@@ -379,8 +243,8 @@ export function MainFormContextProvider({
         return undefined;
       }
       recordJump({
-        app: app,
-        env: env,
+        app,
+        env,
         substitution,
       });
       window.open(jumpUrl, '_blank')?.focus();

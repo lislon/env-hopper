@@ -19,12 +19,11 @@ COPY --from=build-stage /app/docker-entrypoint.sh .
 
 RUN npx prisma generate \
   # Prune non-used files
-  && npm prune --production \
+  && pnpm prune --production \
   # Clean Prisma non-used files https://github.com/prisma/prisma/issues/11577
   && rm -rf node_modules/.cache/ \
   # Remove cache
-  && rm -rf /root/.cache/ \
-  && rm -rf /root/.npm/
+  && rm -rf /root/.cache/
 
 ENV NODE_ENV production
 ENV PORT 4000

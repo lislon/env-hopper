@@ -9,27 +9,21 @@ import {
   EhEnv,
   EhIcon,
   EhStatJump,
-  EhSubstitutionType,
+  EhSubstitutionType
 } from '@env-hopper/types';
 
 import { dbAppsGet, dbAppsSet } from '../database/repo/apps';
-import {
-  dbSubstitutionsGet,
-  dbSubstitutionsSet,
-} from '../database/repo/substitutions';
+import { dbSubstitutionsGet, dbSubstitutionsSet } from '../database/repo/substitutions';
 import { EhAppBackend } from '../backend-types';
 import { UiReaderMapper } from '../database/mappers';
-import {
-  dbCustomizationGet,
-  dbCustomizationUpdate,
-} from '../database/repo/customization';
+import { dbCustomizationGet, dbCustomizationUpdate } from '../database/repo/customization';
 import { dbStatsJumpInsert, dbStatsJumpsGet } from '../database/repo/stats';
 import { StatsJump } from '@prisma/client';
 
 export const publicApi = Router();
 
-publicApi.use(express.json());
-publicApi.use(express.raw({ type: '*/*', limit: '10mb' }));
+publicApi.use(express.json({ limit: '50mb' }));
+publicApi.use(express.raw({ type: '*/*', limit: '50mb' }));
 
 publicApi.get(
   '/api/config',

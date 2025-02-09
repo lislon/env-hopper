@@ -18,6 +18,7 @@ const GLOB_INCLUDE = ['**/*.{js,ts,tsx}'];
 const GLOB_EXCLUDE = [
   '**/.nx/**',
   '**/build/**',
+  '**/dist/**',
   '**/coverage/**',
   '**/dev-dist/**',
   '**/snap/**',

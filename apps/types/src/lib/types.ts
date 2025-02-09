@@ -1,12 +1,12 @@
 export type EhAppOverride = Partial<Pick<EhApp, 'meta' | 'widgets'>>;
 
-export type EnvType = 'stage' | 'prod';
+// export type EnvType = 'stage' | 'prod';
 
 export interface EhEnv {
   id: EhEnvId;
   meta: Record<string, string>;
   appOverride?: EhAppOverride;
-  envType?: EnvType;
+  envType?: string; // stage or prod
 }
 export interface EhApp {
   id: EhAppId;

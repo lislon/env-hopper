@@ -3,7 +3,7 @@ import { ReadonlyCopyField } from '../../ReadonlyCopyField';
 import DbCredsIcon from './db-creds.svg?react';
 import cn from 'classnames';
 import { useMainAppFormContext } from '../../../context/MainFormContextProvider';
-import { interpolateWidgetStr } from '../../../lib/utils';
+import { hasUnresolvedSubstitution, interpolateWidgetStr } from '../../../lib/utils';
 
 export interface DbCredentialsWidgetProps {
   className?: string;
@@ -13,8 +13,7 @@ export function DbCredentialsWidget({ className }: DbCredentialsWidgetProps) {
   const { app, env } = useMainAppFormContext();
 
   return (
-    app?.widgets?.db &&
-    env && (
+    app?.widgets?.db && !hasUnresolvedSubstitution(app.widgets.db.url) && env && (
       <div
         className={cn('flex tooltip tooltip-left', className)}
         data-tip="Credentials for the app DB"

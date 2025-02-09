@@ -1,10 +1,14 @@
-const { join } = require('path');
+import { join } from 'path';
+import themes from 'daisyui/src/theming/themes';
+import typographyPlugin from '@tailwindcss/typography';
+import daisyUiPlugin from 'daisyui';
+import { Config } from 'tailwindcss/types/config';
 
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
     join(
-      __dirname,
+      import.meta.dirname,
       '{src,pages,components,app}/**/*!(*.stories|*.test).{ts,tsx,html}',
     ),
   ],
@@ -47,19 +51,18 @@ module.exports = {
     themes: [
       {
         light: {
-          ...require('daisyui/src/theming/themes')['light'],
+          ...themes['light'],
         },
       },
       {
         dark: {
-          ...require('daisyui/src/theming/themes')['dark'],
+          ...themes['dark'],
         },
       },
     ],
   },
   plugins: [
-    require('@savvywombat/tailwindcss-grid-areas'),
-    require('@tailwindcss/typography'),
-    require('daisyui'),
+    typographyPlugin,
+    daisyUiPlugin,
   ],
 };

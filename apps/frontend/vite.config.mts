@@ -6,8 +6,9 @@ import svgr from 'vite-plugin-svgr';
 import { removeUseClient } from './src/vite-plugins/remove-use-client';
 import * as process from 'node:process';
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
+import tailwindcss from '@tailwindcss/vite'
 
-export default defineConfig(({ mode }) => {
+const config = defineConfig(({ mode }) => {
   const env = { ...process.env, ...loadEnv(mode, process.cwd()) };
 
   return {
@@ -66,7 +67,7 @@ export default defineConfig(({ mode }) => {
       svgr(),
       TanStackRouterVite(),
       viteReact(),
-
+      tailwindcss(),
       process.env['NODE_ENV'] === 'test' && {
         name: 'load-svg',
         enforce: 'pre',
@@ -107,3 +108,5 @@ export default defineConfig(({ mode }) => {
     },
   };
 });
+
+export default config;

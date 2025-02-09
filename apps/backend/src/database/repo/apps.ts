@@ -17,7 +17,5 @@ export async function dbAppsGet(): Promise<EhAppBackend[]> {
       },
     ],
   });
-  return rows
-    .map((x) => ({ ...x, widgets: x.widgets ?? undefined }))
-    .map(DbReaderMapper.ehApp);
+  return rows.map(DbReaderMapper.ehApp);
 }

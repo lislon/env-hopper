@@ -1,33 +1,9 @@
+@import "tailwindcss";
 @import './app/ui/QuickBar/eh-quick-bar.css';
+@plugin "daisyui" {
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* :root::view-transition-old(*),
-:root::view-transition-new(*) {
-  position: absolute;
-  inset-block-start: 0;
-  inline-size: 100%;
-  block-size: auto;
-
-  animation-duration: 250ms;
 }
 
-
-@keyframes -ua-mix-blend-mode-plus-lighter {
-  from {
-    margin-left: 0;
-    mix-blend-mode: plus-lighter;
-  }
-  to {
-    margin-left: 100px;
-    mix-blend-mode: plus-lighter;
-  }
+:root {
+  --eh-green: oklch(74.88% 0.149 130.38);
 }
-
-@keyframes -ua-view-transition-fade-out {
-  to {
-    opacity: 0;
-  }
-} */

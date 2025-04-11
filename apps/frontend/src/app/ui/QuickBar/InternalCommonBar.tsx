@@ -31,7 +31,7 @@ function BarHeaderWithIcon({
 }) {
   return (
     <div
-      className={'menu-title tooltip tooltip-left flex gap-1 px-1 pt-1'}
+      className={'tooltip tooltip-left flex gap-1 px-1 pt-2.5'}
       data-tip={`Click on ${favoriteOrRecent === 'favorite' ? 'favorite' : 'recently used'} ${comboboxType === 'applications' ? 'app' : 'env'} for quick preselect`}
     >
       {favoriteOrRecent === 'favorite' ? (
@@ -71,7 +71,7 @@ export function InternalCommonBar<ID extends string | number>({
         comboboxType={comboboxType}
         favoriteOrRecent={favoriteOrRecent}
       />
-      <ul className="eh-quick-bar p-0 relative overflow-hidden flex-wrap">
+      <ul className="eh-quick-bar p-0 relative overflow-hidden flex-wrap menu menu-horizontal">
         {list.map((element) => {
           const isActive = element.id === activeId;
           return (
@@ -86,7 +86,7 @@ export function InternalCommonBar<ID extends string | number>({
             >
               <button
                 className={cn({
-                  active: isActive,
+                  "menu-active": isActive,
                 })}
                 onClick={() => onClick(element.id)}
               >

@@ -61,10 +61,10 @@ export function SubstitutionList(props: SubstitutionListProps) {
     substitutionType && (
       <div className={props.className}>
         <label className="form-control w-full relative p-1">
-          <div className="label prose">
+          <div className="label mb-2">
             <h4>{substitutionType?.title}</h4>
           </div>
-
+          <div>
           <input
             aria-labelledby="context-label"
             data-testid="substitution-input"
@@ -77,7 +77,7 @@ export function SubstitutionList(props: SubstitutionListProps) {
             placeholder={`Enter ${substitutionType?.title}`}
             autoComplete={getAutoCompleteAttr(substitutionType, env)}
             name={getAutoCompleteName(substitutionType, env)}
-            className="input input-bordered"
+            className="input input-bordered w-full"
             value={substitution?.value || ''}
             onChange={(e) =>
               setSubstitution({
@@ -91,6 +91,7 @@ export function SubstitutionList(props: SubstitutionListProps) {
               }
             }}
           />
+           </div>
         </label>
       </div>
     )

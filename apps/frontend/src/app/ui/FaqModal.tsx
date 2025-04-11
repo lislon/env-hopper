@@ -212,7 +212,7 @@ export function FaqModal(props: BaseDialogProps) {
   ].filter(Boolean);
 
   return (
-    <BaseModal {...props} className={'prose max-w-[800px]'}>
+    <BaseModal {...props} className={' max-w-[800px]'}>
       <div className="carousel w-full transition">
         {slides.map((childrenSlide, slideIndex) => {
           slideIndex++;
@@ -222,7 +222,7 @@ export function FaqModal(props: BaseDialogProps) {
               id={`about-${slideIndex}`}
               className="carousel-item relative w-full"
             >
-              <div className="mx-32">{childrenSlide}</div>
+              <div className="mx-32 prose">{childrenSlide}</div>
               <div className="absolute left-5 right-5 top-1/2 flex -translate-y-1/2 transform justify-between">
                 {slideIndex - 1 > 0 ? (
                   <a

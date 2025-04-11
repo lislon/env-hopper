@@ -6,12 +6,12 @@ import { Config } from 'tailwindcss/types/config';
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    join(
-      import.meta.dirname,
-      '{src,pages,components,app}/**/*!(*.stories|*.test).{ts,tsx,html}',
-    ),
-  ],
+  // content: [
+  //   join(
+  //     import.meta.dirname,
+  //     '{src,pages,components,app}/**/*!(*.stories|*.test).{ts,tsx,html}',
+  //   ),
+  // ],
   darkMode: 'selector',
   theme: {
     extend: {
@@ -29,14 +29,7 @@ export default {
           'history history   history',
         ],
         'layout-sm': [
-          'e-input',
-          'e-bar  ',
-          'a-input',
-          'a-bar  ',
-          's-input',
-          '  jump ',
-          'ui-widget',
-          'history',
+          'e-input''e-bar  ''a-input''a-bar  ''s-input''  jump ''ui-widget''history',
         ],
       },
       gridTemplateColumns: {

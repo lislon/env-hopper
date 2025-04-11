@@ -33,7 +33,7 @@ export function DefaultErrorPage({ error }: ErrorComponentProps) {
 
   return (
     <>
-      <div className={'mt-8 text-center prose !max-w-none'} role="alert">
+      <div className={'mt-8 text-center  !max-w-none'} role="alert">
         {isProbablyWillResolvedAfterUpdate && (
           <div>
             <h2>New version is loading....</h2>

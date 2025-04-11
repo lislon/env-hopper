@@ -30,6 +30,7 @@ const config = defineConfig(({ mode }) => {
     },
 
     plugins: [
+      tailwindcss(),
       removeUseClient(),
       nxViteTsPaths(),
       VitePWA({
@@ -67,7 +68,6 @@ const config = defineConfig(({ mode }) => {
       svgr(),
       TanStackRouterVite(),
       viteReact(),
-      tailwindcss(),
       process.env['NODE_ENV'] === 'test' && {
         name: 'load-svg',
         enforce: 'pre',

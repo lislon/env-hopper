@@ -143,23 +143,23 @@ export function EhAutoComplete(props: EhAutoCompleteProps) {
           className="form-control w-full relative px-1"
           {...getLabelProps()}
         >
-          <div className="label prose">
+          <div className="label mb-2">
             <h4>{props.label}</h4>
           </div>
           <input
             type="text"
             placeholder={props.placeholder}
             className={cn(
-              'input input-bordered w-full',
+              'input input-lg input-bordered w-full',
               { ['pr-10']: props.favoriteButton !== undefined },
               props.inputClassName,
             )}
             {...inputProps}
           />
-          <div className={'absolute bottom-0 right-4 h-[3rem] flex'}>
-            {props.favoriteButton}
-          </div>
         </label>
+        <div className={'absolute bottom-0 right-4 h-[3rem] flex'}>
+          {props.favoriteButton}
+        </div>
         <ul
           tabIndex={0}
           className={cn(

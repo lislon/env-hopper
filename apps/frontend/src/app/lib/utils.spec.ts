@@ -103,4 +103,14 @@ describe('interpolateWidgetStr', () => {
 
     expect(result).toBe('Welcome {{env.meta.greeting}}, have a great day!');
   });
+
+  it('default value', () => {
+    const str = 'a={{env.meta.name ?? Kot}} b={{env.meta.name2 ?? Kot}}';
+    const env = { id: '123', meta: { name: 'Alice' } };
+    const app = undefined;
+
+    const result = interpolateWidgetStr(str, env, app);
+
+    expect(result).toBe('a=Alice b=Kot');
+  });
 });

@@ -8,3 +8,5 @@ export const LOCAL_STORAGE_KEY_LAST_USED_APP = 'lastUsedApp';
 export const LOCAL_STORAGE_KEY_LAST_USED_SUBS = 'lastUsedSubs';
 export const LOCAL_STORAGE_KEY_USER_ID = 'userId';
 export const LOCAL_STORAGE_KEY_UI_PASS_TABS_POSITIONS = 'lastUiTabs';
+export const LOCAL_STORAGE_KEY_UI_K8S_TABS_POSITIONS = 'lastK8sTabs';
+export const LOCAL_STORAGE_KEY_UI_K8S_CLIENT_STYLE = 'k8sClientStyle';

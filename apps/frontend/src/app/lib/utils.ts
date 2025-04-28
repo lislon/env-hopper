@@ -54,7 +54,14 @@ export function interpolateWidgetStr(
       if (end === -1) break; // Stop if there's no matching '}}'
 
       // Extract the placeholder key
-      const placeholder = result.slice(start + 2, end);
+      const betweenBraces = result.slice(start + 2, end);
+
+      let placeholder = betweenBraces;
+      let placeholderDefault = undefined;
+
+      if (betweenBraces.indexOf('??') >= 0) {
+        [placeholder, placeholderDefault] = betweenBraces.split(/\s*[?][?]\s*/);
+      }
 
       // Resolve the value
       let replacement: string | undefined;
@@ -66,6 +73,10 @@ export function interpolateWidgetStr(
       } else if (placeholder.startsWith('app.meta.') && app?.meta) {
         const key = placeholder.replace('app.meta.', '');
         replacement = app.meta[key];
+      }
+
+      if (replacement === undefined && placeholderDefault !== undefined) {
+        replacement = placeholderDefault;
       }
 
       if (replacement !== undefined) {

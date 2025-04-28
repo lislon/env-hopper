@@ -21,7 +21,7 @@ export function ReadonlyCopyField({ value }: { value: string }) {
       <input
         ref={inputRef}
         type="text"
-        className="grow"
+        className="grow text-ellipsis"
         value={value}
         onClick={(e) => e.currentTarget.select()}
         readOnly={true}

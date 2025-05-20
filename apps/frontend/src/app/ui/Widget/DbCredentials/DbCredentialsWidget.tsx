@@ -32,10 +32,14 @@ export function DbCredentialsWidget({ className }: DbCredentialsWidgetProps) {
               />
             </div>
             <div>
-              <ReadonlyCopyField value={app.widgets.db.username} />
+              <ReadonlyCopyField
+                value={interpolateWidgetStr(app.widgets.db.username, env, app)}
+              />
             </div>
             <div>
-              <ReadonlyCopyField value={app.widgets.db.password} />
+              <ReadonlyCopyField
+                value={interpolateWidgetStr(app.widgets.db.password, env, app)}
+              />
             </div>
           </div>
         </div>

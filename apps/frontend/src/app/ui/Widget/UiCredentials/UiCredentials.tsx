@@ -11,6 +11,7 @@ import { isArray } from 'lodash';
 import { useLocalStorage } from '../../../hooks/useLocalStorage';
 import { LOCAL_STORAGE_KEY_UI_PASS_TABS_POSITIONS } from '../../../lib/local-storage-constants';
 import { useMainAppFormContext } from '../../../context/MainFormContextProvider';
+import { interpolateWidgetStr } from '../../../lib/utils';
 
 export interface UiCredentialsProps {
   className?: string;
@@ -40,7 +41,8 @@ function getInitialSelectedTab(
 }
 
 export function UiCredentials({ className }: UiCredentialsProps) {
-  const { listApps, app } = useMainAppFormContext();
+  const { listApps, env, app } = useMainAppFormContext();
+
   const ui = app?.widgets?.ui;
   const uis = isMultiPass(ui) ? ui : [ui];
 
@@ -107,10 +109,14 @@ export function UiCredentials({ className }: UiCredentialsProps) {
 
         <div className="grid text-sm grid-rows-2 gap-1 items-center">
           <div>
-            <ReadonlyCopyField value={tabContent.username} />
+            <ReadonlyCopyField
+              value={interpolateWidgetStr(tabContent.username, env, app)}
+            />
           </div>
           <div>
-            <ReadonlyCopyField value={tabContent.password} />
+            <ReadonlyCopyField
+              value={interpolateWidgetStr(tabContent.password, env, app)}
+            />
           </div>
         </div>
       </div>

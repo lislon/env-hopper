@@ -1,9 +1,0 @@
-@import "tailwindcss";
-@import './app/ui/QuickBar/eh-quick-bar.css';
-@plugin "daisyui" {
-
-}
-
-:root {
-  --eh-green: oklch(74.88% 0.149 130.38);
-}

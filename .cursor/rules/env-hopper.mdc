@@ -1,0 +1,10 @@
+---
+description: 
+globs: *.tsx,*.ts
+alwaysApply: false
+---
+
+# Rules when exporting functions in ts
+
+
+- Don't use default export, prefer named expor

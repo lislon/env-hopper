@@ -5,7 +5,11 @@
     "moduleResolution": "bundler",
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
-    "types": ["vite/client", "vitest"]
+    "types": ["vite/client", "vitest"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "files": [],
   "include": [],

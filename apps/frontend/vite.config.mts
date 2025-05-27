@@ -3,7 +3,8 @@ import viteReact from '@vitejs/plugin-react';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { VitePWA } from 'vite-plugin-pwa';
 import svgr from 'vite-plugin-svgr';
-import { removeUseClient } from './src/vite-plugins/remove-use-client';
+//import { removeUseClient } from './src/vite-plugins/remove-use-client';
+import * as path from 'node:path';
 import * as process from 'node:process';
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
 import tailwindcss from '@tailwindcss/vite'
@@ -15,12 +16,18 @@ const config = defineConfig(({ mode }) => {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/apps/frontend',
 
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src')
+      }
+    },
+
     server: {
       port: 4000,
       strictPort: true,
       host: 'localhost',
       proxy: {
-        '/api': 'http://localhost:4001',
+        '/graphql': 'http://localhost:4001',
       },
     },
 
@@ -31,7 +38,7 @@ const config = defineConfig(({ mode }) => {
 
     plugins: [
       tailwindcss(),
-      removeUseClient(),
+      //removeUseClient(),
       nxViteTsPaths(),
       VitePWA({
         registerType:

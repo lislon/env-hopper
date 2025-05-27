@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+html, body {
+  min-height: 100%;
+  background-color: oklch(var(--b2)); /* base-200 from DaisyUI theme */
+} 

@@ -1,29 +1,32 @@
-import React, { StrictMode } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { registerSW } from 'virtual:pwa-register';
-import { App } from './App';
-import { createEhRouter } from './createEhRouter';
-import { createBrowserHistory } from '@tanstack/react-router';
-import { createQueryClient } from './app/api/createQueryClient';
+import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
+import { persistCache, LocalStorageWrapper } from 'apollo3-cache-persist';
+import App from './App';
+import './index.css';
 
-registerSW();
+const cache = new InMemoryCache();
 
-const queryClient = createQueryClient();
-const router = createEhRouter({
-  history: createBrowserHistory(),
-  context: {
-    queryClient: queryClient,
-  },
-});
+async function setupApollo() {
+  await persistCache({
+    cache,
+    storage: new LocalStorageWrapper(window.localStorage),
+  });
 
-// Render the app
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const rootElement = document.getElementById('root')!;
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <StrictMode>
-      <App router={router} queryClient={queryClient} />
-    </StrictMode>,
-  );
+  const client = new ApolloClient({
+    uri: 'http://localhost:4000/graphql',
+    cache,
+  });
+
+  return client;
 }
+
+setupApollo().then(client => {
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <ApolloProvider client={client}>
+        <App />
+      </ApolloProvider>
+    </React.StrictMode>
+  );
+}); 

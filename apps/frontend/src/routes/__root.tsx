@@ -1,29 +1,14 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/router-devtools';
+import { createRootRoute } from '@tanstack/react-router';
 import React from 'react';
-import { NotFoundError } from '../app/ui/Error/NotFoundError';
-import { LoadingScreen } from '../app/ui/Layout/LoadingScreen';
-import { DefaultErrorPage } from '../app/ui/Error/DefaultErrorPage';
-import { EhContextProvider } from '../app/context/EhContext';
-import { useQuery } from '@tanstack/react-query';
-import { ApiQueryMagazine } from '../app/api/ApiQueryMagazine';
+import { Outlet } from '@tanstack/react-router';
 
-export const Route = createRootRoute({
-  component: () => {
-    if (useQuery(ApiQueryMagazine.getConfig()).isPending) {
-      // workaround https://github.com/TanStack/query/issues/8400
-      return <LoadingScreen />;
-    }
+export const Route = createRootRoute({ component: RootRoute });
 
-    return (
-      <EhContextProvider>
-        <Outlet />
-        {import.meta.env.MODE === 'dev' ? <TanStackRouterDevtools /> : null}
-      </EhContextProvider>
-    );
-  },
-  errorComponent: (errorProps) => <DefaultErrorPage {...errorProps} />,
-  notFoundComponent: () => <NotFoundError />,
-  pendingComponent: () => <LoadingScreen />,
-  wrapInSuspense: true,
-});
+ function RootRoute() {
+  return (
+    <div className="min-h-screen bg-base-200">
+      {/* Add a navbar or layout here if needed */}
+      <Outlet />
+    </div>
+  );
+} 

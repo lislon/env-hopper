@@ -11,15 +11,23 @@
   "dependencies": {
     "@apollo/server": "4.12.1",
     "@as-integrations/express5": "^1.0.0",
+    "@kubernetes/client-node": "^1.2.0",
     "@prisma/client": "^6.8.2",
+    "@types/lodash": "^4.17.5",
     "cors": "^2.8.5",
+    "dotenv-defaults": "^5.0.2",
     "express": "^5.1.0",
     "graphql": "^16.8.1",
     "jose": "^6.0.11",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "reflect-metadata": "^0.2.2",
+    "tsyringe": "^4.10.0",
+    "yaml": "^2.8.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.18",
+    "@types/dotenv-defaults": "^2.0.4",
     "@types/jsonwebtoken": "^9.0.9",
     "prisma": "^6.8.2",
     "ts-node": "^10.9.2",

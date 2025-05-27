@@ -24,6 +24,7 @@
     "classnames": "^2.5.1",
     "daisyui": "5.0.37",
     "downshift": "^9.0.6",
+    "flexsearch": "^0.8.204",
     "graphql": "^16.11.0",
     "http-errors": "^2.0.0",
     "postcss": "^8.5.3",

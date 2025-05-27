@@ -45,8 +45,8 @@ const resolvers = {
   },
 };
 
-const OKTA_ISSUER = 'https://natera.oktapreview.com/oauth2/ausxb83g4wY1x09ec0h7';
-const OKTA_CLIENT_ID = '0oa2elff0brL0IZHF0h8';
+const OKTA_ISSUER = process.env.OKTA_ISSUER || '';
+const OKTA_CLIENT_ID = process.env.OKTA_CLIENT_ID || '';
 const JWKS = createRemoteJWKSet(new URL(`${OKTA_ISSUER}/v1/keys`));
 
 export async function getUserFromToken(authHeader?: string) {

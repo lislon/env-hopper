@@ -109,4 +109,6 @@ async function startServer() {
 startServer().catch((err) => {
   console.error('Fatal error:', err);
   process.exit(1);
-}); 
+});
+
+export { runServer } from './server';

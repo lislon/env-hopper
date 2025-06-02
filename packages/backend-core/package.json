@@ -1,6 +1,8 @@
 {
-  "name": "backend",
+  "name": "@env-hopper/backend",
   "type": "module",
+  "author": "Igor Golovin",
+  "license": "MIT",
   "main": "src/index.ts",
   "scripts": {
     "dev": "node --loader ts-node/esm src/index.ts",

@@ -34,26 +34,26 @@ export default [
       '@nx': nx,
     },
   },
-  {
-    files: GLOB_INCLUDE,
+  // {
+  //   files: GLOB_INCLUDE,
 
-    // rules: {
-    //   '@nx/enforce-module-boundaries': [
-    //     'error',
-    //     {
-    //       enforceBuildableLibDependency: true,
-    //       allow: [],
+  //   rules: {
+  //     '@nx/enforce-module-boundaries': [
+  //       'error',
+  //       {
+  //         enforceBuildableLibDependency: true,
+  //         allow: [],
 
-    //       depConstraints: [
-    //         {
-    //           sourceTag: '*',
-    //           onlyDependOnLibsWithTags: ['*'],
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // },
-  },
+  //         depConstraints: [
+  //           {
+  //             sourceTag: '*',
+  //             onlyDependOnLibsWithTags: ['*'],
+  //           },
+  //         ],
+  //       },
+  //     ],
+  //   },
+  // },
   ...compat.extends('plugin:@nx/typescript').map((config) => ({
     ...config,
     files: ['**/*.ts', '**/*.tsx'],

@@ -1,16 +1,16 @@
 // @ts-check
 
-import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { publish } from '@tanstack/config/publish'
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { publish } from '@tanstack/config/publish';
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 await publish({
   packages: [
     {
-      name: '@env-hopper/backend-core',
-      packageDir: 'packages/backend',
+      name: '@env-hopper/backend-api',
+      packageDir: 'packages/backend-api',
     },
   ],
   branchConfigs: {
@@ -28,6 +28,6 @@ await publish({
   branch: process.env.BRANCH,
   tag: process.env.TAG,
   ghToken: process.env.GH_TOKEN,
-})
+});
 
-process.exit(0)
+process.exit(0);

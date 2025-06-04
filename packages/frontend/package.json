@@ -48,7 +48,7 @@
     "@testing-library/react": "^16.2.0",
     "@types/react": "^19.0.8",
     "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/ui": "^2.1.4",
+    "@vitest/ui": "^3.0.6",
     "vite": "6.3.4",
     "vite-plugin-pwa": "^0.21.1",
     "vite-plugin-svgr": "^4.2.0"

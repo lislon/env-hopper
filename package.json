@@ -22,7 +22,7 @@
     "xfrontend:serve": "nx run frontend:serve",
     "xprettier:write": "pnpm run prettier --write",
     "xtest": "nx run-many -t test --projects=*",
-    "xtest:build": "publint --strict && attw --ignore-rules no-resolution --pack .",
+    "test:build": "publint --strict && attw --ignore-rules no-resolution --pack .",
     "xtest:ci": "nx run-many --targets=test:eslint,test:unit,test:e2e,test:types,test:build,build",
     "xtest:e2e": "nx run-many --target=test:e2e",
     "xtest:eslint": "nx affected --target=test:eslint --exclude=examples/**,e2e/**",

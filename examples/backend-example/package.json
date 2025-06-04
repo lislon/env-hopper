@@ -1,0 +1,29 @@
+{
+  "name": "@env-hopper/backend-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "pnpm run typecheck && pnpm run clean && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --sourcemap",
+    "start": "node dist/index.js",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@env-hopper/backend-api": "workspace:*",
+    "@env-hopper/backend-core": "workspace:*",
+    "@trpc/server": "^11.2.0",
+    "cross-env": "^7.0.3",
+    "express": "^5.1.0",
+    "zod": "^3.25.49"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "esbuild": "^0.25.5",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.4",
+    "typescript": "~5.7.0",
+    "vite": "^6.3.5",
+    "vite-plugin-node": "^5.0.1"
+  }
+}

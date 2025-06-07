@@ -1,13 +1,22 @@
 import { publicProcedure, router } from './trpc';
-import { AnyRouter } from '@trpc/server';
+import { AnyTRPCRouter } from '@trpc/server';
+import { miniDb } from './mini-db';
+import { EhBackendEnvironmentInput } from './backendTypes';
 
-export const appRouter: AnyRouter = router({
+export const trpcRouter: AnyTRPCRouter = router({
   userList: publicProcedure
     .query(async () => {
       // Retrieve users from a datasource, this is an imaginary database
       // const users = await db.user.findMany();
-      return ['151'];
+      return ['111'];
+    }),
+  envs: publicProcedure
+    .query(async () => {
+      const envs = await miniDb.get<EhBackendEnvironmentInput[]>('envs');
+      // Retrieve users from a datasource, this is an imaginary database
+      // const users = await db.user.findMany();
+      return envs.map(env => env.id);
     }),
 });
 
-export type AppRouter = typeof appRouter;
+export type TRPCRouter = typeof trpcRouter;

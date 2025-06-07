@@ -1,4 +1,3 @@
-import nx from '@nx/eslint-plugin';
 import globals from 'globals';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

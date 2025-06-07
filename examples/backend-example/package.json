@@ -10,8 +10,8 @@
     "dev": "vite"
   },
   "dependencies": {
-    "@env-hopper/backend-api": "workspace:*",
-    "@env-hopper/backend-core": "workspace:*",
+    "@env-hopper/backend-api": "0.1.0",
+    "@env-hopper/backend-core": "0.1.0",
     "@trpc/server": "^11.2.0",
     "cross-env": "^7.0.3",
     "express": "^5.1.0",

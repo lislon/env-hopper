@@ -1,6 +1,8 @@
 import React from 'react';
 import { useCombobox } from 'downshift';
 import FlexSearch from 'flexsearch';
+import { useTRPC } from '@/api/infra/trpc';
+import { useQuery } from '@tanstack/react-query';
 
 const items = [
   'gspintegration-01',
@@ -14,13 +16,17 @@ const index = new FlexSearch.Index();
 items.forEach((item) => index.add(item, item));
 
 export function AutocompleteInput() {
+
+  const trpc = useTRPC();
+  const userQuery = useQuery(trpc.getUser.queryOptions({ id: 'id_bilbo' }));
+
   const [inputItems, setInputItems] = React.useState(items);
   const {
     isOpen,
     getMenuProps,
     getInputProps,
     getItemProps,
-    highlightedIndex, 
+    highlightedIndex,
   } = useCombobox({
     items: inputItems,
     onInputValueChange: ({ inputValue }) => {
@@ -59,4 +65,4 @@ export function AutocompleteInput() {
       </ul>
     </div>
   );
-} 
+}

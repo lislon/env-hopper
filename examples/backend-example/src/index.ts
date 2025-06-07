@@ -6,7 +6,7 @@ import { appRouter } from '@env-hopper/backend-core';
 import { AnyRouter, initTRPC } from '@trpc/server';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import express from 'express';
-import { AppRouter } from '@env-hopper/backend-core/src';
+import { TRPCRouter } from '@env-hopper/backend-core/src';
 // created for each request
 const createContext = ({
                          req,

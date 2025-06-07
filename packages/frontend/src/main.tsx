@@ -1,32 +1,42 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
-import { persistCache, LocalStorageWrapper } from 'apollo3-cache-persist';
-import App from './App';
+import { registerSW } from 'virtual:pwa-register';
 import './index.css';
+import { App } from '@/App';
+import { createQueryClient } from '@/api/infra/createQueryClient';
+import { createEhRouter } from '@/util/createEhRouter';
+import { createBrowserHistory } from '@tanstack/react-router';
+import { createTRPCClient, httpBatchLink } from '@trpc/client';
+import { TRPCRouter } from '@env-hopper/backend-core/src';
 
-const cache = new InMemoryCache();
+registerSW();
 
-async function setupApollo() {
-  await persistCache({
-    cache,
-    storage: new LocalStorageWrapper(window.localStorage),
-  });
+const queryClient = createQueryClient();
+const router = createEhRouter({
+  history: createBrowserHistory(),
+  context: {
+    queryClient: queryClient
+  }
+});
 
-  const client = new ApolloClient({
-    uri: 'http://localhost:4000/graphql',
-    cache,
-  });
 
-  return client;
-}
+const trpcClient = createTRPCClient<TRPCRouter>({
+    links: [
+      httpBatchLink({
+        url: 'http://localhost:3002'
+      })
+    ]
+  }
+);
+
 
 setupApollo().then(client => {
-  ReactDOM.createRoot(document.getElementById('root')!).render(
+// Render the app
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const rootElement = document.getElementById('root')!;
+  ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <ApolloProvider client={client}>
-        <App />
-      </ApolloProvider>
+      <App router={router} queryClient={queryClient} trpcClient={trpcClient} />
     </React.StrictMode>
   );
-}); 
+});

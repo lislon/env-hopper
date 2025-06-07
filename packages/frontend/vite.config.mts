@@ -27,7 +27,7 @@ const config = defineConfig(({ mode }) => {
       strictPort: true,
       host: 'localhost',
       proxy: {
-        '/graphql': 'http://localhost:4001',
+        '/trpc': 'http://localhost:3002',
       },
     },
 

@@ -1,8 +1,6 @@
 import pluginReact from '@eslint-react/eslint-plugin';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
 import pluginReactHooks from 'eslint-plugin-react-hooks';
-import rootConfig from '@root/eslint.config.mjs';
+import rootConfig from '../../eslint.config.mjs';
 
 export default [
   ...rootConfig,
@@ -13,7 +11,7 @@ export default [
   {
     plugins: {
       'react-hooks': pluginReactHooks,
-      '@eslint-react': pluginReact,
+      // '@eslint-react': pluginReact,
     },
     rules: {
       ...pluginReactHooks.configs.recommended.rules,

@@ -1,6 +1,6 @@
 import { createRouter } from '@tanstack/react-router';
-import { routeTree } from '@/routeTree.gen';
-import { EhRouterInitParams } from '@/types/types';
+import { routeTree } from '~/routeTree.gen';
+import { EhRouterInitParams } from '~/types/types';
 
 
 export function createEhRouter({ context, history }: EhRouterInitParams) {

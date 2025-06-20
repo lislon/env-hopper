@@ -27,7 +27,7 @@ RUN npx prisma generate \
 
 ENV NODE_ENV production
 ENV PORT 4000
-ENV DATABASE_URL file:/var/db/sqlite.db
+ENV EH_CORE_DATABASE_URL file:/var/db/sqlite.db
 ENV ASSETS_DIR /app/assets
 ENV APP_VERSION ${APP_VERSION}
 

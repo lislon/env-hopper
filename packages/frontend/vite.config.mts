@@ -1,6 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
 import viteReact from '@vitejs/plugin-react';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { VitePWA } from 'vite-plugin-pwa';
 import svgr from 'vite-plugin-svgr';
 //import { removeUseClient } from './src/vite-plugins/remove-use-client';
@@ -18,7 +17,7 @@ const config = defineConfig(({ mode }) => {
 
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src')
+        '~': path.resolve(__dirname, './src')
       }
     },
 
@@ -39,7 +38,7 @@ const config = defineConfig(({ mode }) => {
     plugins: [
       tailwindcss(),
       //removeUseClient(),
-      nxViteTsPaths(),
+      // nxViteTsPaths(),
       VitePWA({
         registerType:
           env['VITE_AUTO_UPDATE'] === 'true' ? 'autoUpdate' : 'prompt',

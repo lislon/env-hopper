@@ -2,7 +2,7 @@
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("EH_CORE_DATABASE_URL")
 }
 
 generator client {
@@ -49,4 +49,4 @@ model User {
   email     String @unique
   firstName String
   lastName  String
-} 
+}

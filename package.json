@@ -7,6 +7,7 @@
   "type": "module",
   "scripts": {
     "build": "nx run-many -t build --projects=*",
+    "xbuild:all": "nx run-many --target=build --exclude=examples/** --exclude=e2e/**",
     "build:all": "nx run-many --target=build --exclude=examples/** --exclude=e2e/**",
     "cipublish": "node scripts/publish.js",
     "clean": "pnpm --filter \"./packages/**\" run clean",
@@ -15,6 +16,7 @@
     "preinstall": "node -e \"if(process.env.CI == 'true') {console.info('Skipping preinstall...')} else {process.exit(1)}\" || npx -y only-allow pnpm",
     "prepare": "husky",
     "prettier": "prettier --ignore-unknown '**/*'",
+    "prettier:write": "pnpm run prettier --write",
     "syncpack:fix": "syncpack fix-mismatches",
     "test:syncpack": "syncpack list-mismatches",
     "test:unit": "nx affected --target=test:unit --exclude=examples/**,e2e/**",
@@ -62,8 +64,6 @@
     "@types/lodash": "^4.17.5",
     "@typescript-eslint/eslint-plugin": "^8.33.1",
     "@typescript-eslint/parser": "^8.33.1",
-    "@vitest/browser": "^3.0.6",
-    "@vitest/ui": "^3.0.6",
     "commitlint": "^19.3.0",
     "eslint": "^9.22.0",
     "eslint-plugin-import": "2.31.0",
@@ -80,13 +80,18 @@
     "semantic-release": "^24.0.0",
     "semantic-release-export-data": "^1.1.0",
     "typescript": "5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "3.2.2",
+    "@vitest/ui": "3.2.2"
   },
-  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c",
+  "packageManager": "pnpm@9.15.5",
   "pnpm": {
     "overrides": {
       "eslint": "$eslint",
       "vite": "$vite",
+      "vitest": "$vitest",
+      "@vitest/ui": "$vitest",
+      "typescript": "$typescript",
       "@env-hopper/backend-core": "workspace:*",
       "@env-hopper/frontend": "workspace:*"
     }

@@ -1,8 +1,8 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createEhRouter } from '@/util/createEhRouter';
+import { createEhRouter } from '~/util/createEhRouter';
 import { RouterProvider } from '@tanstack/react-router';
-import { TRPCProvider } from '@/api/infra/trpc';
+import { TRPCProvider } from '~/api/infra/trpc';
 import { TRPCClient } from '@trpc/client';
 import { TRPCRouter } from '@env-hopper/backend-core';
 

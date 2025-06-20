@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router';
 import React from 'react';
-import { Header } from '@/ui/layout/Header';
-import { Footer } from '@/ui/layout/Footer';
-import { MainLayout } from '@/ui/layout/MainLayout';
-import { Content } from '@/ui/layout/Content';
-import { SideColumn } from '@/ui/layout/SideColumn';
+import { Header } from '~/ui/layout/Header';
+import { Footer } from '~/ui/layout/Footer';
+import { MainLayout } from '~/ui/layout/MainLayout';
+import { Content } from '~/ui/layout/Content';
+import { SideColumn } from '~/ui/layout/SideColumn';
 
 export const Route = createFileRoute('/')({
   component: IndexRoute,
@@ -20,4 +20,4 @@ export function IndexRoute() {
       <Footer />
     </div>
   );
-} 
+}

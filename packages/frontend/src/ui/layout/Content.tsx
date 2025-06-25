@@ -1,13 +1,15 @@
 import React from 'react';
-import { AutocompleteInput } from '../main/AutocompleteInput';
+import { AutocompleteInputBase } from '../main/AutocompleteInputBase';
 import { Breadcrumbs } from '../main/Breadcrumbs';
 import { Tabs } from '../main/Tabs';
 import { JumpTabContent } from '../main/JumpTabContent';
+import { Playground } from '~/ui/autocomplete/Playground';
 
 export function Content() {
   return (
     <div>
-      <AutocompleteInput />
+      <AutocompleteInputBase />
+      {/*<Playground />*/}
       <Breadcrumbs />
       <Tabs>
         <JumpTabContent />
@@ -15,4 +17,4 @@ export function Content() {
       </Tabs>
     </div>
   );
-} 
+}

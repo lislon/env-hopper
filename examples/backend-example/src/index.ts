@@ -2,11 +2,9 @@
 /// <reference types="vite/types/importMeta.d.ts" />
 
 // import { someCoreFunction } from '@env-hopper/backend-core';
-import { appRouter } from '@env-hopper/backend-core';
 import { AnyRouter, initTRPC } from '@trpc/server';
 import * as trpcExpress from '@trpc/server/adapters/express';
 import express from 'express';
-import { TRPCRouter } from '@env-hopper/backend-core/src';
 // created for each request
 const createContext = ({
                          req,

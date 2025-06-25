@@ -1,7 +1,22 @@
-import { publicProcedure, router } from './trpc';
+import { initTRPC, TRPCRootObject } from '@trpc/server';
+import { EhTrpcContext } from './ehTrpcContext';
+
+/**
+ * Initialization of tRPC backend
+ * Should be done only once per backend!
+ */
+const t: TRPCRootObject<EhTrpcContext, {}, {}> = initTRPC.context<EhTrpcContext>().create();
+
+/**
+ * Export reusable router and procedure helpers
+ * that can be used throughout the router
+ */
+const router: typeof t.router = t.router;
+const publicProcedure: typeof t.procedure = t.procedure;
+
 import { EhBackendEnvironmentInput } from '../types/backendTypes';
 
-export const trpcRouter: ReturnType<typeof router> = router({
+export const trpcRouter = router({
   userList: publicProcedure
     .query(async () => {
       // Retrieve users from a datasource, this is an imaginary database

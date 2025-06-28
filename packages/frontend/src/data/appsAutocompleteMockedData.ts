@@ -1,4 +1,5 @@
-export const autocompleteData = [
+export type AppsForAutoComplete = { app: string; group: string|null; title: string };
+export const appsAutocompleteMockedData: (AppsForAutoComplete)[] = [
   { app: 'LIMS', group: 'prodlims', title: 'Home' },
   { app: 'LIMS', group: 'prodlims', title: 'Script Console Prod-Lims' },
   { app: 'LIMS', group: 'prodlims', title: 'Script Console Prod-Lims (Predefined)' },

@@ -3,13 +3,13 @@ import { AutocompleteInputBase } from '../main/AutocompleteInputBase';
 import { Breadcrumbs } from '../main/Breadcrumbs';
 import { Tabs } from '../main/Tabs';
 import { JumpTabContent } from '../main/JumpTabContent';
-import { Playground } from '~/ui/autocomplete/Playground';
+import { Home } from '~/ui/home/Home';
 
 export function Content() {
   return (
     <div>
+      <Home />
       <AutocompleteInputBase />
-      {/*<Playground />*/}
       <Breadcrumbs />
       <Tabs>
         <JumpTabContent />

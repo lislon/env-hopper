@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { appsAutocompleteMockedData } from '../../data/appsAutocompleteMockedData';
 import { Home, Folder, FileText, AlertCircle, Clock, ExternalLink } from 'lucide-react';
+import { Button, Input, Badge } from '~/components/ui';
 
 // Highlight helper (if needed)
 const highlightMatch = (text: string, query: string) => <>{text}</>;
@@ -32,18 +33,19 @@ export const AutocompleteInputBase: React.FC = () => {
   return (
     <div className="w-full max-w-3xl mx-auto p-4 space-y-4">
       {/* Variant Selector */}
-      <div className="join">
+      <div className="flex gap-1 border rounded-md p-1">
         {['A','B','C','D'].map(v => (
-          <button
+          <Button
             key={v}
-            className={`join-item btn ${variant===v?'btn-primary':''}`}
+            variant={variant===v ? 'default' : 'ghost'}
+            size="sm"
             onClick={()=>setVariant(v as any)}
-          >Variant {v}</button>
+          >Variant {v}</Button>
         ))}
       </div>
 
       {/* Base Search Input */}
-      <input type="text" className="input input-bordered w-full" placeholder="Search..." />
+      <Input type="text" className="w-full" placeholder="Search..." />
 
       {/* Variant A */}
       {variant==='A' && (
@@ -60,16 +62,16 @@ export const AutocompleteInputBase: React.FC = () => {
                       <Folder size={16}/> {group}
                     </div>
                   )}
-                  <ul className="ml-6 space-y-1">
-                    {pages.map((page,idx)=>(
-                      <li key={idx} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-base-200">
-                        {page.title.toLowerCase().includes('home')?<Home size={16}/>:<FileText size={16}/>}
-                        <span className="flex-1">{page.title}</span>
-                        {page.title.includes('#') && <AlertCircle size={14} className="text-warning" />}
-                        {idx===0 && <Clock size={14} className="text-info" />}
-                      </li>
-                    ))}
-                  </ul>
+                                      <ul className="ml-6 space-y-1">
+                      {pages.map((page,idx)=>(
+                        <li key={idx} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted">
+                          {page.title.toLowerCase().includes('home')?<Home size={16}/>:<FileText size={16}/>}
+                          <span className="flex-1">{page.title}</span>
+                          {page.title.includes('#') && <AlertCircle size={14} className="text-yellow-600" />}
+                          {idx===0 && <Clock size={14} className="text-blue-600" />}
+                        </li>
+                      ))}
+                    </ul>
                 </div>
               ))}
             </div>
@@ -81,25 +83,25 @@ export const AutocompleteInputBase: React.FC = () => {
       {variant==='B' && (
         <div className="space-y-6">
           {appGroupsMap.map(({app,groups})=>(
-            <div key={app} className="bg-base-200 p-4 rounded-xl shadow">
+            <div key={app} className="bg-card p-4 rounded-xl shadow border">
               <div className="flex justify-between items-center text-2xl font-extrabold text-primary mb-4">
-                {app} <span className="text-sm text-gray-400">{appVersions[app]}</span>
+                {app} <span className="text-sm text-muted-foreground">{appVersions[app]}</span>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 {groups.map(({group,pages})=>(
-                  <div key={group||'default'} className="bg-base-100 p-3 rounded border border-base-300">
+                  <div key={group||'default'} className="bg-background p-3 rounded border">
                     {group && (
-                      <div className="flex items-center text-lg font-semibold text-secondary mb-2 gap-2">
+                      <div className="flex items-center text-lg font-semibold text-foreground mb-2 gap-2">
                         <Folder size={18}/> {group}
                       </div>
                     )}
                     <ul className="space-y-1">
                       {pages.map((page,idx)=>(
-                        <li key={idx} className="flex justify-between items-center px-2 py-1 rounded hover:bg-base-300">
+                        <li key={idx} className="flex justify-between items-center px-2 py-1 rounded hover:bg-muted">
                           <span>{page.title}</span>
                           <div className="flex gap-1 items-center text-xs">
-                            {page.title.includes('#')&&<span className="badge badge-warning">param</span>}
-                            {idx===0 &&<span className="badge badge-info">recent</span>}
+                            {page.title.includes('#')&&<Badge variant="secondary" className="bg-yellow-100 text-yellow-800">param</Badge>}
+                            {idx===0 &&<Badge variant="secondary" className="bg-blue-100 text-blue-800">recent</Badge>}
                           </div>
                         </li>
                       ))}

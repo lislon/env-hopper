@@ -5,7 +5,7 @@ import { Footer } from '~/ui/layout/Footer';
 import { MainLayout } from '~/ui/layout/MainLayout';
 import { Content } from '~/ui/layout/Content';
 import { SideColumn } from '~/ui/layout/SideColumn';
-import Playground from '~/ui/autocomplete/Playground';
+import { Playground } from '~/ui/autocomplete/Playground';
 
 export const Route = createFileRoute('/')({
   component: IndexRoute,

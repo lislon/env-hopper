@@ -5,6 +5,7 @@ import {
   AppsForAutoComplete,
 } from '~/data/appsAutocompleteMockedData';
 import { AppAutocompletePopover } from './AppAutocompletePopover';
+import { Input } from '~/components/ui/input';
 
 export function AppAutocompleteInput() {
   // Keep original list as a ref
@@ -42,11 +43,11 @@ export function AppAutocompleteInput() {
 
   return (
     <div className="relative w-full">
-      <input
+      <Input
         {...getInputProps({
           placeholder: 'Search apps…',
         })}
-        className="input input-bordered w-full"
+        className="w-full"
       />
       {isOpen && (
         <div className="absolute left-0 right-0 z-10">

@@ -1,13 +1,14 @@
 import React from 'react';
+import { Button } from '~/components/ui/button';
 
 export function Header() {
   return (
-    <header className="navbar bg-base-100 shadow mb-4">
+    <header className="flex items-center justify-between bg-background shadow border-b px-4 py-2 mb-4">
       <div className="flex-1">
-        <a className="btn btn-ghost text-xl">EnvHopper</a>
+        <a className="text-xl font-semibold text-foreground">EnvHopper</a>
       </div>
       <div className="flex-none">
-        <button className="btn btn-primary">Login</button>
+        <Button>Login</Button>
       </div>
     </header>
   );

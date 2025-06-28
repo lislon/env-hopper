@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import Playground from '~/ui/autocomplete/Playground';
+import { Playground } from '~/ui/autocomplete/Playground';
 
 export interface HomeProps {
   children?: ReactNode;

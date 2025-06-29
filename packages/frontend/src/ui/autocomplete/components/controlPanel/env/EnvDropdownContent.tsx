@@ -2,29 +2,28 @@ import React from "react";
 import { Badge } from "~/components/ui/badge";
 import { Server } from "lucide-react";
 import { useEhGlobalContextProps } from "~/contexts";
-import { EhEnvDto } from "~/types/ehTypes";
+import { EhEnvDto, BaseDropdownContentProps } from "~/types/ehTypes";
 
-interface EnvDropdownContentProps {
-  searchValue?: string;
-  onSelect?: (value: string) => void;
-  getMenuProps?: () => any;
-  getItemProps?: (options: any) => any;
-  highlightedIndex?: number;
-  isOpen?: boolean;
-}
+interface EnvDropdownContentProps extends BaseDropdownContentProps {}
 
 export function EnvDropdownContent({ 
   searchValue = "", 
   onSelect,
   getItemProps,
   highlightedIndex = -1,
+  isUntouched
 }: EnvDropdownContentProps) {
   const { listEnvs } = useEhGlobalContextProps();
 
   // Filter environments based on search value
   const filteredEnvs = listEnvs.filter((env) =>
-    env.displayName.toLowerCase().includes(searchValue.toLowerCase()) ||
-    env.slug.toLowerCase().includes(searchValue.toLowerCase())
+    {
+      if (isUntouched) {
+        return true;
+      }
+      return env.displayName.toLowerCase().includes(searchValue.toLowerCase()) ||
+        env.slug.toLowerCase().includes(searchValue.toLowerCase());
+    }
   );
 
   // Get environment type for styling

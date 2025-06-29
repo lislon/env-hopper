@@ -16,8 +16,8 @@ interface CredentialsWidgetProps {
 }
 
 const defaultCredentials: Credential[] = [
-  { slug: "SC", desc: "San‑Carlos", user: "test@natera.com", pwd: "testuser" },
-  { slug: "AU", desc: "Austin", user: "austin@natera.com", pwd: "Z*cT" },
+  { slug: "SC", desc: "San‑Carlos", user: "test@company.com", pwd: "password" },
+  { slug: "AU", desc: "Austin", user: "austin@company.com", pwd: "password" },
 ];
 
 export function CredentialsWidget({ 

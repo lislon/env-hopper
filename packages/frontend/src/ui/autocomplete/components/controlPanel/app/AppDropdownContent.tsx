@@ -1,29 +1,28 @@
 import React from "react";
 import { Package, Star } from "lucide-react";
 import { useEhGlobalContextProps } from "~/contexts";
-import { EhAppDto } from "~/types/ehTypes";
+import { EhAppDto, BaseDropdownContentProps } from "~/types/ehTypes";
 
-interface AppDropdownContentProps {
-  searchValue?: string;
-  onSelect?: (value: string) => void;
-  getMenuProps?: () => any;
-  getItemProps?: (options: any) => any;
-  highlightedIndex?: number;
-  isOpen?: boolean;
-}
+interface AppDropdownContentProps extends BaseDropdownContentProps {}
 
 export function AppDropdownContent({ 
   searchValue = "", 
   onSelect,
   getItemProps,
   highlightedIndex = -1,
+  isUntouched
 }: AppDropdownContentProps) {
   const { listApps } = useEhGlobalContextProps();
 
   // Filter apps based on search value
   const filteredApps = listApps.filter((app) =>
-    app.displayName.toLowerCase().includes(searchValue.toLowerCase()) ||
-    app.slug.toLowerCase().includes(searchValue.toLowerCase())
+    {
+      if (isUntouched) {
+        return true;
+      }
+      return app.displayName.toLowerCase().includes(searchValue.toLowerCase()) ||
+        app.slug.toLowerCase().includes(searchValue.toLowerCase());
+    }
   );
 
   // Determine if app is featured/important

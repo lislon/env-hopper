@@ -1,6 +1,6 @@
 ---
 description: 
-globs: *.tsx,*.ts
+globs: *.tsx,*.ts,*.css,*.json
 alwaysApply: false
 ---
 

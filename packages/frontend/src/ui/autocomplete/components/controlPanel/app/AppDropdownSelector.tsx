@@ -20,15 +20,8 @@ export function AppDropdownSelector() {
       placeholder="Select App"
       onSelect={handleSelect}
     >
-      {({ searchValue, onSelect, getMenuProps, getItemProps, highlightedIndex, isOpen }) => (
-        <AppDropdownContent 
-          searchValue={searchValue} 
-          onSelect={onSelect}
-          getMenuProps={getMenuProps}
-          getItemProps={getItemProps}
-          highlightedIndex={highlightedIndex}
-          isOpen={isOpen}
-        />
+      {(props) => (
+        <AppDropdownContent {...props} />
       )}
     </BaseDropdownSelector>
   );

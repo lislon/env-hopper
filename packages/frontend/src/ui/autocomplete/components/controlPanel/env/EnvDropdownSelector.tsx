@@ -20,15 +20,8 @@ export function EnvDropdownSelector() {
       placeholder="Select Env"
       onSelect={handleSelect}
     >
-      {({ searchValue, onSelect, getMenuProps, getItemProps, highlightedIndex, isOpen }) => (
-        <EnvDropdownContent 
-          searchValue={searchValue} 
-          onSelect={onSelect}
-          getMenuProps={getMenuProps}
-          getItemProps={getItemProps}
-          highlightedIndex={highlightedIndex}
-          isOpen={isOpen}
-        />
+      {(props) => (
+        <EnvDropdownContent {...props} />
       )}
     </BaseDropdownSelector>
   );

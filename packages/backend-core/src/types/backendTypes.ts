@@ -169,7 +169,7 @@ export type EhBackendVersionsReturn = {
 export type EhBackendAppDto = EhAppDto;
 export type EhBackendEnvDto = EhEnvDto;
 
-export type EhBackendIndexDataReturn = {
+export interface EhBackendIndexDataReturn {
  envs: EhBackendEnvDto[]
  apps:  EhBackendAppInputIndexed[]
  envsXApps: [string, string][];

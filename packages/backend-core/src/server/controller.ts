@@ -15,6 +15,7 @@ const router: typeof t.router = t.router;
 const publicProcedure: typeof t.procedure = t.procedure;
 
 import { EhBackendEnvironmentInput } from '../types/backendTypes';
+import { EhIndexData } from '../types/commonTypes';
 
 export const trpcRouter = router({
   userList: publicProcedure
@@ -33,7 +34,8 @@ export const trpcRouter = router({
     }),
   index: publicProcedure
     .query(async ({ctx}) => {
-      return await ctx.companySpecificBackend.getIndexData()
+      const ehBackendIndexDataReturn: EhIndexData = await ctx.companySpecificBackend.getIndexData();
+      return ehBackendIndexDataReturn
     }),
 
   specificEnvs: publicProcedure

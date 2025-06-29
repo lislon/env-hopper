@@ -84,4 +84,4 @@ button:not(.animated-button), [role="button"]:not(.animated-button) {
 button:not(.animated-button):hover, [role="button"]:not(.animated-button):hover {
   transform: none;
   animation: none;
-} 
+}

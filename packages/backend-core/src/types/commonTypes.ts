@@ -16,9 +16,9 @@ export interface EhAppDto {
 }
 
 // const packedId = (appId << 16) + envId;
-export type EhAppEnvLinkPacked = number;
+export type EhAppEnvLinkPacked = [string,string][];
 
-export interface EhEnvsAndAppsDto {
+export interface EhIndexData {
   envs: EhEnvDto[]
   apps: EhAppDto[]
   envsXApps: EhAppEnvLinkPacked;

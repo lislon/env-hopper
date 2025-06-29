@@ -7,6 +7,7 @@ import { Footer } from "./components/footer/Footer";
 import { EhConfigProvider, EhUserProvider, useEhUserContext } from "~/contexts";
 import { EhEnvDto, EhAppDto } from "~/types/ehTypes";
 import { ThemeProvider } from "~/components/theme-provider";
+import { useQueryWithPersistence } from '~/api/data/useQueryWithPersistence';
 
 /**
  * Jump‑only prototype (shadcn/ui version)
@@ -40,13 +41,13 @@ function PlaygroundContent() {
       <main className="flex-1 w-full flex justify-center font-sans p-6">
         <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl space-y-6">
           <PlaygroundHeader />
-          
+
           <QuickJumpBar favorites={favorites} />
-          
+
           <ControlBar onJump={handleJump} />
-          
-          <WidgetGrid 
-            widgets={widgets} 
+
+          <WidgetGrid
+            widgets={widgets}
             onAddWidget={handleAddWidget}
           />
         </div>
@@ -70,6 +71,12 @@ export function Playground() {
     { slug: "LIMS-API", displayName: "LIMS-API" },
   ];
 
+  const { data, isPending } = useQueryWithPersistence();
+
+  if (isPending || !data) {
+    return 'Loading...';
+  }
+
   return (
     <ThemeProvider
       attribute="class"
@@ -77,10 +84,10 @@ export function Playground() {
       enableSystem
       disableTransitionOnChange
     >
-      <EhConfigProvider listEnvs={listEnvs} listApps={listApps}>
-        <EhUserProvider 
-          initialEnv={listEnvs[0]} 
-          initialApp={listApps[0]}
+      <EhConfigProvider listEnvs={data.envs} listApps={data.apps}>
+        <EhUserProvider
+          initialEnv={data.envs[0]}
+          initialApp={data.apps[0]}
         >
           <PlaygroundContent />
         </EhUserProvider>

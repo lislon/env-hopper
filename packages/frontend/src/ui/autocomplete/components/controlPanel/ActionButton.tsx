@@ -42,12 +42,12 @@ export function ActionButton({ onJump }: ActionButtonProps) {
     <div className="flex items-center gap-2">
       {/* Main Jump Button */}
       <JumpButton onJump={onJump} />
-      
+
       {/* Tools Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="ghost"
             size="lg"
             disabled={disabled}
             className="px-3"
@@ -61,4 +61,4 @@ export function ActionButton({ onJump }: ActionButtonProps) {
       </DropdownMenu>
     </div>
   );
-} 
+}

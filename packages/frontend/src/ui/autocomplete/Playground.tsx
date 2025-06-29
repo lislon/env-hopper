@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import {
-  PlaygroundHeader,
-  QuickJumpBar,
-  ControlBar,
-  WidgetGrid,
-} from "./components";
+import { PlaygroundHeader } from "./components/header/PlaygroundHeader";
+import { QuickJumpBar } from "./components/quickBar/QuickJumpBar";
+import { ControlBar } from "./components/controlPanel/ControlBar";
+import { WidgetGrid } from "./components/widgetPanel/WidgetGrid";
+import { Footer } from "./components/footer/Footer";
 import { EhConfigProvider, EhUserProvider, useEhUserContext } from "~/contexts";
 import { EhEnvDto, EhAppDto } from "~/types/ehTypes";
+import { ThemeProvider } from "~/components/theme-provider";
 
 /**
  * Jump‑only prototype (shadcn/ui version)
@@ -36,20 +36,23 @@ function PlaygroundContent() {
   };
 
   return (
-    <main className="w-full flex justify-center font-sans p-6">
-      <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl space-y-6">
-        <PlaygroundHeader />
-        
-        <QuickJumpBar favorites={favorites} />
-        
-        <ControlBar onJump={handleJump} />
-        
-        <WidgetGrid 
-          widgets={widgets} 
-          onAddWidget={handleAddWidget}
-        />
-      </div>
-    </main>
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-1 w-full flex justify-center font-sans p-6">
+        <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl space-y-6">
+          <PlaygroundHeader />
+          
+          <QuickJumpBar favorites={favorites} />
+          
+          <ControlBar onJump={handleJump} />
+          
+          <WidgetGrid 
+            widgets={widgets} 
+            onAddWidget={handleAddWidget}
+          />
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
@@ -68,14 +71,21 @@ export function Playground() {
   ];
 
   return (
-    <EhConfigProvider listEnvs={listEnvs} listApps={listApps}>
-      <EhUserProvider 
-        initialEnv={listEnvs[0]} 
-        initialApp={listApps[0]}
-      >
-        <PlaygroundContent />
-      </EhUserProvider>
-    </EhConfigProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <EhConfigProvider listEnvs={listEnvs} listApps={listApps}>
+        <EhUserProvider 
+          initialEnv={listEnvs[0]} 
+          initialApp={listApps[0]}
+        >
+          <PlaygroundContent />
+        </EhUserProvider>
+      </EhConfigProvider>
+    </ThemeProvider>
   );
 }
 

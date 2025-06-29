@@ -7,4 +7,6 @@ alwaysApply: false
 # Rules when exporting functions in ts
 
 
-- Don't use default export, prefer named expor
+- Don't use default export, prefer named export
+- We use pnpm
+- Don't use !important in css

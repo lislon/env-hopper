@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { appsAutocompleteMockedData } from '../../data/appsAutocompleteMockedData';
 import { Home, Folder, FileText, AlertCircle, Clock, ExternalLink } from 'lucide-react';
-import { Button, Input, Badge } from '~/components/ui';
+import { Button } from '~/components/ui/button';
+import { Input } from '~/components/ui/input';
+import { Badge } from '~/components/ui/badge';
 
 // Highlight helper (if needed)
 const highlightMatch = (text: string, query: string) => <>{text}</>;

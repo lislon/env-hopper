@@ -1,5 +1,7 @@
 import React from "react";
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from "~/components/ui";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
 import { Copy, KeyRound } from "lucide-react";
 
 interface Credential {

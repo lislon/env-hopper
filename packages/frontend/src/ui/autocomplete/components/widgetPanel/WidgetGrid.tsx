@@ -1,6 +1,6 @@
 import React from "react";
-import { CredentialsWidget } from "./CredentialsWidget";
-import { VersionWidget } from "./VersionWidget";
+import { CredentialsWidget } from "../widgets/CredentialsWidget";
+import { VersionWidget } from "../widgets/VersionWidget";
 import { AddWidgetCard } from "./AddWidgetCard";
 
 interface WidgetGridProps {

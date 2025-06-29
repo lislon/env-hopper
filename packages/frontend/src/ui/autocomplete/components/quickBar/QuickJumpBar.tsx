@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "~/components/ui";
+import { Button } from "~/components/ui/button";
 import { useEhGlobalContextProps, useEhUserContext } from "~/contexts";
 import { EhEnvDto, EhAppDto } from "~/types/ehTypes";
 

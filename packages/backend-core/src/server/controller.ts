@@ -14,25 +14,16 @@ const t: TRPCRootObject<EhTrpcContext, {}, {}> = initTRPC.context<EhTrpcContext>
 const router: typeof t.router = t.router;
 const publicProcedure: typeof t.procedure = t.procedure;
 
-import { EhBackendEnvironmentInput } from '../types/backendTypes';
-import { EhIndexData } from '../types/commonTypes';
+
+import { EhIndexData } from '../types';
 
 export const trpcRouter = router({
-  userList: publicProcedure
-    .query(async () => {
-      // Retrieve users from a datasource, this is an imaginary database
-      // const users = await db.user.findMany();
-      return ['111'];
-    }),
-  envs: publicProcedure
-    .query(async ({ctx}) => {
-      const envs = await ctx.miniDb.get<EhBackendEnvironmentInput[]>('envs');
-      // Retrieve users from a datasource, this is an imaginary database
-      // const users = await db.user.findMany();
-      return envs.map(env => env.slug);
-
-    }),
   index: publicProcedure
+    .query(async ({ctx}) => {
+      const ehBackendIndexDataReturn: EhIndexData = await ctx.companySpecificBackend.getIndexData();
+      return ehBackendIndexDataReturn
+    }),
+  appCatalog: publicProcedure
     .query(async ({ctx}) => {
       const ehBackendIndexDataReturn: EhIndexData = await ctx.companySpecificBackend.getIndexData();
       return ehBackendIndexDataReturn

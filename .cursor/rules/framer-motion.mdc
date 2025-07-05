@@ -1,0 +1,1389 @@
+TITLE: Installing Framer Motion with npm
+DESCRIPTION: Provides the command line instruction to install the Framer Motion library using the npm package manager.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/packages/framer-motion/README.md#_snippet_1
+
+LANGUAGE: shell
+CODE:
+```
+npm install framer-motion
+```
+
+----------------------------------------
+
+TITLE: Basic Animation with Framer Motion JSX
+DESCRIPTION: Demonstrates a basic animation using the motion.div component to animate the horizontal position (x property) to 0.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/packages/framer-motion/README.md#_snippet_0
+
+LANGUAGE: jsx
+CODE:
+```
+<motion.div animate={{ x: 0 }} />
+```
+
+----------------------------------------
+
+TITLE: Using Framer Motion in a React Component (JSX)
+DESCRIPTION: Shows how to import the motion component and use it within a React functional component to animate the opacity based on a boolean prop.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/packages/framer-motion/README.md#_snippet_2
+
+LANGUAGE: jsx
+CODE:
+```
+import { motion } from "framer-motion"
+
+export const MyComponent = ({ isVisible }) => (
+    <motion.div animate={{ opacity: isVisible ? 1 : 0 }} />
+)
+```
+
+----------------------------------------
+
+TITLE: Implementing Optimized Framer Motion Animation with Server Rendering and Hydration (React)
+DESCRIPTION: Demonstrates using Framer Motion's optimized appear animation (`startOptimizedAppearAnimation`) in a React application that involves server-side rendering (`ReactDOMServer.renderToString`) and client-side hydration (`ReactDOM.hydrateRoot`). It sets up a `motion.div` component with an opacity animation, uses a `motionValue` to track animation progress and perform checks, and hydrates the root element mid-animation. Includes checks for expected opacity values during the animation lifecycle.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/interrupt-tween-opacity.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { motion, animateStyle, startOptimizedAppearAnimation, optimizedAppearDataAttribute, motionValue, } = window.Motion
+const { matchOpacity } = window.Assert
+const root = document.getElementById("root")
+const duration = 0.5
+const opacity = motionValue(0)
+
+opacity.on("render", (v) => {
+  if (v < 0.495) {
+    showError(
+      document.getElementById("box"),
+      "opacity should never be less than 0.5"
+    )
+  }
+})
+
+// This is the tree to be rendered "server" and client-side.
+const Component = React.createElement(motion.div, {
+  id: "box",
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  transition: { duration, ease: "linear" },
+  style: { opacity },
+  /**
+   * On animation start, check the values we expect to see here
+   */
+  onAnimationStart: () => {
+    const { opacity: initialOpacity } = window.getComputedStyle(box)
+    const opacityAsNumber = parseFloat(initialOpacity)
+    if (opacityAsNumber < 0.4 || opacityAsNumber > 0.6) {
+      showError(
+        box,
+        `opacity should be roughly less than 0.5 at animation start`
+      )
+    }
+  },
+  [optimizedAppearDataAttribute]: "a"
+})
+
+// Emulate server rendering of element
+root.innerHTML = ReactDOMServer.renderToString(Component)
+
+startOptimizedAppearAnimation(
+  document.getElementById("box"),
+  "opacity",
+  [0, 1],
+  {
+    duration: duration * 1000,
+    ease: "linear"
+  },
+  (animation) => {
+    // Hydrate root mid-way through animation
+    setTimeout(() => {
+      ReactDOM.hydrateRoot(root, Component)
+    }, (duration * 1000) / 2)
+  }
+)
+```
+
+----------------------------------------
+
+TITLE: Animating React Component with Framer Motion
+DESCRIPTION: Demonstrates using Framer Motion within a React component to animate opacity and layout. It includes state management, effect hooks, server-side rendering emulation, and starting a Web Animations API (WAAPI) animation for optimized appearance.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/defer-handoff-layout-opacity.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { motion, animateStyle, animate, startOptimizedAppearAnimation, optimizedAppearDataAttribute, motionValue, frame, } = window.Motion
+const { matchViewportBox } = window.Assert
+const root = document.getElementById("root")
+const duration = 0.5
+const x = motionValue(0)
+let isFirstFrame = true
+function Component() {
+  const \[top, setTop\] = React.useState(0)
+  React.useEffect(() => {
+    setTimeout(() => {
+      setTop(100)
+    }, 250)
+  }, \[\])
+  return React.createElement(motion.div, {
+    id: "box",
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: {
+      duration,
+      ease: "linear",
+      layout: { duration: 10 },
+    },
+    style: {
+      x,
+      top,
+      position: "relative",
+      background: top ? "red" : "blue",
+    },
+    layout: true,
+    onLayoutAnimationStart: () => {
+      requestAnimationFrame(() => {
+        const box = document.getElementById("box")
+        if (
+          box.style.opacity === window.getComputedStyle(box).opacity
+        ) {
+          /**
+           * If style.opacity and computed style.opacity are the same,
+           * it means the optimised opacity animation was cancelled by
+           * the layout animation.
+           */
+          showError(
+            "style attr and computed style should be slightly different"
+          )
+        }
+      })
+    },
+    \[optimizedAppearDataAttribute\]: "a",
+    children: "Content",
+  })
+}
+// Emulate server rendering of element
+root.innerHTML = ReactDOMServer.renderToString(
+  React.createElement(Component)
+)
+// Start WAAPI animation
+const animation = startOptimizedAppearAnimation(
+  document.getElementById("box"),
+  "opacity",
+  \[0, 1\],
+  {
+    duration: duration * 1000,
+    ease: "linear",
+  },
+  (animation) => {
+    setTimeout(() => {
+      ReactDOM.hydrateRoot(
+        root,
+        React.createElement(Component)
+      )
+    }, (duration * 1000) / 4)
+  }
+)
+```
+
+----------------------------------------
+
+TITLE: Creating and Animating Elements with Layout IDs (JavaScript)
+DESCRIPTION: Uses a library (likely Framer Motion) to create DOM elements, associate them with 'projection' nodes using `layoutId`, handle updates, unmount an old element, and assert their final viewport positions after layout changes.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/shared-relative-new-child.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { createNode } = window.Animate
+const { matchViewportBox, matchVisibility, matchOpacity, matchBorderRadius,
+} = window.Assert
+const { frame } = window.Projection
+const box = document.getElementById("box-a")
+const boxProjection = createNode(box, undefined, { layoutId: "a" })
+boxProjection.willUpdate()
+const newBox = document.createElement("div")
+newBox.id = "box-b"
+document.body.appendChild(newBox)
+const newBoxProjection = createNode(newBox, undefined, { layoutId: "a", })
+const child = document.createElement("div")
+child.id = "child"
+newBox.appendChild(child)
+const childProjection = createNode(child, newBoxProjection, { layoutId: "child", })
+childProjection.willUpdate()
+boxProjection.unmount()
+document.body.removeChild(box)
+newBoxProjection.root.didUpdate()
+frame.postRender(() => {
+matchViewportBox(newBox, { bottom: 400, left: 100, right: 400, top: 150, })
+matchViewportBox(child, { bottom: 210, left: 340, right: 390, top: 160, })
+})
+```
+
+----------------------------------------
+
+TITLE: Defining Animated Box Component (React/Framer Motion)
+DESCRIPTION: Defines a React functional component that renders a `motion.div` element. It uses `useState` and `useLayoutEffect` for state management, applies initial and animate properties for animation, configures transition properties including layout animation, uses a motion value for style, enables layout animation, and includes callbacks to check for animation conflicts.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/defer-handoff-layout-uselayouteffect.html#_snippet_2
+
+LANGUAGE: javascript
+CODE:
+```
+function Component() {
+  const \[top, setTop\] = React.useState(0)
+  React.useLayoutEffect(() => {
+    setTop(100)
+  }, \[\])
+  return React.createElement(motion.div, {
+    id: "box",
+    initial: { x: 0, opacity: 0 },
+    animate: { x: 100, opacity: 1 },
+    transition: {
+      duration,
+      ease: "linear",
+      layout: { ease: () => 0, duration: 10 },
+    },
+    style: {
+      x,
+      top,
+      position: "relative",
+      background: top ? "red" : "blue",
+    },
+    layout: true,
+    onLayoutAnimationStart: () => {
+      requestAnimationFrame(() => {
+        const box = document.getElementById("box")
+        const { top } = box.getBoundingClientRect()
+        if (top !== 100) {
+          showError(
+            box,
+            \`layout animation overridden by optimised animation\`
+          )
+        }
+      })
+    },
+    onAnimationComplete: () => {
+      const box = document.getElementById("box")
+      const { left } = box.getBoundingClientRect()
+      if (left !== 200) {
+        showError(
+          box,
+          \`optimised animation conflict with layout measurements\`
+        )
+      }
+    },
+    \[optimizedAppearDataAttribute\]: "a",
+    children: "Content",
+  })
+}
+```
+
+----------------------------------------
+
+TITLE: Defining React Component with Framer Motion (JavaScript)
+DESCRIPTION: Creates a React element using `React.createElement` and Framer Motion's `motion.div`. It configures initial and animate properties for opacity, transition details, links the `motionValue` to the style, includes an `onAnimationStart` check, and adds the optimized appear data attribute.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/interrupt-delay-before.html#_snippet_2
+
+LANGUAGE: javascript
+CODE:
+```
+// This is the tree to be rendered "server" and client-side.
+const Component = React.createElement(motion.div, {
+  id: "box",
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  transition: { duration, ease: "linear", delay },
+  style: { opacity },
+  /**
+   * On animation start, check the values we expect to see here
+   */
+  onAnimationStart: () => {
+    matchOpacity(document.getElementById("box"), 0)
+    requestAnimationFrame(() => {
+      matchOpacity(document.getElementById("box"), 0)
+    })
+  },
+  \[optimizedAppearDataAttribute\]: "a",
+})
+```
+
+----------------------------------------
+
+TITLE: Defining React Component with Framer Motion Animations (JavaScript)
+DESCRIPTION: Defines a React functional component that uses `motion.div` for animation. It includes initial and animate properties, a transition, a `motionValue` for the `x` style, and nested `motion.div` with layout animation. It also includes an `onAnimationStart` handler to check for animation cancellation issues.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/defer-handoff-layout-ancestor.html#_snippet_2
+
+LANGUAGE: JavaScript
+CODE:
+```
+function Component() {
+  const \[top, setTop\] = React.useState(0)
+  React.useEffect(() => {
+    setTimeout(() => {
+      setTop(100)
+    }, 100)
+  }, \[\])
+  return React.createElement(motion.div, {
+    id: "optimised-box",
+    className: "box",
+    initial: {
+      x: 0,
+      opacity: 0,
+      backgroundColor: "#00f",
+    },
+    animate: {
+      x: 100,
+      opacity: 1,
+      backgroundColor: "#00f",
+    },
+    transition: {
+      duration,
+      ease: "linear",
+    },
+    style: {
+      x,
+      position: "relative",
+    },
+    onAnimationStart: () => {
+      setTimeout(() => {
+        const box = document.getElementById("optimised-box")
+        console.log(
+          box.style.opacity,
+          window.getComputedStyle(box).opacity
+        )
+        if (
+          box.style.opacity === window.getComputedStyle(box).opacity
+        ) {
+          showError(
+            box,
+            \`Optimised opacity animation cancelled by child layout animations\`
+          )
+        }
+        if (
+          box.style.backgroundColor === window.getComputedStyle(box).backgroundColor
+        ) {
+          showError(
+            box,
+            \`Optimised background-color animation cancelled by child layout animations\`
+          )
+        }
+        if (!window.Assert.xTransformEquals(box)) {
+          showError(
+            box,
+            \`Optimised transform NOT animation cancelled by child layout animations\`
+          )
+        }
+      }, 150)
+    },
+    \[optimizedAppearDataAttribute\]: "a",
+    children: React.createElement(motion.div, {
+      id: "layout-box",
+      className: "box",
+      transition: {
+        duration,
+        ease: "linear",
+        layout: {
+          ease: () => 1,
+          duration: 10
+        },
+      },
+      style: {
+        top,
+        position: "relative",
+        background: top ? "red" : "blue",
+      },
+      layout: true,
+      children: "Content",
+    }),
+  })
+}
+```
+
+----------------------------------------
+
+TITLE: Setting Up Projection Nodes for Nested Elements (JavaScript)
+DESCRIPTION: Initializes necessary functions from global objects, creates projection nodes for existing and newly created nested HTML elements, linking them via parent-child relationships and shared layout IDs. It triggers updates and performs checks on the state of the projection system after setup.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/perf-shared-deep.html#_snippet_1
+
+LANGUAGE: JavaScript
+CODE:
+```
+const { createNode } = window.Animate
+const { matchViewportBox, checkFrame } = window.Assert
+const { frame } = window.Projection
+const duration = 10
+const a = document.getElementById("a")
+const aProjection = createNode( a, undefined, { layoutId: "box" }, { duration } )
+const a2 = document.getElementById("a-2")
+const a2Projection = createNode( a2, aProjection, { layoutId: "2" }, { duration } )
+const a3 = document.getElementById("a-3")
+const a3Projection = createNode( a3, a2Projection, { layoutId: "3" }, { duration } )
+aProjection.willUpdate()
+a2Projection.willUpdate()
+a3Projection.willUpdate()
+const b = document.createElement("div")
+b.id = "b"
+document.body.appendChild(b)
+const bProjection = createNode( b, undefined, { layoutId: "box" }, { duration } )
+const b2 = document.createElement("div")
+b2.id = "b-2"
+b.appendChild(b2)
+const b2Projection = createNode( b2, bProjection, { layoutId: "2" }, { duration } )
+const b3 = document.createElement("div")
+b3.id = "b-3"
+b2.appendChild(b3)
+const b3Projection = createNode( b3, b2Projection, { layoutId: "3" }, { duration } )
+aProjection.root.didUpdate()
+/**
+ * Shared element transition nodes are currently all recalculated,
+ * it would be good to investigate in the future if there's further
+ * safe optimisations we can make here.
+ */
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    console.log(window.ProjectionFrames)
+    checkFrame(a, 1, { totalNodes: 7, resolvedTargetDeltas: 3, recalculatedProjection: 6, })
+  })
+})
+```
+
+----------------------------------------
+
+TITLE: Applying Projection and Asserting Layout (JavaScript)
+DESCRIPTION: Retrieves utility functions from window.Projection, window.Undo, and window.Assert. Gets DOM elements, captures their initial bounding boxes, creates projection nodes for them, sets a border radius value on one projection, groups the projections, triggers layout updates, changes the container's flex direction, and finally, in a post-render callback, asserts the viewport box, opacity, and border radius of the elements against expected values.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/flexbox-siblings-layout-group.html#_snippet_1
+
+LANGUAGE: JavaScript
+CODE:
+```
+const { frame, nodeGroup } = window.Projection
+const { createNode } = window.Undo
+const { matchOpacity, matchBorderRadius, matchViewportBox } = window.Assert
+const container = document.getElementById("container")
+const a = document.getElementById("a")
+const b = document.getElementById("b")
+const aOrigin = a.getBoundingClientRect()
+const bOrigin = b.getBoundingClientRect()
+const aProjection = createNode(a)
+const bProjection = createNode(b)
+aProjection.setValue("borderRadius", 20)
+const group = nodeGroup()
+group.add(aProjection)
+group.add(bProjection)
+aProjection.willUpdate()
+container.style.flexDirection = "column-reverse"
+aProjection.root.didUpdate()
+frame.postRender(() => {
+  window.scrollTo(0, 0)
+  matchViewportBox(a, aOrigin)
+  matchViewportBox(b, bOrigin)
+  matchOpacity(a, 1)
+  matchOpacity(b, 1)
+  matchBorderRadius(a, "13.3333% / 10%")
+  matchBorderRadius(b, "")
+})
+```
+
+----------------------------------------
+
+TITLE: Framer Motion Optimized Appear Animation with React SSR/Hydration
+DESCRIPTION: Sets up a Framer Motion `motionValue` to track animation progress, defines a React component using `motion.div` with initial and animate states, server-renders the component to HTML, and then initiates an optimized appear animation. It includes checks during the animation and hydrates the React tree client-side partway through the animation.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/interrupt-tween-transforms.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { motion, animateStyle, startOptimizedAppearAnimation, optimizedAppearDataAttribute, motionValue, } = window.Motion
+const { matchViewportBox } = window.Assert
+const root = document.getElementById("root")
+const duration = 0.5
+const y = motionValue(0)
+let isFirstFrame = true
+y.on("change", (latest) => {
+  if (latest < 50) {
+    showError(
+      document.getElementById("box"),
+      \`y transform should never be less than 50, but was ${latest}\`
+    )
+  }
+  if (isFirstFrame && latest === 100) {
+    showError(
+      document.getElementById("box"),
+      \`y transform shouldn't be 100 on the first frame\`
+    )
+  }
+  isFirstFrame = false
+})
+// This is the tree to be rendered "server" and client-side.
+const Component = React.createElement(motion.div, {
+  id: "box",
+  initial: { y: 0, scale: 1 },
+  animate: { y: 100, scale: 2 },
+  transition: { duration, ease: "linear" },
+  style: { y },
+  /**
+   * On animation start, check the values we expect to see here
+   */
+  onAnimationStart: () => {
+    const { top, left } = document
+      .getElementById("box")
+      .getBoundingClientRect()
+    if (top < 120 || top > 130 || left < 70 || left > 85) {
+      showError(box, \`unexpected viewport box\`)
+    }
+  },
+  \[optimizedAppearDataAttribute\]: "a",
+})
+// Emulate server rendering of element
+root.innerHTML = ReactDOMServer.renderToString(Component)
+// Start Motion One animation
+const animation = startOptimizedAppearAnimation(
+  document.getElementById("box"),
+  "transform",
+  \["translateY(0px) scale(1)", "translateY(100px) scale(2)"\],
+  {
+    duration: duration * 1000,
+    ease: "linear",
+  },
+  (animation) => {
+    // Hydrate root mid-way through animation
+    setTimeout(() => {
+      ReactDOM.hydrateRoot(root, Component)
+    }, (duration * 1000) / 2)
+  }
+)
+```
+
+----------------------------------------
+
+TITLE: Initializing Projection Nodes and Handling Scroll (JavaScript)
+DESCRIPTION: Initializes projection nodes for the scroller and sticky elements using a library (likely Framer Motion). It gets DOM elements, creates nodes with specific configurations (layoutScroll, layoutRoot), stores the initial sticky position, triggers layout updates, scrolls the container, and uses a timeout to assert the sticky element's position after the scroll.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/sticky-element-scroll.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { createNode } = window.Undo
+const { matchViewportBox, matchVisibility, matchOpacity, addPageScroll, } = window.Assert
+const { frame } = window.Projection
+
+const scroller = document.getElementById("scroller")
+const scrollerProjection = createNode(scroller, undefined, { layoutScroll: true, })
+const sticky = document.getElementById("sticky")
+const stickyProjection = createNode(sticky, scrollerProjection, { layoutRoot: true, })
+
+const stickyOrigin = sticky.getBoundingClientRect()
+
+stickyProjection.willUpdate()
+scroller.scrollTo(0, 100)
+stickyProjection.root.didUpdate()
+
+setTimeout(() => {
+  matchViewportBox(sticky, stickyOrigin)
+}, 50)
+```
+
+----------------------------------------
+
+TITLE: Initializing Projection Nodes with JavaScript
+DESCRIPTION: Retrieves DOM elements and uses a library (likely Framer Motion's Animate and Projection) to create hierarchical projection nodes for the parent, mid, and child elements. It then triggers updates on these nodes and schedules post-render checks using the frame object to assert layout correctness.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/animate-relative-nested.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { createNode, relativeEase } = window.Animate
+const { matchViewportBox } = window.Assert
+const { frame } = window.Projection
+
+const parent = document.getElementById("parent")
+const mid = document.getElementById("mid")
+const child = document.getElementById("child")
+
+const childOrigin = child.getBoundingClientRect()
+
+const parentProjection = createNode(
+  parent,
+  undefined,
+  {}
+  // { duration: 2 }
+  // { duration: 200, ease: relativeEase() }
+)
+
+const midProjection = createNode(
+  mid,
+  parentProjection,
+  {}
+  // { duration: 2 }
+  // { duration: 200, ease: relativeEase() }
+)
+
+const childProjection = createNode(
+  child,
+  midProjection,
+  {}
+  // { duration: 2 }
+  // { duration: 0 }
+)
+
+parentProjection.willUpdate()
+midProjection.willUpdate()
+childProjection.willUpdate()
+
+parent.classList.add("b")
+
+parentProjection.root.didUpdate()
+
+frame.postRender(() => {
+  frame.postRender(() => {
+    matchViewportBox(child, childOrigin)
+  })
+})
+```
+
+----------------------------------------
+
+TITLE: Manipulating Layout with Projection (JavaScript)
+DESCRIPTION: Uses a projection library (likely related to Framer Motion) to create nodes for parent and child elements, apply transformations (scale, x), update their state, and then assert their viewport box matches their original position after a class change.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/transform-nested-parent-layout-change-scale-child-layout-change-transform.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { createNode } = window.Undo
+const { matchViewportBox } = window.Assert
+const { frame } = window.Projection
+const parent = document.getElementById("parent")
+const child = document.getElementById("child")
+const parentProjection = createNode(parent)
+const childProjection = createNode(child, parentProjection)
+parentProjection.setValue("scale", 2)
+parentProjection.setValue("x", 400)
+childProjection.setValue("scale", 0.5)
+childProjection.setValue("x", -100)
+frame.postRender(() => {
+  const parentOrigin = parent.getBoundingClientRect()
+  const childOrigin = child.getBoundingClientRect()
+  parentProjection.willUpdate()
+  childProjection.willUpdate()
+  parent.classList.add("b")
+  childProjection.root.didUpdate()
+  frame.postRender(() => {
+    matchViewportBox(parent, parentOrigin)
+    matchViewportBox(child, childOrigin)
+  })
+})
+```
+
+----------------------------------------
+
+TITLE: Using Projection Nodes for Element Manipulation (JavaScript)
+DESCRIPTION: Demonstrates the use of a projection library (likely Framer Motion's internal projection system) to create and manage projection nodes for DOM elements. It shows creating nodes, establishing parent-child relationships, triggering updates, mounting nodes, and asserting their final viewport positions after layout changes.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/new-element-concurrent.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { createNode } = window.Undo
+const { matchViewportBox } = window.Assert
+const { frame, HTMLProjectionNode } = window.Projection
+
+const box = document.getElementById("box")
+const boxProjection = createNode(box)
+const boxOrigin = box.getBoundingClientRect()
+
+const a = document.createElement("div")
+a.id = "child"
+
+// Render phase
+const aProjection = createNode(
+  a,
+  boxProjection,
+  { layout: true },
+  "a"
+)
+const bProjection = new HTMLProjectionNode({}, boxProjection)
+
+// Snapshot
+boxProjection.willUpdate()
+
+// Commit
+box.appendChild(a)
+box.classList.add("b")
+
+// First layout effect
+boxProjection.root.didUpdate()
+
+// A/B mounts
+aProjection.mount(a)
+
+frame.postRender(() => {
+  matchViewportBox(box, boxOrigin)
+  matchViewportBox(a, {
+    bottom: 70,
+    left: 20,
+    right: 70,
+    top: 20,
+  })
+})
+```
+
+----------------------------------------
+
+TITLE: Implementing Framer Motion Optimized Appear Animation with SSR (JavaScript)
+DESCRIPTION: Imports necessary Framer Motion and assertion utilities, sets up a motion value for opacity with a validation check, defines a React component using motion.div with initial/animate opacity and a transition, server-renders the component, initiates an optimized appear animation, and then hydrates the root after a delay to simulate a real-world SSR hydration scenario.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/persist.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { motion, animateStyle, startOptimizedAppearAnimation, optimizedAppearDataAttribute, motionValue, } = window.Motion
+const { matchOpacity } = window.Assert
+const root = document.getElementById("root")
+const duration = 0.5
+const opacity = motionValue(0)
+opacity.onChange((v) => {
+  if (v < 1) {
+    showError(
+      document.getElementById("box"),
+      "opacity should never be less than 1"
+    )
+  }
+})
+// This is the tree to be rendered "server" and client-side.
+const Component = React.createElement(motion.div, {
+  id: "box",
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  transition: { duration, ease: "linear" },
+  style: { opacity },
+  /**
+   * On animation start, check the values we expect to see here
+   */
+  onAnimationStart: () => {
+    console.log(
+      getComputedStyle(document.getElementById("box")).opacity
+    )
+    matchOpacity(document.getElementById("box"), 1)
+  },
+  [optimizedAppearDataAttribute]: "a",
+})
+// Emulate server rendering of element
+root.innerHTML = ReactDOMServer.renderToString(Component)
+startOptimizedAppearAnimation(
+  document.getElementById("box"),
+  "opacity",
+  [0, 1],
+  {
+    duration: duration * 1000,
+    ease: "linear",
+  },
+  (animation) => {
+    /**
+     * Give it time to commit the finished animation
+     */
+    setTimeout(() => {
+      // Hydrate root mid-way through animation
+      ReactDOM.hydrateRoot(root, Component)
+    }, duration * 1000 + 1000)
+  }
+)
+```
+
+----------------------------------------
+
+TITLE: Animating Layout Changes with Framer Motion Projection
+DESCRIPTION: Uses Framer Motion's Projection API to create nodes for parent and child elements. It scales the parent, then updates the parent's class to change its layout, and finally asserts that the original viewport positions of both elements are maintained after the layout change, likely demonstrating layout projection capabilities.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/transform-nested-parent-scale-child-layout-change.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { createNode } = window.Undo
+const { matchViewportBox } = window.Assert
+const { frame } = window.Projection
+const parent = document.getElementById("parent")
+const child = document.getElementById("child")
+const parentProjection = createNode(parent)
+const childProjection = createNode(child, parentProjection)
+parentProjection.setValue("scale", 2)
+frame.postRender(() => {
+  const parentOrigin = parent.getBoundingClientRect()
+  const childOrigin = child.getBoundingClientRect()
+  childProjection.willUpdate()
+  parent.classList.add("b")
+  childProjection.root.didUpdate()
+  frame.postRender(() => {
+    matchViewportBox(parent, parentOrigin)
+    matchViewportBox(child, childOrigin)
+  })
+})
+```
+
+----------------------------------------
+
+TITLE: Dynamic Box Creation and Sequential Animation (JavaScript)
+DESCRIPTION: Generates 100 box elements dynamically using JavaScript, appends them to the DOM, and applies two sequential animation sequences to each box using the Web Animations API, modifying properties like rotation, color, width, and translation.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/benchmarks/cold-start-waapi.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+// Create boxes
+const numBoxes = 100
+let html = ""
+for (let i = 0; i < numBoxes; i++) {
+  html += `<div><div class="box"></div></div>`
+}
+document.querySelector(".container").innerHTML = html
+const boxes = document.querySelectorAll(".box")
+setTimeout(() => {
+  boxes.forEach((box) => {
+    const animation = box.animate(
+      {
+        rotate: Math.random() * 360 + "deg",
+        backgroundColor: "#f00",
+        width: Math.random() * 100 + "%",
+        translate: "5px 0"
+      },
+      {
+        duration: 1000,
+        fill: "both"
+      }
+    )
+    animation.onfinish = () => {
+      requestAnimationFrame(() => {
+        animation.commitStyles()
+        animation.cancel()
+      })
+    }
+  })
+  setTimeout(() => {
+    boxes.forEach((box) => {
+      const animation = box.animate(
+        {
+          width: Math.random() * 100 + "px",
+          translate: "50% 0"
+        },
+        {
+          duration: 1000,
+          fill: "both"
+        }
+      )
+      animation.onfinish = () => {
+        requestAnimationFrame(() => {
+          animation.commitStyles()
+          animation.cancel()
+        })
+      }
+    })
+  }, 1500)
+}, 1000)
+```
+
+----------------------------------------
+
+TITLE: Applying Projection and Layout Assertions (JavaScript)
+DESCRIPTION: Utilizes custom utilities (Undo, Assert, Projection) to create a projection node for a DOM element. It then uses postRender callbacks to perform layout assertions, update the projection (scaling the box), modify the element's class, and assert the layout again after the projection transformation.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/transform-single-layout-change-with-scale-change.html#_snippet_1
+
+LANGUAGE: JavaScript
+CODE:
+```
+const { createNode } = window.Undo
+const { matchViewportBox } = window.Assert
+const { frame } = window.Projection
+const box = document.getElementById("box")
+const boxProjection = createNode(box)
+const boxOrigin = box.getBoundingClientRect()
+frame.postRender(() => {
+  matchViewportBox(box, boxOrigin)
+  boxProjection.willUpdate()
+  boxProjection.setValue("scale", 2)
+  box.classList.add("b")
+  const transformedBox = {
+    top: -50,
+    left: -50,
+    right: 150,
+    bottom: 150,
+  }
+  boxProjection.root.didUpdate()
+  frame.postRender(() => matchViewportBox(box, transformedBox))
+})
+```
+
+----------------------------------------
+
+TITLE: Implementing Optimized Appear Animation with Framer Motion (JavaScript)
+DESCRIPTION: Demonstrates using Framer Motion's optimized appear animation feature. It defines a React component using `motion.div`, server-renders it, starts an optimized appear animation, and then hydrates the root with the same component, including checks during the animation lifecycle. Requires Framer Motion, React, and ReactDOM.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/interrupt-delay-before-accelerated.html#_snippet_1
+
+LANGUAGE: JavaScript
+CODE:
+```
+const { motion, animateStyle, startOptimizedAppearAnimation, optimizedAppearDataAttribute, motionValue, } = window.Motion
+const { matchOpacity } = window.Assert
+const root = document.getElementById("root")
+const duration = 0.25
+const delay = 0.5
+
+// This is the tree to be rendered "server" and client-side.
+const Component = React.createElement(motion.div, {
+  id: "box",
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  transition: { duration, ease: "linear", delay },
+  // style: { opacity },
+  /**
+   * On animation start, check the values we expect to see here
+   */
+  onAnimationStart: () => {
+    matchOpacity(document.getElementById("box"), 0)
+    requestAnimationFrame(() => {
+      matchOpacity(document.getElementById("box"), 0)
+    })
+  },
+  \[optimizedAppearDataAttribute\]: "a",
+})
+
+// Emulate server rendering of element
+root.innerHTML = ReactDOMServer.renderToString(Component)
+
+startOptimizedAppearAnimation(
+  document.getElementById("box"),
+  "opacity",
+  \[0, 1\],
+  {
+    duration: duration * 1000,
+    ease: "linear",
+    delay: delay * 1000,
+  },
+  (animation) => {
+    // Hydrate root mid-way through delay
+    setTimeout(() => {
+      ReactDOM.hydrateRoot(root, Component)
+      const { opacity: initialOpacity } = window.getComputedStyle(box)
+      if (initialOpacity !== "0") {
+        showError(box, \`opacity should have animated\`)
+      }
+    }, 300)
+  }
+)
+```
+
+----------------------------------------
+
+TITLE: Animating and Projecting Elements with JavaScript
+DESCRIPTION: Initializes projection nodes for parent and child elements using 'createNode', retrieves initial element position, triggers layout updates by adding/removing CSS classes, updates projections using 'willUpdate' and 'didUpdate', and uses 'frame.postRender' and 'setTimeout' for timing and ensuring updates occur after rendering. It also includes an assertion using 'matchViewportBox'.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/animate-nested-scale-correction.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { createNode, relativeEase } = window.Animate
+const { matchViewportBox } = window.Assert
+const { frame } = window.Projection
+
+const parent = document.getElementById("parent")
+const a = document.getElementById("a")
+const b = document.getElementById("b")
+
+const parentProjection = createNode(
+  parent,
+  undefined,
+  {},
+  { duration: 0.1 }
+)
+const aProjection = createNode(
+  a,
+  parentProjection,
+  {},
+  { duration: 0.1 }
+)
+const bProjection = createNode(
+  b,
+  parentProjection,
+  {},
+  { duration: 0.1 }
+)
+
+const aOrigin = a.getBoundingClientRect()
+
+parentProjection.willUpdate()
+aProjection.willUpdate()
+bProjection.willUpdate()
+a.classList.add("open")
+parentProjection.root.didUpdate()
+
+frame.postRender(() => {
+  frame.postRender(() => {
+    parentProjection.willUpdate()
+    aProjection.willUpdate()
+    bProjection.willUpdate()
+    a.classList.remove("open")
+    parentProjection.root.didUpdate()
+
+    setTimeout(() => {
+      parentProjection.willUpdate()
+      aProjection.willUpdate()
+      bProjection.willUpdate()
+      b.classList.add("open")
+      parentProjection.root.didUpdate()
+
+      frame.postRender(() => {
+        frame.postRender(() => {
+          matchViewportBox(a, aOrigin)
+        })
+      })
+    }, 120)
+  })
+})
+```
+
+----------------------------------------
+
+TITLE: Framer Motion Optimized Appear Animation Setup (JavaScript)
+DESCRIPTION: Initializes Framer Motion components, sets up a motion value to track animation progress, defines a React component using motion.div with initial and animate properties, and includes checks during the animation lifecycle. It prepares the component for server-side rendering and subsequent client-side hydration.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/interrupt-tween-x.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { motion, animateStyle, startOptimizedAppearAnimation, optimizedAppearDataAttribute, motionValue, } = window.Motion
+const { matchViewportBox } = window.Assert
+const root = document.getElementById("root")
+const duration = 0.5
+const x = motionValue(0)
+let isFirstFrame = true
+x.onChange((latest) => {
+  if (latest < 50) {
+    showError(
+      document.getElementById("box"),
+      `x transform should never be less than 50`
+    )
+  }
+  if (latest === 100 && isFirstFrame) {
+    showError(
+      document.getElementById("box"),
+      `x transform shouldn't be 100 on the first frame`
+    )
+  }
+  isFirstFrame = false
+})
+// This is the tree to be rendered "server" and client-side.
+const Component = React.createElement(motion.div, {
+  id: "box",
+  initial: { x: 0 },
+  animate: { x: 100 },
+  transition: { duration, ease: "linear" },
+  style: { x },
+  /**
+   * On animation start, check the values we expect to see here
+   */
+  onAnimationStart: () => {
+    const { top, left } = document
+      .getElementById("box")
+      .getBoundingClientRect()
+    // Fuzzy to be permissive towards Cypress runner
+    if (left < 135 || left > 165) {
+      showError(box, `unexpected viewport box`)
+    }
+  },
+  \[optimizedAppearDataAttribute\]: "a",
+  children: "Content",
+})
+```
+
+----------------------------------------
+
+TITLE: Manipulating Layout and Scrolling with JavaScript
+DESCRIPTION: Uses Framer Motion's Projection API (via `createNode`) to track element layout. Modifies element classes, scrolls the window, and asserts layout properties after updates and scrolling.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/single-element-layout-change-with-child-page-scroll.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { createNode } = window.Undo
+const { matchViewportBox, addPageScroll } = window.Assert
+const { frame } = window.Projection
+const box = document.getElementById("box")
+const boxProjection = createNode(box)
+const child = document.getElementById("child")
+const childProjection = createNode(child, boxProjection)
+const boxOrigin = box.getBoundingClientRect()
+const childOrigin = child.getBoundingClientRect()
+boxProjection.willUpdate()
+childProjection.willUpdate()
+box.classList.add("b")
+const scrollOffset = \[50, 100\]
+window.scrollTo(...scrollOffset)
+boxProjection.root.didUpdate()
+frame.postRender(() => {
+  matchViewportBox(box, addPageScroll(boxOrigin, ...scrollOffset))
+  matchViewportBox(
+    child, addPageScroll(childOrigin, ...scrollOffset)
+  )
+})
+```
+
+----------------------------------------
+
+TITLE: Testing Element Projection and Layout Changes (JavaScript)
+DESCRIPTION: Uses functions from `window.Undo`, `window.Assert`, and `window.Projection` to get DOM elements, create projection nodes, apply a CSS class to change the layout, and then assert that the elements' viewport boxes match their original positions in a post-render step.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/projection/flexbox-siblings-to-grid.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { createNode } = window.Undo
+const { matchViewportBox } = window.Assert
+const { frame } = window.Projection
+const container = document.getElementById("container")
+const a = document.getElementById("a")
+const b = document.getElementById("b")
+const aOrigin = a.getBoundingClientRect()
+const bOrigin = b.getBoundingClientRect()
+const aProjection = createNode(a)
+const bProjection = createNode(b)
+aProjection.willUpdate()
+bProjection.willUpdate()
+container.classList.add("as-grid")
+aProjection.root.didUpdate()
+frame.postRender(() => {
+  matchViewportBox(a, aOrigin)
+  matchViewportBox(b, bOrigin)
+})
+```
+
+----------------------------------------
+
+TITLE: React Motion Component Definition
+DESCRIPTION: Defines a React functional component using `React.createElement` and `motion.div`. It utilizes Framer Motion's `initial`, `animate`, `transition`, `style`, and `layout` props, including specific transition settings for layout. It also includes `onLayoutAnimationStart` and `onAnimationComplete` callbacks to check for animation conflicts and uses `useState` and `useEffect` for state management.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/defer-handoff-layout.html#_snippet_2
+
+LANGUAGE: javascript
+CODE:
+```
+function Component() {
+  const [top, setTop] = React.useState(0)
+  React.useEffect(() => {
+    setTimeout(() => {
+      setTop(100)
+    }, 200)
+  }, [])
+  return React.createElement(motion.div, {
+    id: "box",
+    initial: { x: 0, opacity: 0 },
+    animate: { x: 100, opacity: 1 },
+    transition: { duration, ease: "linear", layout: { ease: () => 0, duration: 10 }, },
+    style: { x, top, position: "relative", background: top ? "red" : "blue", },
+    layout: true,
+    onLayoutAnimationStart: () => {
+      requestAnimationFrame(() => {
+        const box = document.getElementById("box")
+        const { top } = box.getBoundingClientRect()
+        if (top !== 100) {
+          showError(
+            box,
+            `layout animation overridden by optimised animation`
+          )
+        }
+      })
+    },
+    onAnimationComplete: () => {
+      const box = document.getElementById("box")
+      const { left } = box.getBoundingClientRect()
+      if (left !== 200) {
+        showError(
+          box,
+          `optimised animation conflict with layout measurements`
+        )
+      }
+    },
+    [optimizedAppearDataAttribute]: "a",
+    children: "Content",
+  })
+}
+```
+
+----------------------------------------
+
+TITLE: Framer Motion SSR and Hydration Test (JavaScript)
+DESCRIPTION: This script sets up a test environment using Framer Motion, React, and ReactDOMServer/hydrateRoot. It defines a motion component, server-renders it, starts an optimized appear animation, tracks a motion value ('y') with validation checks, and hydrates the root element mid-animation to test the transition from server-rendered static content to a client-side interactive component.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/portal.html#_snippet_1
+
+LANGUAGE: JavaScript
+CODE:
+```
+const { motion, animateStyle, startOptimizedAppearAnimation, optimizedAppearDataAttribute, motionValue, } = window.Motion
+const { matchViewportBox } = window.Assert
+const root = document.getElementById("root")
+const duration = 0.5
+const y = motionValue(0)
+let isFirstFrame = true
+y.on("change", (latest) => {
+  if (latest < 50) {
+    showError(
+      document.getElementById("box"),
+      `y transform should never be less than 50, but was ${latest}`
+    )
+  }
+  if (isFirstFrame && latest === 100) {
+    showError(
+      document.getElementById("box"),
+      `y transform shouldn't be 100 on the first frame`
+    )
+  }
+  isFirstFrame = false
+})
+// This is the tree to be rendered "server" and client-side.
+const Component = React.createElement(motion.div, {
+  id: "box",
+  initial: { y: 0, scale: 1 },
+  animate: { y: 100, scale: 2 },
+  transition: { duration, ease: "linear" },
+  style: { y },
+  /**
+   * On animation start, check the values we expect to see here
+   */
+  onAnimationStart: () => {
+    const { top, left } = document
+      .getElementById("box")
+      .getBoundingClientRect()
+    if (top < 120 || top > 130 || left < 70 || left > 85) {
+      showError(box, `unexpected viewport box`)
+    }
+  },
+  [optimizedAppearDataAttribute]: "a",
+})
+// Emulate server rendering of element
+root.innerHTML = ReactDOMServer.renderToString(Component)
+// Start Motion One animation
+const animation = startOptimizedAppearAnimation(
+  document.getElementById("box"),
+  "transform",
+  ["translateY(0px) scale(1)", "translateY(100px) scale(2)"],
+  {
+    duration: duration * 1000,
+    ease: "linear",
+  },
+  (animation) => {
+    // Hydrate root mid-way through animation
+    setTimeout(() => {
+      ReactDOM.createRoot(
+        document.getElementById("portal")
+      ).render(
+        React.createElement(motion.div, {
+          id: "box-2",
+          initial: { y: 0 },
+          animate: { y: 100, scale: 2 },
+          transition: { duration, ease: "linear" },
+          style: {
+            width: 100,
+            height: 100,
+            background: "red",
+          },
+        })
+      )
+      ReactDOM.hydrateRoot(root, Component)
+    }, (duration * 1000) / 2)
+  }
+)
+```
+
+----------------------------------------
+
+TITLE: Framer Motion Layout and Optimized Appear Test Component (JavaScript)
+DESCRIPTION: A React component utilizing Framer Motion to create a box element that undergoes layout and optimized appear animations. It includes initial and animate properties, a transition configuration, style overrides using a motion value and state, and lifecycle callbacks to check element position during and after animations.
+SOURCE: https://github.com/grx7/framer-motion/blob/main/dev/html/public/optimized-appear/defer-handoff-layout-useeffect.html#_snippet_1
+
+LANGUAGE: javascript
+CODE:
+```
+const { motion, animateStyle, animate, startOptimizedAppearAnimation, optimizedAppearDataAttribute, motionValue, frame, } = window.Motion
+const { matchViewportBox } = window.Assert
+const root = document.getElementById("root")
+const duration = 0.5
+const x = motionValue(0)
+let isFirstFrame = true
+function Component() {
+  const \[top, setTop\] = React.useState(0)
+  React.useEffect(() => {
+    setTop(100)
+  }, \[])
+  return React.createElement(motion.div, {
+    id: "box",
+    initial: { x: 0, opacity: 0 },
+    animate: { x: 100, opacity: 1 },
+    transition: {
+      duration,
+      ease: "linear",
+      layout: { ease: () => 0, duration: 10 },
+    },
+    style: {
+      x,
+      top,
+      position: "relative",
+      background: top ? "red" : "blue",
+    },
+    layout: true,
+    onLayoutAnimationStart: () => {
+      requestAnimationFrame(() => {
+        const box = document.getElementById("box")
+        const { top } = box.getBoundingClientRect()
+        if (top !== 100) {
+          showError(
+            box,
+            `layout animation overridden by optimised animation`
+          )
+        }
+      })
+    },
+    onAnimationComplete: () => {
+      const box = document.getElementById("box")
+      const { left } = box.getBoundingClientRect()
+      console.log(left)
+      if (left !== 200) {
+        showError(
+          box,
+          `optimised animation conflict with layout measurements`
+        )
+      }
+    },
+    \[optimizedAppearDataAttribute\]: "a",
+    children: "Content",
+  })
+}
+// Emulate server rendering of element
+root.innerHTML = ReactDOMServer.renderToString(
+  React.createElement(Component)
+)
+// Start optimised opacity animation
+startOptimizedAppearAnimation(
+  document.getElementById("box"),
+  "opacity",
+  \[0, 1\],
+  {
+    duration: duration * 1000,
+    ease: "linear",
+  }
+)
+// Start WAAPI animation
+const animation = startOptimizedAppearAnimation(
+  document.getElementById("box"),
+  "transform",
+  \["translateX(0px)", "translateX(100px)"\],
+  {
+    duration: duration * 1000,
+    ease: "linear",
+  },
+  (animation) => {
+    setTimeout(() => {
+      ReactDOM.hydrateRoot(
+        root,
+        React.createElement(Component)
+      )
+    }, (duration * 1000) / 2)
+  }
+)
+```

@@ -4,7 +4,8 @@ import { BaseDropdownSelector } from "../BaseDropdownSelector";
 import { EnvDropdownContent } from "./EnvDropdownContent";
 
 export function EnvDropdownSelector() {
-  const { listEnvs } = useEhGlobalContextProps();
+  const { indexData } = useEhGlobalContextProps();
+  const listEnvs = indexData.envs;
   const { env, setEnv } = useEhUserContext();
 
   const handleSelect = (envSlug: string) => {

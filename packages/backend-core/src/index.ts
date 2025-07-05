@@ -4,12 +4,13 @@
 export { trpcRouter } from './server/controller';
 export type { TRPCRouter } from './server/controller';
 export { createEhTrpcContext }  from './server/ehTrpcContext';
-export type * from './types/commonTypes';
+
+export { staticControllerContract  } from './server/ehStaticControllerContract';
+export type { EhStaticControllerContract  } from './server/ehStaticControllerContract';
 
 
 // ui-only
 
 // backend-only
 
-export type * from './types/backendTypes';
-export * from './server/ehBackendApi';
+export * from './types/index';

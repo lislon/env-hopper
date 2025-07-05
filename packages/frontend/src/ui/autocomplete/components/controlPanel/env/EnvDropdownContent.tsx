@@ -13,7 +13,8 @@ export function EnvDropdownContent({
   highlightedIndex = -1,
   isUntouched
 }: EnvDropdownContentProps) {
-  const { listEnvs } = useEhGlobalContextProps();
+  const { indexData } = useEhGlobalContextProps();
+  const listEnvs = indexData.envs;
 
   // Filter environments based on search value
   const filteredEnvs = listEnvs.filter((env) =>

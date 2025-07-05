@@ -1,3 +1,8 @@
+import { EhBackendIndexCommon } from './common/indexCommon';
+import { EhBackendAppInputIndexed, EhBackendTagsDescriptionDataIndexed } from './backend';
+
+export * from './common/indexCommon';
+
 export interface EhAppLinkType {
   typeId: string;
   iconId: string;
@@ -6,21 +11,17 @@ export interface EhAppLinkType {
 }
 
 export interface EhEnvDto {
-  slug: string
+  slug: string;
   displayName: string;
 }
 
-export interface EhAppDto {
-  slug: string
-  displayName: string;
-}
+export type EhAppDto = EhBackendAppInputIndexed;
+export type EhTagsDescriptionDto = EhBackendTagsDescriptionDataIndexed;
 
 // const packedId = (appId << 16) + envId;
-export type EhAppEnvLinkPacked = [string,string][];
+export type EhAppEnvLinkPacked = [string, string][];
 
-export interface EhIndexData {
-  envs: EhEnvDto[]
-  apps: EhAppDto[]
+export interface EhIndexData extends EhBackendIndexCommon {
   envsXApps: EhAppEnvLinkPacked;
 }
 

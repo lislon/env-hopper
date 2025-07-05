@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
-import { EhEnvDto, EhAppDto, EhAppPage } from "~/types/ehTypes";
+import { EhEnvDto, EhAppDto } from "@env-hopper/backend-core";
+import { EhAppPage } from "~/types/ehTypes";
 
 export interface EhUserContext {
   setEnv: (env: EhEnvDto | undefined) => void;

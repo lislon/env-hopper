@@ -1,40 +1,36 @@
-import React, { createContext, useContext, ReactNode } from "react";
-import { EhEnvDto, EhAppDto } from "~/types/ehTypes";
+import React, { createContext, ReactNode, use, useMemo } from 'react';
+import { EhIndexData } from '@env-hopper/backend-core';
 
 export interface EhConfigContext {
-  listEnvs: EhEnvDto[];
-  listApps: EhAppDto[];
+  indexData: EhIndexData;
 }
 
 const EhConfigContext = createContext<EhConfigContext | undefined>(undefined);
 
 interface EhConfigProviderProps {
   children: ReactNode;
-  listEnvs: EhEnvDto[];
-  listApps: EhAppDto[];
+  indexData: EhIndexData;
 }
 
 export function EhConfigProvider({
   children,
-  listEnvs,
-  listApps,
+  indexData,
 }: EhConfigProviderProps) {
-  const value: EhConfigContext = {
-    listEnvs,
-    listApps,
-  };
+  const value: EhConfigContext = useMemo(() => ({
+    indexData,
+  }), [indexData]);
 
   return (
-    <EhConfigContext.Provider value={value}>
+    <EhConfigContext value={value}>
       {children}
-    </EhConfigContext.Provider>
+    </EhConfigContext>
   );
 }
 
 export function useEhGlobalContextProps(): EhConfigContext {
-  const context = useContext(EhConfigContext);
+  const context = use(EhConfigContext);
   if (context === undefined) {
     throw new Error("useEhGlobalContextProps must be used within an EhConfigProvider");
   }
   return context;
-} 
+}

@@ -1,13 +1,17 @@
 import React, { useState } from "react";
 import { PlaygroundHeader } from "./components/header/PlaygroundHeader";
+
+import { EnvironmentTabs } from "./components/environmentTabs/EnvironmentTabs";
 import { QuickJumpBar } from "./components/quickBar/QuickJumpBar";
 import { ControlBar } from "./components/controlPanel/ControlBar";
+import { CommandBar } from "./components/controlPanel/CommandBar";
 import { WidgetGrid } from "./components/widgetPanel/WidgetGrid";
 import { Footer } from "./components/footer/Footer";
+import { LeftPanel } from "./components/leftPanel/LeftPanel";
 import { EhConfigProvider, EhUserProvider, useEhUserContext } from "~/contexts";
-import { EhEnvDto, EhAppDto } from "~/types/ehTypes";
 import { ThemeProvider } from "~/components/theme-provider";
 import { useQueryWithPersistence } from '~/api/data/useQueryWithPersistence';
+import { AppSelectorDemo } from "./components/AppSelectorDemo";
 
 /**
  * Jump‑only prototype (shadcn/ui version)
@@ -32,45 +36,62 @@ function PlaygroundContent() {
     console.log(`Jumping to ${env?.slug}/${app?.slug}`);
   };
 
+  const handleCommand = (command: string) => {
+    console.log(`Command executed: ${command}`);
+  };
+
   const handleAddWidget = () => {
     console.log("Add widget clicked");
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-      <main className="flex-1 w-full flex justify-center font-sans p-6">
-        <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl space-y-6">
-          <PlaygroundHeader />
+      <div className="flex-1 flex">
+        {/* Left panel */}
+        <LeftPanel className="h-screen" />
+        
+        {/* Main content area */}
+        <main className="flex-1 w-full flex justify-center font-sans p-6">
+          <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl space-y-6">
+            <PlaygroundHeader />
 
-          <QuickJumpBar favorites={favorites} />
+            {/* <ControlBar onJump={handleJump} /> */}
+            <QuickJumpBar />
+            <CommandBar onCommand={handleCommand} />
+            
+            
 
-          <ControlBar onJump={handleJump} />
+            <AppSelectorDemo />
+            
+            
 
-          <WidgetGrid
-            widgets={widgets}
-            onAddWidget={handleAddWidget}
-          />
-        </div>
-      </main>
+            {/* AppDropdownContent for testing - make it larger
+            <div className="border border-border rounded-lg p-6 bg-card">
+              <h2 className="text-lg font-semibold mb-4">AppDropdownContent Preview</h2>
+              <div className="w-full max-w-2xl">
+                <AppDropdownContent 
+                  searchValue=""
+                  onSelect={(value) => console.log("Selected:", value)}
+                  getItemProps={(options) => options}
+                  highlightedIndex={-1}
+                  isUntouched={true}
+                />
+              </div>
+            </div> */}
+
+            <WidgetGrid
+              widgets={widgets}
+              onAddWidget={handleAddWidget}
+            />
+          </div>
+        </main>
+      </div>
       <Footer />
     </div>
   );
 }
 
 export function Playground() {
-  /* demo data */
-  const listEnvs: EhEnvDto[] = [
-    { slug: "cross-04", displayName: "Cross-04" },
-    { slug: "preprod-04", displayName: "Preprod-04" },
-    { slug: "g64-int-01", displayName: "G64-Int-01" },
-  ];
-
-  const listApps: EhAppDto[] = [
-    { slug: "Prod-LIMS", displayName: "Prod-LIMS" },
-    { slug: "Kafka-UI", displayName: "Kafka-UI" },
-    { slug: "LIMS-API", displayName: "LIMS-API" },
-  ];
-
   const { data, isPending } = useQueryWithPersistence();
 
   if (isPending || !data) {
@@ -84,7 +105,7 @@ export function Playground() {
       enableSystem
       disableTransitionOnChange
     >
-      <EhConfigProvider listEnvs={data.envs} listApps={data.apps}>
+      <EhConfigProvider indexData={data}>
         <EhUserProvider
           initialEnv={data.envs[0]}
           initialApp={data.apps[0]}

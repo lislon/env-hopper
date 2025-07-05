@@ -4,7 +4,8 @@ import { BaseDropdownSelector } from "../BaseDropdownSelector";
 import { AppDropdownContent } from "./AppDropdownContent";
 
 export function AppDropdownSelector() {
-  const { listApps } = useEhGlobalContextProps();
+  const { indexData } = useEhGlobalContextProps();
+  const listApps = indexData.apps;
   const { app, setApp } = useEhUserContext();
 
   const handleSelect = (appSlug: string) => {

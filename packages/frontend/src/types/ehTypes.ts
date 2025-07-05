@@ -3,10 +3,7 @@ export interface EhEnvDto {
   displayName: string;
 }
 
-export interface EhAppDto {
-  slug: string;
-  displayName: string;
-}
+// EhAppDto is now imported from @env-hopper/backend-core
 
 export interface EhAppPage {
   slug: string;

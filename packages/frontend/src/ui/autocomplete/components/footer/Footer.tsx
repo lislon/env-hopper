@@ -16,6 +16,16 @@ export function Footer() {
             shadcn/ui
             <ExternalLink className="h-3 w-3" />
           </a>
+          <span className="mx-2">•</span>
+          <a
+            href="https://lucide.dev/icons/expand"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-primary hover:text-primary/80 transition-colors font-medium"
+          >
+            Lucide Icons
+            <ExternalLink className="h-3 w-3" />
+          </a>
         </div>
       </div>
     </footer>

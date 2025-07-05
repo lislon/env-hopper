@@ -27,6 +27,7 @@ const config = defineConfig(({ mode }) => {
       host: 'localhost',
       proxy: {
         '/trpc': 'http://localhost:3002',
+        '/static': 'http://localhost:3002',
       },
     },
 

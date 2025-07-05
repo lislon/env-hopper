@@ -1,51 +1,123 @@
 import React from "react";
-import { Button } from "~/components/ui/button";
 import { useEhGlobalContextProps, useEhUserContext } from "~/contexts";
-import { EhEnvDto, EhAppDto } from "~/types/ehTypes";
-
-interface QuickJumpItem {
-  env: string;
-  app: string;
-}
+import { EhBackendAppInputIndexed } from "@env-hopper/backend-core";
+import { Server, Package, Globe } from "lucide-react";
+import { ActionCard } from "../ActionCard";
 
 interface QuickJumpBarProps {
-  favorites: QuickJumpItem[];
+  className?: string;
 }
 
-export function QuickJumpBar({ favorites }: QuickJumpBarProps) {
-  const { listEnvs, listApps } = useEhGlobalContextProps();
-  const { setEnv, setApp } = useEhUserContext();
+// Utility function to create short page names
+function getShortPageName(app: EhBackendAppInputIndexed, page: { slug: string; title?: string }) {
+  const appName = app.abbr || app.displayName;
+  const pageName = page.title || page.slug;
+  return `${appName} - ${pageName}`;
+}
 
-  const envColor = (e: string) =>
-    e.startsWith("cross")
-      ? "text-blue-600"
-      : e.startsWith("preprod")
-      ? "text-orange-600"
-      : "text-violet-600";
+// Environment icon mapping
+const getEnvironmentIcon = (envSlug: string) => {
+  if (envSlug.includes('cross')) return Package;
+  if (envSlug.includes('prod')) return Globe;
+  return Server;
+};
 
-  const handleSelect = (envSlug: string, appSlug: string) => {
-    if (appSlug === "More") return;
+// Environment color mapping
+const getEnvironmentColor = (envSlug: string) => {
+  if (envSlug.includes('cross')) return "text-blue-600";
+  if (envSlug.includes('prod')) return "text-red-600";
+  return "text-violet-600";
+};
+
+export function QuickJumpBar({ className }: QuickJumpBarProps) {
+  const { indexData } = useEhGlobalContextProps();
+  const { setEnv, setApp, env: currentEnv } = useEhUserContext();
+
+  // Get first 6 pages from real data
+  const getFirstSixPages = () => {
+    const allPages = [];
+    for (const app of indexData.apps) {
+      for (const group of app.ui.groups) {
+        for (const page of group.pages) {
+          allPages.push({ app, page, group });
+          if (allPages.length >= 6) break;
+        }
+        if (allPages.length >= 6) break;
+      }
+      if (allPages.length >= 6) break;
+    }
+    return allPages;
+  };
+
+  const firstSixPages = getFirstSixPages();
+
+  // Get first 3-4 real environments from context data
+  const environments = indexData.envs.slice(0, 4).map(env => ({
+    id: env.slug,
+    label: env.displayName || env.slug,
+    icon: getEnvironmentIcon(env.slug),
+    color: getEnvironmentColor(env.slug),
+  }));
+
+  const handleEnvironmentChange = (environment: string) => {
+    const selectedEnv = indexData.envs.find(env => env.slug === environment);
     
-    const selectedEnv = listEnvs.find(env => env.slug === envSlug);
-    const selectedApp = listApps.find(app => app.slug === appSlug);
+    if (selectedEnv) {
     
-    if (selectedEnv) setEnv(selectedEnv);
-    if (selectedApp) setApp(selectedApp);
+      
+      setEnv(selectedEnv);
+    }
+  };
+
+  const handlePageSelect = (app: EhBackendAppInputIndexed, page: { slug: string; title?: string; url: string }) => {
+    setApp(app);
+    // Could navigate to page here in the future
+    console.log(`Navigate to ${app.slug}/${page.slug}`);
   };
 
   return (
-    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-      {favorites.map(({ env: ev, app: ap }) => (
-        <Button
-          key={`${ev}-${ap}`}
-          variant="outline"
-          className="h-20 flex-col"
-          onClick={() => handleSelect(ev, ap)}
-        >
-          <span className={`font-medium ${envColor(ev)}`}>{ev}</span>
-          <span className="text-green-700 text-xs mt-1">{ap}</span>
-        </Button>
-      ))}
+    <div className={`flex mb-6 ${className}`}>
+      {/* Left Column - Simplified Environment Switcher */}
+      <div className="flex flex-col gap-1 p-4 flex-grow-0">
+        {environments.map((env) => {
+          const Icon = env.icon;
+          const isActive = env.id === currentEnv?.slug;
+          
+          return (
+            <button
+              key={env.id}
+              onClick={() => handleEnvironmentChange(env.id)}
+              className={`
+                flex items-center gap-2 text-left px-3 py-2 rounded-md transition-colors text-sm text-nowrap
+                hover:bg-accent/50
+                ${isActive ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground'}
+              `}
+            >
+              <Icon className={`w-4 h-4 ${env.color} flex-shrink-0`} />
+              {env.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Vertical Divider with padding */}
+      <div className="flex items-center py-8">
+        <div className="w-px bg-border h-full"></div>
+      </div>
+
+      {/* Right Column - 2x3 Grid of Pages */}
+      <div className="flex-1 p-4">
+        <div className="grid grid-cols-2 gap-3">
+          {firstSixPages.map(({ app, page, group }, index) => (
+            <ActionCard
+              key={`${app.slug}-${page.slug}-${index}`}
+              app={app}
+              actionName={getShortPageName(app, page)}
+              onClick={() => handlePageSelect(app, page)}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 } 

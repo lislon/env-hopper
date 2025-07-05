@@ -1,9 +1,8 @@
-import { EhBackendCompanySpecificBackend } from '../types/backendTypes';
-import { miniDb, MiniDB } from './mini-db';
+import { EhBackendCompanySpecificBackend } from '../types';
+
 
 export interface EhTrpcContext {
   companySpecificBackend: EhBackendCompanySpecificBackend;
-  miniDb: MiniDB;
 }
 
 export interface EhTrpcContextOptions {
@@ -12,8 +11,7 @@ export interface EhTrpcContextOptions {
 
 export function createEhTrpcContext({ companySpecificBackend }: EhTrpcContextOptions): EhTrpcContext {
   return {
-    companySpecificBackend,
-    miniDb
+    companySpecificBackend
   };
 }
 

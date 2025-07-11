@@ -14,7 +14,7 @@ import { AppDropdownSelector } from "./app/AppDropdownSelector";
 
 export function InteractiveBreadcrumbs() {
   const [path, setPath] = useState("");
-  const { env, app } = useEhUserContext();
+  const { currentEnv, currentApp } = useEhUserContext();
 
   return (
     <div className="flex gap-3 items-center w-full">

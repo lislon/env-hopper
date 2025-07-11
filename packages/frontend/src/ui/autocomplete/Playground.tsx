@@ -4,14 +4,14 @@ import { PlaygroundHeader } from "./components/header/PlaygroundHeader";
 import { EnvironmentTabs } from "./components/environmentTabs/EnvironmentTabs";
 import { QuickJumpBar } from "./components/quickBar/QuickJumpBar";
 import { ControlBar } from "./components/controlPanel/ControlBar";
-import { CommandBar } from "./components/controlPanel/CommandBar";
 import { WidgetGrid } from "./components/widgetPanel/WidgetGrid";
 import { Footer } from "./components/footer/Footer";
 import { LeftPanel } from "./components/leftPanel/LeftPanel";
-import { EhConfigProvider, EhUserProvider, useEhUserContext } from "~/contexts";
+import { EhConfigProvider, EhUserProvider, EhUserBehaviourMemoryProvider, useEhUserContext, EhSearchIndexProvider } from "~/contexts";
 import { ThemeProvider } from "~/components/theme-provider";
 import { useQueryWithPersistence } from '~/api/data/useQueryWithPersistence';
 import { AppSelectorDemo } from "./components/AppSelectorDemo";
+import { EhCommandInput } from "./components/commandInput/EhCommandInput";
 
 /**
  * Jump‑only prototype (shadcn/ui version)
@@ -20,7 +20,7 @@ import { AppSelectorDemo } from "./components/AppSelectorDemo";
  * – Widget grid (Creds, Version, Add)
  */
 function PlaygroundContent() {
-  const { env, app } = useEhUserContext();
+  const { currentEnv, currentApp } = useEhUserContext();
   const [widgets] = useState(["creds", "version"] as const);
 
   const favorites: { env: string; app: string }[] = [
@@ -33,7 +33,7 @@ function PlaygroundContent() {
   ];
 
   const handleJump = () => {
-    console.log(`Jumping to ${env?.slug}/${app?.slug}`);
+    console.log(`Jumping to ${currentEnv?.slug}/${currentApp?.slug}`);
   };
 
   const handleCommand = (command: string) => {
@@ -49,27 +49,27 @@ function PlaygroundContent() {
       <div className="flex-1 flex">
         {/* Left panel */}
         <LeftPanel className="h-screen" />
-        
+
         {/* Main content area */}
         <main className="flex-1 w-full flex justify-center font-sans p-6">
           <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl space-y-6">
             <PlaygroundHeader />
 
             {/* <ControlBar onJump={handleJump} /> */}
+            <div className="flex gap-4 flex-row">
+              <EhCommandInput onCommand={handleCommand} className="w-2/12" />
+              <EhCommandInput onCommand={handleCommand} className="w-10/12" />
+            </div>
             <QuickJumpBar />
-            <CommandBar onCommand={handleCommand} />
-            
-            
 
-            <AppSelectorDemo />
-            
-            
+            {/* <AppSelectorDemo /> */}
+
 
             {/* AppDropdownContent for testing - make it larger
             <div className="border border-border rounded-lg p-6 bg-card">
               <h2 className="text-lg font-semibold mb-4">AppDropdownContent Preview</h2>
               <div className="w-full max-w-2xl">
-                <AppDropdownContent 
+                <AppDropdownContent
                   searchValue=""
                   onSelect={(value) => console.log("Selected:", value)}
                   getItemProps={(options) => options}
@@ -106,15 +106,18 @@ export function Playground() {
       disableTransitionOnChange
     >
       <EhConfigProvider indexData={data}>
-        <EhUserProvider
-          initialEnv={data.envs[0]}
-          initialApp={data.apps[0]}
-        >
-          <PlaygroundContent />
-        </EhUserProvider>
+        <EhUserBehaviourMemoryProvider>
+          <EhUserProvider
+            initialEnvSlug={Object.values(data.envs)[0]?.slug}
+            initialAppSlug={Object.values(data.apps)[0]?.slug}
+          >
+            <EhSearchIndexProvider>
+              <PlaygroundContent />
+            </EhSearchIndexProvider>
+          </EhUserProvider>
+        </EhUserBehaviourMemoryProvider>
       </EhConfigProvider>
     </ThemeProvider>
   );
 }
-
 

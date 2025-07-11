@@ -16,7 +16,7 @@ export function AppDropdownContent({
   isUntouched
 }: AppDropdownContentProps) {
   const { indexData } = useEhGlobalContextProps();
-  const listApps = indexData.apps;
+  const listApps = Object.values(indexData.apps);
 
   // Filter apps based on search value
   const filteredApps = listApps.filter((app) =>

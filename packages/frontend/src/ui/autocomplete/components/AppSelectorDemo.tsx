@@ -86,7 +86,7 @@ export function AppSelectorDemo() {
 
   // Try to use real data from context, fallback to sample data
   const { indexData } = useEhGlobalContextProps();
-  const apps = indexData?.apps || sampleApps;
+  const apps = indexData ? Object.values(indexData.apps) : sampleApps;
 
   const handleSelect = (app: EhAppDto, page?: { slug: string; title?: string; url: string }) => {
     setSelectedApp(app);

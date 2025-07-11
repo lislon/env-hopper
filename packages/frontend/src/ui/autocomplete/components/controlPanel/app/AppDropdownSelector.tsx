@@ -5,19 +5,16 @@ import { AppDropdownContent } from "./AppDropdownContent";
 
 export function AppDropdownSelector() {
   const { indexData } = useEhGlobalContextProps();
-  const listApps = indexData.apps;
-  const { app, setApp } = useEhUserContext();
+  const listApps = Object.values(indexData.apps);
+  const { currentApp, setCurrentAppPage } = useEhUserContext();
 
   const handleSelect = (appSlug: string) => {
-    const selectedApp = listApps.find(a => a.slug === appSlug);
-    if (selectedApp) {
-      setApp(selectedApp);
-    }
+    setCurrentAppPage(appSlug, undefined);
   };
 
   return (
     <BaseDropdownSelector
-      value={app?.displayName}
+      value={currentApp?.displayName}
       placeholder="Select App"
       onSelect={handleSelect}
     >

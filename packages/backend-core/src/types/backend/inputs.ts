@@ -63,29 +63,36 @@ export interface EhBackendTagFixedTagValue {
 export interface EhBackendAppInputIndexed {
   slug: string;
   displayName: string;
-  abbr: string;
-  ui: EhBackendAppUIInputIndexed;
+  abbr?: string;
+  aliases?: string[];
+  ui?: EhBackendAppUIInputIndexed;
   tags?: Tag[];
   iconName?: string;
+  meta?: EhBackendGenericMetaInput;
 }
 
 export interface EhBackendAppInput extends EhBackendAppInputIndexed {
-  slug: string;
-  displayName: string;
-  abbr: string;
-  ui: EhBackendAppUIInput;
-  meta?: EhBackendGenericMetaInput;
-  deployables: EhBackendDeployableInput[];
+  ui?: EhBackendAppUIInput;
   dataSources?: EhBackendDataSourceInput[];
 }
 
-export type EhBackendContextInput = {
+export type EhBackendContextIndexed = {
   slug: string;
   displayName: string;
   /**
    * The value is shared across envs (By default: false)
    */
   isSharedAcrossEnvs?: boolean;
+  defaultFixedValues?: string[];
+};
+
+/**
+ * Resouces like kafka topics, database tables, etc.
+ */
+export type EhBackendResourceIndexed = {
+  slug: string;
+  displayName: string;
+  defaultFixedValues?: string[];
 };
 
 // Re-export for convenience

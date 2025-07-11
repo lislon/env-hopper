@@ -1,19 +1,23 @@
 import React from "react";
 import { useEhGlobalContextProps, useEhUserContext } from "~/contexts";
 import { EhBackendAppInputIndexed } from "@env-hopper/backend-core";
-import { Server, Package, Globe } from "lucide-react";
+import { Server, Package, Globe, Divide } from "lucide-react";
 import { ActionCard } from "../ActionCard";
+import { Button } from "~/components/ui/button";
+import { Separator } from "~/components/ui/separator";
+
 
 interface QuickJumpBarProps {
   className?: string;
 }
 
-// Utility function to create short page names
-function getShortPageName(app: EhBackendAppInputIndexed, page: { slug: string; title?: string }) {
-  const appName = app.abbr || app.displayName;
-  const pageName = page.title || page.slug;
-  return `${appName} - ${pageName}`;
-}
+// Environment color mapping
+const getEnvironmentColor = (envSlug: string) => {
+  if (envSlug.includes('cross')) return 'text-blue-600';
+  if (envSlug.includes('preprod')) return 'text-orange-600';
+  if (envSlug.includes('g64')) return 'text-violet-600';
+  return 'text-gray-600';
+};
 
 // Environment icon mapping
 const getEnvironmentIcon = (envSlug: string) => {
@@ -22,27 +26,27 @@ const getEnvironmentIcon = (envSlug: string) => {
   return Server;
 };
 
-// Environment color mapping
-const getEnvironmentColor = (envSlug: string) => {
-  if (envSlug.includes('cross')) return "text-blue-600";
-  if (envSlug.includes('prod')) return "text-red-600";
-  return "text-violet-600";
+// Helper function to get shortened page name
+const getShortPageName = (app: EhBackendAppInputIndexed, page: { slug: string; title?: string; url: string }) => {
+  return page.title || page.slug;
 };
 
 export function QuickJumpBar({ className }: QuickJumpBarProps) {
   const { indexData } = useEhGlobalContextProps();
-  const { setEnv, setApp, env: currentEnv } = useEhUserContext();
+  const { setCurrentEnv, setCurrentAppPage, currentEnv } = useEhUserContext();
 
   // Get first 6 pages from real data
   const getFirstSixPages = () => {
     const allPages = [];
-    for (const app of indexData.apps) {
-      for (const group of app.ui.groups) {
-        for (const page of group.pages) {
-          allPages.push({ app, page, group });
+    for (const app of Object.values(indexData.apps)) {
+      if (app.ui?.groups) {
+        for (const group of app.ui.groups) {
+          for (const page of group.pages) {
+            allPages.push({ app, page, group });
+            if (allPages.length >= 6) break;
+          }
           if (allPages.length >= 6) break;
         }
-        if (allPages.length >= 6) break;
       }
       if (allPages.length >= 6) break;
     }
@@ -52,7 +56,7 @@ export function QuickJumpBar({ className }: QuickJumpBarProps) {
   const firstSixPages = getFirstSixPages();
 
   // Get first 3-4 real environments from context data
-  const environments = indexData.envs.slice(0, 4).map(env => ({
+  const environments = Object.values(indexData.envs).slice(0, 4).map(env => ({
     id: env.slug,
     label: env.displayName || env.slug,
     icon: getEnvironmentIcon(env.slug),
@@ -60,50 +64,47 @@ export function QuickJumpBar({ className }: QuickJumpBarProps) {
   }));
 
   const handleEnvironmentChange = (environment: string) => {
-    const selectedEnv = indexData.envs.find(env => env.slug === environment);
-    
-    if (selectedEnv) {
-    
-      
-      setEnv(selectedEnv);
-    }
+    setCurrentEnv(environment);
   };
 
   const handlePageSelect = (app: EhBackendAppInputIndexed, page: { slug: string; title?: string; url: string }) => {
-    setApp(app);
+    setCurrentAppPage(app.slug, page.slug);
     // Could navigate to page here in the future
     console.log(`Navigate to ${app.slug}/${page.slug}`);
   };
 
   return (
-    <div className={`flex mb-6 ${className}`}>
+    <div className={`flex mb-6 gap-3 ${className}`}>
       {/* Left Column - Simplified Environment Switcher */}
-      <div className="flex flex-col gap-1 p-4 flex-grow-0">
+      <div className="flex flex-col gap-1">
         {environments.map((env) => {
           const Icon = env.icon;
           const isActive = env.id === currentEnv?.slug;
           
           return (
-            <button
+            <Button
               key={env.id}
+              variant={'ghost'}
               onClick={() => handleEnvironmentChange(env.id)}
-              className={`
-                flex items-center gap-2 text-left px-3 py-2 rounded-md transition-colors text-sm text-nowrap
-                hover:bg-accent/50
-                ${isActive ? 'bg-accent text-accent-foreground font-medium' : 'text-muted-foreground'}
+              className={`justify-start
+                ${isActive ? 'bg-accent text-accent-foreground font-medium' : ''}
               `}
             >
               <Icon className={`w-4 h-4 ${env.color} flex-shrink-0`} />
               {env.label}
-            </button>
+            </Button>
           );
         })}
+        
+        <div className="mt-2"><Button className="w-full">Environment...</Button></div>
       </div>
 
       {/* Vertical Divider with padding */}
-      <div className="flex items-center py-8">
-        <div className="w-px bg-border h-full"></div>
+      <div>
+        <Separator orientation="vertical" />
       </div>
+      
+      
 
       {/* Right Column - 2x3 Grid of Pages */}
       <div className="flex-1 p-4">

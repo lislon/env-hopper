@@ -26,7 +26,7 @@ interface AppGroup {
 
 export function ExploreAppDialog({ children, onAppSelect }: ExploreAppDialogProps) {
   const { indexData } = useEhGlobalContextProps();
-  const listApps = indexData.apps;
+  const listApps = Object.values(indexData.apps);
   const [searchValue, setSearchValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 

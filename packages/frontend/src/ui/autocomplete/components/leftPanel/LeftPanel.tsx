@@ -21,7 +21,7 @@ function buildHierarchyFromContext(indexData: any): HierarchyNode[] {
   const hierarchyData: HierarchyNode[] = [];
   
   // Take a subset of environments representing most visited
-  const envs = indexData.envs.slice(0, 3); // Take first 3 environments
+  const envs = Object.values(indexData.envs).slice(0, 3); // Take first 3 environments
   
   envs.forEach((env: any) => {
     const envNode: HierarchyNode = {
@@ -32,7 +32,7 @@ function buildHierarchyFromContext(indexData: any): HierarchyNode[] {
     };
     
     // Take a subset of apps for each environment (most visited)
-    const apps = indexData.apps.slice(0, 3); // Take first 3 apps per env
+    const apps = Object.values(indexData.apps).slice(0, 3); // Take first 3 apps per env
     
     apps.forEach((app: any) => {
       const appNode: HierarchyNode = {

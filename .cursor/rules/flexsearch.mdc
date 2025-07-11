@@ -1,0 +1,3099 @@
+---
+alwaysApply: false
+---
+
+TITLE: FlexSearch Document Worker Initialization and Search Example (JavaScript)
+DESCRIPTION: This comprehensive JavaScript example demonstrates how to use FlexSearch's Document API with a web worker. It covers initializing the Document instance with specific indexing configurations, adding sample data, and performing various search operations including basic queries with tags, merging results, and generating suggestions. It highlights the use of 'worker: true' for offloading indexing and searching to a web worker.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/document-worker-extern-config/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+import { Document } from "../../../dist/flexsearch.bundle.module.min.js";
+const dirname = import.meta.url.replace("/index.html", "");
+
+// some test data
+const data = [{
+  "tconst": "tt0000001",
+  "titleType": "short",
+  "primaryTitle": "Carmencita",
+  "originalTitle": "Carmencita",
+  "isAdult": 0,
+  "startYear": "1894",
+  "endYear": "",
+  "runtimeMinutes": "1",
+  "genres": [ "Documentary", "Short" ]
+},{
+  "tconst": "tt0000002",
+  "titleType": "short",
+  "primaryTitle": "Le clown et ses chiens",
+  "originalTitle": "Le clown et ses chiens",
+  "isAdult": 0,
+  "startYear": "1892",
+  "endYear": "",
+  "runtimeMinutes": "5",
+  "genres": [ "Animation", "Short" ]
+}];
+
+// create the document and await (!) for the instance response
+const index = await new Document({
+  worker: true,
+  document: {
+    id: "tconst",
+    store: true,
+    index: [{
+      field: "primaryTitle",
+      config: dirname + "/config.primaryTitle.js"
+    },{
+      field: "originalTitle",
+      config: dirname + "/config.originalTitle.js"
+    }],
+    tag: [{
+      field: "startYear"
+    },{
+      field: "genres"
+    }]
+  }
+});
+
+// add test data
+for(let i = 0; i < data.length; i++){
+  await index.add(data[i]);
+}
+
+// perform a query
+const result = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true
+});
+
+// display results
+console.log(result);
+log(JSON.stringify(result, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + merge results
+const merged = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(merged);
+log(JSON.stringify(merged, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + get suggestions
+const suggestions = await index.search({
+  query: "karmen or clown or not found",
+  tag: {
+    // no data for this category:
+    "genres": "Movie"
+  },
+  suggest: true,
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(suggestions);
+log(JSON.stringify(suggestions, null, 2));
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Document Methods API
+DESCRIPTION: Outlines the methods specific to FlexSearch Document instances, including operations for adding, updating, removing, searching documents, managing cache, clearing, and document store functionalities like get and set, along with export and import capabilities.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_22
+
+LANGUAGE: APIDOC
+CODE:
+```
+document.add(<id>, document)
+document.append()(<id>, document)
+document.update(<id>, document)
+document.remove(id)
+document.remove(document)
+document.search(string, <limit>, <options>)
+document.search(options)
+document.searchCache(...)
+document.contain(id)
+document.clear()
+document.cleanup()
+document.get(id)
+document.set(<id>, document)
+async document.export(handler)
+async document.import(key, data)
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Document Indexing and Querying Comprehensive Example
+DESCRIPTION: This comprehensive JavaScript example demonstrates the full lifecycle of using FlexSearch's `Document` index. It covers importing the module, defining sample data, initializing the index with specific document fields, tokenizers, and tags, adding data to the index, and performing various search operations including basic queries, queries with tags, enriched results, merged results, and suggestions. It also includes a simple `log` function for displaying results in a browser.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/document/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+import { Document, Charset } from "https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.compact.module.min.js";
+
+// some test data
+const data = [
+  {
+    "tconst": "tt0000001",
+    "titleType": "short",
+    "primaryTitle": "Carmencita",
+    "originalTitle": "Carmencita",
+    "isAdult": 0,
+    "startYear": "1894",
+    "endYear": "",
+    "runtimeMinutes": "1",
+    "genres": [
+      "Documentary",
+      "Short"
+    ]
+  },
+  {
+    "tconst": "tt0000002",
+    "titleType": "short",
+    "primaryTitle": "Le clown et ses chiens",
+    "originalTitle": "Le clown et ses chiens",
+    "isAdult": 0,
+    "startYear": "1892",
+    "endYear": "",
+    "runtimeMinutes": "5",
+    "genres": [
+      "Animation",
+      "Short"
+    ]
+  }
+];
+
+// create the document index
+const index = new Document({
+  document: {
+    id: "tconst",
+    store: true,
+    index: [
+      { field: "primaryTitle", tokenize: "forward", encoder: Charset.LatinBalance },
+      { field: "originalTitle", tokenize: "forward", encoder: Charset.LatinBalance }
+    ],
+    tag: [
+      { field: "startYear" },
+      { field: "genres" }
+    ]
+  }
+});
+
+// add test data
+for(let i = 0; i < data.length; i++){
+  index.add(data[i]);
+}
+
+// perform a query + enrich results
+const result = index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [
+      "Documentary",
+      "Short"
+    ]
+  },
+  enrich: true
+});
+
+// display results
+console.log(result);
+log(JSON.stringify(result, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + merge results
+const merged = index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [
+      "Documentary",
+      "Short"
+    ]
+  },
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(merged);
+log(JSON.stringify(merged, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + get suggestions
+const suggestions = index.search({
+  query: "karmen or clown or not found",
+  tag: {
+    // no data for this category:
+    "genres": "Movie"
+  },
+  suggest: true,
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(suggestions);
+log(JSON.stringify(suggestions, null, 2));
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Browser Legacy Indexing and Querying
+DESCRIPTION: This JavaScript example demonstrates how to initialize a FlexSearch index, add textual data from an array, and perform complex queries using `FlexSearch.Resolver` with `or`, `and`, and `not` operations. It also includes a simple logging function to display results in the browser.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/basic-resolver/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+// create a simple index which can store id-content-pairs
+const index = new FlexSearch.Index({ tokenize: "forward" });
+
+// some test data
+const data = [
+  'cats abcd efgh ijkl dogs pigs rats cute',
+  'cats abcd efgh ijkl dogs pigs cute',
+  'cats abcd efgh ijkl dogs cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+// add data to the index
+data.forEach((item, id) => {
+  index.add(id, item);
+});
+
+// perform query
+const result = new FlexSearch.Resolver({ index: index, query: "black" })
+  .or({ index: index, query: "cute" })
+  .and([{ index: index, query: "dog" },{ index: index, query: "cat" }])
+  .not({ index: index, query: "rat" })
+  .resolve();
+
+// display results
+result.forEach(i => {
+  console.log(data[i]);
+  log(data[i]);
+});
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Basic Suggestion Example (Browser Module)
+DESCRIPTION: This JavaScript snippet illustrates how to set up a FlexSearch index in a browser using its light module. It initializes an index with 'forward' tokenization, populates it with sample text data, and then performs a suggestion-based search query. The results are logged to the console and appended to the document body.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/basic-suggestion/index.html#_snippet_0
+
+LANGUAGE: javascript
+CODE:
+```
+import { Index } from "https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.light.module.min.js";
+
+// create a simple index which can store id-content-pairs
+const index = new Index({ tokenize: "forward" });
+
+// some test data
+const data = [
+  'cats abcd efgh ijkl mnop qrst uvwx cute',
+  'cats abcd efgh ijkl mnop qrst cute',
+  'cats abcd efgh ijkl dogs cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+// add data to the index
+data.forEach((item, id) => {
+  index.add(id, item);
+});
+
+// perform query
+const result = index.search({ query: "black dog or cute cat", suggest: true });
+
+// display results
+result.forEach(i => {
+  console.log(data[i]);
+  log(data[i]);
+});
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Constructors API
+DESCRIPTION: Lists the available constructors for creating different types of FlexSearch instances, such as Index, Document, Worker, Encoder, Resolver, and IndexedDB.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_19
+
+LANGUAGE: APIDOC
+CODE:
+```
+new Index(<options>) : index
+new Document(options) : document
+new Worker(<options>) : worker
+new Encoder(<options>, <options>, ...) : encoder
+new Resolver(<options>) : resolver
+new IndexedDB(<options>) : indexeddb
+```
+
+----------------------------------------
+
+TITLE: Initialize and Use FlexSearch Index in Browser
+DESCRIPTION: This JavaScript example demonstrates how to set up a basic FlexSearch index, add textual data to it, and then perform a search query. It highlights the 'forward' tokenizer for partial matching and iterates through results to display them in the browser console and DOM.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/basic/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+// create a simple index which can store id-content-pairs
+const index = new FlexSearch.Index({
+  // use forward when you want to match partials
+  // e.g. match "flexsearch" when query "flex"
+  tokenize: "forward"
+});
+
+// some test data
+const data = [
+  'cats abcd efgh ijkl mnop qrst uvwx cute',
+  'cats abcd efgh ijkl mnop qrst cute',
+  'cats abcd efgh ijkl mnop cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+// add data to the index
+data.forEach((item, id) => {
+  index.add(id, item);
+});
+
+// perform query
+const result = index.search("cute cat");
+
+// display results
+result.forEach(i => {
+  console.log(data[i]);
+  log(data[i]);
+});
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Resolver API Methods
+DESCRIPTION: Reference for the methods available on the FlexSearch Resolver object, including boolean operations, result manipulation, and final resolution.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/resolver.md#_snippet_8
+
+LANGUAGE: APIDOC
+CODE:
+```
+Resolver:
+  .and(options, ...)
+    Description: Apply an operation
+    Returns: Resolver (when resolve was not set to false within the options), otherwise result (or promise in async context).
+  .or(options, ...)
+    Description: Apply an operation
+    Returns: Resolver (when resolve was not set to false within the options), otherwise result (or promise in async context).
+  .not(options, ...)
+    Description: Apply an operation
+    Returns: Resolver (when resolve was not set to false within the options), otherwise result (or promise in async context).
+  .xor(options, ...)
+    Description: Apply an operation
+    Returns: Resolver (when resolve was not set to false within the options), otherwise result (or promise in async context).
+  .limit(number)
+    Description: Apply limit to the result
+    Returns: Resolver
+  .offset(number)
+    Description: Apply offset to the result
+    Returns: Resolver
+  .boost(number)
+    Description: Apply boost to the result
+    Returns: Resolver
+  .resolve(options)
+    Description: Resolve results
+    Returns: The final result or promise in async context (can't be executed twice)
+```
+
+----------------------------------------
+
+TITLE: Example Structure of Serialized FlexSearch Index Function
+DESCRIPTION: Provides an example of the internal structure of the JavaScript function generated by 'index.serialize()'. This function contains the necessary data to restore the index state.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/export-import.md#_snippet_3
+
+LANGUAGE: js
+CODE:
+```
+function inject(index){
+    index.reg = new Set([/* ... */]);
+    index.map = new Map([/* ... */]);
+    index.ctx = new Map([/* ... */]);
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch IndexedDB Persistent Storage in Browser
+DESCRIPTION: This asynchronous JavaScript function demonstrates how to initialize a FlexSearch index with IndexedDB for persistent storage in a browser. It covers creating a database instance, mounting the index, adding data, committing changes, and performing a search query. The example also includes a simple logging function to display results directly in the document body.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/basic-persistent/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+(async function(){ // create DB instance with namespace const db = new FlexSearch.IndexedDB("my-store"); // create a simple index which can store id-content-pairs const index = new FlexSearch.Index({ tokenize: "forward" }); // mount database to the index await index.mount(db); // await document.destroy(); // await document.mount(db); // some test data const data = [ 'cats abcd efgh ijkl mnop qrst uvwx cute', 'cats abcd efgh ijkl mnop qrst cute', 'cats abcd efgh ijkl mnop cute', 'cats abcd efgh ijkl cute', 'cats abcd efgh cute', 'cats abcd cute', 'cute cat ' ]; data.forEach((item, id) => { index.add(id, item); }); // transfer changes (bulk) await index.commit(); // perform query const result = await index.search({ query: "cute cat", suggest: true }); // display results result.forEach(i => { console.log(data[i]); log(data[i]); }); function log(str){ document.body.appendChild( document.createTextNode(str + "\n") ); } }());
+```
+
+----------------------------------------
+
+TITLE: Supported Complex Document Structure Example
+DESCRIPTION: Provides an example of a valid complex document structure for FlexSearch. It demonstrates how to organize nested data with the ID and tag at a non-array path, allowing for proper indexing.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_18
+
+LANGUAGE: json
+CODE:
+```
+{
+  "meta": {
+    "tag": "cat",
+    "id": 0
+  },
+  "contents": [
+    {
+      "body": {
+        "title": "some title",
+        "footer": "some text"
+      },
+      "keywords": ["some", "key", "words"]
+    },
+    {
+      "body": {
+        "title": "some title",
+        "footer": "some text"
+      },
+      "keywords": ["some", "key", "words"]
+    }
+  ]
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Document Worker: Indexing and Searching Data
+DESCRIPTION: This JavaScript code snippet illustrates how to set up and use FlexSearch's Document Worker in a browser. It defines a dataset, initializes a document index with 'id', 'store', 'index' (for primary and original titles), and 'tag' (for start year and genres) configurations. It then adds the sample data asynchronously and performs three types of searches: a basic query, a query with merged results, and a query to get suggestions, all while filtering by tags.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/document-worker/index.html#_snippet_0
+
+LANGUAGE: javascript
+CODE:
+```
+import { Document } from "../../../dist/flexsearch.bundle.module.min.js";
+
+const data = [{
+  "tconst": "tt0000001",
+  "titleType": "short",
+  "primaryTitle": "Carmencita",
+  "originalTitle": "Carmencita",
+  "isAdult": 0,
+  "startYear": "1894",
+  "endYear": "",
+  "runtimeMinutes": "1",
+  "genres": [ "Documentary", "Short" ]
+},{
+  "tconst": "tt0000002",
+  "titleType": "short",
+  "primaryTitle": "Le clown et ses chiens",
+  "originalTitle": "Le clown et ses chiens",
+  "isAdult": 0,
+  "startYear": "1892",
+  "endYear": "",
+  "runtimeMinutes": "5",
+  "genres": [ "Animation", "Short" ]
+}];
+
+const index = new Document({
+  worker: true,
+  document: {
+    id: "tconst",
+    store: true,
+    index: [
+      { field: "primaryTitle", tokenize: "forward", encoder: "LatinBalance" },
+      { field: "originalTitle", tokenize: "forward", encoder: "LatinBalance" }
+    ],
+    tag: [
+      { field: "startYear" },
+      { field: "genres" }
+    ]
+  }
+});
+
+for(let i = 0; i < data.length; i++){
+  await index.add(data[i]);
+}
+
+const result = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true
+});
+
+console.log(result);
+log(JSON.stringify(result, null, 2));
+log("\n-------------------------------------\n");
+
+const merged = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true,
+  merge: true
+});
+
+console.log(merged);
+log(JSON.stringify(merged, null, 2));
+log("\n-------------------------------------\n");
+
+const suggestions = await index.search({
+  query: "karmen or clown or not found",
+  tag: {
+    "genres": "Movie"
+  },
+  suggest: true,
+  enrich: true,
+  merge: true
+});
+
+console.log(suggestions);
+log(JSON.stringify(suggestions, null, 2));
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Document Indexing and Highlighting in JavaScript
+DESCRIPTION: This JavaScript example demonstrates how to initialize a FlexSearch Document index, add sample data, perform a search query with suggestions and result enrichment, and apply HTML highlighting to matched terms. It also includes a simple log function to display results in the browser.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/document-highlighting/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+import { Document, Charset } from "https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.compact.module.min.js";
+
+// some test data
+const data = [{
+  "id": 1,
+  "title": "Carmencita"
+},{
+  "id": 2,
+  "title": "Le clown et ses chiens"
+}];
+
+// create the document index
+const index = new Document({
+  document: {
+    store: true,
+    index: [{
+      field: "title",
+      tokenize: "forward",
+      encoder: Charset.LatinBalance
+    }]
+  }
+});
+
+// add test data
+for(let i = 0; i < data.length; i++){
+  index.add(data[i]);
+}
+
+// perform a query
+const result = index.search({
+  query: "karmen or clown or not found",
+  suggest: true, // set enrich to true (required)
+  enrich: true,
+  // highlight template
+  // $1 is a placeholder for the matched partial
+  highlight: "<b>$1</b>"
+});
+
+// display results
+console.log(result);
+log(JSON.stringify(result, null, 2));
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: Example Simple Document Data Structure
+DESCRIPTION: Illustrates a basic JSON object representing a document with an 'id' and 'content' field, suitable for indexing.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_4
+
+LANGUAGE: json
+CODE:
+```
+{
+    "id": 0,
+    "content": "some text"
+}
+```
+
+----------------------------------------
+
+TITLE: Document Object API Reference
+DESCRIPTION: Defines the methods and properties available on the FlexSearch Document object, primarily for persistent index operations.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_23
+
+LANGUAGE: APIDOC
+CODE:
+```
+Document:
+  mount(db): async
+  commit(): async
+  destroy(): async
+Properties:
+  store
+```
+
+----------------------------------------
+
+TITLE: FlexSearch.Document Browser Worker Example with Tagged Search and Suggestions
+DESCRIPTION: This JavaScript example demonstrates how to use FlexSearch.Document in a browser environment, leveraging web workers for efficient indexing. It shows how to define a document schema with 'id', 'store', 'index' fields (primaryTitle, originalTitle), and 'tag' fields (startYear, genres). The example then populates the index with sample movie data, performs various search queries including tag-based filtering, result enrichment, merging multiple results, and generating search suggestions. It also includes a simple 'log' function to display results in the browser.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/document-worker/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+(async function(){ 
+  // some test data
+  const data = [{ "tconst": "tt0000001", "titleType": "short", "primaryTitle": "Carmencita", "originalTitle": "Carmencita", "isAdult": 0, "startYear": "1894", "endYear": "", "runtimeMinutes": "1", "genres": [ "Documentary", "Short" ] },{ "tconst": "tt0000002", "titleType": "short", "primaryTitle": "Le clown et ses chiens", "originalTitle": "Le clown et ses chiens", "isAdult": 0, "startYear": "1892", "endYear": "", "runtimeMinutes": "5", "genres": [ "Animation", "Short" ] }];
+
+  // create the document index
+  const index = new FlexSearch.Document({
+    // enable worker:
+    worker: true,
+    // hint: the encoder is shared for both index fields
+    // because primaryTitle and originalTitle has almost
+    // equal content, otherwise you should set the encoder
+    // option to each of the field options separately
+    encoder: FlexSearch.Charset.LatinBalance,
+    document: {
+      id: "tconst",
+      store: true,
+      index: [{ field: "primaryTitle", tokenize: "forward" },{ field: "originalTitle", tokenize: "forward" }],
+      tag: [{ field: "startYear" },{ field: "genres" }]
+    }
+  });
+
+  // add test data
+  for(let i = 0; i < data.length; i++){
+    await index.add(data[i]);
+  }
+
+  // perform a query
+  const result = await index.search({
+    query: "karmen",
+    tag: { "startYear": "1894", "genres": [ "Documentary", "Short" ] },
+    enrich: true
+  });
+  // display results
+  console.log(result);
+  log(JSON.stringify(result, null, 2));
+  log("\n-------------------------------------\n");
+
+  // perform a query + merge results
+  const merged = await index.search({
+    query: "karmen",
+    tag: { "startYear": "1894", "genres": [ "Documentary", "Short" ] },
+    enrich: true,
+    merge: true
+  });
+  // display results
+  console.log(merged);
+  log(JSON.stringify(merged, null, 2));
+  log("\n-------------------------------------\n");
+
+  // perform a query + get suggestions
+  const suggestions = await index.search({
+    query: "karmen or clown or not found",
+    tag: { // no data for this category:
+      "genres": "Movie"
+    },
+    suggest: true,
+    enrich: true,
+    merge: true
+  });
+  // display results
+  console.log(suggestions);
+  log(JSON.stringify(suggestions, null, 2));
+
+  function log(str){
+    document.body.appendChild(
+      document.createTextNode(str + "\n")
+    );
+  }
+}());
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Search Options API Reference
+DESCRIPTION: Detailed reference for configurable parameters used in FlexSearch queries, covering result limits, offsets, scoring resolution, caching, and suggestion features.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_39
+
+LANGUAGE: APIDOC
+CODE:
+```
+limit: number
+  Description: Sets the limit of results
+  Default: 100
+offset: number
+  Description: Apply offset (skip items)
+  Default: 0
+resolution: number
+  Description: Limit the resolution (score) of the results
+  Default: 
+suggest: Boolean
+  Description: Enables Suggestions in results
+  Default: false
+cache: Boolean
+  Description: Use a Query Cache
+  Default: false
+resolve: Boolean
+  Description: When set to false, an instance of a Resolver is returned to apply further operations
+  Default: true
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Enriched Search Results Structure Example
+DESCRIPTION: Provides an example of the JSON structure returned when `enrich: true` is used in a FlexSearch query. Each result object includes the document `id` and a `doc` property containing the stored content, making it easy to access the original data.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_56
+
+LANGUAGE: js
+CODE:
+```
+[{
+    id: 0,
+    doc: { /* content from store */ }
+},{
+    id: 1,
+    doc: { /* content from store */ }
+}]
+```
+
+----------------------------------------
+
+TITLE: Helper Function to Log Output to Document Body
+DESCRIPTION: A simple JavaScript helper function `log` that appends text content to the HTML document's body. This is used in the example to display search results directly on a web page, useful for browser-based demonstrations.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/document/index.html#_snippet_6
+
+LANGUAGE: javascript
+CODE:
+```
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Async Index Methods API
+DESCRIPTION: Lists asynchronous methods for common index operations like adding, appending, updating, removing, and searching. These methods return Promises or accept callbacks.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_24
+
+LANGUAGE: APIDOC
+CODE:
+```
+Async Equivalents (Non-Blocking Balanced):
+  addAsync(... , <callback>): async
+  appendAsync(... , <callback>): async
+  updateAsync(... , <callback>): async
+  removeAsync(... , <callback>): async
+  searchAsync(... , <callback>): async
+  searchCacheAsync(... , <callback>): async
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Persistent Document Indexing and Searching in Browser
+DESCRIPTION: This JavaScript example demonstrates the use of FlexSearch.IndexedDB for persistent storage and FlexSearch.Document for creating a searchable index. It shows how to initialize the database and document index, add data, commit changes, and perform various search operations including basic queries, merged results, and suggestions, with support for tag-based filtering.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/document-persistent/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+(async function(){ 
+// some test data
+const data = [{
+  "tconst": "tt0000001",
+  "titleType": "short",
+  "primaryTitle": "Carmencita",
+  "originalTitle": "Carmencita",
+  "isAdult": 0,
+  "startYear": "1894",
+  "endYear": "",
+  "runtimeMinutes": "1",
+  "genres": [ "Documentary", "Short" ]
+},{
+  "tconst": "tt0000002",
+  "titleType": "short",
+  "primaryTitle": "Le clown et ses chiens",
+  "originalTitle": "Le clown et ses chiens",
+  "isAdult": 0,
+  "startYear": "1892",
+  "endYear": "",
+  "runtimeMinutes": "5",
+  "genres": [ "Animation", "Short" ]
+}];
+
+// create DB instance with namespace
+const db = new FlexSearch.IndexedDB("my-store");
+
+// create the document index
+const index = new FlexSearch.Document({
+  // hint: the encoder is shared for both index fields
+  // because primaryTitle and originalTitle has almost
+  // equal content, otherwise you should set the encoder
+  // option to each of the field options separately
+  encoder: FlexSearch.Charset.LatinBalance,
+  document: {
+    id: "tconst",
+    store: true,
+    index: [{
+      field: "primaryTitle",
+      tokenize: "forward"
+    },{
+      field: "originalTitle",
+      tokenize: "forward"
+    }],
+    tag: [{
+      field: "startYear"
+    },{
+      field: "genres"
+    }]
+  }
+});
+
+await index.mount(db);
+// await document.destroy();
+// await document.mount(db);
+
+// add test data
+for(let i = 0; i < data.length; i++){
+  index.add(data[i]);
+}
+
+// transfer changes (bulk)
+await index.commit();
+
+// perform a query
+const result = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true
+});
+
+// display results
+console.log(result);
+log(JSON.stringify(result, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + merge results
+const merged = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(merged);
+log(JSON.stringify(merged, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + get suggestions
+const suggestions = await index.search({
+  query: "karmen or clown or not found",
+  tag: {
+    // no data for this category:
+    "genres": "Movie"
+  },
+  suggest: true,
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(suggestions);
+log(JSON.stringify(suggestions, null, 2));
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+
+}());
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Text Indexing and Searching with Language Packs (JavaScript)
+DESCRIPTION: This snippet demonstrates the basic usage of FlexSearch to create a text index, add data, and perform searches. It initializes an index with a custom encoder for language packs (LatinSimple, English) and 'forward' tokenization. The example indexes a set of sentences and then queries them, logging the results to the document body.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/language-pack/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+const encoder = new FlexSearch.Encoder(
+    FlexSearch.Charset.LatinSimple,
+    FlexSearch.Language.en
+);
+
+// create a simple index which can store id-content-pairs
+const index = new FlexSearch.Index({
+    tokenize: "forward",
+    encoder: encoder
+});
+
+// some test data
+const data = [
+    'She doesn’t get up at six o’clock.',
+    'It\'s been raining for five hours now.'
+];
+
+// add data to the index
+data.forEach((item, id) => {
+    index.add(id, item);
+});
+
+// perform query
+let result = index.search("she does not at clock");
+
+// display results
+result.forEach(i => {
+    console.log(data[i]);
+    log(data[i]);
+    log("\n-------------------------------------\n");
+});
+
+// perform query
+result = index.search("it is raining now");
+
+// display results
+result.forEach(i => {
+    console.log(data[i]);
+    log(data[i]);
+});
+
+function log(str){
+    document.body.appendChild(
+        document.createTextNode(str + "\n")
+    );
+}
+```
+
+----------------------------------------
+
+TITLE: Search items in FlexSearch Index
+DESCRIPTION: Illustrates how to perform a search query on a FlexSearch index, including an example of limiting the number of results.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_32
+
+LANGUAGE: javascript
+CODE:
+```
+index.search("John");
+```
+
+LANGUAGE: javascript
+CODE:
+```
+index.search("John", 10);
+```
+
+----------------------------------------
+
+TITLE: StorageInterface Object API Reference
+DESCRIPTION: Outlines the asynchronous methods for the FlexSearch StorageInterface, used for managing persistent storage operations like mounting, opening, closing, destroying, clearing, and committing data.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_27
+
+LANGUAGE: APIDOC
+CODE:
+```
+StorageInterface:
+  mount(index, <options>): async
+  open(): async
+  close(): async
+  destroy(): async
+  clear(): async
+  commit(index): async
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Index and Worker Methods API
+DESCRIPTION: Describes the methods available for FlexSearch Index and Worker instances, covering operations like adding, updating, removing, searching items, managing cache, clearing, and persistence functionalities such as export, import, serialize, mount, commit, and destroy.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_21
+
+LANGUAGE: APIDOC
+CODE:
+```
+index.add(id, string)
+index.append()(id, string)
+index.update(id, string)
+index.remove(id)
+index.search(string, <limit>, <options>)
+index.search(options)
+index.searchCache(...)
+index.contain(id)
+index.clear()
+index.cleanup()
+async index.export(handler)
+async index.import(key, data)
+async index.serialize(boolean)
+async index.mount(db)
+async index.commit()
+async index.destroy()
+```
+
+----------------------------------------
+
+TITLE: Populate FlexSearch Index with Sample Data
+DESCRIPTION: Iterates through the predefined `data` array and adds each movie object to the initialized FlexSearch document index. This step makes the data searchable according to the configured index schema.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/document/index.html#_snippet_2
+
+LANGUAGE: javascript
+CODE:
+```
+for(let i = 0; i < data.length; i++){
+  index.add(data[i]);
+}
+```
+
+----------------------------------------
+
+TITLE: Invalid Document Example: Sequential Data
+DESCRIPTION: Presents an example of a document structure that violates both rules for FlexSearch, starting with an array root and having IDs nested within an array. This structure is not directly supported for indexing.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_21
+
+LANGUAGE: js
+CODE:
+```
+[ // <-- not allowed as document start!
+  {
+    "tag": "cat",
+    "records": [ // <-- not allowed when ID or tag lives inside!
+      {
+        "id": 0,
+        "body": {
+          "title": "some title",
+          "footer": "some text"
+        },
+        "keywords": ["some", "key", "words"]
+      },
+      {
+        "id": 1,
+        "body": {
+          "title": "some title",
+          "footer": "some text"
+        },
+        "keywords": ["some", "key", "words"]
+      }
+    ]
+  }
+]
+```
+
+----------------------------------------
+
+TITLE: Helper Function to Log to Document Body (JavaScript)
+DESCRIPTION: A simple utility function to append text to the document body, followed by a newline. This function is used within the FlexSearch example to display search results directly on the web page.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/basic/index.html#_snippet_2
+
+LANGUAGE: javascript
+CODE:
+```
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: Example Multiple Documents for Indexing
+DESCRIPTION: Provides an array of JavaScript objects, each representing a document with 'id', 'title', and 'content' fields, ready to be added to a FlexSearch index.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_6
+
+LANGUAGE: js
+CODE:
+```
+var docs = [{
+    id: 0,
+    title: "Title A",
+    content: "Body A"
+},{
+    id: 1,
+    title: "Title B",
+    content: "Body B"
+}];
+```
+
+----------------------------------------
+
+TITLE: Resolver Object API Reference
+DESCRIPTION: Describes the methods and properties of the FlexSearch Resolver object, used for combining search results with logical operations (AND, OR, XOR, NOT), boosting, limiting, and offsetting.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_26
+
+LANGUAGE: APIDOC
+CODE:
+```
+Resolver:
+  and(options)
+  or(options)
+  xor(options)
+  not(options)
+  boost(number)
+  limit(number)
+  offset(number)
+  resolve(<options>)
+Properties:
+  result
+  await: Async
+```
+
+----------------------------------------
+
+TITLE: Encoder Object API Reference
+DESCRIPTION: Details the methods of the FlexSearch Encoder object, used for encoding strings, assigning options, and managing filters, stemmers, mappers, matchers, and replacers.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_25
+
+LANGUAGE: APIDOC
+CODE:
+```
+Encoder:
+  encode(string)
+  assign(options, <options>, ...)
+  addFilter(string)
+  addStemmer(string => boolean)
+  addMapper(char, char)
+  addMatcher(string, string)
+  addReplacer(regex, string)
+```
+
+----------------------------------------
+
+TITLE: Start Node.js Application
+DESCRIPTION: Executes the main JavaScript file of the Node.js application. This command typically starts the server or runs the primary script of the project.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/nodejs-commonjs/basic-persistent/README.md#_snippet_2
+
+LANGUAGE: bash
+CODE:
+```
+node index.js
+```
+
+----------------------------------------
+
+TITLE: Initialize FlexSearch Index and Add Data (JavaScript)
+DESCRIPTION: This snippet demonstrates how to create a new FlexSearch index instance, configure it with 'forward' tokenization for partial matching, and then add an array of string data to the index. Each item is added with its array index as the ID.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/basic/index.html#_snippet_0
+
+LANGUAGE: javascript
+CODE:
+```
+// create a simple index which can store id-content-pairs
+const index = new Index({
+  // use forward when you want to match partials
+  // e.g. match "flexsearch" when query "flex"
+  tokenize: "forward"
+});
+
+// some test data
+const data = [
+  'rats',
+  'cats abcd efgh ijkl mnop qrst uvwx cute',
+  'cats abcd efgh ijkl mnop dogs cute',
+  'cats abcd efgh ijkl mnop cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+// add data to the index
+data.forEach((item, id) => {
+  index.add(id, item);
+});
+```
+
+----------------------------------------
+
+TITLE: Perform FlexSearch Query with Suggestions
+DESCRIPTION: Shows how to use FlexSearch's suggestion feature. The query searches for 'karmen or clown or not found' and uses `suggest: true` to provide potential alternative search terms or corrections, even for terms not directly found.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/document/index.html#_snippet_5
+
+LANGUAGE: javascript
+CODE:
+```
+const suggestions = index.search({
+  query: "karmen or clown or not found",
+  tag: {
+    // no data for this category:
+    "genres": "Movie"
+  },
+  suggest: true,
+  enrich: true,
+  merge: true
+});
+console.log(suggestions);
+log(JSON.stringify(suggestions, null, 2));
+```
+
+----------------------------------------
+
+TITLE: Charset Encoder Presets API Reference
+DESCRIPTION: Lists the available Charset encoder presets for universal, Latin-specific, and CJK languages, providing predefined encoding configurations.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_28
+
+LANGUAGE: APIDOC
+CODE:
+```
+Charset Universal Encoder Presets:
+  Exact
+  Default
+  Normalize
+Charset Latin-specific Encoder Presets:
+  LatinBalance
+  LatinAdvanced
+  LatinExtra
+  LatinSoundex
+Charset Chinese, Japanese, Korean Encoder Presets:
+  CJK
+```
+
+----------------------------------------
+
+TITLE: Example Nested Document Data Structure
+DESCRIPTION: Presents a more complex JSON document structure with nested objects, demonstrating how 'id', 'title', and 'content' (with 'header' and 'footer') can be deeply embedded.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_10
+
+LANGUAGE: json
+CODE:
+```
+{
+  "record": {
+    "id": 0,
+    "title": "some title",
+    "content": {
+      "header": "some text",
+      "footer": "some text"
+    }
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Start Node.js Application
+DESCRIPTION: This command executes the main JavaScript file of the Node.js application, typically starting the server or running a script. Ensure all dependencies are installed before running this command.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/nodejs-esm/basic-persistent/README.md#_snippet_2
+
+LANGUAGE: bash
+CODE:
+```
+node index.js
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Enriched Search Results Structure with Specific Fields
+DESCRIPTION: Provides an example of the JSON structure returned when `enrich: true` is used with a document store configured to store specific fields. The `doc` property will only contain the whitelisted fields, demonstrating the selective retrieval of data.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_59
+
+LANGUAGE: js
+CODE:
+```
+[{
+    field: "content",
+    result: [{
+        id: 0,
+        doc: {
+            author: "Jon Doe",
+            email: "john@mail.com"
+        }
+    }]
+}]
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Project Setup and Run
+DESCRIPTION: These commands demonstrate how to install the necessary Node.js dependencies and then execute the main script for the FlexSearch project. The `npm install` command fetches all packages listed in `package.json`, while `node index.js` starts the application.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/nodejs-esm/basic-worker/README.md#_snippet_0
+
+LANGUAGE: bash
+CODE:
+```
+npm install
+```
+
+LANGUAGE: bash
+CODE:
+```
+node index.js
+```
+
+----------------------------------------
+
+TITLE: Example of FlexSearch plucked result set structure
+DESCRIPTION: This code example shows the flat array structure of results when the `pluck` option is used in FlexSearch. It returns an array of enriched document objects directly, without the field-based grouping.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_39
+
+LANGUAGE: js
+CODE:
+```
+[
+    { id: 0, doc: { /* document */ }},
+    { id: 1, doc: { /* document */ }},
+    { id: 2, doc: { /* document */ }}
+]
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Worker Basic Async Usage (Browser)
+DESCRIPTION: This JavaScript snippet illustrates the fundamental use of FlexSearch.Worker for client-side indexing and searching. It shows how to initialize a worker with tokenization, add multiple data entries asynchronously, and execute a search query with suggestions. The results are then logged to the console and appended to the document body.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/basic-worker/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+// create a simple index which can store id-content-pairs
+const index = new FlexSearch.Worker({ tokenize: "forward" });
+
+// some test data
+const data = [
+  'cats abcd efgh ijkl mnop qrst uvwx cute',
+  'cats abcd efgh ijkl mnop qrst cute',
+  'cats abcd efgh ijkl mnop cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+for(let i = 0; i < data.length; i++){
+  await index.add(i, data[i]);
+}
+
+// perform query
+const result = await index.search({ query: "cute cat", suggest: true });
+
+// display results
+result.forEach(i => {
+  console.log(data[i]);
+  log(data[i]);
+});
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: Create and Query FlexSearch Index with Suggestion in Browser
+DESCRIPTION: This JavaScript code snippet initializes a FlexSearch index configured for 'forward' tokenization. It then populates the index with a set of predefined string data. Finally, it executes a search query with the 'suggest' option to find relevant matches and logs the original data corresponding to the search results to the console and the document body.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/basic-suggestion/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+const index = new FlexSearch.Index({
+  tokenize: "forward"
+});
+
+const data = [
+  'cats abcd efgh ijkl mnop qrst uvwx cute',
+  'cats abcd efgh ijkl mnop qrst cute',
+  'cats abcd efgh ijkl dogs cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+data.forEach((item, id) => {
+  index.add(id, item);
+});
+
+const result = index.search({
+  query: "black dog or cute cat",
+  suggest: true
+});
+
+result.forEach(i => {
+  console.log(data[i]);
+  log(data[i]);
+});
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: Example of FlexSearch default result set structure
+DESCRIPTION: This code example illustrates the typical structure of a non-enriched result set returned by FlexSearch. It shows an array of objects, each representing a field with its corresponding array of matching document IDs.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_34
+
+LANGUAGE: js
+CODE:
+```
+[{
+    field: "title",
+    result: [0, 1, 2]
+},{
+    field: "content",
+    result: [3, 4, 5]
+}]
+```
+
+----------------------------------------
+
+TITLE: Example of FlexSearch merged result set structure
+DESCRIPTION: This code example illustrates the structure of a merged result set in FlexSearch, obtained by using the `merge: true` option. It shows how results are grouped by document ID, including the document and the fields it matched.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_37
+
+LANGUAGE: js
+CODE:
+```
+[{
+    id: 1001,
+    doc:{/* stored document */},
+    field: ["fieldname-1", "fieldname-2"]
+},{
+    id: 1002,
+    doc:{/* stored document */},
+    field: ["fieldname-3"]
+}]
+```TITLE: FlexSearch Document Worker Initialization and Search Example (JavaScript)
+DESCRIPTION: This comprehensive JavaScript example demonstrates how to use FlexSearch's Document API with a web worker. It covers initializing the Document instance with specific indexing configurations, adding sample data, and performing various search operations including basic queries with tags, merging results, and generating suggestions. It highlights the use of 'worker: true' for offloading indexing and searching to a web worker.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/document-worker-extern-config/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+import { Document } from "../../../dist/flexsearch.bundle.module.min.js";
+const dirname = import.meta.url.replace("/index.html", "");
+
+// some test data
+const data = [{
+  "tconst": "tt0000001",
+  "titleType": "short",
+  "primaryTitle": "Carmencita",
+  "originalTitle": "Carmencita",
+  "isAdult": 0,
+  "startYear": "1894",
+  "endYear": "",
+  "runtimeMinutes": "1",
+  "genres": [ "Documentary", "Short" ]
+},{
+  "tconst": "tt0000002",
+  "titleType": "short",
+  "primaryTitle": "Le clown et ses chiens",
+  "originalTitle": "Le clown et ses chiens",
+  "isAdult": 0,
+  "startYear": "1892",
+  "endYear": "",
+  "runtimeMinutes": "5",
+  "genres": [ "Animation", "Short" ]
+}];
+
+// create the document and await (!) for the instance response
+const index = await new Document({
+  worker: true,
+  document: {
+    id: "tconst",
+    store: true,
+    index: [{
+      field: "primaryTitle",
+      config: dirname + "/config.primaryTitle.js"
+    },{
+      field: "originalTitle",
+      config: dirname + "/config.originalTitle.js"
+    }],
+    tag: [{
+      field: "startYear"
+    },{
+      field: "genres"
+    }]
+  }
+});
+
+// add test data
+for(let i = 0; i < data.length; i++){
+  await index.add(data[i]);
+}
+
+// perform a query
+const result = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true
+});
+
+// display results
+console.log(result);
+log(JSON.stringify(result, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + merge results
+const merged = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(merged);
+log(JSON.stringify(merged, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + get suggestions
+const suggestions = await index.search({
+  query: "karmen or clown or not found",
+  tag: {
+    // no data for this category:
+    "genres": "Movie"
+  },
+  suggest: true,
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(suggestions);
+log(JSON.stringify(suggestions, null, 2));
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Document Methods API
+DESCRIPTION: Outlines the methods specific to FlexSearch Document instances, including operations for adding, updating, removing, searching documents, managing cache, clearing, and document store functionalities like get and set, along with export and import capabilities.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_22
+
+LANGUAGE: APIDOC
+CODE:
+```
+document.add(<id>, document)
+document.append()(<id>, document)
+document.update(<id>, document)
+document.remove(id)
+document.remove(document)
+document.search(string, <limit>, <options>)
+document.search(options)
+document.searchCache(...)
+document.contain(id)
+document.clear()
+document.cleanup()
+document.get(id)
+document.set(<id>, document)
+async document.export(handler)
+async document.import(key, data)
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Document Indexing and Querying Comprehensive Example
+DESCRIPTION: This comprehensive JavaScript example demonstrates the full lifecycle of using FlexSearch's `Document` index. It covers importing the module, defining sample data, initializing the index with specific document fields, tokenizers, and tags, adding data to the index, and performing various search operations including basic queries, queries with tags, enriched results, merged results, and suggestions. It also includes a simple `log` function for displaying results in a browser.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/document/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+import { Document, Charset } from "https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.compact.module.min.js";
+
+// some test data
+const data = [
+  {
+    "tconst": "tt0000001",
+    "titleType": "short",
+    "primaryTitle": "Carmencita",
+    "originalTitle": "Carmencita",
+    "isAdult": 0,
+    "startYear": "1894",
+    "endYear": "",
+    "runtimeMinutes": "1",
+    "genres": [
+      "Documentary",
+      "Short"
+    ]
+  },
+  {
+    "tconst": "tt0000002",
+    "titleType": "short",
+    "primaryTitle": "Le clown et ses chiens",
+    "originalTitle": "Le clown et ses chiens",
+    "isAdult": 0,
+    "startYear": "1892",
+    "endYear": "",
+    "runtimeMinutes": "5",
+    "genres": [
+      "Animation",
+      "Short"
+    ]
+  }
+];
+
+// create the document index
+const index = new Document({
+  document: {
+    id: "tconst",
+    store: true,
+    index: [
+      { field: "primaryTitle", tokenize: "forward", encoder: Charset.LatinBalance },
+      { field: "originalTitle", tokenize: "forward", encoder: Charset.LatinBalance }
+    ],
+    tag: [
+      { field: "startYear" },
+      { field: "genres" }
+    ]
+  }
+});
+
+// add test data
+for(let i = 0; i < data.length; i++){
+  index.add(data[i]);
+}
+
+// perform a query + enrich results
+const result = index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [
+      "Documentary",
+      "Short"
+    ]
+  },
+  enrich: true
+});
+
+// display results
+console.log(result);
+log(JSON.stringify(result, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + merge results
+const merged = index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [
+      "Documentary",
+      "Short"
+    ]
+  },
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(merged);
+log(JSON.stringify(merged, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + get suggestions
+const suggestions = index.search({
+  query: "karmen or clown or not found",
+  tag: {
+    // no data for this category:
+    "genres": "Movie"
+  },
+  suggest: true,
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(suggestions);
+log(JSON.stringify(suggestions, null, 2));
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Browser Legacy Indexing and Querying
+DESCRIPTION: This JavaScript example demonstrates how to initialize a FlexSearch index, add textual data from an array, and perform complex queries using `FlexSearch.Resolver` with `or`, `and`, and `not` operations. It also includes a simple logging function to display results in the browser.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/basic-resolver/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+// create a simple index which can store id-content-pairs
+const index = new FlexSearch.Index({ tokenize: "forward" });
+
+// some test data
+const data = [
+  'cats abcd efgh ijkl dogs pigs rats cute',
+  'cats abcd efgh ijkl dogs pigs cute',
+  'cats abcd efgh ijkl dogs cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+// add data to the index
+data.forEach((item, id) => {
+  index.add(id, item);
+});
+
+// perform query
+const result = new FlexSearch.Resolver({ index: index, query: "black" })
+  .or({ index: index, query: "cute" })
+  .and([{ index: index, query: "dog" },{ index: index, query: "cat" }])
+  .not({ index: index, query: "rat" })
+  .resolve();
+
+// display results
+result.forEach(i => {
+  console.log(data[i]);
+  log(data[i]);
+});
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Basic Suggestion Example (Browser Module)
+DESCRIPTION: This JavaScript snippet illustrates how to set up a FlexSearch index in a browser using its light module. It initializes an index with 'forward' tokenization, populates it with sample text data, and then performs a suggestion-based search query. The results are logged to the console and appended to the document body.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/basic-suggestion/index.html#_snippet_0
+
+LANGUAGE: javascript
+CODE:
+```
+import { Index } from "https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.light.module.min.js";
+
+// create a simple index which can store id-content-pairs
+const index = new Index({ tokenize: "forward" });
+
+// some test data
+const data = [
+  'cats abcd efgh ijkl mnop qrst uvwx cute',
+  'cats abcd efgh ijkl mnop qrst cute',
+  'cats abcd efgh ijkl dogs cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+// add data to the index
+data.forEach((item, id) => {
+  index.add(id, item);
+});
+
+// perform query
+const result = index.search({ query: "black dog or cute cat", suggest: true });
+
+// display results
+result.forEach(i => {
+  console.log(data[i]);
+  log(data[i]);
+});
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Constructors API
+DESCRIPTION: Lists the available constructors for creating different types of FlexSearch instances, such as Index, Document, Worker, Encoder, Resolver, and IndexedDB.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_19
+
+LANGUAGE: APIDOC
+CODE:
+```
+new Index(<options>) : index
+new Document(options) : document
+new Worker(<options>) : worker
+new Encoder(<options>, <options>, ...) : encoder
+new Resolver(<options>) : resolver
+new IndexedDB(<options>) : indexeddb
+```
+
+----------------------------------------
+
+TITLE: Initialize and Use FlexSearch Index in Browser
+DESCRIPTION: This JavaScript example demonstrates how to set up a basic FlexSearch index, add textual data to it, and then perform a search query. It highlights the 'forward' tokenizer for partial matching and iterates through results to display them in the browser console and DOM.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/basic/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+// create a simple index which can store id-content-pairs
+const index = new FlexSearch.Index({
+  // use forward when you want to match partials
+  // e.g. match "flexsearch" when query "flex"
+  tokenize: "forward"
+});
+
+// some test data
+const data = [
+  'cats abcd efgh ijkl mnop qrst uvwx cute',
+  'cats abcd efgh ijkl mnop qrst cute',
+  'cats abcd efgh ijkl mnop cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+// add data to the index
+data.forEach((item, id) => {
+  index.add(id, item);
+});
+
+// perform query
+const result = index.search("cute cat");
+
+// display results
+result.forEach(i => {
+  console.log(data[i]);
+  log(data[i]);
+});
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Resolver API Methods
+DESCRIPTION: Reference for the methods available on the FlexSearch Resolver object, including boolean operations, result manipulation, and final resolution.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/resolver.md#_snippet_8
+
+LANGUAGE: APIDOC
+CODE:
+```
+Resolver:
+  .and(options, ...)
+    Description: Apply an operation
+    Returns: Resolver (when resolve was not set to false within the options), otherwise result (or promise in async context).
+  .or(options, ...)
+    Description: Apply an operation
+    Returns: Resolver (when resolve was not set to false within the options), otherwise result (or promise in async context).
+  .not(options, ...)
+    Description: Apply an operation
+    Returns: Resolver (when resolve was not set to false within the options), otherwise result (or promise in async context).
+  .xor(options, ...)
+    Description: Apply an operation
+    Returns: Resolver (when resolve was not set to false within the options), otherwise result (or promise in async context).
+  .limit(number)
+    Description: Apply limit to the result
+    Returns: Resolver
+  .offset(number)
+    Description: Apply offset to the result
+    Returns: Resolver
+  .boost(number)
+    Description: Apply boost to the result
+    Returns: Resolver
+  .resolve(options)
+    Description: Resolve results
+    Returns: The final result or promise in async context (can't be executed twice)
+```
+
+----------------------------------------
+
+TITLE: Example Structure of Serialized FlexSearch Index Function
+DESCRIPTION: Provides an example of the internal structure of the JavaScript function generated by 'index.serialize()'. This function contains the necessary data to restore the index state.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/export-import.md#_snippet_3
+
+LANGUAGE: js
+CODE:
+```
+function inject(index){
+    index.reg = new Set([/* ... */]);
+    index.map = new Map([/* ... */]);
+    index.ctx = new Map([/* ... */]);
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch IndexedDB Persistent Storage in Browser
+DESCRIPTION: This asynchronous JavaScript function demonstrates how to initialize a FlexSearch index with IndexedDB for persistent storage in a browser. It covers creating a database instance, mounting the index, adding data, committing changes, and performing a search query. The example also includes a simple logging function to display results directly in the document body.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/basic-persistent/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+(async function(){ // create DB instance with namespace const db = new FlexSearch.IndexedDB("my-store"); // create a simple index which can store id-content-pairs const index = new FlexSearch.Index({ tokenize: "forward" }); // mount database to the index await index.mount(db); // await document.destroy(); // await document.mount(db); // some test data const data = [ 'cats abcd efgh ijkl mnop qrst uvwx cute', 'cats abcd efgh ijkl mnop qrst cute', 'cats abcd efgh ijkl mnop cute', 'cats abcd efgh ijkl cute', 'cats abcd efgh cute', 'cats abcd cute', 'cute cat ' ]; data.forEach((item, id) => { index.add(id, item); }); // transfer changes (bulk) await index.commit(); // perform query const result = await index.search({ query: "cute cat", suggest: true }); // display results result.forEach(i => { console.log(data[i]); log(data[i]); }); function log(str){ document.body.appendChild( document.createTextNode(str + "\n") ); } }());
+```
+
+----------------------------------------
+
+TITLE: Supported Complex Document Structure Example
+DESCRIPTION: Provides an example of a valid complex document structure for FlexSearch. It demonstrates how to organize nested data with the ID and tag at a non-array path, allowing for proper indexing.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_18
+
+LANGUAGE: json
+CODE:
+```
+{
+  "meta": {
+    "tag": "cat",
+    "id": 0
+  },
+  "contents": [
+    {
+      "body": {
+        "title": "some title",
+        "footer": "some text"
+      },
+      "keywords": ["some", "key", "words"]
+    },
+    {
+      "body": {
+        "title": "some title",
+        "footer": "some text"
+      },
+      "keywords": ["some", "key", "words"]
+    }
+  ]
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Document Worker: Indexing and Searching Data
+DESCRIPTION: This JavaScript code snippet illustrates how to set up and use FlexSearch's Document Worker in a browser. It defines a dataset, initializes a document index with 'id', 'store', 'index' (for primary and original titles), and 'tag' (for start year and genres) configurations. It then adds the sample data asynchronously and performs three types of searches: a basic query, a query with merged results, and a query to get suggestions, all while filtering by tags.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/document-worker/index.html#_snippet_0
+
+LANGUAGE: javascript
+CODE:
+```
+import { Document } from "../../../dist/flexsearch.bundle.module.min.js";
+
+const data = [{
+  "tconst": "tt0000001",
+  "titleType": "short",
+  "primaryTitle": "Carmencita",
+  "originalTitle": "Carmencita",
+  "isAdult": 0,
+  "startYear": "1894",
+  "endYear": "",
+  "runtimeMinutes": "1",
+  "genres": [ "Documentary", "Short" ]
+},{
+  "tconst": "tt0000002",
+  "titleType": "short",
+  "primaryTitle": "Le clown et ses chiens",
+  "originalTitle": "Le clown et ses chiens",
+  "isAdult": 0,
+  "startYear": "1892",
+  "endYear": "",
+  "runtimeMinutes": "5",
+  "genres": [ "Animation", "Short" ]
+}];
+
+const index = new Document({
+  worker: true,
+  document: {
+    id: "tconst",
+    store: true,
+    index: [
+      { field: "primaryTitle", tokenize: "forward", encoder: "LatinBalance" },
+      { field: "originalTitle", tokenize: "forward", encoder: "LatinBalance" }
+    ],
+    tag: [
+      { field: "startYear" },
+      { field: "genres" }
+    ]
+  }
+});
+
+for(let i = 0; i < data.length; i++){
+  await index.add(data[i]);
+}
+
+const result = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true
+});
+
+console.log(result);
+log(JSON.stringify(result, null, 2));
+log("\n-------------------------------------\n");
+
+const merged = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true,
+  merge: true
+});
+
+console.log(merged);
+log(JSON.stringify(merged, null, 2));
+log("\n-------------------------------------\n");
+
+const suggestions = await index.search({
+  query: "karmen or clown or not found",
+  tag: {
+    "genres": "Movie"
+  },
+  suggest: true,
+  enrich: true,
+  merge: true
+});
+
+console.log(suggestions);
+log(JSON.stringify(suggestions, null, 2));
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Document Indexing and Highlighting in JavaScript
+DESCRIPTION: This JavaScript example demonstrates how to initialize a FlexSearch Document index, add sample data, perform a search query with suggestions and result enrichment, and apply HTML highlighting to matched terms. It also includes a simple log function to display results in the browser.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/document-highlighting/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+import { Document, Charset } from "https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.compact.module.min.js";
+
+// some test data
+const data = [{
+  "id": 1,
+  "title": "Carmencita"
+},{
+  "id": 2,
+  "title": "Le clown et ses chiens"
+}];
+
+// create the document index
+const index = new Document({
+  document: {
+    store: true,
+    index: [{
+      field: "title",
+      tokenize: "forward",
+      encoder: Charset.LatinBalance
+    }]
+  }
+});
+
+// add test data
+for(let i = 0; i < data.length; i++){
+  index.add(data[i]);
+}
+
+// perform a query
+const result = index.search({
+  query: "karmen or clown or not found",
+  suggest: true, // set enrich to true (required)
+  enrich: true,
+  // highlight template
+  // $1 is a placeholder for the matched partial
+  highlight: "<b>$1</b>"
+});
+
+// display results
+console.log(result);
+log(JSON.stringify(result, null, 2));
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: Example Simple Document Data Structure
+DESCRIPTION: Illustrates a basic JSON object representing a document with an 'id' and 'content' field, suitable for indexing.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_4
+
+LANGUAGE: json
+CODE:
+```
+{
+    "id": 0,
+    "content": "some text"
+}
+```
+
+----------------------------------------
+
+TITLE: Document Object API Reference
+DESCRIPTION: Defines the methods and properties available on the FlexSearch Document object, primarily for persistent index operations.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_23
+
+LANGUAGE: APIDOC
+CODE:
+```
+Document:
+  mount(db): async
+  commit(): async
+  destroy(): async
+Properties:
+  store
+```
+
+----------------------------------------
+
+TITLE: FlexSearch.Document Browser Worker Example with Tagged Search and Suggestions
+DESCRIPTION: This JavaScript example demonstrates how to use FlexSearch.Document in a browser environment, leveraging web workers for efficient indexing. It shows how to define a document schema with 'id', 'store', 'index' fields (primaryTitle, originalTitle), and 'tag' fields (startYear, genres). The example then populates the index with sample movie data, performs various search queries including tag-based filtering, result enrichment, merging multiple results, and generating search suggestions. It also includes a simple 'log' function to display results in the browser.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/document-worker/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+(async function(){ 
+  // some test data
+  const data = [{ "tconst": "tt0000001", "titleType": "short", "primaryTitle": "Carmencita", "originalTitle": "Carmencita", "isAdult": 0, "startYear": "1894", "endYear": "", "runtimeMinutes": "1", "genres": [ "Documentary", "Short" ] },{ "tconst": "tt0000002", "titleType": "short", "primaryTitle": "Le clown et ses chiens", "originalTitle": "Le clown et ses chiens", "isAdult": 0, "startYear": "1892", "endYear": "", "runtimeMinutes": "5", "genres": [ "Animation", "Short" ] }];
+
+  // create the document index
+  const index = new FlexSearch.Document({
+    // enable worker:
+    worker: true,
+    // hint: the encoder is shared for both index fields
+    // because primaryTitle and originalTitle has almost
+    // equal content, otherwise you should set the encoder
+    // option to each of the field options separately
+    encoder: FlexSearch.Charset.LatinBalance,
+    document: {
+      id: "tconst",
+      store: true,
+      index: [{ field: "primaryTitle", tokenize: "forward" },{ field: "originalTitle", tokenize: "forward" }],
+      tag: [{ field: "startYear" },{ field: "genres" }]
+    }
+  });
+
+  // add test data
+  for(let i = 0; i < data.length; i++){
+    await index.add(data[i]);
+  }
+
+  // perform a query
+  const result = await index.search({
+    query: "karmen",
+    tag: { "startYear": "1894", "genres": [ "Documentary", "Short" ] },
+    enrich: true
+  });
+  // display results
+  console.log(result);
+  log(JSON.stringify(result, null, 2));
+  log("\n-------------------------------------\n");
+
+  // perform a query + merge results
+  const merged = await index.search({
+    query: "karmen",
+    tag: { "startYear": "1894", "genres": [ "Documentary", "Short" ] },
+    enrich: true,
+    merge: true
+  });
+  // display results
+  console.log(merged);
+  log(JSON.stringify(merged, null, 2));
+  log("\n-------------------------------------\n");
+
+  // perform a query + get suggestions
+  const suggestions = await index.search({
+    query: "karmen or clown or not found",
+    tag: { // no data for this category:
+      "genres": "Movie"
+    },
+    suggest: true,
+    enrich: true,
+    merge: true
+  });
+  // display results
+  console.log(suggestions);
+  log(JSON.stringify(suggestions, null, 2));
+
+  function log(str){
+    document.body.appendChild(
+      document.createTextNode(str + "\n")
+    );
+  }
+}());
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Search Options API Reference
+DESCRIPTION: Detailed reference for configurable parameters used in FlexSearch queries, covering result limits, offsets, scoring resolution, caching, and suggestion features.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_39
+
+LANGUAGE: APIDOC
+CODE:
+```
+limit: number
+  Description: Sets the limit of results
+  Default: 100
+offset: number
+  Description: Apply offset (skip items)
+  Default: 0
+resolution: number
+  Description: Limit the resolution (score) of the results
+  Default: 
+suggest: Boolean
+  Description: Enables Suggestions in results
+  Default: false
+cache: Boolean
+  Description: Use a Query Cache
+  Default: false
+resolve: Boolean
+  Description: When set to false, an instance of a Resolver is returned to apply further operations
+  Default: true
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Enriched Search Results Structure Example
+DESCRIPTION: Provides an example of the JSON structure returned when `enrich: true` is used in a FlexSearch query. Each result object includes the document `id` and a `doc` property containing the stored content, making it easy to access the original data.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_56
+
+LANGUAGE: js
+CODE:
+```
+[{
+    id: 0,
+    doc: { /* content from store */ }
+},{
+    id: 1,
+    doc: { /* content from store */ }
+}]
+```
+
+----------------------------------------
+
+TITLE: Helper Function to Log Output to Document Body
+DESCRIPTION: A simple JavaScript helper function `log` that appends text content to the HTML document's body. This is used in the example to display search results directly on a web page, useful for browser-based demonstrations.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/document/index.html#_snippet_6
+
+LANGUAGE: javascript
+CODE:
+```
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Async Index Methods API
+DESCRIPTION: Lists asynchronous methods for common index operations like adding, appending, updating, removing, and searching. These methods return Promises or accept callbacks.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_24
+
+LANGUAGE: APIDOC
+CODE:
+```
+Async Equivalents (Non-Blocking Balanced):
+  addAsync(... , <callback>): async
+  appendAsync(... , <callback>): async
+  updateAsync(... , <callback>): async
+  removeAsync(... , <callback>): async
+  searchAsync(... , <callback>): async
+  searchCacheAsync(... , <callback>): async
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Persistent Document Indexing and Searching in Browser
+DESCRIPTION: This JavaScript example demonstrates the use of FlexSearch.IndexedDB for persistent storage and FlexSearch.Document for creating a searchable index. It shows how to initialize the database and document index, add data, commit changes, and perform various search operations including basic queries, merged results, and suggestions, with support for tag-based filtering.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/document-persistent/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+(async function(){ 
+// some test data
+const data = [{
+  "tconst": "tt0000001",
+  "titleType": "short",
+  "primaryTitle": "Carmencita",
+  "originalTitle": "Carmencita",
+  "isAdult": 0,
+  "startYear": "1894",
+  "endYear": "",
+  "runtimeMinutes": "1",
+  "genres": [ "Documentary", "Short" ]
+},{
+  "tconst": "tt0000002",
+  "titleType": "short",
+  "primaryTitle": "Le clown et ses chiens",
+  "originalTitle": "Le clown et ses chiens",
+  "isAdult": 0,
+  "startYear": "1892",
+  "endYear": "",
+  "runtimeMinutes": "5",
+  "genres": [ "Animation", "Short" ]
+}];
+
+// create DB instance with namespace
+const db = new FlexSearch.IndexedDB("my-store");
+
+// create the document index
+const index = new FlexSearch.Document({
+  // hint: the encoder is shared for both index fields
+  // because primaryTitle and originalTitle has almost
+  // equal content, otherwise you should set the encoder
+  // option to each of the field options separately
+  encoder: FlexSearch.Charset.LatinBalance,
+  document: {
+    id: "tconst",
+    store: true,
+    index: [{
+      field: "primaryTitle",
+      tokenize: "forward"
+    },{
+      field: "originalTitle",
+      tokenize: "forward"
+    }],
+    tag: [{
+      field: "startYear"
+    },{
+      field: "genres"
+    }]
+  }
+});
+
+await index.mount(db);
+// await document.destroy();
+// await document.mount(db);
+
+// add test data
+for(let i = 0; i < data.length; i++){
+  index.add(data[i]);
+}
+
+// transfer changes (bulk)
+await index.commit();
+
+// perform a query
+const result = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true
+});
+
+// display results
+console.log(result);
+log(JSON.stringify(result, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + merge results
+const merged = await index.search({
+  query: "karmen",
+  tag: {
+    "startYear": "1894",
+    "genres": [ "Documentary", "Short" ]
+  },
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(merged);
+log(JSON.stringify(merged, null, 2));
+log("\n-------------------------------------\n");
+
+// perform a query + get suggestions
+const suggestions = await index.search({
+  query: "karmen or clown or not found",
+  tag: {
+    // no data for this category:
+    "genres": "Movie"
+  },
+  suggest: true,
+  enrich: true,
+  merge: true
+});
+
+// display results
+console.log(suggestions);
+log(JSON.stringify(suggestions, null, 2));
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+
+}());
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Text Indexing and Searching with Language Packs (JavaScript)
+DESCRIPTION: This snippet demonstrates the basic usage of FlexSearch to create a text index, add data, and perform searches. It initializes an index with a custom encoder for language packs (LatinSimple, English) and 'forward' tokenization. The example indexes a set of sentences and then queries them, logging the results to the document body.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/language-pack/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+const encoder = new FlexSearch.Encoder(
+    FlexSearch.Charset.LatinSimple,
+    FlexSearch.Language.en
+);
+
+// create a simple index which can store id-content-pairs
+const index = new FlexSearch.Index({
+    tokenize: "forward",
+    encoder: encoder
+});
+
+// some test data
+const data = [
+    'She doesn’t get up at six o’clock.',
+    'It\'s been raining for five hours now.'
+];
+
+// add data to the index
+data.forEach((item, id) => {
+    index.add(id, item);
+});
+
+// perform query
+let result = index.search("she does not at clock");
+
+// display results
+result.forEach(i => {
+    console.log(data[i]);
+    log(data[i]);
+    log("\n-------------------------------------\n");
+});
+
+// perform query
+result = index.search("it is raining now");
+
+// display results
+result.forEach(i => {
+    console.log(data[i]);
+    log(data[i]);
+});
+
+function log(str){
+    document.body.appendChild(
+        document.createTextNode(str + "\n")
+    );
+}
+```
+
+----------------------------------------
+
+TITLE: Search items in FlexSearch Index
+DESCRIPTION: Illustrates how to perform a search query on a FlexSearch index, including an example of limiting the number of results.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_32
+
+LANGUAGE: javascript
+CODE:
+```
+index.search("John");
+```
+
+LANGUAGE: javascript
+CODE:
+```
+index.search("John", 10);
+```
+
+----------------------------------------
+
+TITLE: StorageInterface Object API Reference
+DESCRIPTION: Outlines the asynchronous methods for the FlexSearch StorageInterface, used for managing persistent storage operations like mounting, opening, closing, destroying, clearing, and committing data.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_27
+
+LANGUAGE: APIDOC
+CODE:
+```
+StorageInterface:
+  mount(index, <options>): async
+  open(): async
+  close(): async
+  destroy(): async
+  clear(): async
+  commit(index): async
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Index and Worker Methods API
+DESCRIPTION: Describes the methods available for FlexSearch Index and Worker instances, covering operations like adding, updating, removing, searching items, managing cache, clearing, and persistence functionalities such as export, import, serialize, mount, commit, and destroy.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_21
+
+LANGUAGE: APIDOC
+CODE:
+```
+index.add(id, string)
+index.append()(id, string)
+index.update(id, string)
+index.remove(id)
+index.search(string, <limit>, <options>)
+index.search(options)
+index.searchCache(...)
+index.contain(id)
+index.clear()
+index.cleanup()
+async index.export(handler)
+async index.import(key, data)
+async index.serialize(boolean)
+async index.mount(db)
+async index.commit()
+async index.destroy()
+```
+
+----------------------------------------
+
+TITLE: Populate FlexSearch Index with Sample Data
+DESCRIPTION: Iterates through the predefined `data` array and adds each movie object to the initialized FlexSearch document index. This step makes the data searchable according to the configured index schema.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/document/index.html#_snippet_2
+
+LANGUAGE: javascript
+CODE:
+```
+for(let i = 0; i < data.length; i++){
+  index.add(data[i]);
+}
+```
+
+----------------------------------------
+
+TITLE: Invalid Document Example: Sequential Data
+DESCRIPTION: Presents an example of a document structure that violates both rules for FlexSearch, starting with an array root and having IDs nested within an array. This structure is not directly supported for indexing.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_21
+
+LANGUAGE: js
+CODE:
+```
+[ // <-- not allowed as document start!
+  {
+    "tag": "cat",
+    "records": [ // <-- not allowed when ID or tag lives inside!
+      {
+        "id": 0,
+        "body": {
+          "title": "some title",
+          "footer": "some text"
+        },
+        "keywords": ["some", "key", "words"]
+      },
+      {
+        "id": 1,
+        "body": {
+          "title": "some title",
+          "footer": "some text"
+        },
+        "keywords": ["some", "key", "words"]
+      }
+    ]
+  }
+]
+```
+
+----------------------------------------
+
+TITLE: Helper Function to Log to Document Body (JavaScript)
+DESCRIPTION: A simple utility function to append text to the document body, followed by a newline. This function is used within the FlexSearch example to display search results directly on the web page.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/basic/index.html#_snippet_2
+
+LANGUAGE: javascript
+CODE:
+```
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: Example Multiple Documents for Indexing
+DESCRIPTION: Provides an array of JavaScript objects, each representing a document with 'id', 'title', and 'content' fields, ready to be added to a FlexSearch index.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_6
+
+LANGUAGE: js
+CODE:
+```
+var docs = [{
+    id: 0,
+    title: "Title A",
+    content: "Body A"
+},{
+    id: 1,
+    title: "Title B",
+    content: "Body B"
+}];
+```
+
+----------------------------------------
+
+TITLE: Resolver Object API Reference
+DESCRIPTION: Describes the methods and properties of the FlexSearch Resolver object, used for combining search results with logical operations (AND, OR, XOR, NOT), boosting, limiting, and offsetting.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_26
+
+LANGUAGE: APIDOC
+CODE:
+```
+Resolver:
+  and(options)
+  or(options)
+  xor(options)
+  not(options)
+  boost(number)
+  limit(number)
+  offset(number)
+  resolve(<options>)
+Properties:
+  result
+  await: Async
+```
+
+----------------------------------------
+
+TITLE: Encoder Object API Reference
+DESCRIPTION: Details the methods of the FlexSearch Encoder object, used for encoding strings, assigning options, and managing filters, stemmers, mappers, matchers, and replacers.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_25
+
+LANGUAGE: APIDOC
+CODE:
+```
+Encoder:
+  encode(string)
+  assign(options, <options>, ...)
+  addFilter(string)
+  addStemmer(string => boolean)
+  addMapper(char, char)
+  addMatcher(string, string)
+  addReplacer(regex, string)
+```
+
+----------------------------------------
+
+TITLE: Start Node.js Application
+DESCRIPTION: Executes the main JavaScript file of the Node.js application. This command typically starts the server or runs the primary script of the project.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/nodejs-commonjs/basic-persistent/README.md#_snippet_2
+
+LANGUAGE: bash
+CODE:
+```
+node index.js
+```
+
+----------------------------------------
+
+TITLE: Initialize FlexSearch Index and Add Data (JavaScript)
+DESCRIPTION: This snippet demonstrates how to create a new FlexSearch index instance, configure it with 'forward' tokenization for partial matching, and then add an array of string data to the index. Each item is added with its array index as the ID.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-module/basic/index.html#_snippet_0
+
+LANGUAGE: javascript
+CODE:
+```
+// create a simple index which can store id-content-pairs
+const index = new Index({
+  // use forward when you want to match partials
+  // e.g. match "flexsearch" when query "flex"
+  tokenize: "forward"
+});
+
+// some test data
+const data = [
+  'rats',
+  'cats abcd efgh ijkl mnop qrst uvwx cute',
+  'cats abcd efgh ijkl mnop dogs cute',
+  'cats abcd efgh ijkl mnop cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+// add data to the index
+data.forEach((item, id) => {
+  index.add(id, item);
+});
+```
+
+----------------------------------------
+
+TITLE: Perform FlexSearch Query with Suggestions
+DESCRIPTION: Shows how to use FlexSearch's suggestion feature. The query searches for 'karmen or clown or not found' and uses `suggest: true` to provide potential alternative search terms or corrections, even for terms not directly found.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/document/index.html#_snippet_5
+
+LANGUAGE: javascript
+CODE:
+```
+const suggestions = index.search({
+  query: "karmen or clown or not found",
+  tag: {
+    // no data for this category:
+    "genres": "Movie"
+  },
+  suggest: true,
+  enrich: true,
+  merge: true
+});
+console.log(suggestions);
+log(JSON.stringify(suggestions, null, 2));
+```
+
+----------------------------------------
+
+TITLE: Charset Encoder Presets API Reference
+DESCRIPTION: Lists the available Charset encoder presets for universal, Latin-specific, and CJK languages, providing predefined encoding configurations.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/README.md#_snippet_28
+
+LANGUAGE: APIDOC
+CODE:
+```
+Charset Universal Encoder Presets:
+  Exact
+  Default
+  Normalize
+Charset Latin-specific Encoder Presets:
+  LatinBalance
+  LatinAdvanced
+  LatinExtra
+  LatinSoundex
+Charset Chinese, Japanese, Korean Encoder Presets:
+  CJK
+```
+
+----------------------------------------
+
+TITLE: Example Nested Document Data Structure
+DESCRIPTION: Presents a more complex JSON document structure with nested objects, demonstrating how 'id', 'title', and 'content' (with 'header' and 'footer') can be deeply embedded.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_10
+
+LANGUAGE: json
+CODE:
+```
+{
+  "record": {
+    "id": 0,
+    "title": "some title",
+    "content": {
+      "header": "some text",
+      "footer": "some text"
+    }
+  }
+}
+```
+
+----------------------------------------
+
+TITLE: Start Node.js Application
+DESCRIPTION: This command executes the main JavaScript file of the Node.js application, typically starting the server or running a script. Ensure all dependencies are installed before running this command.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/nodejs-esm/basic-persistent/README.md#_snippet_2
+
+LANGUAGE: bash
+CODE:
+```
+node index.js
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Enriched Search Results Structure with Specific Fields
+DESCRIPTION: Provides an example of the JSON structure returned when `enrich: true` is used with a document store configured to store specific fields. The `doc` property will only contain the whitelisted fields, demonstrating the selective retrieval of data.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_59
+
+LANGUAGE: js
+CODE:
+```
+[{
+    field: "content",
+    result: [{
+        id: 0,
+        doc: {
+            author: "Jon Doe",
+            email: "john@mail.com"
+        }
+    }]
+}]
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Project Setup and Run
+DESCRIPTION: These commands demonstrate how to install the necessary Node.js dependencies and then execute the main script for the FlexSearch project. The `npm install` command fetches all packages listed in `package.json`, while `node index.js` starts the application.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/nodejs-esm/basic-worker/README.md#_snippet_0
+
+LANGUAGE: bash
+CODE:
+```
+npm install
+```
+
+LANGUAGE: bash
+CODE:
+```
+node index.js
+```
+
+----------------------------------------
+
+TITLE: Example of FlexSearch plucked result set structure
+DESCRIPTION: This code example shows the flat array structure of results when the `pluck` option is used in FlexSearch. It returns an array of enriched document objects directly, without the field-based grouping.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_39
+
+LANGUAGE: js
+CODE:
+```
+[
+    { id: 0, doc: { /* document */ }},
+    { id: 1, doc: { /* document */ }},
+    { id: 2, doc: { /* document */ }}
+]
+```
+
+----------------------------------------
+
+TITLE: FlexSearch Worker Basic Async Usage (Browser)
+DESCRIPTION: This JavaScript snippet illustrates the fundamental use of FlexSearch.Worker for client-side indexing and searching. It shows how to initialize a worker with tokenization, add multiple data entries asynchronously, and execute a search query with suggestions. The results are then logged to the console and appended to the document body.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/basic-worker/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+// create a simple index which can store id-content-pairs
+const index = new FlexSearch.Worker({ tokenize: "forward" });
+
+// some test data
+const data = [
+  'cats abcd efgh ijkl mnop qrst uvwx cute',
+  'cats abcd efgh ijkl mnop qrst cute',
+  'cats abcd efgh ijkl mnop cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+for(let i = 0; i < data.length; i++){
+  await index.add(i, data[i]);
+}
+
+// perform query
+const result = await index.search({ query: "cute cat", suggest: true });
+
+// display results
+result.forEach(i => {
+  console.log(data[i]);
+  log(data[i]);
+});
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: Create and Query FlexSearch Index with Suggestion in Browser
+DESCRIPTION: This JavaScript code snippet initializes a FlexSearch index configured for 'forward' tokenization. It then populates the index with a set of predefined string data. Finally, it executes a search query with the 'suggest' option to find relevant matches and logs the original data corresponding to the search results to the console and the document body.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/example/browser-legacy/basic-suggestion/index.html#_snippet_0
+
+LANGUAGE: JavaScript
+CODE:
+```
+const index = new FlexSearch.Index({
+  tokenize: "forward"
+});
+
+const data = [
+  'cats abcd efgh ijkl mnop qrst uvwx cute',
+  'cats abcd efgh ijkl mnop qrst cute',
+  'cats abcd efgh ijkl dogs cute',
+  'cats abcd efgh ijkl cute',
+  'cats abcd efgh cute',
+  'cats abcd cute',
+  'cats cute'
+];
+
+data.forEach((item, id) => {
+  index.add(id, item);
+});
+
+const result = index.search({
+  query: "black dog or cute cat",
+  suggest: true
+});
+
+result.forEach(i => {
+  console.log(data[i]);
+  log(data[i]);
+});
+
+function log(str){
+  document.body.appendChild(
+    document.createTextNode(str + "\n")
+  );
+}
+```
+
+----------------------------------------
+
+TITLE: Example of FlexSearch default result set structure
+DESCRIPTION: This code example illustrates the typical structure of a non-enriched result set returned by FlexSearch. It shows an array of objects, each representing a field with its corresponding array of matching document IDs.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_34
+
+LANGUAGE: js
+CODE:
+```
+[{
+    field: "title",
+    result: [0, 1, 2]
+},{
+    field: "content",
+    result: [3, 4, 5]
+}]
+```
+
+----------------------------------------
+
+TITLE: Example of FlexSearch merged result set structure
+DESCRIPTION: This code example illustrates the structure of a merged result set in FlexSearch, obtained by using the `merge: true` option. It shows how results are grouped by document ID, including the document and the fields it matched.
+SOURCE: https://github.com/nextapps-de/flexsearch/blob/master/doc/document-search.md#_snippet_37
+
+LANGUAGE: js
+CODE:
+```
+[{
+    id: 1001,
+    doc:{/* stored document */},
+    field: ["fieldname-1", "fieldname-2"]
+},{
+    id: 1002,
+    doc:{/* stored document */},
+    field: ["fieldname-3"]
+}]
+```

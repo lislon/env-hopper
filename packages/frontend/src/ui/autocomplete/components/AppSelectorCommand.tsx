@@ -90,7 +90,7 @@ function AppPagesPanel({
   return (
     <div className="p-4">
 
-      {app.ui.groups.length === 0 || !app.ui.groups.some(group => group.pages.length > 0) ? (
+      {!app.ui?.groups || app.ui.groups.length === 0 || !app.ui.groups.some(group => group.pages.length > 0) ? (
         <div className="text-center py-8">
           <FileText className="w-8 h-8 mx-auto mb-3 opacity-50" />
           <p className="text-sm text-muted-foreground">No pages available</p>
@@ -145,7 +145,7 @@ export function AppSelectorCommand({
   const handleAppSelect = (app: EhBackendAppInputIndexed) => {
     setValue(app.slug);
     // If app has no pages, select it directly
-    if (!app.ui.groups.length || !app.ui.groups.some(group => group.pages.length > 0)) {
+    if (!app.ui?.groups || app.ui.groups.length === 0 || !app.ui.groups.some(group => group.pages.length > 0)) {
       onSelect?.(app);
     }
   };
@@ -172,7 +172,7 @@ export function AppSelectorCommand({
               <CommandGroup heading="Applications" className="p-2">
                 {apps.map((app) => {
                   // Get first 3 pages across all groups for SubItems
-                  const firstPages = app.ui.groups
+                  const firstPages = (app.ui?.groups || [])
                     .flatMap(group => 
                       group.pages.map(page => ({ ...page, groupName: group.displayName }))
                     )
@@ -182,7 +182,7 @@ export function AppSelectorCommand({
                     <React.Fragment key={app.slug}>
                       <AppItem
                         value={app.slug}
-                        subtitle={app.abbr}
+                        subtitle={app.abbr || ''}
                         onSelect={() => handleAppSelect(app)}
                       >
                         <AppIcon app={app} className="w-5 h-5" />
@@ -190,7 +190,7 @@ export function AppSelectorCommand({
                           <span className="font-medium">{app.displayName}</span>
                           <span className="text-xs text-muted-foreground">{app.abbr}</span>
                         </div>
-                        {app.ui.groups.length > 0 && app.ui.groups.some(group => group.pages.length > 0) && (
+                        {app.ui?.groups && app.ui.groups.length > 0 && app.ui.groups.some(group => group.pages.length > 0) && (
                           <ExternalLink className="w-3 h-3 text-muted-foreground opacity-60 ml-auto" />
                         )}
                       </AppItem>
@@ -257,7 +257,7 @@ export function AppSelectorCommandDialog({
 
   const handleAppSelect = (app: EhBackendAppInputIndexed) => {
     // If app has pages, navigate to app pages, otherwise select the app directly
-    if (app.ui.groups.length > 0 && app.ui.groups.some(group => group.pages.length > 0)) {
+    if (app.ui?.groups && app.ui.groups.length > 0 && app.ui.groups.some(group => group.pages.length > 0)) {
       setPages([...pages, app.slug]);
     } else {
       onSelect?.(app);
@@ -299,7 +299,7 @@ export function AppSelectorCommandDialog({
             <CommandGroup heading="Applications">
               {apps.map((app) => {
                 // Get first 3 pages across all groups for this app
-                const firstPages = app.ui.groups
+                const firstPages = (app.ui?.groups || [])
                   .flatMap(group => 
                     group.pages.map(page => ({ ...page, groupName: group.displayName }))
                   )
@@ -316,7 +316,7 @@ export function AppSelectorCommandDialog({
                         <span className="font-medium">{app.displayName}</span>
                         <span className="text-xs text-muted-foreground">{app.abbr}</span>
                       </div>
-                      {app.ui.groups.length > 0 && app.ui.groups.some(group => group.pages.length > 0) && (
+                      {app.ui?.groups && app.ui.groups.length > 0 && app.ui.groups.some(group => group.pages.length > 0) && (
                         <ExternalLink className="w-3 h-3 text-muted-foreground opacity-60 ml-auto" />
                       )}
                     </CommandItem>
@@ -349,7 +349,7 @@ export function AppSelectorCommandDialog({
               </CommandItem>
               
               <CommandGroup heading={`${currentApp.displayName} - Pages`}>
-                {currentApp.ui.groups.map((group) =>
+                {(currentApp.ui?.groups || []).map((group) =>
                   group.pages.map((page) => (
                     <CommandItem
                       key={`${group.slug}-${page.slug}`}

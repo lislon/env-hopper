@@ -1,8 +1,14 @@
 import React, { createContext, ReactNode, use, useMemo } from 'react';
 import { EhIndexData } from '@env-hopper/backend-core';
 
+interface EhFrontendConfig {
+  microinteractionsToKeep: number;
+  searchHistoryToKeep: number;
+}
+
 export interface EhConfigContext {
   indexData: EhIndexData;
+  ehConfig: EhFrontendConfig;
 }
 
 const EhConfigContext = createContext<EhConfigContext | undefined>(undefined);
@@ -18,6 +24,10 @@ export function EhConfigProvider({
 }: EhConfigProviderProps) {
   const value: EhConfigContext = useMemo(() => ({
     indexData,
+    ehConfig: {
+      microinteractionsToKeep: 1000,
+      searchHistoryToKeep: 1000,
+    },
   }), [indexData]);
 
   return (

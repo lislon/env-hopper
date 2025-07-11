@@ -14,7 +14,7 @@ export function EnvDropdownContent({
   isUntouched
 }: EnvDropdownContentProps) {
   const { indexData } = useEhGlobalContextProps();
-  const listEnvs = indexData.envs;
+  const listEnvs = Object.values(indexData.envs);
 
   // Filter environments based on search value
   const filteredEnvs = listEnvs.filter((env) =>

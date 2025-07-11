@@ -1,5 +1,5 @@
 import { EhBackendIndexCommon } from './common/indexCommon';
-import { EhBackendAppInputIndexed, EhBackendTagsDescriptionDataIndexed } from './backend';
+import { EhBackendAppInputIndexed, EhBackendGenericMetaInput, EhBackendTagsDescriptionDataIndexed } from './backend';
 
 export * from './common/indexCommon';
 
@@ -13,6 +13,7 @@ export interface EhAppLinkType {
 export interface EhEnvDto {
   slug: string;
   displayName: string;
+  meta?: EhBackendGenericMetaInput;
 }
 
 export type EhAppDto = EhBackendAppInputIndexed;

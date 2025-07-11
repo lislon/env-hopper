@@ -5,19 +5,16 @@ import { EnvDropdownContent } from "./EnvDropdownContent";
 
 export function EnvDropdownSelector() {
   const { indexData } = useEhGlobalContextProps();
-  const listEnvs = indexData.envs;
-  const { env, setEnv } = useEhUserContext();
+  const listEnvs = Object.values(indexData.envs);
+  const { currentEnv, setCurrentEnv } = useEhUserContext();
 
   const handleSelect = (envSlug: string) => {
-    const selectedEnv = listEnvs.find(e => e.slug === envSlug);
-    if (selectedEnv) {
-      setEnv(selectedEnv);
-    }
+    setCurrentEnv(envSlug);
   };
 
   return (
     <BaseDropdownSelector
-      value={env?.displayName}
+      value={currentEnv?.displayName}
       placeholder="Select Env"
       onSelect={handleSelect}
     >

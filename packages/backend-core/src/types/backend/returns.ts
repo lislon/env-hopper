@@ -13,7 +13,10 @@ export interface EhBackendVersionsReturn {
 }
 
 export type EhBackendAppDto = EhBackendAppInputIndexed;
-export type EhBackendEnvDto = EhEnvDto;
+
+export interface EhBackendEnvDto extends EhEnvDto {
+
+}
 
 export interface EhAppsMeta {
   defaultIcon?: string

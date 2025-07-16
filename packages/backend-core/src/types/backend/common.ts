@@ -1,5 +1,5 @@
-export interface EhBackendGenericMetaInput {
-  [key: string]: string | null | EhBackendGenericMetaInput;
+export interface EhMetaDictionary {
+  [key: string]: string | null | EhMetaDictionary;
 }
 
 export interface EhBackendUiDefaultsInput {

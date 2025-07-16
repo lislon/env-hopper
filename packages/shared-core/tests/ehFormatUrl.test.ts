@@ -1,16 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { urlFormatter } from '~/index';
+import { ehFormatUrl } from '~/index';
 
-describe('urlFormatter', () => {
+describe('ehFormatUrl', () => {
 
   it('generates the correct URL from nested templates', () => {
-    const actual = urlFormatter(
-      '<%= app.meta.ui.baseUrl + "/prod-lims/app/home" %>',
+    const actual = ehFormatUrl(
+      '<%= it.appMeta.baseUrl + "/prod-lims/app/home" %>',
       {
         appMeta: {
-          ui: {
-            baseUrl: '<%= it.env.meta.isProduction ? "https://production.example.com" : "https://" + it.env.meta.subdomain + ".example.com:8250" %>'
-          }
+          baseUrl: '<%= it.envMeta.isProduction ? "https://production.example.com" : "https://" + it.envMeta.subdomain + ".example.com:8250" %>'
         },
         envMeta: {
           isProduction: false,

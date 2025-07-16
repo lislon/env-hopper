@@ -1,17 +1,17 @@
-import { EhBackendGenericMetaInput } from './common';
+import { EhMetaDictionary } from './common';
 
 export interface EhBackendEnvironmentInput {
   slug: string;
   displayName?: string;
   description?: string;
-  meta?: EhBackendGenericMetaInput;
+  meta?: EhMetaDictionary;
 }
 
 export interface EhBackendDeploymentInput {
   envId: string;
   appId: string;
   displayVersion: string;
-  meta?: EhBackendGenericMetaInput;
+  meta?: EhMetaDictionary;
 }
 
 export interface EhBackendDeployableInput {

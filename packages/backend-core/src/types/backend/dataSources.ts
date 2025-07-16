@@ -1,7 +1,7 @@
-import { EhBackendGenericMetaInput } from './common';
+import { EhMetaDictionary } from './common';
 
 export interface EhBackendDataSourceInputCommon {
-  meta?: EhBackendGenericMetaInput;
+  meta?: EhMetaDictionary;
 }
 
 export interface EhBackendDataSourceInputDb {

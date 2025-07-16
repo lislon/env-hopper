@@ -1,9 +1,10 @@
-import { EhAppsMeta, EhBackendAppInputIndexed, EhBackendContextIndexed, EhBackendEnvDto, EhBackendResourceIndexed } from '../backend';
+import { EhAppIndexed, EhAppsMeta, EhContextIndexed, EhResourceIndexed } from '../backend';
+import { EhEnvIndexed } from '../commonTypes';
 
 export interface EhBackendIndexCommon {
-  envs: Record<string, EhBackendEnvDto>;
-  apps: Record<string, EhBackendAppInputIndexed>;
+  envs: Record<string, EhEnvIndexed>;
+  apps: Record<string, EhAppIndexed>;
   appsMeta: EhAppsMeta
-  contexts: EhBackendContextIndexed[];
-  resources: EhBackendResourceIndexed[];
+  contexts: EhContextIndexed[];
+  resources: EhResourceIndexed[];
 }

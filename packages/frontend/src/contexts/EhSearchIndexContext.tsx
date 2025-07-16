@@ -1,7 +1,6 @@
 import React, { createContext, ReactNode, use, useMemo } from 'react';
 import { Index } from 'flexsearch';
 import { useEhGlobalContextProps } from './EhConfigContext';
-import { EhBackendAppInputIndexed } from '@env-hopper/backend-core/src/types';
 
 export interface EhSearchIndexContext {
   appPageIndex: Index;

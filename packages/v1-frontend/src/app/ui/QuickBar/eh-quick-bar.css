@@ -7,16 +7,14 @@
 }
 
 :where(
-    .eh-quick-bar
-      li:not(.menu-title, .disabled)
-      > *:not(ul, details, .menu-title)
-  ),
+  .eh-quick-bar li:not(.menu-title, .disabled) > *:not(ul, details, .menu-title)
+),
 :where(
-    .eh-quick-bar
-      li:not(.menu-title, .disabled)
-      > details
-      > summary:not(.menu-title)
-  ) {
+  .eh-quick-bar
+    li:not(.menu-title, .disabled)
+    > details
+    > summary:not(.menu-title)
+) {
   &:not(summary, .active, .btn).focus,
   &:not(summary, .active, .btn):focus,
   &:is(summary):not(.active, .btn):focus-visible {

@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     root: __dirname,
-    cacheDir: '../../node_modules/.vite/apps/frontend',
+    cacheDir: '../../node_modules/.vite/packages/v1-frontend',
 
     server: {
       port: 4000,
@@ -80,7 +80,7 @@ export default defineConfig(({ mode }) => {
     ],
 
     build: {
-      outDir: '../../dist/apps/frontend',
+      outDir: '../../dist/packages/v1-frontend',
       emptyOutDir: true,
       reportCompressedSize: true,
       sourcemap: true,
@@ -101,7 +101,7 @@ export default defineConfig(({ mode }) => {
       hookTimeout: process.env['MORE_TIME'] ? 3600_000 : undefined,
 
       coverage: {
-        reportsDirectory: '../../coverage/apps/frontend',
+        reportsDirectory: '../../coverage/packages/v1-frontend',
         provider: 'v8',
       },
     },

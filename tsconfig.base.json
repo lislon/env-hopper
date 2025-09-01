@@ -22,7 +22,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@env-hopper/types": ["apps/types/src/index.ts"],
+      "@env-hopper/types": ["packages/v1-types/src/index.ts"],
       "@root": [""]
     }
   },

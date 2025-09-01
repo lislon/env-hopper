@@ -26,7 +26,7 @@ Navigate to `http://localhost:4001`
 Change schema in `schema.prisma` and then run
 
 ```bash
-cd apps/backend
+cd packages/v1-backend
 prisma generate
 npx prisma migrate dev
 ```

@@ -7,14 +7,14 @@ RUN npm ci --quiet
 COPY . /app/
 ARG configuration=production
 RUN NX_SKIP_NX_CACHE=true VITE_APP_VERSION=${APP_VERSION} npx nx run-many -t build -p backend frontend
-RUN mv /app/dist/apps/frontend /app/dist/apps/backend/assets
+RUN mv /app/dist/packages/v1-frontend /app/dist/packages/v1-backend/assets
 
 FROM node:22-alpine AS express-js
 ARG APP_VERSION
 RUN apk add --no-cache bash
 WORKDIR /app
-COPY --from=build-stage /app/dist/apps/backend .
-COPY --from=build-stage /app/apps/backend/prisma .
+COPY --from=build-stage /app/dist/packages/v1-backend .
+COPY --from=build-stage /app/packages/v1-backend/prisma .
 COPY --from=build-stage /app/docker-entrypoint.sh .
 
 RUN npx prisma generate \

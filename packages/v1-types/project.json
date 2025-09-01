@@ -1,7 +1,7 @@
 {
-  "name": "types",
+  "name": "v1-types",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "types/src",
+  "sourceRoot": "packages/v1-types/src",
   "projectType": "library",
   "tags": [],
   "// targets": "to see all targets run: nx show project types --web",

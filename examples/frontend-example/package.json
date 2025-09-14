@@ -5,31 +5,31 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "clean": "premove ./dist ./coverage ./dist-ts",
-    "start": "node dist/index.js",
     "build": "vite build",
-    "dev": "vite",
+    "clean": "premove ./dist ./coverage ./dist-ts",
     "compile": "tsc --build",
+    "dev": "vite",
+    "start": "node dist/index.js",
     "test:eslint": "eslint ./src",
     "test:unit": "vitest"
   },
   "dependencies": {
     "@env-hopper/frontend-build-vite": "workspace:*",
-    "@env-hopper/frontend-core": "workspace:*",
+    "@env-hopper/frontend-core": "^2.0.1-alpha",
     "cross-env": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "tailwindcss": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vitest": "catalog:",
     "vite-plugin-svgr": "catalog:",
     "vite-tsconfig-paths": "catalog:",
-    "@tailwindcss/vite": "catalog:",
-    "tailwindcss": "catalog:"
+    "vitest": "catalog:"
   }
 }

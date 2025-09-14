@@ -5,16 +5,16 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "clean": "premove ./dist ./coverage ./dist-ts",
-    "start": "node dist/index.js",
     "build": "pnpm run clean && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --sourcemap",
-    "dev": "node node_modules/vite/bin/vite.js",
+    "clean": "premove ./dist ./coverage ./dist-ts",
     "compile": "tsc --build",
+    "dev": "node node_modules/vite/bin/vite.js",
+    "start": "node dist/index.js",
     "test:eslint": "eslint ./src",
     "test:unit": "vitest"
   },
   "dependencies": {
-    "@env-hopper/backend-core": "workspace:*",
+    "@env-hopper/backend-core": "^2.0.1-alpha",
     "@trpc/server": "catalog:",
     "cross-env": "catalog:",
     "express": "catalog:",
@@ -30,7 +30,7 @@
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vitest": "catalog:",
-    "vite-plugin-node": "catalog:"
+    "vite-plugin-node": "catalog:",
+    "vitest": "catalog:"
   }
 }

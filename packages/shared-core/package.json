@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/shared-core",
-  "version": "0.1.0",
+  "version": "2.0.1-alpha",
   "description": "Shared core utilities for Env Hopper",
   "homepage": "https://github.com/lislon/env-hopper",
   "repository": {
@@ -32,10 +32,10 @@
     "build": "vite build",
     "clean": "premove ./dist ./coverage ./dist-ts",
     "compile": "tsc --build",
+    "dev": "tsx watch src/index.ts",
     "test:eslint": "eslint ./src",
     "test:unit": "vitest",
-    "test:unit:dev": "pnpm run test:unit --watch",
-    "dev": "tsx watch src/index.ts"
+    "test:unit:dev": "pnpm run test:unit --watch"
   },
   "dependencies": {
     "eta": "^3.5.0"

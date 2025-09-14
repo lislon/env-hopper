@@ -2,6 +2,7 @@
   "recommendations": [
     "esbenp.prettier-vscode",
     "firsttris.vscode-jest-runner",
-    "vitest.explorer"
+    "vitest.explorer",
+    "dbaeumer.vscode-eslint"
   ]
 }

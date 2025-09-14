@@ -1,13 +1,13 @@
 import { createContext, use, useEffect, useMemo } from 'react'
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react'
 import type { ResouceJumpItemParent } from '~/modules/resourceJump/types'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { usePluginManagerForPlugin } from '~/modules/pluginCore/PluginManagerContext'
 
-export interface PageUrlPluginContext {}
+export interface PageUrlPluginContextIface {}
 
-const PageUrlPluginContextInstance = createContext<
-  PageUrlPluginContext | undefined
+const PageUrlPluginContext = createContext<
+  PageUrlPluginContextIface | undefined
 >(undefined)
 
 interface PageUrlPluginProviderProps {
@@ -39,19 +39,15 @@ export function PageUrlPluginContextProvider({
       )
     })
     setResouceJumps(jumpLinks)
-  }, [apps])
+  }, [apps, setResouceJumps])
 
-  const value: PageUrlPluginContext = useMemo(() => ({}), [])
+  const value: PageUrlPluginContextIface = useMemo(() => ({}), [])
 
-  return (
-    <PageUrlPluginContextInstance value={value}>
-      {children}
-    </PageUrlPluginContextInstance>
-  )
+  return <PageUrlPluginContext value={value}>{children}</PageUrlPluginContext>
 }
 
-export function usePageUrlPlugin(): PageUrlPluginContext {
-  const context = use(PageUrlPluginContextInstance)
+export function usePageUrlPlugin(): PageUrlPluginContextIface {
+  const context = use(PageUrlPluginContext)
   if (context === undefined) {
     throw new Error('useEhUserContext must be used within an EhUserProvider')
   }

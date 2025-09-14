@@ -4,7 +4,7 @@ import type {
   FuzzySearchContext,
   FuzzySearchIndex,
   FuzzySearchPrepareIndexParams,
-  FuzzySearchReturnItem
+  FuzzySearchReturnItem,
 } from './types'
 
 export function makeFuzzySearchIndex(
@@ -30,8 +30,8 @@ export function makeFuzzySearchIndex(
     encoder: encoder,
   })
   params.entries.forEach((entry, idx) => {
-  index.add(idx, entry.displayName || entry.slug)
-  // index.add(idx, enrichTokensForIndex(tokenize(entry.displayName || entry.slug)).join(' '))
+    index.add(idx, entry.displayName || entry.slug)
+    // index.add(idx, enrichTokensForIndex(tokenize(entry.displayName || entry.slug)).join(' '))
   })
   return {
     flexIndex: index,

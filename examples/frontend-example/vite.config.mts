@@ -1,14 +1,11 @@
 import { defineConfig, type UserConfig } from 'vite'
-//import { removeUseClient } from './src/vite-plugins/remove-use-client';
-import * as path from 'node:path'
-import * as process from 'node:process'
 import { frontendViteConfig } from '@env-hopper/frontend-build-vite'
-import tsconfigPaths from 'vite-tsconfig-paths';
+import tsconfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
+import packageJson from './package.json'
 
-
-const config = defineConfig((env) => {
-  const cfg = frontendViteConfig(env)
+const config = defineConfig(() => {
+  const cfg = frontendViteConfig()
 
   return {
     ...cfg,
@@ -30,6 +27,13 @@ const config = defineConfig((env) => {
     },
 
     plugins: [tailwindcss(), ...cfg.plugins, tsconfigPaths()],
+    test: {
+      name: packageJson.name,
+      dir: './src/__tests__',
+      watch: false,
+      environment: 'jsdom',
+      typecheck: { enabled: true },
+    },
 
     // test: {
     //   globals: true,

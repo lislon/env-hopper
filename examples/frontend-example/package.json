@@ -26,6 +26,7 @@
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "vitest": "catalog:",
     "vite-plugin-svgr": "catalog:",
     "vite-tsconfig-paths": "catalog:",
     "@tailwindcss/vite": "catalog:",

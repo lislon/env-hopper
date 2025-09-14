@@ -1,14 +1,10 @@
-
 interface QuickJumpBarProps {
   className?: string
 }
 
-
-
 export function QuickJumpBar(_: QuickJumpBarProps) {
   return null
   // const indexData = useBootstrapConfig()
-  
 
   // const { setCurrentResourceJumpSlug } = useResourceJumpContext();
   // const { setCurrentEnv, currentEnv } = useEnvironmentContext();

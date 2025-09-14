@@ -41,7 +41,6 @@
     "@tanstack/react-router-devtools": "catalog:",
     "@tanstack/router-plugin": "catalog:",
     "@tailwindcss/vite": "catalog:"
-
   },
   "devDependencies": {
     "@env-hopper/shared-core": "workspace:*",

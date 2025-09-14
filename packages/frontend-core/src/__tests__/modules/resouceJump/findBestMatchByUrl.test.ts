@@ -6,11 +6,8 @@ import type {
   EhEnvIndexed,
 } from '@env-hopper/backend-core'
 import type { ResourceJumpItem } from '~/modules/resourceJump/types'
-import type {FindBestMatchingResourceJumpParams} from '~/modules/resourceJump/findBestMatchByUrl';
-import {
-  
-  findBestMatchByUrl
-} from '~/modules/resourceJump/findBestMatchByUrl'
+import type { FindBestMatchingResourceJumpParams } from '~/modules/resourceJump/findBestMatchByUrl'
+import { findBestMatchByUrl } from '~/modules/resourceJump/findBestMatchByUrl'
 
 function makeEnvs(
   envAsCommaSeparated: string | Array<string>,
@@ -85,7 +82,7 @@ describe('findBestMatchByUrl', () => {
       urlAppSlug: urlAppSlug,
       envs: envs,
       resourceJumps: resourceJumps,
-  getAvailabilityMatrix: async () => await Promise.resolve(matrixData),
+      getAvailabilityMatrix: async () => await Promise.resolve(matrixData),
       getNameMigrations: async (r) => {
         if (r.resourceSlug === 'old-app%2Fhome') {
           return await Promise.resolve({
@@ -101,7 +98,7 @@ describe('findBestMatchByUrl', () => {
           ['staging-env', 'prod-env', 'test-env'].map((envSlug, index) => ({
             envSlug,
             timestamp: 100 - index,
-          }))
+          })),
         ),
       ...override,
     })
@@ -128,7 +125,7 @@ describe('findBestMatchByUrl', () => {
 
   it('app-only simple', async () => {
     expect(
-      await run('/app/test-app', { getEnvHistory: async () => [] }),
+      await run('/app/test-app', { getEnvHistory: () => Promise.resolve([]) }),
     ).toEqual({
       env: undefined,
       resourceJump: 'test-app',

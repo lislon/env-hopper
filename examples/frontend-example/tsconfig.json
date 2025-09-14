@@ -1,9 +1,8 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "jsx": "react-jsx",
     "esModuleInterop": false,
-    "types": ["vite/client", "vitest"],
     "outDir": "./dist-ts",
     "rootDir": ".",
     "paths": {

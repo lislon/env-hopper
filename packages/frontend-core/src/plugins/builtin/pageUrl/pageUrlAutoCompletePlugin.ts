@@ -1,11 +1,9 @@
 import type {
   BaseAutoCompleteItemRender,
   EhPluginResouceJumpCtx,
-} from '~/modules/pluginCore/types';
-import type { ResourceJumpItem } from '~/modules/resourceJump/types';
-import type {
-  PluginPageUrlAutocompleteItem
-} from './pageUrlTypes';
+} from '~/modules/pluginCore/types'
+import type { ResourceJumpItem } from '~/modules/resourceJump/types'
+import type { PluginPageUrlAutocompleteItem } from './pageUrlTypes'
 
 export function isAutocompleteItem(
   item: { type?: string } | null | undefined,
@@ -30,7 +28,8 @@ export function autocompleteFilter(
   return items.filter((item) => {
     return (
       item.displayName.toLowerCase().includes(needle.toLowerCase()) ||
-      item?.parent?.displayName.toLowerCase().includes(needle.toLowerCase())
+      (item.parent &&
+        item.parent.displayName.toLowerCase().includes(needle.toLowerCase()))
     )
   })
 }
@@ -45,11 +44,10 @@ export function autocompleteToString(
 export function formatJumpButtonTitle(
   item: PluginPageUrlAutocompleteItem,
 ): string {
-  if (item?.parent?.displayName) {
-    if (item.parent && item.parent.hasSingleChild) {
+  if (item.parent && item.parent.displayName) {
+    if (item.parent.hasSingleChild) {
       return item.parent.displayName
     }
-
     return `${item.parent.displayName} :: ${item.displayName}`
   }
   return item.displayName
@@ -61,8 +59,8 @@ export function getJumpUrl(
 ): string {
   console.log('jump Url', jumpResource, ctx)
 
-    if (!jumpResource) {
-      return ''
-    }
-    return `https://${jumpResource.slug}.ru`
+  if (!jumpResource) {
+    return ''
+  }
+  return `https://${jumpResource.slug}.ru`
 }

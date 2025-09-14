@@ -3,6 +3,7 @@
 **/build
 **/coverage
 **/dist
+**/dist-ts
 pnpm-lock.yaml
 **/snapshots
 **/.vercel

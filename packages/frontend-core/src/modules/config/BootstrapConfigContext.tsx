@@ -1,5 +1,5 @@
 import { createContext, use } from 'react'
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react'
 import type { BootstrapConfigData } from '@env-hopper/backend-core'
 
 const BootstrapConfigContext = createContext<BootstrapConfigData | undefined>(

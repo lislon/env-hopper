@@ -3,25 +3,26 @@ import { useCombobox } from 'downshift'
 import { CornerDownRight, Edit3Icon, ExpandIcon, XIcon } from 'lucide-react'
 import { unique } from 'radashi'
 import React, { useEffect, useMemo } from 'react'
+import { EhBaseSelectorRoot } from '../../../ui/components/commandInput/EhBaseSelector'
+import { mapDisplayedItems } from '../helpers'
+import { useResourceJumpContext } from '../ResourceJumpContext'
+import type {
+  BaseAutoCompletableItem,
+  BaseAutoCompleteItemRender,
+} from '~/modules/pluginCore/types'
+import type {
+  AppAutoCompleteAmend,
+  AutoCompleteContext,
+} from '../../../ui/components/commandInput/types'
 import { Button } from '~/components/ui/button'
 import { PopoverTrigger } from '~/components/ui/popover'
 import { cn } from '~/lib/utils'
-import type {
-  BaseAutoCompletableItem, BaseAutoCompleteItemRender
-} from '~/modules/pluginCore/types'
 import {
   autocompleteFilter,
   autocompleteToString,
   isAutocompleteItem,
 } from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
 import { highlightMatches } from '~/util/highlightMatches'
-import { EhBaseSelectorRoot } from '../../../ui/components/commandInput/EhBaseSelector'
-import type {
-  AppAutoCompleteAmend,
-  AutoCompleteContext,
-} from '../../../ui/components/commandInput/types'
-import { mapDisplayedItems } from '../helpers'
-import { useResourceJumpContext } from '../ResourceJumpContext'
 
 interface EhJumpResourceSelectorProps {
   className?: string
@@ -33,7 +34,10 @@ export function EhJumpResourceSelector({
   const { jumpResources, currentResourceJump, setCurrentResourceJumpSlug } =
     useResourceJumpContext()
 
-  const appFilter = (needle: string, allItems: Array<BaseAutoCompletableItem>) => {
+  const appFilter = (
+    needle: string,
+    allItems: Array<BaseAutoCompletableItem>,
+  ) => {
     return autocompleteFilter(
       allItems.filter((i) => isAutocompleteItem(i)),
       needle,
@@ -56,7 +60,10 @@ export function EhJumpResourceSelector({
     inputValue: comboInputValue,
     setInputValue,
   } = useCombobox<BaseAutoCompletableItem>({
-    onInputValueChange({ inputValue: changedInputValue, isOpen: changedIsOpen }) {
+    onInputValueChange({
+      inputValue: changedInputValue,
+      isOpen: changedIsOpen,
+    }) {
       if (changedIsOpen) {
         const matchedIds = unique(appFilter(changedInputValue, jumpResources))
         setDisplayedItems(matchedIds)
@@ -82,7 +89,7 @@ export function EhJumpResourceSelector({
         selectItem(f)
       }
     }
-  }, [currentResourceJump])
+  }, [currentResourceJump, jumpResources, selectItem])
 
   const ctx = useMemo<AutoCompleteContext>(() => {
     return {

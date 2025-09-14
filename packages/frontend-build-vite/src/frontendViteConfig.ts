@@ -1,13 +1,10 @@
-import { type ConfigEnv, type UserConfig } from "vite";
+import * as process from 'node:process'
 import viteReact from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import svgr from 'vite-plugin-svgr'
-//import { removeUseClient } from './src/vite-plugins/remove-use-client';
-import * as process from 'node:process'
-//import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
-// import tailwindcss from '@tailwindcss/vite'
+import type { UserConfig } from 'vite'
 
-export function frontendViteConfig({}: ConfigEnv) {
+export function frontendViteConfig() {
   // const env = { ...process.env, ...loadEnv(mode, process.cwd()) }
 
   return {
@@ -37,7 +34,7 @@ export function frontendViteConfig({}: ConfigEnv) {
 
     plugins: [
       // tailwindcss(),
-      //removeUseClient(),
+      // removeUseClient(),
       // nxViteTsPaths(),
       VitePWA({
         // registerType:
@@ -72,7 +69,7 @@ export function frontendViteConfig({}: ConfigEnv) {
         },
       }),
       svgr(),
-      //TanStackRouterVite(),
+      // TanStackRouterVite(),
       viteReact(),
       process.env['NODE_ENV'] === 'test' && {
         name: 'load-svg',
@@ -96,5 +93,4 @@ export function frontendViteConfig({}: ConfigEnv) {
     //   },
     // },
   } satisfies UserConfig
-
 }

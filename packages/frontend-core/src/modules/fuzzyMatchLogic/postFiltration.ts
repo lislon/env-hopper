@@ -1,7 +1,5 @@
-import type {
-  FuzzySearchInputEntry
-} from './types'
 import { normalize } from './utils'
+import type { FuzzySearchInputEntry } from './types'
 
 export function isTokensConsequent(
   foundTokens: Array<string>,

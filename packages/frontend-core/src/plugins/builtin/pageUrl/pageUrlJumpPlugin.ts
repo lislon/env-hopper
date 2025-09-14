@@ -1,6 +1,11 @@
-import type {PluginPageUrlAutoCompletableParent,
-  PluginPageUrlAutocompleteItem} from './pageUrlTypes';
-import type {EhPluginResouceJumpFactoryCtx, EhPluginResourceJumpable} from '~/modules/pluginCore/types';
+import type {
+  PluginPageUrlAutoCompletableParent,
+  PluginPageUrlAutocompleteItem,
+} from './pageUrlTypes'
+import type {
+  EhPluginResouceJumpFactoryCtx,
+  EhPluginResourceJumpable,
+} from '~/modules/pluginCore/types'
 
 export class PageUrlJumpPlugin implements EhPluginResourceJumpable {
   public readonly name = 'pageUrl'

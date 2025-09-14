@@ -46,6 +46,6 @@ catalog:
   vite-plugin-svgr: ^4.2.0
   vitest: 3.2.2
   zod: ^3.25.49
-  vite-tsconfig-paths: "^5.1.4"
-  tailwindcss: "^4.1.7"
+  vite-tsconfig-paths: '^5.1.4'
+  tailwindcss: '^4.1.7'
   '@tailwindcss/vite': ^4.0.5

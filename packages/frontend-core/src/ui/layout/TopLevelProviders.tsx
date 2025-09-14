@@ -1,4 +1,4 @@
-import React, { Suspense, useMemo , useState } from 'react'
+import React, { Suspense, useMemo, useState } from 'react'
 
 import { LoadingScreen } from './LoadingScreen'
 import { useQueryBootstrapConfig } from '~/api/data/useQueryBootstrapConfig'

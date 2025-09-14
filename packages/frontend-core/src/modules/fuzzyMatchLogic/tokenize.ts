@@ -1,4 +1,3 @@
-
 export function normalize(str: string): string {
   const text = str.normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
   return text

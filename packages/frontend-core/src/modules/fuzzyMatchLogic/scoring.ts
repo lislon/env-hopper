@@ -1,7 +1,7 @@
 import { prefixFrac } from './features/prefixFrac'
 import type {
   FuzzySearchPreliminaryResult,
-  FuzzySearchReturnItem
+  FuzzySearchReturnItem,
 } from './types'
 
 const W = {
@@ -25,10 +25,10 @@ export function score(
     // const tc = tokenCoverage(qTokens, norm);
     // const pb = positionBonus(q, norm, W.positionDecayAlpha);
 
-  let scoreValue = 0
-  scoreValue += W.prefixFrac * pf
+    let scoreValue = 0
+    scoreValue += W.prefixFrac * pf
 
-  return { entry, score: scoreValue }
+    return { entry, score: scoreValue }
   })
 
   // stable sort by score desc, then by displayName

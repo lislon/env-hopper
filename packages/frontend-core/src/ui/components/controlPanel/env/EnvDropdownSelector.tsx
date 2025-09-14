@@ -1,6 +1,6 @@
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
 import { BaseDropdownSelector } from '../BaseDropdownSelector'
 import { EnvDropdownContent } from './EnvDropdownContent'
+import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
 
 export function EnvDropdownSelector() {
   const { currentEnv, setCurrentEnv } = useEnvironmentContext()

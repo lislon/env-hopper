@@ -8,5 +8,6 @@ export function NotFoundError() {
       <p>
         Navigate to <Link to={'/'}>Home page</Link>
       </p>
-    </main>)
+    </main>
+  )
 }

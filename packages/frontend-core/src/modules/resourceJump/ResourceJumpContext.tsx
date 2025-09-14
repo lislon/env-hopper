@@ -1,8 +1,4 @@
-import type { EnvSlug, JumpResouceSlug } from '@env-hopper/backend-core'
 import { useNavigate } from '@tanstack/react-router'
-import type {
-  ReactNode
-} from 'react'
 import {
   createContext,
   use,
@@ -11,15 +7,17 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
-import type { EhUrlParams } from '~/types/ehTypes'
-import { getEhToOptions } from '~/util/route-utils'
 import { useEnvironmentContext } from '../environment/EnvironmentContext'
 import { usePluginManager } from '../pluginCore/PluginManagerContext'
 import { buildJumpUrl } from './buildJumpUrl'
+import type { EhUrlParams } from '~/types/ehTypes'
+import type { ReactNode } from 'react'
+import type { EnvSlug, JumpResouceSlug } from '@env-hopper/backend-core'
 import type { ResourceJumpItem, ResourceJumpLoaderReturn } from './types'
+import { getEhToOptions } from '~/util/route-utils'
+import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 
-export interface ResourceJumpContext {
+export interface ResourceJumpContextIface {
   setCurrentResourceJumpSlug: (slug: JumpResouceSlug | undefined) => void
   currentResourceJump: ResourceJumpItem | undefined
   jumpResources: Array<ResourceJumpItem>
@@ -29,9 +27,9 @@ export interface ResourceJumpContext {
   ) => string
 }
 
-const ResourceJumpContextInstance = createContext<
-  ResourceJumpContext | undefined
->(undefined)
+const ResourceJumpContext = createContext<ResourceJumpContextIface | undefined>(
+  undefined,
+)
 
 interface ResouceJumpProviderProps {
   children: ReactNode
@@ -52,9 +50,10 @@ export function ResourceJumpProvider({
   >(resourceJumpLoader.resourceSlug)
 
   const [jumpResources, setJumpResources] = useState<Array<ResourceJumpItem>>(
-    autocompleteFactoryItems({
-      bootstrapConfig: indexData,
-    }),
+    () =>
+      autocompleteFactoryItems({
+        bootstrapConfig: indexData,
+      }),
   )
 
   // const [initialEnvAppSubBased] = useState(() => {
@@ -80,6 +79,7 @@ export function ResourceJumpProvider({
   )
 
   useEffect(() => {
+    // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect
     setJumpResources(autocompleteFactoryItems({ bootstrapConfig: indexData }))
   }, [indexData, autocompleteFactoryItems])
 
@@ -97,7 +97,12 @@ export function ResourceJumpProvider({
         true,
       )
     }
-  }, [currentResourceJump, currentEnv, resourceJumpLoader])
+  }, [
+    currentResourceJump,
+    currentEnv,
+    resourceJumpLoader,
+    fixUrlBasedOnSelection,
+  ])
 
   const getJumpUrl = useCallback(
     (
@@ -113,25 +118,21 @@ export function ResourceJumpProvider({
     [resourceJumpLoader],
   )
 
-  const value: ResourceJumpContext = useMemo(
+  const value: ResourceJumpContextIface = useMemo(
     () => ({
       currentResourceJump,
       setCurrentResourceJumpSlug,
       jumpResources,
       getJumpUrl,
     }),
-    [currentResourceJump, setCurrentResourceJumpSlug, jumpResources],
+    [currentResourceJump, jumpResources, getJumpUrl],
   )
 
-  return (
-    <ResourceJumpContextInstance value={value}>
-      {children}
-    </ResourceJumpContextInstance>
-  )
+  return <ResourceJumpContext value={value}>{children}</ResourceJumpContext>
 }
 
-export function useResourceJumpContext(): ResourceJumpContext {
-  const context = use(ResourceJumpContextInstance)
+export function useResourceJumpContext(): ResourceJumpContextIface {
+  const context = use(ResourceJumpContext)
   if (context === undefined) {
     throw new Error(
       'useResourceJumpContext must be used within an ResourceJumpContext',

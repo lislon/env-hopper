@@ -6,7 +6,7 @@
     "sharedGlobals": [
       "{workspaceRoot}/.nvmrc",
       "{workspaceRoot}/package.json",
-      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/tsconfig.json",
       "{workspaceRoot}/eslint.config.js",
       "{workspaceRoot}/pnpm-workspace.yaml"
     ],

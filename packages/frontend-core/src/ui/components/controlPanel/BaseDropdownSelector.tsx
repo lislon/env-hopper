@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useCombobox } from 'downshift'
-import type { ReactNode } from 'react';
+import type { ReactNode } from 'react'
 import type { BaseDropdownContentProps } from '~/types/ehTypes'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
@@ -39,7 +39,7 @@ function DropdownInput({
     getInputProps,
     getItemProps,
     highlightedIndex,
-    closeMenu,
+    // closeMenu,
   } = useCombobox({
     inputValue,
     isOpen: true, // Always open when this component is rendered
@@ -48,17 +48,17 @@ function DropdownInput({
       setInputValue(newInputValue || '')
       setIsUntouched(false)
     },
-    onSelectedItemChange: ({ selectedItem: changedSelectedItem }) => {
-      if (changedSelectedItem) {
-        console.log('✅ Item selected:', changedSelectedItem)
-        onSelect(changedSelectedItem)
-        closeMenu()
-        onClose()
-      }
-    },
+    // onSelectedItemChange: ({ selectedItem: changedSelectedItem }) => {
+    //   if (changedSelectedItem !== null) {
+    //     console.log('✅ Item selected:', changedSelectedItem)
+    //     onSelect(changedSelectedItem)
+    //     closeMenu()
+    //     onClose()
+    //   }
+    // },
     onIsOpenChange: ({ isOpen: newIsOpen }) => {
       console.log('📋 Combobox open change:', newIsOpen)
-      if (!newIsOpen) {
+      if (newIsOpen === false) {
         console.log('📋 Combobox closed, closing dropdown')
         onClose()
       }
@@ -155,6 +155,7 @@ export function BaseDropdownSelector({
       size="default"
       className={`px-4 font-normal ${className} min-w-[15ch]`}
       onClick={handleButtonClick}
+      type="button"
     >
       {value || placeholder}
     </Button>

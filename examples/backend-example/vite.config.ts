@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import { VitePluginNode } from 'vite-plugin-node'
+import packageJson from './package.json'
 
 export default defineConfig({
   resolve: {
@@ -28,4 +29,11 @@ export default defineConfig({
       tsCompiler: 'esbuild',
     }),
   ],
+  test: {
+    name: packageJson.name,
+    dir: './src/__tests__',
+    watch: false,
+    environment: 'jsdom',
+    typecheck: { enabled: true },
+  },
 })

@@ -5,7 +5,7 @@ import packageJson from './package.json'
 const config = defineConfig({
   test: {
     name: packageJson.name,
-    dir: './tests',
+    dir: './src/__tests__',
     watch: false,
     environment: 'jsdom',
     typecheck: { enabled: true },

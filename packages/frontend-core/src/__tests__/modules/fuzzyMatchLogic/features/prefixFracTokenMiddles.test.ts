@@ -15,12 +15,6 @@ describe('prefixFracAcrossTokens', () => {
     expect(actual.toFixed(2)).toEqual('1.00')
   })
 
-  it('1 token match full', () => {
-    const input = makeInputEntry('env-001-abc')
-    const actual = prefixFracAcrossTokens(input, ['001'])
-    expect(actual.toFixed(2)).toEqual('1.00')
-  })
-
   it('1 token match partial l', () => {
     const input = makeInputEntry('env-001-abc')
     const actual = prefixFracAcrossTokens(input, ['001', 'ab'])

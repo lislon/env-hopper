@@ -9,8 +9,8 @@ import { App, appPropsFactory } from '@env-hopper/frontend-core'
 
 // Render the app
 
-const props = appPropsFactory();
- 
+const props = appPropsFactory()
+
 const rootElement = document.getElementById('root')!
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)

@@ -1,27 +1,18 @@
-import { objectify } from 'radashi';
+import { objectify } from 'radashi'
+import { createContext, use, useCallback, useMemo, useState } from 'react'
+import { isEhPluginResourceJumpable } from './types'
+import type { ReactNode } from 'react'
+import type { PluginPageUrlAutocompleteItem } from '~/plugins/builtin/pageUrl/pageUrlTypes'
+import type { PartialRecord } from '~/types/utilityTypes'
+import type { ResourceJumpItem } from '../resourceJump/types'
+import type { PluginInterfaceForCore } from './makePluginManagerContext'
 import type {
-  ReactNode
-} from 'react';
-import {
-  createContext,
-  use,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
-import type { PluginPageUrlAutocompleteItem } from '~/plugins/builtin/pageUrl/pageUrlTypes';
-import type { PartialRecord } from '~/types/utilityTypes';
-import type { ResourceJumpItem } from '../resourceJump/types';
-import type { PluginInterfaceForCore } from './makePluginManagerContext';
-import type {
-  EhPlugin, EhPluginResouceJumpFactoryCtx,
-  PluginName
-} from './types';
-import {
-  isEhPluginResourceJumpable
-} from './types';
+  EhPlugin,
+  EhPluginResouceJumpFactoryCtx,
+  PluginName,
+} from './types'
 
-export interface PluginManagerContext {
+export interface PluginManagerContextIface {
   plugins: Array<EhPlugin>
   interfaceForPlugins: PartialRecord<
     PluginName,
@@ -37,8 +28,8 @@ export interface PluginManagerInterfaceForPlugins {
   setResouceJumps: (items: Array<ResourceJumpItem>) => void
 }
 
-const PluginManagerContextInstance = createContext<
-  PluginManagerContext | undefined
+const PluginManagerContext = createContext<
+  PluginManagerContextIface | undefined
 >(undefined)
 
 interface PluginManagerProviderProps {
@@ -56,7 +47,9 @@ export function PluginManagerContextProvider({
   >({})
 
   const autocompleteFactoryItems = useCallback(
-    (ctx: EhPluginResouceJumpFactoryCtx): Array<PluginPageUrlAutocompleteItem> => {
+    (
+      ctx: EhPluginResouceJumpFactoryCtx,
+    ): Array<PluginPageUrlAutocompleteItem> => {
       return plugins
         .filter((p) => isEhPluginResourceJumpable(p))
         .flatMap((plugin) => plugin.factoryPageJumpAutocompleteItems(ctx))
@@ -64,7 +57,7 @@ export function PluginManagerContextProvider({
     [plugins],
   )
 
-  const value: PluginManagerContext = useMemo(() => {
+  const value: PluginManagerContextIface = useMemo(() => {
     return {
       plugins,
       interfaceForPlugins: objectify(
@@ -82,17 +75,13 @@ export function PluginManagerContextProvider({
       autocompleteFactoryItems,
       resouceJumpItems,
     }
-  }, [plugins])
+  }, [autocompleteFactoryItems, plugins, resouceJumpItems])
 
-  return (
-    <PluginManagerContextInstance value={value}>
-      {children}
-    </PluginManagerContextInstance>
-  )
+  return <PluginManagerContext value={value}>{children}</PluginManagerContext>
 }
 
-export function usePluginManager(): PluginManagerContext {
-  const context = use(PluginManagerContextInstance)
+export function usePluginManager(): PluginManagerContextIface {
+  const context = use(PluginManagerContext)
   if (context === undefined) {
     throw new Error(
       'usePluginManager must be used within an PluginManagerContextProvider',

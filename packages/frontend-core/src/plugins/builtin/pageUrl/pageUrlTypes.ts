@@ -1,4 +1,7 @@
-import type { BaseAppAutoCompletableParent,BaseAutoCompletableItem } from '~/modules/pluginCore/types'
+import type {
+  BaseAppAutoCompletableParent,
+  BaseAutoCompletableItem,
+} from '~/modules/pluginCore/types'
 
 export interface PluginPageUrlAutoCompletableParent
   extends BaseAppAutoCompletableParent {

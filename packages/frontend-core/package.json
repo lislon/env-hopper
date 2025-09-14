@@ -95,6 +95,7 @@
     "eslint-plugin-react-hooks": "catalog:",
     "tsc-alias": "^1.8.16",
     "tw-animate-css": "^1.3.5",
+    "vitest": "catalog:",
     "vite": "catalog:",
     "vite-plugin-pwa": "catalog:",
     "vite-plugin-svgr": "catalog:"

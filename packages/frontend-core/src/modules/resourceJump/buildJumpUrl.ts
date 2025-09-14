@@ -17,26 +17,23 @@ export function buildJumpUrl(
 
   while (finalUrl !== prevUrl) {
     prevUrl = finalUrl
-  finalUrl = finalUrl.replace(
-      /{{(.+?)}}/g,
-      function (match, contents) {
-        if (contents.startsWith('app.meta.')) {
-          const varName = contents.replace('app.meta.', '')
-          const r = resourceJumpsData[jumpResourceSlug || '']?.[varName]
-          if (r !== undefined) {
-            return r
-          }
+    finalUrl = finalUrl.replace(/{{(.+?)}}/g, function (match, contents) {
+      if (contents.startsWith('app.meta.')) {
+        const varName = contents.replace('app.meta.', '')
+        const r = resourceJumpsData[jumpResourceSlug || '']?.[varName]
+        if (r !== undefined) {
+          return r
         }
-        if (contents.startsWith('env.meta.')) {
-          const varName = contents.replace('env.meta.', '')
-          const r = envData[envSlug || '']?.[varName]
-          if (r !== undefined) {
-            return r
-          }
+      }
+      if (contents.startsWith('env.meta.')) {
+        const varName = contents.replace('env.meta.', '')
+        const r = envData[envSlug || '']?.[varName]
+        if (r !== undefined) {
+          return r
         }
-        return match
-      },
-    )
+      }
+      return match
+    })
   }
 
   return finalUrl || `not found ${jumpResourceSlug}`

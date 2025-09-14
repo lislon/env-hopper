@@ -1,27 +1,27 @@
+import Rand from 'rand-seed'
 import type {
   AvailabilityVariant,
   AvailiabilityMatrixData,
   EhAppIndexed,
   EhEnvIndexed,
 } from '@env-hopper/backend-core'
-import Rand from 'rand-seed'
 
 export interface RandomAvailablityMatrixParams {
-  apps: EhAppIndexed[]
-  envs: EhEnvIndexed[]
+  apps: Array<EhAppIndexed>
+  envs: Array<EhEnvIndexed>
 }
 
 export function makeResouceJumpSlugFromAppAndPage(
-  app: { slug: string; ui?: { pages?: { slug: string }[] } },
+  app: { slug: string; ui?: { pages?: Array<{ slug: string }> } },
   page: { slug: string },
 ) {
   const singlePageApp = app.ui?.pages?.length === 1
   return (singlePageApp ? app.slug : app.slug + '-' + page.slug).toLowerCase()
 }
 
-export function getResourceJumpsFromApp(app: EhAppIndexed): string[] {
+export function getResourceJumpsFromApp(app: EhAppIndexed): Array<string> {
   return (
-    app.ui?.pages?.map((page) => {
+    app.ui?.pages.map((page) => {
       return makeResouceJumpSlugFromAppAndPage(app, page)
     }) || []
   )
@@ -34,7 +34,7 @@ export function getRandomAvailabilityMatrix(
 
   const resourceJumpsSlugs = apps.flatMap(getResourceJumpsFromApp)
 
-  const variants: (AvailabilityVariant & { weight: number })[] = [
+  const variants: Array<AvailabilityVariant & { weight: number }> = [
     {
       isDeployed: true,
       isHealthy: true,

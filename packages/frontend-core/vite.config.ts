@@ -1,23 +1,21 @@
-import { defineConfig, mergeConfig, type UserConfig } from 'vite'
+import { defineConfig, mergeConfig } from 'vite'
 import viteReact from '@vitejs/plugin-react'
 import { tanstackViteConfig } from '@tanstack/config/vite'
-import packageJson from './package.json'
 import svgr from 'vite-plugin-svgr'
+import packageJson from './package.json'
+import type { UserConfig } from 'vite'
 
 const config = defineConfig(() => {
   const myConfig: UserConfig = {
     build: {},
     test: {
       name: packageJson.name,
-      dir: './tests',
+      dir: './src/__tests__',
       watch: false,
       environment: 'jsdom',
       typecheck: { enabled: true },
     },
-    plugins: [
-      viteReact(),
-       svgr(),
-    ]
+    plugins: [viteReact(), svgr()],
   }
 
   return mergeConfig(

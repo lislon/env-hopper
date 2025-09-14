@@ -1,5 +1,5 @@
 import Dexie from 'dexie'
-import type { Table } from 'dexie';
+import type { Table } from 'dexie'
 import type { BootstrapConfigData } from '@env-hopper/backend-core'
 import type { EnvironmentHistoryItem } from '~/modules/environment/types'
 

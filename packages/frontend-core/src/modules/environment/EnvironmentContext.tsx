@@ -1,7 +1,3 @@
-import type { EhEnvIndexed } from '@env-hopper/backend-core';
-import type {
-  ReactNode
-} from 'react';
 import {
   createContext,
   use,
@@ -9,10 +5,12 @@ import {
   useEffect,
   useMemo,
   useState,
-} from 'react';
-import { useDb } from '~/userDb/DbContext';
-import { useBootstrapConfig } from '../config/BootstrapConfigContext';
-import type { EnvironmentHistoryItem } from './types';
+} from 'react'
+import { useBootstrapConfig } from '../config/BootstrapConfigContext'
+import type { EhEnvIndexed } from '@env-hopper/backend-core'
+import type { ReactNode } from 'react'
+import type { EnvironmentHistoryItem } from './types'
+import { useDb } from '~/userDb/DbContext'
 
 export interface EnvironmentContext {
   setCurrentEnv: (envSlug: string | undefined) => void
@@ -45,7 +43,7 @@ export function EnvironmentProvider({
       setHistory(historyItems)
     }
     fetchHistory()
-  }, [])
+  }, [db.environmentHistory])
 
   const [currentEnvSlug, setCurrentEnvSlug] = useState<string | undefined>(
     initialEnvSlug,
@@ -62,14 +60,17 @@ export function EnvironmentProvider({
 
   // Get current objects from slugs
   const currentEnv = findEnvBySlug(currentEnvSlug)
-  const setCurrentEnv = useCallback((envSlug: string | undefined) => {
-    setCurrentEnvSlug(envSlug)
-    const timestamp = Date.now()
-    if (envSlug !== undefined) {
-      setHistory((prev) => [...prev, { envSlug, timestamp }])
-      db.environmentHistory.add({ envSlug, timestamp })
-    }
-  }, [])
+  const setCurrentEnv = useCallback(
+    (envSlug: string | undefined) => {
+      setCurrentEnvSlug(envSlug)
+      const timestamp = Date.now()
+      if (envSlug !== undefined) {
+        setHistory((prev) => [...prev, { envSlug, timestamp }])
+        db.environmentHistory.add({ envSlug, timestamp })
+      }
+    },
+    [db.environmentHistory],
+  )
 
   const value: EnvironmentContext = useMemo(
     () => ({

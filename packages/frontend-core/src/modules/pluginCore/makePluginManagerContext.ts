@@ -1,6 +1,6 @@
 import { objectify } from 'radashi'
-import {  isEhPluginResourceJumpable } from './types'
-import type {EhPlugin} from './types';
+import { isEhPluginResourceJumpable } from './types'
+import type { EhPlugin } from './types'
 import type { BootstrapConfigData } from '@env-hopper/backend-core'
 import type { ResourceJumpItem } from '../resourceJump/types'
 

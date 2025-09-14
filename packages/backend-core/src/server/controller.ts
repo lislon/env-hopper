@@ -1,7 +1,7 @@
 import { initTRPC } from '@trpc/server'
 import z from 'zod'
 import type { EhTrpcContext } from './ehTrpcContext'
-import type { TRPCRootObject } from '@trpc/server';
+import type { TRPCRootObject } from '@trpc/server'
 
 /**
  * Initialization of tRPC backend

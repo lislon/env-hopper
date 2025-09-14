@@ -1,16 +1,18 @@
 import type { EhAppIndexed, EhEnvIndexed } from '@env-hopper/backend-core'
 import type {
   BaseAppAutoCompletableParent,
-  BaseAutoCompletableItem
+  BaseAutoCompletableItem,
 } from '~/modules/pluginCore/types'
+import type { EhUrlParams } from '~/types/ehTypes'
+import type { ResourceJumpItem } from './types'
 import {
   getRenderData,
   isAutocompleteItem,
 } from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
-import type { EhUrlParams } from '~/types/ehTypes'
-import type { ResourceJumpItem } from './types'
 
-export function* mapDisplayedItems(displayedItems: Array<BaseAutoCompletableItem>) {
+export function* mapDisplayedItems(
+  displayedItems: Array<BaseAutoCompletableItem>,
+) {
   let lastParent: BaseAppAutoCompletableParent | undefined = undefined
 
   for (const item of displayedItems) {

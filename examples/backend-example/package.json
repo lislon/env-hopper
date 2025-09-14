@@ -30,6 +30,7 @@
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "vitest": "catalog:",
     "vite-plugin-node": "catalog:"
   }
 }

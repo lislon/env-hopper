@@ -14,15 +14,16 @@ export function highlightMatches(text: string, query: string): React.ReactNode {
 
   return (
     <>
-      {parts.map((part, i) =>
-        i % 2 === 1 ? (
-          <span key={i} className="bg-highlight">
+      {parts.map((part, idx) => {
+        const key = `${part}-${text.indexOf(part, idx)}`
+        return idx % 2 === 1 ? (
+          <span key={key} className="bg-highlight">
             {part}
           </span>
         ) : (
-          <React.Fragment key={i}>{part}</React.Fragment>
-        ),
-      )}
+          <React.Fragment key={key}>{part}</React.Fragment>
+        )
+      })}
     </>
   )
 }

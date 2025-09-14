@@ -1,7 +1,5 @@
 import React from 'react'
-import {
-  Popover
-} from '~/components/ui/popover'
+import { Popover } from '~/components/ui/popover'
 import { cn } from '~/lib/utils'
 
 export function EhBaseSelectorRoot({

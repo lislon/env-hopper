@@ -1,39 +1,40 @@
 /// <reference types="vite/client" />
 /// <reference types="vite/types/importMeta.d.ts" />
 
-import {
-  createEhTrpcContext,
-  trpcRouter,
-  type BootstrapConfigData,
-  type EhBackendCompanySpecificBackend,
-  type ResourceJumpsData,
-} from '@env-hopper/backend-core'
+import { createEhTrpcContext, trpcRouter } from '@env-hopper/backend-core'
 import { initTRPC } from '@trpc/server'
 import * as trpcExpress from '@trpc/server/adapters/express'
 import express from 'express'
 import { getRandomAvailabilityMatrix } from './utils.js'
+import type { Express } from 'express'
+import type {
+  BootstrapConfigData,
+  EhBackendCompanySpecificBackend,
+  RenameRuleParams,
+  ResourceJumpsData,
+} from '@env-hopper/backend-core'
 
 interface DataShape {
-  bootstrapConfigData: BootstrapConfigData;
-  resourceJumpsData: ResourceJumpsData;
+  bootstrapConfigData: BootstrapConfigData
+  resourceJumpsData: ResourceJumpsData
 }
 
 async function loadStaticData(): Promise<DataShape> {
-        try {
-        return await import('./local/example-data.local.js')
-      } catch (error) {
-        console.error(error)
-        return await import('./example-data.js')
-      }
+  try {
+    return await import('./local/example-data.local.js')
+  } catch (error) {
+    console.error(error)
+    throw new Error('Failed to load local example data')
+  }
 }
 
 // created for each request
 const createContext = () => {
   const companySpecificBackend: EhBackendCompanySpecificBackend = {
     async getBootstrapData() {
-      return (await loadStaticData()).bootstrapConfigData;
+      return (await loadStaticData()).bootstrapConfigData
     },
-    async getNameMigrations(params) {
+    async getNameMigrations(params: RenameRuleParams) {
       const { resourceSlug } = params
       if (resourceSlug?.includes('@')) {
         return {
@@ -45,15 +46,15 @@ const createContext = () => {
       return false
     },
     async getAvailabilityMatrix() {
-      const bootstrapConfigData = (await loadStaticData()).bootstrapConfigData;
+      const bootstrapConfigData = (await loadStaticData()).bootstrapConfigData
       return getRandomAvailabilityMatrix({
         apps: Object.values(bootstrapConfigData.apps),
         envs: Object.values(bootstrapConfigData.envs),
       })
     },
     async getResourceJumps() {
-      return (await loadStaticData()).resourceJumpsData;
-    }
+      return (await loadStaticData()).resourceJumpsData
+    },
   }
   return createEhTrpcContext({
     companySpecificBackend,
@@ -74,4 +75,4 @@ app.use(
 if (import.meta.env.PROD) {
   app.listen(4000)
 }
-export const viteNodeApp = app
+export const viteNodeApp: Express = app

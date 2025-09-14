@@ -23,7 +23,7 @@ export interface EhEnvSelectorItem {
 }
 
 export function EhEnvSelector({ className = '' }: EhEnvSelectorProps) {
-  const { envs} = useBootstrapConfig()
+  const { envs } = useBootstrapConfig()
   const { currentEnv, setCurrentEnv } = useEnvironmentContext()
 
   const allItems = useMemo(
@@ -41,7 +41,7 @@ export function EhEnvSelector({ className = '' }: EhEnvSelectorProps) {
     return makeFuzzySearchIndex({
       entries: allItems,
     })
-  }, [envs])
+  }, [allItems])
 
   const [displayedItems, setDisplayedItems] =
     React.useState<Array<EhEnvSelectorItem>>(allItems)
@@ -70,7 +70,10 @@ export function EhEnvSelector({ className = '' }: EhEnvSelectorProps) {
     inputValue: comboInputValue,
     setInputValue,
   } = useCombobox<EhEnvSelectorItem>({
-    onInputValueChange({ inputValue: changedInputValue, isOpen: changedIsOpen }) {
+    onInputValueChange({
+      inputValue: changedInputValue,
+      isOpen: changedIsOpen,
+    }) {
       if (changedIsOpen) {
         const matchedIds = unique(envFilter(changedInputValue))
         setDisplayedItems(matchedIds)
@@ -93,7 +96,7 @@ export function EhEnvSelector({ className = '' }: EhEnvSelectorProps) {
         selectItem(f)
       }
     }
-  }, [currentEnv])
+  }, [allItems, currentEnv, selectItem])
 
   return (
     <EhBaseSelectorRoot className={className}>

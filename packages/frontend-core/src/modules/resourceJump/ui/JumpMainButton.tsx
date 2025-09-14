@@ -1,11 +1,11 @@
 import cn from 'classnames'
+import { useResourceJumpContext } from '../ResourceJumpContext'
+import { JumpALink } from './JumpALink'
 import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
 import {
   formatJumpButtonTitle,
   isAutocompleteItem,
 } from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
-import { useResourceJumpContext } from '../ResourceJumpContext'
-import { JumpALink } from './JumpALink'
 
 export const JUMP_MAIN_BTN_ID = 'jump-main-button'
 
@@ -18,7 +18,10 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
 
   const { currentEnv } = useEnvironmentContext()
 
-  const url = getJumpUrl(currentResourceJump?.slug, currentEnv?.slug)
+  const url =
+    currentResourceJump && currentEnv
+      ? getJumpUrl(currentResourceJump.slug, currentEnv.slug)
+      : undefined
 
   let buttonTitle = 'n/a'
   if (isAutocompleteItem(currentResourceJump)) {
@@ -84,9 +87,7 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
           </div>
         </JumpALink>
       ) : (
-        <div
-          className="border border-dashed border-black dark:border-white rounded flex justify-center p-4 flex-col cursor-not-allowed w-full"
-        >
+        <div className="border border-dashed border-black dark:border-white rounded flex justify-center p-4 flex-col cursor-not-allowed w-full">
           not ready
           {/* <MainJumpButtonNotReady isHovered={isHovered} /> */}
         </div>

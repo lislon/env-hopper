@@ -1,8 +1,17 @@
-import type {AvailiabilityMatrixData, BootstrapConfigData,
-  ResourceJumpsData} from '../common/dataRootTypes';
+import type {
+  AvailiabilityMatrixData,
+  BootstrapConfigData,
+  ResourceJumpsData,
+} from '../common/dataRootTypes'
 import type { EhAppIndexed } from '../common/app/appTypes'
-import type { EhAppPageIndexed, EhAppUiIndexed } from '../common/app/ui/appUiTypes'
-import type { EhBackendCredentialInput, EhBackendUiDefaultsInput } from './common'
+import type {
+  EhAppPageIndexed,
+  EhAppUiIndexed,
+} from '../common/app/ui/appUiTypes'
+import type {
+  EhBackendCredentialInput,
+  EhBackendUiDefaultsInput,
+} from './common'
 import type { EhBackendDataSourceInput } from './dataSources'
 
 export interface EhBackendVersionsRequestParams {

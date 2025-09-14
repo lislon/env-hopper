@@ -17,7 +17,7 @@ export interface EhPluginResourceJumpable extends EhPlugin {
 }
 
 export interface EhPlugin {
-  name: PluginName;
+  name: PluginName
   // populatePageJumpItems(): Promise<ResouceJumpItem[]>
 }
 
@@ -51,4 +51,4 @@ export interface EhPluginResouceJumpCtx {
   env: EhEnvIndexed | undefined
 }
 
-export type PluginName = string;
+export type PluginName = string

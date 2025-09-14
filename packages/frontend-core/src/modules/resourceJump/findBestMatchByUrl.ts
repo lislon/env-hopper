@@ -7,11 +7,8 @@ import type {
 } from '@env-hopper/backend-core'
 import type { EnvironmentHistoryItem } from '../environment/types'
 import type { ResourceJumpItem } from './types'
-import type {AvailabilitySlugPair} from '~/util/availabilityMatrixUtils';
-import {
-  
-  findAvailableResources
-} from '~/util/availabilityMatrixUtils'
+import type { AvailabilitySlugPair } from '~/util/availabilityMatrixUtils'
+import { findAvailableResources } from '~/util/availabilityMatrixUtils'
 
 export interface FindBestMatchingResourceJumpParams {
   urlEnvSlug: string | undefined
@@ -76,7 +73,10 @@ export async function findBestMatchByUrl({
       ])
 
       const historyEnvSlugs = history
-        .map((historyItem) => envs[historyItem.envSlug] && envs[historyItem.envSlug]?.slug)
+        .map(
+          (historyItem) =>
+            envs[historyItem.envSlug] && envs[historyItem.envSlug]?.slug,
+        )
         .filter((e) => e !== undefined)
       const alreadyCheckedSlugs = new Set<string>()
 
@@ -89,7 +89,9 @@ export async function findBestMatchByUrl({
 
         const jumpResourcePairs = findAvailableResources({
           envSlug,
-          resourceJumpSlug: resourceJumpFound ? resourceJumpFound.slug : undefined,
+          resourceJumpSlug: resourceJumpFound
+            ? resourceJumpFound.slug
+            : undefined,
           availabilityMatrix: availabilityMatrix,
         })
 
@@ -104,7 +106,8 @@ export async function findBestMatchByUrl({
           (isDeployed ? 1 : 0),
         true,
       )
-  const mostRelevantEnvSlug = sortedByRelevance.length > 0 ? sortedByRelevance[0]?.envSlug : undefined
+      const mostRelevantEnvSlug =
+        sortedByRelevance.length > 0 ? sortedByRelevance[0]?.envSlug : undefined
       if (mostRelevantEnvSlug) {
         envFound = envs[mostRelevantEnvSlug]
       }

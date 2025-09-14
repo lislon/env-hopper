@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiQueryMagazine } from '../ApiQueryMagazine'
-import type { QueryKey} from '@tanstack/react-query';
+import type { QueryKey } from '@tanstack/react-query'
 import { useTRPCClient } from '~/api/infra/trpc'
 import { useDb } from '~/userDb/DbContext'
 

@@ -26,14 +26,14 @@ export function findAvailableResources({
   let pairs: Array<AvailabilitySlugPair> = []
 
   if (envSlug !== undefined) {
-  const envIdx = envSlugs.findIndex((slug) => slug === envSlug)
+    const envIdx = envSlugs.findIndex((slug) => slug === envSlug)
     if (envIdx !== -1) {
       pairs =
         matrix[envIdx]?.flatMap((variantIdx, resourceIdx) => {
-          const resourceJumpSlug = resourceJumpSlugs[resourceIdx]
+          const resourceJumpSlugFound = resourceJumpSlugs[resourceIdx]
           const availabilityVariant = availabilityVariants[variantIdx]
           if (
-            resourceJumpSlug === undefined ||
+            resourceJumpSlugFound === undefined ||
             availabilityVariant === undefined
           ) {
             return []
@@ -41,7 +41,7 @@ export function findAvailableResources({
           return [
             {
               envSlug,
-              resourceJumpSlug,
+              resourceJumpSlug: resourceJumpSlugFound,
               availabilityVariant,
             },
           ]
@@ -57,7 +57,7 @@ export function findAvailableResources({
     if (resourceIdx !== -1) {
       pairs = matrix.flatMap((resourceJumps, envIdx) => {
         const variantIdx = resourceJumps[resourceIdx]
-  const foundEnvSlug = envSlugs[envIdx]
+        const foundEnvSlug = envSlugs[envIdx]
         const availabilityVariant =
           variantIdx !== undefined
             ? availabilityVariants[variantIdx]
@@ -74,9 +74,6 @@ export function findAvailableResources({
           },
         ]
       })
-    }
-    if (envSlug !== undefined) {
-  pairs = pairs.filter((pair) => pair.envSlug === envSlug)
     }
   }
   return pairs

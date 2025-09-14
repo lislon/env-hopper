@@ -1,9 +1,8 @@
-
 import type { QueryClient, QueryKey } from '@tanstack/react-query'
 import type { TRPCClient } from '@trpc/client'
-import type { BootstrapConfigData, TRPCRouter  } from '@env-hopper/backend-core'
-import type {EhDb} from '~/userDb/EhDb';
-import {  dbCacheDbKeys } from '~/userDb/EhDb'
+import type { BootstrapConfigData, TRPCRouter } from '@env-hopper/backend-core'
+import type { EhDb } from '~/userDb/EhDb'
+import { dbCacheDbKeys } from '~/userDb/EhDb'
 
 export const queryKey: QueryKey = ['bootstrapConfig']
 

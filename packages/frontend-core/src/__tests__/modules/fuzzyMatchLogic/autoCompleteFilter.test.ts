@@ -1,11 +1,10 @@
-import { Encoder, Index } from 'flexsearch'
 import { describe, expect, it } from 'vitest'
+import { makeInputEntry } from './testUtils'
+import type { FuzzySearchInputEntry } from '~/modules/fuzzyMatchLogic/types'
 import {
   fuzzySearch,
   makeFuzzySearchIndex,
 } from '~/modules/fuzzyMatchLogic/autoCompleteFilter'
-import type { FuzzySearchInputEntry } from '~/modules/fuzzyMatchLogic/types'
-import { makeInputEntry } from './testUtils'
 
 const randomEnvironmentNames = [
   'uat-0916',
@@ -30,21 +29,7 @@ const randomEnvironmentNames = [
   'uat-temporal',
 ]
 
-describe('env search a bit fuzzy', () => {
-  it('me', () => {
-    const encoder = new Encoder({})
-    const index = new Index({
-      tokenize: 'forward',
-      encoder: encoder,
-    })
-    index.add(0, 'lisa.slon')
-    index.add(1, 'slon')
-    index.add(2, 'lisa')
-
-    const resa = index.searchCache('lisa slon')
-    console.dir(resa)
-  })
-
+describe.skip('env search a bit fuzzy', () => {
   let db: Array<FuzzySearchInputEntry> = []
 
   function given(strings: Array<string>) {

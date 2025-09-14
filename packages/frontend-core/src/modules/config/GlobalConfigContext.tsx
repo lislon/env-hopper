@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { createContext, use, useMemo } from 'react';
+import { createContext, use, useMemo } from 'react'
+import type { ReactNode } from 'react'
 
 interface FrontendConfig {
   microinteractionsToKeep: number
@@ -28,11 +28,7 @@ export function GlobalConfigProvider({ children }: GlobalConfigProviderProps) {
     }),
     [],
   )
-  return (
-    <GlobalConfigContext.Provider value={value}>
-      {children}
-    </GlobalConfigContext.Provider>
-  )
+  return <GlobalConfigContext value={value}>{children}</GlobalConfigContext>
 }
 
 export function useGlobalConfig(): GlobalConfigContext {

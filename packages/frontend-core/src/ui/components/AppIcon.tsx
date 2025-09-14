@@ -9,7 +9,7 @@ interface AppIconProps {
 }
 
 export function AppIcon({ app, className = 'w-4 h-4' }: AppIconProps) {
-  const { appsMeta } = useBootstrapConfig();
+  const { appsMeta } = useBootstrapConfig()
   const [imageError, setImageError] = useState(false)
 
   const handleImageError = () => {

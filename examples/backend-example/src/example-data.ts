@@ -1,5 +1,5 @@
-import type { BootstrapConfigData } from '@env-hopper/backend-core'
 import { objectify } from 'radashi'
+import type { BootstrapConfigData } from '@env-hopper/backend-core'
 
 const newVar: BootstrapConfigData = {
   apps: {

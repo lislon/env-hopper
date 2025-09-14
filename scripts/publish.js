@@ -9,8 +9,16 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 await publish({
   packages: [
     {
-      name: '@env-hopper/backend-api',
-      packageDir: 'packages/backend-api',
+      name: '@env-hopper/shared-core',
+      packageDir: 'packages/shared-core',
+    },
+    {
+      name: '@env-hopper/backend-core',
+      packageDir: 'packages/backend-core',
+    },
+    {
+      name: '@env-hopper/frontend-core',
+      packageDir: 'packages/frontend-core',
     },
   ],
   branchConfigs: {

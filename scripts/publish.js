@@ -20,6 +20,10 @@ await publish({
       name: '@env-hopper/frontend-core',
       packageDir: 'packages/frontend-core',
     },
+    {
+      name: '@env-hopper/frontend-build-vite',
+      packageDir: 'packages/frontend-build-vite',
+    },
   ],
   branchConfigs: {
     main: {

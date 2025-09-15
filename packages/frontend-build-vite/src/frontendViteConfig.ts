@@ -5,18 +5,7 @@ import svgr from 'vite-plugin-svgr'
 import type { UserConfig } from 'vite'
 
 export function frontendViteConfig() {
-  // const env = { ...process.env, ...loadEnv(mode, process.cwd()) }
-
   return {
-    // root: __dirname,
-    // cacheDir: '../../node_modules/.vite/apps/frontend',
-
-    // resolve: {
-    //   alias: {
-    //     '~': path.resolve(__dirname, './src'),
-    //   },
-    // },
-
     server: {
       port: 4000,
       strictPort: true,

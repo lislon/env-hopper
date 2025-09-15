@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/frontend-build-vite",
-  "version": "0.1.0",
+  "version": "2.0.1-alpha.0",
   "description": "Vite build config for Env Hopper frontend",
   "homepage": "https://github.com/lislon/env-hopper",
   "repository": {
@@ -35,12 +35,12 @@
     "test:eslint": "eslint ./src"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "catalog:",
-    "vite-plugin-pwa": "catalog:",
-    "vite-plugin-svgr": "catalog:",
+    "@tailwindcss/vite": "catalog:",
     "@tanstack/react-router-devtools": "catalog:",
     "@tanstack/router-plugin": "catalog:",
-    "@tailwindcss/vite": "catalog:"
+    "@vitejs/plugin-react": "catalog:",
+    "vite-plugin-pwa": "catalog:",
+    "vite-plugin-svgr": "catalog:"
   },
   "devDependencies": {
     "@env-hopper/shared-core": "workspace:*",

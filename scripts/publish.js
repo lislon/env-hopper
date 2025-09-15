@@ -42,4 +42,5 @@ await publish({
   ghToken: process.env.GH_TOKEN,
 })
 
+// exit
 process.exit(0)

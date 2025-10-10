@@ -1,1 +1,0 @@
-C:/Users/lislo/src/other/env-hopper/packages/backend-core/root-symlink.eslint.config.js

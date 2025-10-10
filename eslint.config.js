@@ -1,16 +1,23 @@
 // @ts-check
 
 // @ts-ignore Needed due to moduleResolution Node vs Bundler
-import { tanstackConfig } from '@tanstack/config/eslint'
 import pluginCspell from '@cspell/eslint-plugin'
+import { tanstackConfig } from '@tanstack/eslint-config'
 import vitest from '@vitest/eslint-plugin'
 
+/** @type {import('eslint').Linter.Config[]} */
 export default [
   {
     name: 'env-hopper/ignores',
-    ignores: ['**/dist-ts/**'],
+    ignores: ['**/dist-ts/**', '**/src/generated/**'],
   },
   ...tanstackConfig,
+  {
+    name: 'disable-because-i-cant-fix-vscode',
+    rules: {
+      'import/order': 'off',
+    },
+  },
   {
     name: 'tanstack/temp',
     plugins: {

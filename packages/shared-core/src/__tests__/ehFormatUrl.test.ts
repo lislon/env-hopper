@@ -4,7 +4,7 @@ import { ehFormatUrl } from '../ehFormatUrl.js'
 describe('ehFormatUrl', () => {
   it('generates the correct URL from nested templates', () => {
     const actual = ehFormatUrl(
-      '<%= it.appMeta.baseUrl + "/prod-lims/app/home" %>',
+      '<%= it.appMeta.baseUrl + "/my-cars/app/home" %>',
       {
         appMeta: {
           baseUrl:
@@ -18,7 +18,7 @@ describe('ehFormatUrl', () => {
     )
 
     expect(actual).toStrictEqual(
-      'https://staging.example.com:8250/prod-lims/app/home',
+      'https://staging.example.com:8250/my-cars/app/home',
     )
   })
 })

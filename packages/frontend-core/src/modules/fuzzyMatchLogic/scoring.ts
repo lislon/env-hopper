@@ -1,3 +1,4 @@
+import { positionBonus } from './features/positionBonus'
 import { prefixFrac } from './features/prefixFrac'
 import type {
   FuzzySearchPreliminaryResult,
@@ -7,6 +8,10 @@ import type {
 const W = {
   prefixFrac: 1.3,
   prefixFracTokenMiddles: 0.1,
+  positionBonus: 0.08,
+  // How fast the bonus decays as the first match appears later in the string.
+  // Higher = harsher penalty for late matches.
+  positionDecayAlpha: 0.08,
 }
 
 export function score(
@@ -23,10 +28,11 @@ export function score(
     // const pfTokens = prefixFracTokenMiddles(entry, foundTokens)
 
     // const tc = tokenCoverage(qTokens, norm);
-    // const pb = positionBonus(q, norm, W.positionDecayAlpha);
+    const pb = positionBonus(needle, norm, W.positionDecayAlpha)
 
     let scoreValue = 0
     scoreValue += W.prefixFrac * pf
+    scoreValue += W.positionBonus * pb
 
     return { entry, score: scoreValue }
   })

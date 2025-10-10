@@ -1,11 +1,16 @@
 import { Encoder, Index } from 'flexsearch'
-import { score } from './scoring'
+import { matchSorter } from 'match-sorter'
 import type {
   FuzzySearchContext,
   FuzzySearchIndex,
   FuzzySearchPrepareIndexParams,
   FuzzySearchReturnItem,
 } from './types'
+import { fixRuLayout, isRuLayout } from '~/modules/fuzzyMatchLogic/fixLayout'
+import {
+  enrichTokensForIndex,
+  tokenize,
+} from '~/modules/fuzzyMatchLogic/tokenize'
 
 export function makeFuzzySearchIndex(
   params: FuzzySearchPrepareIndexParams,
@@ -30,8 +35,12 @@ export function makeFuzzySearchIndex(
     encoder: encoder,
   })
   params.entries.forEach((entry, idx) => {
-    index.add(idx, entry.displayName || entry.slug)
-    // index.add(idx, enrichTokensForIndex(tokenize(entry.displayName || entry.slug)).join(' '))
+    const newLocal = [
+      ...enrichTokensForIndex(tokenize(entry.displayName)),
+      gluer(entry.displayName),
+    ].join(' ')
+    // index.add(idx, entry.displayName)
+    index.add(idx, newLocal)
   })
   return {
     flexIndex: index,
@@ -43,15 +52,79 @@ export function fuzzySearch(
   needle: string,
   context: FuzzySearchContext,
 ): Array<FuzzySearchReturnItem> {
-  const postFiltrationResults = context.index.flexIndex
-    .searchCache(needle)
-    .map((id) => {
-      return {
-        entry: context.index.entries[id as number]!,
-      }
-    })
+  const justDisplayName = context.index.entries
 
-  // const tokenizedNeedle = tokenize(needle)
+  const attempt = (n: string) => {
+    const tokenizedNeedle = tokenize(n).join(' ')
+    const results = matchSorter(justDisplayName, tokenizedNeedle, {
+      keys: [(item) => tokenize(item.displayName).join(' ')],
+      sorter: (rankedItems) => {
+        return rankedItems.sort((a, b) => {
+          const aFirst = -1
+          const bFirst = 1
+          const { rank: aRank, keyIndex: aKeyIndex } = a
+          const { rank: bRank, keyIndex: bKeyIndex } = b
+          const same = aRank === bRank
+          if (same) {
+            if (aKeyIndex === bKeyIndex) {
+              const aFreq = context.freqGetter?.(a.item.slug) || 0
+              const bFreq = context.freqGetter?.(b.item.slug) || 0
+              if (aFreq === bFreq) {
+                return a.item.displayName.localeCompare(b.item.displayName)
+              }
+
+              return aFreq > bFreq ? aFirst : bFirst
+            } else {
+              return aKeyIndex < bKeyIndex ? aFirst : bFirst
+            }
+          } else {
+            return aRank > bRank ? aFirst : bFirst
+          }
+        })
+        // return sort(rankedItems, (rankedItem) => {
+        //   const { rank } = rankedItem
+        //   const freq = context.freqGetter?.(rankedItem.item.slug) || 0;
+        //   if (rank <= rankings.STARTS_WITH) {
+        //     // or worse
+        //     return ((10 - rank) * 10000 + freq * 1000 + rankedItem.index)
+        //   }
+        //   return ((10 - rank) * 100000 + rankedItem.index)
+        // }, true)
+      },
+    })
+    return results.map((r) => ({ entry: r }))
+  }
+
+  let lastAttempt = attempt(needle)
+  if (lastAttempt.length === 0 && isRuLayout(needle)) {
+    lastAttempt = attempt(fixRuLayout(needle))
+  }
+  return lastAttempt
+
+  // const attempt = (n: string) => {
+  //   const tokenizedNeedle = tokenize(n)
+  //   const postFiltrationResultsRaw = tokenizedNeedle.flatMap((t) =>
+  //     context.index.flexIndex.searchCache(t).map((id) => {
+  //       return {
+  //         id,
+  //         entry: context.index.entries[id as number]!,
+  //       }
+  //     }),
+  //   )
+
+  //   const postFiltrationResults = postFiltration(
+  //     unique(postFiltrationResultsRaw, (r) => r.id),
+  //     n,
+  //   )
+
+  //   return score(postFiltrationResults, n)
+  // }
+
+  // let lastAttempt = attempt(needle)
+  // if (lastAttempt.length === 0 && isRuLayout(needle)) {
+  //   lastAttempt = attempt(fixRuLayout(needle))
+  // }
+  // return lastAttempt
 
   // const foundTokensByRows = new Map<number, FuzzySearchPreliminaryResult>()
 
@@ -73,9 +146,11 @@ export function fuzzySearch(
 
   // const rawResults = [...foundTokensByRows.values()]
   // const postFiltrationResults = postFiltration(rawResults)
-  return score(postFiltrationResults, needle)
 }
 
+function gluer(displayName: string) {
+  return displayName.toLowerCase().replaceAll(/[^a-z0-9]/g, '')
+}
 // type IndexType = {
 //   title: string;
 //   titleOrig: string;

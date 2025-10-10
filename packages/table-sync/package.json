@@ -1,0 +1,53 @@
+{
+  "name": "@env-hopper/table-sync",
+  "version": "2.0.1-alpha",
+  "description": "Database table sync utilities for Env Hopper",
+  "homepage": "https://github.com/lislon/env-hopper",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lislon/env-hopper.git",
+    "directory": "packages/table-sync"
+  },
+  "license": "MIT",
+  "author": "Igor Golovin",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "my-custom-condition": "./src/index.ts",
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "clean": "premove ./dist ./coverage ./dist-ts",
+    "compile": "tsc --build",
+    "dev": "tsx watch src/index.ts",
+    "test:eslint": "eslint ./src",
+    "test:unit": "vitest",
+    "test:unit:dev": "pnpm run test:unit --watch"
+  },
+  "dependencies": {
+    "radashi": "catalog:"
+  },
+  "devDependencies": {
+    "@tanstack/vite-config": "catalog:",
+    "@types/node": "catalog:",
+    "esbuild": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

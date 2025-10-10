@@ -7,8 +7,7 @@
       "{workspaceRoot}/.nvmrc",
       "{workspaceRoot}/package.json",
       "{workspaceRoot}/tsconfig.json",
-      "{workspaceRoot}/eslint.config.js",
-      "{workspaceRoot}/pnpm-workspace.yaml"
+      "{workspaceRoot}/eslint.config.js"
     ],
     "default": [
       "sharedGlobals",
@@ -52,7 +51,7 @@
     },
     "build": {
       "cache": true,
-      "dependsOn": ["^build"],
+      "dependsOn": ["prisma:generate", "^build"],
       "inputs": ["production", "^production"],
       "outputs": ["{projectRoot}/build", "{projectRoot}/dist"]
     },

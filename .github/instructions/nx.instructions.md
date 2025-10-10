@@ -10,7 +10,8 @@ You have access to the Nx MCP server and the tools it provides. Use them. Follow
 
 # General Guidelines
 
-- When answering questions, use the nx_workspace tool first to gain an understanding of the workspace architecture
+- Always run nx commands with pnpm prefix (e.g., `pnpm nx run`, `pnpm nx show`). - 
+When answering questions, use the nx_workspace tool first to gain an understanding of the workspace architecture
 - For questions around nx configuration, best practices or if you're unsure, use the nx_docs tool to get relevant, up-to-date docs!! Always use this instead of assuming things about nx configuration
 - If the user needs help with an Nx configuration or project graph error, use the 'nx_workspace' tool to get any errors
 - To help answer questions about the workspace structure or simply help with demonstrating how tasks depend on each other, use the 'nx_visualize_graph' tool
@@ -37,5 +38,5 @@ If the user wants help with tasks or commands (which include keywords like "test
 - Use the 'nx_current_running_tasks_details' tool to get the list of tasks (this can include tasks that were completed, stopped or failed).
 - If there are any tasks, ask the user if they would like help with a specific task then use the 'nx_current_running_task_output' tool to get the terminal output for that task/command
 - Use the terminal output from 'nx_current_running_task_output' to see what's wrong and help the user fix their problem. Use the appropriate tools if necessary
-- If the user would like to rerun the task or command, always use `nx run <taskId>` to rerun in the terminal. This will ensure that the task will run in the nx context and will be run the same way it originally executed
+- If the user would like to rerun the task or command, always use `pnpm nx run <taskId>` to rerun in the terminal. This will ensure that the task will run in the nx context and will be run the same way it originally executed
 - If the task was marked as "continuous" do not offer to rerun the task. This task is already running and the user can see the output in the terminal. You can use 'nx_current_running_task_output' to get the output of the task to verify the output.

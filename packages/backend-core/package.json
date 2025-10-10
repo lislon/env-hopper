@@ -5,7 +5,7 @@
   "homepage": "https://github.com/lislon/env-hopper",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lislon/env-hopper.git",
+    "url": "git+https://github.com/lislon/env-hopper.git",
     "directory": "packages/backend-core"
   },
   "license": "MIT",
@@ -16,20 +16,22 @@
     ".": {
       "my-custom-condition": "./src/index.ts",
       "import": {
-        "types": "./dist/esm/index.d.ts",
-        "default": "./dist/esm/index.js"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
       }
     },
     "./package.json": "./package.json"
   },
-  "module": "dist/esm/index.js",
-  "types": "dist/esm/index.d.ts",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "src"
+    "src",
+    "prisma"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "tsdown",
+    "build:lenient": "tsdown",
     "clean": "premove ./dist ./coverage ./dist-ts",
     "compile": "tsc --build",
     "dev": "tsx watch src/index.ts",
@@ -39,26 +41,39 @@
     "test:unit:dev": "pnpm run test:unit --watch"
   },
   "dependencies": {
+    "@env-hopper/shared-core": "workspace:*",
+    "@env-hopper/table-sync": "workspace:*",
     "@kubernetes/client-node": "^1.2.0",
-    "@prisma/client": "catalog:",
+    "@prisma/client": "6.19.1",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
+    "ai": "^6.0.37",
+    "better-auth": "^1.4.15",
     "cors": "^2.8.5",
     "dotenv-defaults": "catalog:",
     "express": "catalog:",
     "jsonwebtoken": "^9.0.2",
+    "multer": "catalog:",
+    "node-cron": "^4.2.1",
+    "radashi": "catalog:",
     "reflect-metadata": "^0.2.2",
+    "sharp": "^0.33.5",
     "tsyringe": "^4.10.0",
     "yaml": "^2.8.0",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@tanstack/vite-config": "catalog:",
     "@types/cors": "^2.8.18",
     "@types/dotenv-defaults": "catalog:",
+    "@types/express": "catalog:",
     "@types/jsonwebtoken": "^9.0.9",
+    "@types/multer": "catalog:",
     "@types/node": "catalog:",
     "esbuild": "catalog:",
     "prisma": "^6.8.2",
+    "prisma-json-types-generator": "catalog:",
+    "tsdown": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vite-plugin-dts": "^4.5.4"

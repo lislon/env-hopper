@@ -1,11 +1,9 @@
-import type { TRPCRouter } from '@env-hopper/backend-core'
+import type { EnvBaseInfo, TRPCRouter } from '@env-hopper/backend-core'
 import type { TRPCClient } from '@trpc/client'
 import type { EhDb } from '~/userDb/EhDb'
 
-export interface EhEnvIndexed {
-  slug: string
-  displayName: string
-}
+// EhEnvIndexed is now imported from @env-hopper/backend-core as EnvBaseInfo
+export type EhEnvIndexed = EnvBaseInfo
 
 // EhAppIndexed is now imported from @env-hopper/backend-core
 

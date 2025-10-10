@@ -1,14 +1,9 @@
 import type { ReactNode } from 'react'
-import type { ResourceJumpItem } from '../types'
-import type { EhPluginResouceJumpCtx } from '~/modules/pluginCore/types'
-import { getJumpUrl } from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
 
 export interface JumpUrlParams extends React.ComponentPropsWithoutRef<'a'> {
   children: ReactNode
-  ctx: EhPluginResouceJumpCtx
-  jumpResource: ResourceJumpItem
+  jumpUrl: string
   id?: string
-  // substitution?: EhSubstitutionValue;
   className?: string
   isMain?: boolean
   prefetch?: boolean
@@ -17,10 +12,8 @@ export interface JumpUrlParams extends React.ComponentPropsWithoutRef<'a'> {
 
 export function JumpALink({
   children,
-  ctx,
+  jumpUrl,
   id,
-  jumpResource,
-  // substitution,
   className,
   isMain,
   testId,
@@ -32,9 +25,8 @@ export function JumpALink({
     // ...existing code...
   }
 
-  const jumpUrl = getJumpUrl(jumpResource, ctx)
   if (!jumpUrl) {
-    return undefined
+    return <div className={className}>{children}</div>
   }
   return (
     <a

@@ -1,4 +1,4 @@
-import type { ToOptions } from '@tanstack/react-router'
+import { linkOptions } from '@tanstack/react-router'
 import type { EhUrlParams } from '~/types/ehTypes'
 
 export function escapeAppId(appId: string) {
@@ -13,59 +13,36 @@ export function escapeEnvId(envId: string) {
   return encodeURIComponent(envId)
 }
 
-export function getEhToOptions({
-  appId,
-  envId,
-  subValue,
-}: EhUrlParams): ToOptions {
-  if (appId && envId && subValue) {
-    return {
-      from: '/',
-      to: '/env/$envSlug/app/$appSlug/sub/$subValue',
-      params: {
-        appSlug: escapeAppId(appId),
-        envSlug: escapeEnvId(envId),
-        subValue: escapeSubValue(subValue),
-      },
-    }
-  } else if (appId && envId) {
-    return {
+export function getEhToOptions({ appId, envId }: EhUrlParams) {
+  if (appId && envId) {
+    return linkOptions({
       from: '/',
       to: '/env/$envSlug/app/$appSlug',
       params: {
         appSlug: escapeAppId(appId),
         envSlug: escapeEnvId(envId),
       },
-    }
-  } else if (appId && subValue) {
-    return {
-      from: '/',
-      to: '/app/$appSlug/sub/$subValue',
-      params: {
-        appSlug: escapeAppId(appId),
-        subValue: escapeSubValue(subValue),
-      },
-    }
+    })
   } else if (appId) {
-    return {
+    return linkOptions({
       from: '/',
       to: '/app/$appSlug',
       params: {
         appSlug: escapeAppId(appId),
       },
-    }
+    })
   } else if (envId) {
-    return {
+    return linkOptions({
       from: '/',
       to: '/env/$envSlug',
       params: {
         envSlug: escapeEnvId(envId),
       },
-    }
+    })
   } else {
-    return {
+    return linkOptions({
       from: '/',
       to: '/',
-    }
+    })
   }
 }

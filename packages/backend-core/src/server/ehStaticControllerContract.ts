@@ -1,5 +1,8 @@
 export interface EhStaticControllerContract {
-  methods: { getIcon: { method: string; url: string } }
+  methods: { 
+    getIcon: { method: string; url: string }
+    getScreenshot: { method: string; url: string }
+  }
 }
 
 export const staticControllerContract: EhStaticControllerContract = {
@@ -7,6 +10,10 @@ export const staticControllerContract: EhStaticControllerContract = {
     getIcon: {
       method: 'get',
       url: 'icon/:icon',
+    },
+    getScreenshot: {
+      method: 'get',
+      url: 'screenshot/:id',
     },
   },
 }

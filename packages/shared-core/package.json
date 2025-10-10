@@ -5,7 +5,7 @@
   "homepage": "https://github.com/lislon/env-hopper",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lislon/env-hopper.git",
+    "url": "git+https://github.com/lislon/env-hopper.git",
     "directory": "packages/shared-core"
   },
   "license": "MIT",
@@ -41,7 +41,7 @@
     "eta": "^3.5.0"
   },
   "devDependencies": {
-    "@env-hopper/backend-core": "workspace:*",
+    "@tanstack/vite-config": "catalog:",
     "@types/node": "catalog:",
     "esbuild": "catalog:",
     "tsx": "catalog:",

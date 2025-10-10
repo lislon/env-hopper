@@ -4,10 +4,10 @@
     "jsx": "react-jsx",
     "esModuleInterop": false,
     "outDir": "./dist-ts",
-    "rootDir": ".",
-    "paths": {
-      "~/*": ["./node_modules/@env-hopper/frontend-core/src/*"]
-    }
+    "rootDir": "."
+    // "paths": {
+    //   "~/*": ["./@env-hopper/frontend-core/src22222222222/*"]
+    // }
   },
   "include": ["src", "*.config.ts", "*.config.js", "package.json"]
 }

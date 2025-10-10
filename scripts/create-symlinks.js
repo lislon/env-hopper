@@ -1,9 +1,9 @@
 // scripts/create-symlinks.js
 // This script creates symlinks for eslint.config.js in each package, supporting both Windows and Linux.
 
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -41,21 +41,21 @@ const targets = [
   },
 ]
 
-function createSymlink(src, dest) {
+function createSymlink(srcPath, destPath) {
   // Remove existing file/symlink if present
-  if (fs.existsSync(dest)) {
-    fs.unlinkSync(dest)
+  if (fs.existsSync(destPath)) {
+    fs.unlinkSync(destPath)
   }
   // On Windows, use 'junction' for directories, 'file' for files
   const type = process.platform === 'win32' ? 'file' : null
-  fs.symlinkSync(src, dest, type)
-  console.log(`Symlink created: ${dest} -> ${src}`)
+  fs.symlinkSync(srcPath, destPath, type)
+  console.log(`Symlink created: ${destPath} -> ${srcPath}`)
 }
 
-for (const { src, dest } of targets) {
+for (const { src: sourcePath, dest: destPath } of targets) {
   try {
-    createSymlink(src, dest)
+    createSymlink(sourcePath, destPath)
   } catch (err) {
-    console.error(`Failed to create symlink for ${dest}:`, err)
+    console.error(`Failed to create symlink for ${destPath}:`, err)
   }
 }

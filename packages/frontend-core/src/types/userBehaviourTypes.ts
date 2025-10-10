@@ -66,7 +66,7 @@ export interface AppPageSelectionAction {
 }
 
 export interface PageJumpAction {
-  actionType: 'pageJump'
+  actionType: 'jumpPage'
   envSlug: string
   appPageSlug: AppPageSlug
   appPageContext?: AppPageContext

@@ -1,6 +1,6 @@
-import { AppIcon } from './AppIcon'
 import type { EhAppIndexed } from '@env-hopper/backend-core'
-import { Button } from '~/components/ui/button'
+import { Button } from '~/ui/button'
+import { AppIcon } from './AppIcon'
 
 interface ActionCardProps {
   app: EhAppIndexed

@@ -1,3 +1,6 @@
 .env
 dist/
 node_modules/
+
+# Generated Prisma client
+src/generated/

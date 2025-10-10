@@ -15,10 +15,21 @@ const TOKEN_SPLIT = new RegExp(
 )
 
 export function tokenize(str: string): Array<string> {
-  return str
+  // We mostly split on whitespace/punctuation/symbols, but we also want to keep
+  // certain standalone symbols (like '#') as their own tokens so queries like
+  // "order #" can specifically match entries containing "#".
+  const raw = str
     .split(TOKEN_SPLIT)
     .filter(Boolean)
     .map((s) => s.toLowerCase())
+
+  const symbolTokens = [...str]
+    .filter((c) => /[#]/.test(c))
+    .map((c) => c.toLowerCase())
+
+  // Preserve original ordering as best-effort by appending symbols; for our
+  // current use cases it’s enough that the symbol token exists.
+  return [...raw, ...symbolTokens]
 }
 
 export function enrichTokensForIndex(tokens: Array<string>): Array<string> {

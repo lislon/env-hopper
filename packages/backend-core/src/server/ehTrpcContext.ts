@@ -15,9 +15,3 @@ export function createEhTrpcContext({
     companySpecificBackend,
   }
 }
-
-// const createContext = ({
-//                          req,
-//                          res
-//                        }: trpcExpress.CreateExpressContextOptions) => ({}); // no context
-// type Context = Awaited<ReturnType<typeof createContext>>;

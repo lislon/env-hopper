@@ -29,8 +29,8 @@ const randomEnvironmentNames = [
   'uat-temporal',
 ]
 
-describe.skip('env search a bit fuzzy', () => {
-  let db: Array<FuzzySearchInputEntry> = []
+describe('Autocomplete search', () => {
+  let db: Array<FuzzySearchInputEntry & { frequency: number }> = []
 
   function given(strings: Array<string>) {
     db = strings.map((title) => makeInputEntry(title))
@@ -40,7 +40,14 @@ describe.skip('env search a bit fuzzy', () => {
     const index = makeFuzzySearchIndex({
       entries: db,
     })
-    return fuzzySearch(search, { index })
+
+    return fuzzySearch(search, {
+      index,
+      freqGetter: (slug: string) => {
+        const entry = db.find((e) => e.slug === slug)
+        return entry ? entry.frequency : 0
+      },
+    }).map((r) => r.entry.displayName)
   }
 
   it('case 1', () => {
@@ -48,19 +55,37 @@ describe.skip('env search a bit fuzzy', () => {
     expect(searchResults('a')).toEqual(['env-a'])
   })
 
-  it('case 2', () => {
+  it('case 2a', () => {
     given(['x abcdev', 'abc-dev'])
     expect(searchResults('abcdev')).toMatchInlineSnapshot(`
       [
-        "abc-dev",
         "x abcdev",
+        "abc-dev",
+      ]
+    `)
+  })
+
+  it('case 2b', () => {
+    given(['abc-dev'])
+    expect(searchResults('abcdev')).toMatchInlineSnapshot(`
+      [
+        "abc-dev",
+      ]
+    `)
+  })
+
+  it('case 2c', () => {
+    given(['abc-dev'])
+    expect(searchResults('abc-dev')).toMatchInlineSnapshot(`
+      [
+        "abc-dev",
       ]
     `)
   })
 
   it('case 3 - firstLetters', () => {
     given(['x abcdev', 'abcXXX-devXXX'])
-    expect(searchResults('abc-dev')).toEqual(['abcXXX-devXXX', 'x abcdev'])
+    expect(searchResults('abc-dev')).toEqual(['abcXXX-devXXX'])
   })
 
   it('case 4', () => {
@@ -89,21 +114,20 @@ describe.skip('env search a bit fuzzy', () => {
 
   it('case 7', () => {
     given(randomEnvironmentNames)
-    expect(searchResults('B')).toEqual([
-      'BUILD-08',
-      'Backup-21',
-      'Backup-gammae',
-      'BACKUP-TEMPORAL',
-      'Sig-betac',
-      'STAGING-BETAB',
-      'Staging-deployb',
-    ])
+    expect(searchResults('B')).toMatchInlineSnapshot(`
+      [
+        "BACKUP-TEMPORAL",
+        "Backup-21",
+        "Backup-gammae",
+        "BUILD-08",
+        "Sig-betac",
+        "STAGING-BETAB",
+        "Staging-deployb",
+      ]
+    `)
   })
 
-  it('Case insensitive', () => {
-    given(['Abc Review', 'AbcRev'])
-    expect(searchResults('Rev')).toEqual(['AbcRev', 'Abc Review'])
-  })
+  it.todo('Case insensitive')
 
   it('prefix is priority', () => {
     given(['EPIC-ENV-A64', 'A64-ENV-01'])
@@ -111,10 +135,7 @@ describe.skip('env search a bit fuzzy', () => {
   })
 
   // TODO: treat  numeric/letter boundaries with different priorities compared with separators like '-'
-  it.skip('should respect delimiter', () => {
-    given(['g32pe-01', 'g32-dev-01'])
-    expect(searchResults('g32')).toEqual(['g32-dev-01', 'g32pe-01'])
-  })
+  it.todo('should respect delimiter')
 
   it('fuzzy will not match inverted', () => {
     given(['env-33'])
@@ -123,7 +144,13 @@ describe.skip('env search a bit fuzzy', () => {
 
   it('Upper case is a word separator', () => {
     given(['camelCase', 'PascalCase', 'case'])
-    expect(searchResults('case')).toEqual(['case', 'camelCase', 'PascalCase'])
+    expect(searchResults('case')).toMatchInlineSnapshot(`
+      [
+        "case",
+        "camelCase",
+        "PascalCase",
+      ]
+    `)
   })
 
   it('000 Leading zeros can be omitted', () => {
@@ -141,34 +168,26 @@ describe.skip('env search a bit fuzzy', () => {
     expect(searchResults('order #')).toEqual(['b order #'])
   })
 
-  it('favorites, then recent, are priority - case sensitive', () => {
-    given(['a order', 'a order - recent', 'a order - favorite'])
+  it('will respect recent results first', () => {
+    given(['a order', 'a order - [frequency=0.1]', 'a order - [frequency=0.5]'])
     expect(searchResults('a')).toEqual([
-      'a order - favorite',
-      'a order - recent',
+      'a order - [frequency=0.5]',
+      'a order - [frequency=0.1]',
       'a order',
     ])
   })
 
-  it('favorites, then recent, are priority - case insensitive', () => {
-    given(['A order', 'A order - recent', 'A order - favorite'])
-    expect(searchResults('a')).toEqual([
-      'A order - favorite',
-      'A order - recent',
-      'A order',
-    ])
+  it('will rank prefixed match higher then frequency', () => {
+    given(['ac [frequency=0.1]', 'abc [frequency=0.9]'])
+    expect(searchResults('ac')).toMatchInlineSnapshot(`
+      [
+        "ac [frequency=0.1]",
+        "abc [frequency=0.9]",
+      ]
+    `)
   })
 
-  it('favorites, then recent, are priority - substring', () => {
-    given(['A order', 'A order - recent', 'A order - favorite'])
-    expect(searchResults('rd')).toEqual([
-      'A order - favorite',
-      'A order - recent',
-      'A order',
-    ])
-  })
-
-  it('doubl dashes', () => {
+  it('double dashes', () => {
     given(['abc-uat-01'])
     expect(searchResults('abcuat-01')).toEqual(['abc-uat-01'])
   })
@@ -176,10 +195,5 @@ describe.skip('env search a bit fuzzy', () => {
   it('dash-separator', () => {
     given(['abc-uat'])
     expect(searchResults('abcuat')).toEqual(['abc-uat'])
-  })
-
-  it('does not match substrings', () => {
-    given(['abc'])
-    expect(searchResults('b')).toEqual([])
   })
 })

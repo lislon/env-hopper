@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "strict": false,
+    "strictNullChecks": true,
+    "suppressExcessPropertyErrors": true
+  }
+}

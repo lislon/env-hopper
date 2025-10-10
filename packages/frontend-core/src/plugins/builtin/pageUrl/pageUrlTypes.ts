@@ -3,8 +3,7 @@ import type {
   BaseAutoCompletableItem,
 } from '~/modules/pluginCore/types'
 
-export interface PluginPageUrlAutoCompletableParent
-  extends BaseAppAutoCompletableParent {
+export interface PluginPageUrlAutoCompletableParent extends BaseAppAutoCompletableParent {
   type: 'pageUrlParent'
   displayName: string
   aliases?: Array<string>

@@ -1,9 +1,7 @@
-import type {
-  BaseAutoCompleteItemRender,
-  EhPluginResouceJumpCtx,
-} from '~/modules/pluginCore/types'
-import type { ResourceJumpItem } from '~/modules/resourceJump/types'
+import type { BaseAutoCompleteItemRender } from '~/modules/pluginCore/types'
+import type { ResourceJumpUI } from '~/modules/resourceJump/types'
 import type { PluginPageUrlAutocompleteItem } from './pageUrlTypes'
+import { formatResourceTitle } from '~/modules/resourceJump/utils/helpers'
 
 export function isAutocompleteItem(
   item: { type?: string } | null | undefined,
@@ -34,33 +32,6 @@ export function autocompleteFilter(
   })
 }
 
-export function autocompleteToString(
-  item: PluginPageUrlAutocompleteItem,
-): string {
-  return formatJumpButtonTitle(item)
-  // return item.displayName;
-}
-
-export function formatJumpButtonTitle(
-  item: PluginPageUrlAutocompleteItem,
-): string {
-  if (item.parent && item.parent.displayName) {
-    if (item.parent.hasSingleChild) {
-      return item.parent.displayName
-    }
-    return `${item.parent.displayName} :: ${item.displayName}`
-  }
-  return item.displayName
-}
-
-export function getJumpUrl(
-  jumpResource: ResourceJumpItem | undefined,
-  ctx: EhPluginResouceJumpCtx,
-): string {
-  console.log('jump Url', jumpResource, ctx)
-
-  if (!jumpResource) {
-    return ''
-  }
-  return `https://${jumpResource.slug}.ru`
+export function formatJumpButtonTitle(item: ResourceJumpUI): string {
+  return formatResourceTitle(item)
 }

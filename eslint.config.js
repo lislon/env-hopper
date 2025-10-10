@@ -1,8 +1,8 @@
 // @ts-check
 
 // @ts-ignore Needed due to moduleResolution Node vs Bundler
-import { tanstackConfig } from '@tanstack/config/eslint'
 import pluginCspell from '@cspell/eslint-plugin'
+import { tanstackConfig } from '@tanstack/config/eslint'
 import vitest from '@vitest/eslint-plugin'
 
 export default [

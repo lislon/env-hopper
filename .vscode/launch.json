@@ -13,10 +13,10 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "backend-example - Debug 2",
+      "name": "frontend-example - Debug",
       "skipFiles": ["<node_internals>/**"],
-      "cwd": "${workspaceFolder}/examples/backend-example",
-      "program": "${workspaceFolder}/examples/backend-example/node_modules/.bin/vite",
+      "cwd": "${workspaceFolder}/packages/frontend-core",
+      "program": "${workspaceFolder}/packages/frontend-core/node_modules/.bin/vite",
       "args": []
     }
   ]

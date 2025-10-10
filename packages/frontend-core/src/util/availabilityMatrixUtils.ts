@@ -1,12 +1,12 @@
 import type {
+  AvailabilityMatrixData,
   AvailabilityVariant,
-  AvailiabilityMatrixData,
 } from '@env-hopper/backend-core'
 
 export interface AvailabilitySearchParams {
   envSlug?: string
   resourceJumpSlug?: string
-  availabilityMatrix: AvailiabilityMatrixData
+  availabilityMatrix: AvailabilityMatrixData
 }
 
 export interface AvailabilitySlugPair {

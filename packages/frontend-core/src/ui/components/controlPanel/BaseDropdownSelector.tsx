@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
 import { useCombobox } from 'downshift'
+import React, { useState } from 'react'
 import type { ReactNode } from 'react'
 import type { BaseDropdownContentProps } from '~/types/ehTypes'
 import { Button } from '~/components/ui/button'
@@ -66,7 +66,7 @@ function DropdownInput({
     items: [], // We'll handle items in the children component
   })
 
-  // Handle input blur
+  // Handle input blur: push current value immediately and close
   const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     console.log('🔄 Input blur', {
       relatedTarget: e.relatedTarget,

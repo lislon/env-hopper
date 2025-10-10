@@ -1,13 +1,13 @@
-import { objectify } from 'radashi'
-import { describe, expect, it } from 'vitest'
 import type {
-  AvailiabilityMatrixData as AvailabilityMatrixData,
+  AvailabilityMatrixData,
   AvailabilityVariant,
   EhEnvIndexed,
 } from '@env-hopper/backend-core'
+import { objectify } from 'radashi'
+import { describe, expect, it } from 'vitest'
 import type { ResourceJumpItem } from '~/modules/resourceJump/types'
-import type { FindBestMatchingResourceJumpParams } from '~/modules/resourceJump/findBestMatchByUrl'
-import { findBestMatchByUrl } from '~/modules/resourceJump/findBestMatchByUrl'
+import type { FindBestMatchingResourceJumpParams } from '~/modules/resourceJump/utils/findBestMatchByUrl'
+import { findBestMatchByUrl } from '~/modules/resourceJump/utils/findBestMatchByUrl'
 
 function makeEnvs(
   envAsCommaSeparated: string | Array<string>,
@@ -23,11 +23,11 @@ function makeEnvs(
 }
 
 function makeResourceJumps(
-  resoucesAsCommaSeparated: string | Array<string>,
+  resourcesAsCommaSeparated: string | Array<string>,
 ): Record<string, ResourceJumpItem> {
-  const resourceArray = Array.isArray(resoucesAsCommaSeparated)
-    ? resoucesAsCommaSeparated
-    : resoucesAsCommaSeparated.split(/\s*,\s*/)
+  const resourceArray = Array.isArray(resourcesAsCommaSeparated)
+    ? resourcesAsCommaSeparated
+    : resourcesAsCommaSeparated.split(/\s*,\s*/)
   return objectify(
     resourceArray,
     (slug) => slug,
@@ -82,24 +82,22 @@ describe('findBestMatchByUrl', () => {
       urlAppSlug: urlAppSlug,
       envs: envs,
       resourceJumps: resourceJumps,
-      getAvailabilityMatrix: async () => await Promise.resolve(matrixData),
+      getAvailabilityMatrix: async () => matrixData,
       getNameMigrations: async (r) => {
         if (r.resourceSlug === 'old-app%2Fhome') {
-          return await Promise.resolve({
+          return {
             type: 'resourceRename',
             oldSlug: r.resourceSlug,
             targetSlug: 'test-app',
-          })
+          }
         }
-        return await Promise.resolve(false)
+        return false
       },
       getEnvHistory: async () =>
-        await Promise.resolve(
-          ['staging-env', 'prod-env', 'test-env'].map((envSlug, index) => ({
-            envSlug,
-            timestamp: 100 - index,
-          })),
-        ),
+        ['staging-env', 'prod-env', 'test-env'].map((envSlug, index) => ({
+          envSlug,
+          timestamp: 100 - index,
+        })),
       ...override,
     })
 

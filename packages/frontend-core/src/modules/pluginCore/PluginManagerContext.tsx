@@ -1,14 +1,10 @@
 import { objectify } from 'radashi'
-import { createContext, use, useCallback, useMemo, useState } from 'react'
-import { isEhPluginResourceJumpable } from './types'
+import { createContext, use, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import type { PluginPageUrlAutocompleteItem } from '~/plugins/builtin/pageUrl/pageUrlTypes'
 import type { PartialRecord } from '~/types/utilityTypes'
-import type { ResourceJumpItem } from '../resourceJump/types'
 import type { PluginInterfaceForCore } from './makePluginManagerContext'
 import type {
   EhPlugin,
-  EhPluginResouceJumpFactoryCtx,
   PluginName,
 } from './types'
 
@@ -18,14 +14,10 @@ export interface PluginManagerContextIface {
     PluginName,
     PluginManagerInterfaceForPlugins
   >
-  resouceJumpItems: PartialRecord<PluginName, Array<ResourceJumpItem>>
-  autocompleteFactoryItems: (
-    ctx: EhPluginResouceJumpFactoryCtx,
-  ) => Array<PluginPageUrlAutocompleteItem>
 }
 
 export interface PluginManagerInterfaceForPlugins {
-  setResouceJumps: (items: Array<ResourceJumpItem>) => void
+  // Future plugin interface methods can be added here
 }
 
 const PluginManagerContext = createContext<
@@ -42,40 +34,22 @@ export function PluginManagerContextProvider({
   children,
   plugins,
 }: PluginManagerProviderProps) {
-  const [resouceJumpItems, setResouceJumpsItems] = useState<
-    PartialRecord<PluginName, Array<ResourceJumpItem>>
-  >({})
-
-  const autocompleteFactoryItems = useCallback(
-    (
-      ctx: EhPluginResouceJumpFactoryCtx,
-    ): Array<PluginPageUrlAutocompleteItem> => {
-      return plugins
-        .filter((p) => isEhPluginResourceJumpable(p))
-        .flatMap((plugin) => plugin.factoryPageJumpAutocompleteItems(ctx))
-    },
-    [plugins],
-  )
+  const interfaceForPlugins = useMemo(() => {
+    return objectify(
+      plugins.map((p) => p.name),
+      (pluginName) => pluginName,
+      () => ({
+        // Future plugin interface methods can be added here
+      }),
+    );
+  }, [plugins])
 
   const value: PluginManagerContextIface = useMemo(() => {
     return {
       plugins,
-      interfaceForPlugins: objectify(
-        plugins.map((p) => p.name),
-        (pluginName) => pluginName,
-        (pluginName) => ({
-          setResouceJumps: (items: Array<ResourceJumpItem>) => {
-            setResouceJumpsItems((old) => ({
-              ...old,
-              ...{ [pluginName]: items },
-            }))
-          },
-        }),
-      ),
-      autocompleteFactoryItems,
-      resouceJumpItems,
+      interfaceForPlugins,
     }
-  }, [autocompleteFactoryItems, plugins, resouceJumpItems])
+  }, [plugins, interfaceForPlugins])
 
   return <PluginManagerContext value={value}>{children}</PluginManagerContext>
 }

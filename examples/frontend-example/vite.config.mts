@@ -3,9 +3,15 @@ import { frontendViteConfig } from '@env-hopper/frontend-build-vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
 import packageJson from './package.json'
+import { fileURLToPath, URL } from 'node:url'
 
 const config = defineConfig(() => {
-  const cfg = frontendViteConfig()
+  const cfg = frontendViteConfig({
+    appRoot: import.meta.dirname,
+    pwa: {
+      
+    }
+  })
 
   return {
     ...cfg,
@@ -14,6 +20,11 @@ const config = defineConfig(() => {
 
     resolve: {
       conditions: ['my-custom-condition'],
+      alias: {
+        '~': fileURLToPath(
+          new URL('../../packages/frontend-core/src', import.meta.url),
+        ),
+      },  
     },
 
     build: {
@@ -34,24 +45,7 @@ const config = defineConfig(() => {
       environment: 'jsdom',
       typecheck: { enabled: true },
     },
-
-    // test: {
-    //   globals: true,
-    //   environment: 'jsdom',
-    //   include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    //   setupFiles: ['src/__tests__/setupTests.tsx'],
-    //   // isolate: false, // isolate=false good for debugging https://vitest.dev/guide/improving-performance#test-isolation
-    //   reporters: ['default'],
-    //   watch: false, //https://github.com/nrwl/nx/issues/26223
-    //   testTimeout: process.env['MORE_TIME'] ? 3600_000 : undefined,
-    //   hookTimeout: process.env['MORE_TIME'] ? 3600_000 : undefined,
-
-    //   coverage: {
-    //     reportsDirectory: '../../coverage/apps/frontend',
-    //     provider: 'v8',
-    //   },
-    // },
-  } satisfies UserConfig
+  }
 })
 
 export default config

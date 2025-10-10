@@ -4,26 +4,31 @@ import { LoadingScreen } from './LoadingScreen'
 import { useQueryBootstrapConfig } from '~/api/data/useQueryBootstrapConfig'
 import { ThemeProvider } from '~/components/theme-provider'
 import { PluginManagerContextProvider } from '~/modules/pluginCore/PluginManagerContext'
-import { PageUrlPluginContextProvider } from '~/plugins/builtin/pageUrl/PageUrlPluginContext'
-import { PageUrlJumpPlugin } from '~/plugins/builtin/pageUrl/pageUrlJumpPlugin'
 import { BootstrapConfigProvider } from '~/modules/config/BootstrapConfigContext'
 import { GlobalConfigProvider } from '~/modules/config/GlobalConfigContext'
 import { makePluginInterfaceForCore } from '~/modules/pluginCore/makePluginManagerContext'
+import type { QueryClient } from '@tanstack/react-query'
+import type { TRPCClient } from '@trpc/client'
+import type { TRPCRouter } from '@env-hopper/backend-core'
 
 export interface MainLayoutProps {
   children: React.ReactNode
+  queryClient: QueryClient
+  trpcClient: TRPCClient<TRPCRouter>
 }
 
 export function TopLevelProviders({ children }: MainLayoutProps) {
-  const { data, isPending } = useQueryBootstrapConfig()
-  const [plugins] = useState(() => [new PageUrlJumpPlugin()])
+  const { data, failureCount, failureReason } = useQueryBootstrapConfig()
+  const [plugins] = useState(() => [
+    // Future plugins can be added here
+  ])
 
   const pluginInterfaceForCore = useMemo(() => {
-    return data ? makePluginInterfaceForCore(plugins) : null
-  }, [plugins, data])
+    return makePluginInterfaceForCore(plugins)
+  }, [plugins])
 
-  if (isPending || !data || !pluginInterfaceForCore) {
-    return <LoadingScreen />
+  if (!data) {
+    return <LoadingScreen label='configuration' failureCount={failureCount} failureReason={failureReason?.message} />
   }
 
   return (
@@ -40,9 +45,7 @@ export function TopLevelProviders({ children }: MainLayoutProps) {
               plugins={plugins}
               pluginInterfaceForCore={pluginInterfaceForCore}
             >
-              <PageUrlPluginContextProvider>
-                {children}
-              </PageUrlPluginContextProvider>
+              {children}
             </PluginManagerContextProvider>
           </GlobalConfigProvider>
         </BootstrapConfigProvider>

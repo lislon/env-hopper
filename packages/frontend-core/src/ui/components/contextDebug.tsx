@@ -1,12 +1,21 @@
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
+import { pick } from 'radashi'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '~/components/ui/collapsible'
 import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
 
 const ContextDebug: React.FC = () => {
-  const { currentResourceJump } = useResourceJumpContext()
-  const { currentEnv } = useEnvironmentContext()
+  const p = useResourceJumpContext()
 
   return (
-    <pre>{JSON.stringify({ currentResourceJump, currentEnv }, null, 2)}</pre>
+    <Collapsible>
+      <CollapsibleTrigger>Debug</CollapsibleTrigger>
+      <CollapsibleContent>
+        <pre>{JSON.stringify(pick(p, ['currentResourceJump', 'currentFlagship']), null, 2)}</pre>
+      </CollapsibleContent>
+    </Collapsible>
   )
 }
 

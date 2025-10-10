@@ -14,6 +14,8 @@ export * from './backend/api.js'
 export * from './backend/common.js'
 // Data source types
 export * from './backend/dataSources.js'
+// Company specific backend types
+export * from './backend/companySpecificBackend.js'
 
 // Deployment and version types
 export * from './backend/deployments.js'

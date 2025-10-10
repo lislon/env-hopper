@@ -5,16 +5,17 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "build": "pnpm run clean && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --sourcemap",
+    "build": "tsdown",
     "clean": "premove ./dist ./coverage ./dist-ts",
     "compile": "tsc --build",
-    "dev": "node node_modules/vite/bin/vite.js",
+    "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test:eslint": "eslint ./src",
-    "test:unit": "vitest"
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@env-hopper/backend-core": "^2.0.1-alpha",
+    "@env-hopper/shared-core": "^2.0.1-alpha",
     "@trpc/server": "catalog:",
     "cross-env": "catalog:",
     "express": "catalog:",
@@ -26,6 +27,7 @@
     "@types/express": "catalog:",
     "@types/node": "catalog:",
     "esbuild": "catalog:",
+    "tsdown": "^0.15.7",
     "tsup": "^8.5.0",
     "tsx": "catalog:",
     "typescript": "catalog:",

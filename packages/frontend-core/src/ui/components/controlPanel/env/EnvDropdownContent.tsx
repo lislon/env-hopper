@@ -1,7 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { Server } from 'lucide-react'
-import type { BaseDropdownContentProps, EhEnvIndexed } from '~/types/ehTypes'
 import { Badge } from '~/components/ui/badge'
-import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
+import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/ApiQueryMagazineResourceJump'
+import type { BaseDropdownContentProps, EnvBaseInfo } from '~/types/ehTypes'
 
 interface EnvDropdownContentProps extends BaseDropdownContentProps {}
 
@@ -12,8 +13,12 @@ export function EnvDropdownContent({
   highlightedIndex = -1,
   isUntouched,
 }: EnvDropdownContentProps) {
-  const indexData = useBootstrapConfig()
-  const listEnvs = Object.values(indexData.envs)
+  // Fetch ResourceJumpsData to get environment information
+  const { data: resourceJumpsData } = useQuery(
+    ApiQueryMagazineResourceJump.getResourceJumps()
+  )
+  
+  const listEnvs = resourceJumpsData?.envs || []
 
   // Filter environments based on search value
   const filteredEnvs = listEnvs.filter((env) => {
@@ -56,7 +61,7 @@ export function EnvDropdownContent({
     return 'text-gray-600'
   }
 
-  const handleEnvSelect = (env: EhEnvIndexed) => {
+  const handleEnvSelect = (env: EnvBaseInfo) => {
     if (onSelect) {
       onSelect(env.slug)
     }
@@ -78,7 +83,7 @@ export function EnvDropdownContent({
 
         return (
           <div
-            key={env.slug}
+            key={`${env.slug}-${index}`}
             {...(getItemProps
               ? getItemProps({
                   item: env.slug,

@@ -1,5 +1,6 @@
 import { initTRPC } from '@trpc/server'
 import z from 'zod'
+import type { ResourceJumpsData } from '../types'
 import type { EhTrpcContext } from './ehTrpcContext'
 import type { TRPCRootObject } from '@trpc/server'
 
@@ -41,14 +42,36 @@ export const trpcRouter = router({
   resourceJumps: publicProcedure.query(async ({ ctx }) => {
     return await ctx.companySpecificBackend.getResourceJumps()
   }),
-
-  // specificEnvs: publicProcedure
-  //   .query(async ({ctx}) => {
-  //     return await ctx.companySpecificBackend.getDeployments({
-  //       envNames: ['dev', 'prod'],
-  //       appNames: ['app1', 'app2'],
-  //     })
-  //   }),
+  resourceJumpBySlugAndEnv: publicProcedure
+    .input(
+      z.object({
+        jumpResourceSlug: z.string(),
+        envSlug: z.string(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      return filterSingleResourceJump(
+        await ctx.companySpecificBackend.getResourceJumps(),
+        input.jumpResourceSlug,
+        input.envSlug,
+      )
+    }),
 })
+
+function filterSingleResourceJump(
+  resourceJumps: ResourceJumpsData,
+  jumpResourceSlug: string,
+  envSlug: string,
+): ResourceJumpsData {
+  const filteredResourceJump = resourceJumps.resourceJumps.find(
+    (item) => item.slug === jumpResourceSlug,
+  )
+  const filteredEnv = resourceJumps.envs.find((item) => item.slug === envSlug)
+
+  return {
+    resourceJumps: filteredResourceJump ? [filteredResourceJump] : [],
+    envs: filteredEnv ? [filteredEnv] : [],
+  }
+}
 
 export type TRPCRouter = typeof trpcRouter

@@ -1,28 +1,23 @@
 import { Popover, PopoverContent } from '@radix-ui/react-popover'
 import { useCombobox } from 'downshift'
 import { CornerDownRight, Edit3Icon, ExpandIcon, XIcon } from 'lucide-react'
-import { unique } from 'radashi'
 import React, { useEffect, useMemo } from 'react'
-import { EhBaseSelectorRoot } from '../../../ui/components/commandInput/EhBaseSelector'
-import { mapDisplayedItems } from '../helpers'
-import { useResourceJumpContext } from '../ResourceJumpContext'
+import { Button } from '~/components/ui/button'
+import { PopoverTrigger } from '~/components/ui/popover'
+import { cn } from '~/lib/utils'
 import type {
   BaseAutoCompletableItem,
   BaseAutoCompleteItemRender,
 } from '~/modules/pluginCore/types'
+import { highlightMatches } from '~/util/highlightMatches'
+import { decodeSlug, slugToDisplayName } from '~/util/slug-utils'
+import { EhBaseSelectorRoot } from '../../../ui/components/commandInput/EhBaseSelector'
 import type {
   AppAutoCompleteAmend,
   AutoCompleteContext,
 } from '../../../ui/components/commandInput/types'
-import { Button } from '~/components/ui/button'
-import { PopoverTrigger } from '~/components/ui/popover'
-import { cn } from '~/lib/utils'
-import {
-  autocompleteFilter,
-  autocompleteToString,
-  isAutocompleteItem,
-} from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
-import { highlightMatches } from '~/util/highlightMatches'
+import { useResourceJumpContext } from '../ResourceJumpContext'
+import { mapDisplayedItems } from '../utils/helpers'
 
 interface EhJumpResourceSelectorProps {
   className?: string
@@ -31,8 +26,12 @@ interface EhJumpResourceSelectorProps {
 export function EhJumpResourceSelector({
   className = '',
 }: EhJumpResourceSelectorProps) {
-  const { jumpResources, currentResourceJump, setCurrentResourceJumpSlug } =
-    useResourceJumpContext()
+  const {
+    jumpResources,
+    currentResourceJump,
+    setCurrentResourceJumpSlug,
+    initialResourceSlug,
+  } = useResourceJumpContext()
 
   const appFilter = (
     needle: string,
@@ -65,7 +64,9 @@ export function EhJumpResourceSelector({
       isOpen: changedIsOpen,
     }) {
       if (changedIsOpen) {
-        const matchedIds = unique(appFilter(changedInputValue, jumpResources))
+        const matchedIds = [
+          ...new Set(appFilter(changedInputValue, jumpResources)),
+        ]
         setDisplayedItems(matchedIds)
       }
     },
@@ -91,11 +92,25 @@ export function EhJumpResourceSelector({
     }
   }, [currentResourceJump, jumpResources, selectItem])
 
+  // Update displayedItems when jumpResources changes
+  useEffect(() => {
+    setDisplayedItems(jumpResources)
+  }, [jumpResources])
+
   const ctx = useMemo<AutoCompleteContext>(() => {
     return {
       searchString: comboInputValue,
     }
   }, [comboInputValue])
+
+  // Generate placeholder text from URL slug when data is loading
+  const placeholderText = useMemo(() => {
+    if (initialResourceSlug && !currentResourceJump) {
+      const decodedSlug = decodeSlug(initialResourceSlug)
+      return slugToDisplayName(decodedSlug)
+    }
+    return ''
+  }, [initialResourceSlug, currentResourceJump])
 
   return (
     <EhBaseSelectorRoot className={className}>
@@ -108,6 +123,7 @@ export function EhJumpResourceSelector({
                 'group-hover:border-secondary-foreground/60 group-hover:bg-secondary/30 focus:bg-secondary/30 focus:border-secondary-foreground/60',
                 'pr-12 hover:cursor-pointer',
               )}
+              placeholder={placeholderText}
               {...getInputProps({
                 onMouseUp: (e) => {
                   const userHasSelectedSomeText =
@@ -163,7 +179,7 @@ export function EhJumpResourceSelector({
               ({ item, itemRenderData, isChild }, index) => {
                 return (
                   <DisplayItem
-                    key={item.slug}
+                    key={`${item.slug}-${index}`}
                     ctx={ctx}
                     item={item}
                     itemRenderData={itemRenderData}

@@ -8,9 +8,12 @@
   "scripts": {
     "build": "nx run-many -t build --projects=*",
     "build:all": "nx run-many --target=build --exclude=examples/** --exclude=e2e/**",
+    "build:all:lenient": "nx run-many --target=build:lenient --exclude=examples/** --exclude=e2e/**",
     "cipublish": "node scripts/publish.js",
     "clean": "pnpm --filter \"./packages/**\" run clean",
-    "dev": "nx run-many --target=dev --projects=@env-hopper/frontend-example,@env-hopper/backend-example",
+    "dev": "nx run-many --target=dev --projects=examples/*",
+    "dev:backend": "nx run-many --target=dev --projects=examples/backend-example",
+    "dev:frontend": "nx run-many --target=dev --projects=examples/frontend-example",
     "format": "prettier --write . && nx run-many -t test:eslint --fix --projects=*",
     "preinstall": "node -e \"if(process.env.CI == 'true') {console.info('Skipping preinstall...')} else {process.exit(1)}\" || npx -y only-allow pnpm",
     "prepare": "husky",
@@ -21,10 +24,11 @@
     "test:build": "publint --strict && attw --ignore-rules no-resolution --pack .",
     "test:ci": "nx run-many --targets=prisma:generate,test:eslint,test:unit,test:types,test:build,build",
     "test:eslint": "nx affected --target=test:eslint --exclude=examples/**,e2e/**",
+    "test:frontend": "pnpm --filter @env-hopper/frontend-core run test:unit",
     "test:pr": "nx affected --targets=prisma:generate,test:eslint,test:unit,test:e2e,test:types,test:build,build",
     "test:syncpack": "syncpack list-mismatches",
     "test:unit": "nx affected --target=test:unit --exclude=examples/**,e2e/**",
-    "watch": "pnpm run build:all && nx watch --all -- pnpm run build:all",
+    "watch": "pnpm run build:all:lenient && nx watch --all -- pnpm run build:all:lenient",
     "xbuild:all": "nx run-many --target=build --exclude=examples/** --exclude=e2e/**",
     "xtest": "nx run-many -t test --projects=*",
     "xtest:e2e": "nx run-many --target=test:e2e",
@@ -90,7 +94,7 @@
     "vite": "catalog:",
     "vitest": "catalog:"
   },
-  "packageManager": "pnpm@10.15.0",
+  "packageManager": "pnpm@10.18.3",
   "pnpm": {
     "overrides": {
       "@env-hopper/backend-core": "workspace:*",

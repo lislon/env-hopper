@@ -1,8 +1,3 @@
-import type {
-  AvailiabilityMatrixData,
-  BootstrapConfigData,
-  ResourceJumpsData,
-} from '../common/dataRootTypes'
 import type { EhAppIndexed } from '../common/app/appTypes'
 import type {
   EhAppPageIndexed,
@@ -87,11 +82,4 @@ export interface RenameRule {
   type: 'resourceRename' | 'envRename'
   oldSlug: string
   targetSlug: string
-}
-
-export interface EhBackendCompanySpecificBackend {
-  getBootstrapData: () => Promise<BootstrapConfigData>
-  getAvailabilityMatrix: () => Promise<AvailiabilityMatrixData>
-  getNameMigrations: (params: RenameRuleParams) => Promise<RenameRule | false>
-  getResourceJumps: () => Promise<ResourceJumpsData>
 }

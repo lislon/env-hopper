@@ -1,7 +1,7 @@
-import type { ResourceJumpsData } from '@env-hopper/backend-core'
-import type { PluginInterfaceForCore } from '../pluginCore/makePluginManagerContext'
+import type { ResourceJump } from "@env-hopper/backend-core"
+import type { FlagshipResourceJumpUi as FlagshipResourceJumpUI } from "~/modules/resourceJump/utils/mapToFlagshipResourceJumps"
 
-export interface ResouceJumpItemParent {
+export interface ResourceJumpItemParent {
   type: string
   displayName: string
   hasSingleChild: boolean
@@ -10,12 +10,21 @@ export interface ResouceJumpItemParent {
 export interface ResourceJumpItem {
   type: string
   slug: string
-  parent?: ResouceJumpItemParent
+  parent?: ResourceJumpItemParent
 }
 
 export interface ResourceJumpLoaderReturn {
   envSlug?: string
   resourceSlug?: string
-  pluginInterfaceForCore: PluginInterfaceForCore
-  resourceJumps: ResourceJumpsData
+  subValue?: string
+}
+
+export interface ResourceJumpHistoryItem {
+  resourceSlug: string
+  envSlug: string
+  timestamp: number
+}
+
+export interface ResourceJumpUI extends ResourceJump {
+  flagship?: FlagshipResourceJumpUI;
 }

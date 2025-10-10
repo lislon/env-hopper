@@ -1,3 +1,6 @@
+import type { EnvBaseInfo } from '@env-hopper/backend-core'
+import { useQuery } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import {
   createContext,
   use,
@@ -6,19 +9,19 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { useBootstrapConfig } from '../config/BootstrapConfigContext'
-import type { EhEnvIndexed } from '@env-hopper/backend-core'
-import type { ReactNode } from 'react'
-import type { EnvironmentHistoryItem } from './types'
 import { useDb } from '~/userDb/DbContext'
+import { ApiQueryMagazineResourceJump } from '../resourceJump/api/ApiQueryMagazineResourceJump'
+import type { EnvironmentHistoryItem } from './types'
 
 export interface EnvironmentContext {
   setCurrentEnv: (envSlug: string | undefined) => void
-  currentEnv: EhEnvIndexed | undefined
+  currentEnv: EnvBaseInfo | undefined
   getHistory: () => Array<EnvironmentHistoryItem>
+  initialEnvSlug: string | undefined
+  environments: Array<EnvBaseInfo>
 }
 
-const EnvironmentContext = createContext<EnvironmentContext | undefined>(
+export const EnvironmentContext = createContext<EnvironmentContext | undefined>(
   undefined,
 )
 
@@ -31,9 +34,14 @@ export function EnvironmentProvider({
   children,
   initialEnvSlug,
 }: EnvironmentProviderProps) {
-  const indexData = useBootstrapConfig()
   const db = useDb()
   const [history, setHistory] = useState<Array<EnvironmentHistoryItem>>([])
+
+  // Fetch ResourceJumpsData to get environment information
+  const { data: resourceJumpsData } = useQuery(
+    ApiQueryMagazineResourceJump.getResourceJumps(),
+  )
+
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -49,13 +57,22 @@ export function EnvironmentProvider({
     initialEnvSlug,
   )
 
+  const environments = useMemo(() => {
+    return resourceJumpsData?.envs || []
+  }, [resourceJumpsData])
+
+  // Sync currentEnvSlug with URL changes (from initialEnvSlug prop)
+  useEffect(() => {
+    setCurrentEnvSlug(initialEnvSlug)
+  }, [initialEnvSlug])
+
   // Lookup functions
   const findEnvBySlug = useCallback(
-    (envSlug: string | undefined): EhEnvIndexed | undefined => {
-      if (!envSlug) return undefined
-      return indexData.envs[envSlug]
+    (envSlug: string | undefined): EnvBaseInfo | undefined => {
+      if (!envSlug || !resourceJumpsData) return undefined
+      return resourceJumpsData.envs.find((env) => env.slug === envSlug)
     },
-    [indexData.envs],
+    [resourceJumpsData],
   )
 
   // Get current objects from slugs
@@ -67,6 +84,9 @@ export function EnvironmentProvider({
       if (envSlug !== undefined) {
         setHistory((prev) => [...prev, { envSlug, timestamp }])
         db.environmentHistory.add({ envSlug, timestamp })
+
+        // Don't navigate here - let ResourceJumpContext handle navigation
+        // since it has access to both environment and resource state
       }
     },
     [db.environmentHistory],
@@ -77,8 +97,10 @@ export function EnvironmentProvider({
       setCurrentEnv,
       currentEnv,
       getHistory: () => history,
+      initialEnvSlug,
+      environments
     }),
-    [currentEnv, setCurrentEnv, history],
+    [currentEnv, setCurrentEnv, history, initialEnvSlug, environments],
   )
 
   //   return (

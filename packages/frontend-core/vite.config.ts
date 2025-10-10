@@ -1,31 +1,58 @@
-import { defineConfig, mergeConfig } from 'vite'
+import { defineConfig, mergeConfig } from 'vitest/config'
 import viteReact from '@vitejs/plugin-react'
 import { tanstackViteConfig } from '@tanstack/config/vite'
 import svgr from 'vite-plugin-svgr'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 import packageJson from './package.json'
 import type { UserConfig } from 'vite'
 
-const config = defineConfig(() => {
+const config = defineConfig(({ mode }) => {
+  const tsconfigPath = mode === 'lenient' ? './tsconfig-lenient.json' : './tsconfig.json'
   const myConfig: UserConfig = {
-    build: {},
+    build: {
+      copyPublicDir: false
+    },
     test: {
       name: packageJson.name,
       dir: './src/__tests__',
       watch: false,
       environment: 'jsdom',
       typecheck: { enabled: true },
+      setupFiles: ['./src/__tests__/integration/setup/testSetup.ts'],
+      include: ['./src/__tests__/**/*.test.{ts,tsx}'],
     },
-    plugins: [viteReact(), svgr()],
+    plugins: [
+      viteReact(), 
+      svgr(),
+      // Copy public directory and CSS file to dist during build
+      viteStaticCopy({
+        targets: [
+          {
+            src: 'public/[!.]*',
+            dest: 'public'
+          },
+          {
+            src: 'src/index.css',
+            dest: '.'
+          }
+        ]
+      })
+    ],
   }
 
-  return mergeConfig(
-    myConfig,
-    tanstackViteConfig({
-      entry: './src/index.tsx',
-      srcDir: './src',
-      cjs: false,
-    }),
-  )
+  // Only merge tanstack config for non-test modes
+  if (process.env.NODE_ENV !== 'test') {
+    return mergeConfig(
+      myConfig,
+      tanstackViteConfig({
+        entry: './src/index.tsx',
+        srcDir: './src',
+        cjs: false
+      })
+    )
+  }
+  
+  return myConfig
 })
 
 export default config

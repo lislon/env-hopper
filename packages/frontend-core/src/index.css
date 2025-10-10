@@ -1,5 +1,7 @@
 /* @import url(./modules/resourceJump/ui/JumpMainButton.css); */
 @import 'tailwindcss';
+/* Other module imports this css, and we need to tell tailwind to scan our tsx files */
+@source "."; 
 
 /* @import 'tw-animate-css'; */
 
@@ -63,6 +65,8 @@
     --hopper: oklch(0.7488 0.149 130.38);
     --animation-btn: 0.25s;
     --btn-focus-scale: 0.95;
+    --eh-app-foreground: var(--foreground);
+    --eh-env-foreground: var(--color-chart-1);
   }
 
   /* https://tweakcn.com/editor/theme */
@@ -123,6 +127,8 @@
 
     --highlight: var(--color-amber-900);
     --hopper: oklch(0.7488 0.149 130.38);
+    /* --eh-app-foreground: var(--primary-foreground); */
+    /* --eh-env-foreground: var(--color-chart-1); */
     --animation-btn: 0.25s;
     --btn-focus-scale: 0.95;
   }
@@ -181,6 +187,8 @@
 
   --color-highlight: var(--highlight);
   --color-hopper: var(--hopper);
+  --color-eh-env-foreground: var(--eh-env-foreground);
+  --color-eh-app-foreground: var(--eh-app-foreground);
 
   --animate-button-pop: button-pop var(--animation-btn, 0.25s) ease-out;
 }

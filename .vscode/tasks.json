@@ -1,0 +1,66 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Integration Test - resourceJump",
+      "type": "shell",
+      "command": "pnpm",
+      "args": [
+        "run",
+        "test:unit",
+        "src/__tests__/integration/resourceJump.integration.test.tsx"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/packages/frontend-core"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run All Integration Tests",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "test:unit", "src/__tests__/integration/"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/packages/frontend-core"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Frontend Core",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "build"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "options": {
+        "cwd": "${workspaceFolder}/packages/frontend-core"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

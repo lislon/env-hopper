@@ -8,7 +8,7 @@ const BootstrapConfigContext = createContext<BootstrapConfigData | undefined>(
 
 interface BootstrapConfigProviderProps {
   children: ReactNode
-  bootstrapConfig: BootstrapConfigData
+  bootstrapConfig: BootstrapConfigData|undefined
 }
 
 export function BootstrapConfigProvider({

@@ -1,16 +1,15 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 // import { registerSW } from 'virtual:pwa-register';
-import './index.css'
+import type { TRPCRouter } from '@env-hopper/backend-core'
 import { createBrowserHistory } from '@tanstack/react-router'
 import { createTRPCClient, httpBatchLink } from '@trpc/client'
-import { EhDb as DbClass } from './userDb/EhDb'
-import { PageUrlJumpPlugin } from './plugins/builtin/pageUrl/pageUrlJumpPlugin'
-import type { TRPCRouter } from '@env-hopper/backend-core'
-import type { EhPlugin } from './modules/pluginCore/types'
-import { createEhRouter } from '~/util/createEhRouter'
 import { createQueryClient } from '~/api/infra/createQueryClient'
 import { App } from '~/App'
+import { createEhRouter } from '~/util/createEhRouter'
+import './index.css'
+import type { EhPlugin } from './modules/pluginCore/types'
+import { EhDb as DbClass } from './userDb/EhDb'
 
 // registerSW();
 
@@ -23,8 +22,10 @@ const trpcClient = createTRPCClient<TRPCRouter>({
 })
 
 const db = new DbClass()
-const queryClient = createQueryClient({ trpcClient })
-const plugins: Array<EhPlugin> = [new PageUrlJumpPlugin()]
+const queryClient = createQueryClient({ trpcClient, db })
+const plugins: Array<EhPlugin> = [
+  // Future plugins can be added here
+]
 const router = createEhRouter({
   history: createBrowserHistory(),
   context: {
@@ -32,6 +33,9 @@ const router = createEhRouter({
     trpcClient,
     db,
     plugins,
+    boostrapHealth: {
+      bootstrapApiError: undefined,
+    },
   },
 })
 

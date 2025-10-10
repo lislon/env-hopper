@@ -1,14 +1,16 @@
 ---
-description: 
-globs: *.tsx,*.ts,*.css,*.json
-alwaysApply: false
+globs: *.tsx,*.ts
+alwaysApply: true
 ---
-
 # Rules when exporting functions in ts
-
 
 - Don't use default export, prefer named export
 - We use pnpm
-- Don't use !important in css
+- Don't use `any` type in typescript
 - always use braces `{` for `if`, even if single line
 - Don't use index.ts to re-export, unless it's a index.ts that specified in package.json as an main export
+- if on windows, user powershell for commands, never cmd
+- when I ask you to commit, use --author to use AI as name, and commit without gpg
+- do not suppress errors/warnings
+- prefer not to use ! for non-null, analyze if type can be corrected
+- local front URL http://localhost:4000/

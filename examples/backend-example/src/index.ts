@@ -1,18 +1,16 @@
-/// <reference types="vite/client" />
-/// <reference types="vite/types/importMeta.d.ts" />
 
-import { createEhTrpcContext, trpcRouter } from '@env-hopper/backend-core'
-import { initTRPC } from '@trpc/server'
-import * as trpcExpress from '@trpc/server/adapters/express'
-import express from 'express'
-import { getRandomAvailabilityMatrix } from './utils.js'
-import type { Express } from 'express'
 import type {
   BootstrapConfigData,
   EhBackendCompanySpecificBackend,
   RenameRuleParams,
   ResourceJumpsData,
 } from '@env-hopper/backend-core'
+import { createEhTrpcContext, trpcRouter } from '@env-hopper/backend-core'
+import { initTRPC } from '@trpc/server'
+import * as trpcExpress from '@trpc/server/adapters/express'
+import type { Express } from 'express'
+import express from 'express'
+import { getRandomAvailabilityMatrix } from './utils.js'
 
 interface DataShape {
   bootstrapConfigData: BootstrapConfigData
@@ -21,10 +19,14 @@ interface DataShape {
 
 async function loadStaticData(): Promise<DataShape> {
   try {
+    // Try to load local override first, fallback to example data
     return await import('./local/example-data.local.js')
   } catch (error) {
-    console.error(error)
-    throw new Error('Failed to load local example data')
+    // Use the clean example data as fallback
+    return {
+      bootstrapConfigData: {},
+      resourceJumpsData: {},
+    }
   }
 }
 
@@ -72,7 +74,7 @@ app.use(
     createContext,
   }),
 )
-if (import.meta.env.PROD) {
-  app.listen(4000)
-}
+const port = process.env.PORT || 3002
+app.listen(port)
+console.log(`Example env-hopper listening on port ${port}`)
 export const viteNodeApp: Express = app

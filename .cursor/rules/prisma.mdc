@@ -1,5 +1,5 @@
 ---
-description:
+description: When working with db entities
 globs:
 alwaysApply: false
 ---

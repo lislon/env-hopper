@@ -1,10 +1,11 @@
-import { ApiQueryMagazineHistory } from '../environment/ApiQueryMagazineEnvironment'
-import { makePluginInterfaceForCore } from '../pluginCore/makePluginManagerContext'
-import { ApiQueryMagazineResouceJump } from './ApiQueryMagazineResourceJump'
-import { findBestMatchByUrl } from './findBestMatchByUrl'
+import type { QueryFunctionContext } from '@tanstack/react-query'
+import {
+  quickJumpFetcher,
+  quickSlotsQueryKey,
+} from '~/api/unsorted/quickJumpFetcher'
+import { resourceJumpsFetcher } from '~/api/unsorted/resourceJumpsFetcher'
 import type { EhRouterContext } from '~/types/types'
 import type { ResourceJumpLoaderReturn } from './types'
-import { ApiQueryMagazine } from '~/api/ApiQueryMagazine'
 
 export interface RouteLoaderCtx {
   params: {
@@ -19,40 +20,38 @@ export async function routeLoader({
   params,
   context,
 }: RouteLoaderCtx): Promise<ResourceJumpLoaderReturn> {
-  const [bootstrapConfig, resourceJumps] = await Promise.all([
-    context.queryClient.ensureQueryData(ApiQueryMagazine.getConfig(context)),
-    context.queryClient.ensureQueryData(
-      ApiQueryMagazineResouceJump.getResourceJumps(),
-    ),
-  ])
-
-  const pluginInterfaceForCore = makePluginInterfaceForCore(context.plugins)
-  const resourceJumpItems =
-    await pluginInterfaceForCore.getResourceJumpsItems(bootstrapConfig)
-
-  const { env, resourceJump } = await findBestMatchByUrl({
-    urlEnvSlug: params.envSlug,
-    urlAppSlug: params.appSlug,
-    envs: bootstrapConfig.envs,
-    resourceJumps: resourceJumpItems,
-    getEnvHistory: () =>
-      context.queryClient.ensureQueryData(
-        ApiQueryMagazineHistory.getEnvSelectionHistory(context),
-      ),
-    getNameMigrations: (migrationParams) =>
-      context.queryClient.ensureQueryData(
-        ApiQueryMagazineResouceJump.getNameMigration(migrationParams),
-      ),
-    getAvailabilityMatrix: () =>
-      context.queryClient.ensureQueryData(
-        ApiQueryMagazineResouceJump.getAvailabilityMatrix(),
-      ),
+  // Try to load cached data from IndexedDB to pre-populate React Query cache
+  const queryFn = resourceJumpsFetcher({
+    db: context.db,
+    trpcClient: context.trpcClient,
+    dbOnly: true,
   })
 
+  // Create a minimal context object for the query function
+  const ctx: QueryFunctionContext = {
+    queryKey: ['resourceJumps'],
+    meta: { db: context.db, trpcClient: context.trpcClient },
+    client: context.queryClient,
+    signal: new AbortController().signal,
+  }
+
+  // Call the query function to pre-populate cache
+  await queryFn(ctx)
+
+  // Preload quick slots from IndexedDB into React Query cache (DB-only)
+  const quickFn = quickJumpFetcher()
+  const quickCtx: QueryFunctionContext = {
+    queryKey: quickSlotsQueryKey,
+    meta: { db: context.db, trpcClient: context.trpcClient },
+    client: context.queryClient,
+    signal: new AbortController().signal,
+  }
+  const quickData = await quickFn(quickCtx)
+  context.queryClient.setQueryData(quickSlotsQueryKey, quickData)
+
   return {
-    envSlug: env?.slug,
-    resourceSlug: resourceJump?.slug,
-    resourceJumps,
-    pluginInterfaceForCore,
+    envSlug: params.envSlug,
+    resourceSlug: params.appSlug,
+    subValue: params.subValue,
   }
 }

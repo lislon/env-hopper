@@ -3,15 +3,16 @@ import { useCombobox } from 'downshift'
 import { Edit3Icon, XIcon } from 'lucide-react'
 import { listify, unique } from 'radashi'
 import React, { useEffect, useMemo } from 'react'
-import { EhBaseSelectorRoot } from '../../../ui/components/commandInput/EhBaseSelector'
 import { PopoverTrigger } from '~/components/ui/popover'
-import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { cn } from '~/lib/utils'
+import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
 import {
   fuzzySearch,
   makeFuzzySearchIndex,
 } from '~/modules/fuzzyMatchLogic/autoCompleteFilter'
+import { decodeSlug, slugToDisplayName } from '~/util/slug-utils'
+import { EhBaseSelectorRoot } from '~/ui/components/commandInput/EhBaseSelector'
 
 interface EhEnvSelectorProps {
   className?: string
@@ -24,7 +25,7 @@ export interface EhEnvSelectorItem {
 
 export function EhEnvSelector({ className = '' }: EhEnvSelectorProps) {
   const { envs } = useBootstrapConfig()
-  const { currentEnv, setCurrentEnv } = useEnvironmentContext()
+  const { currentEnv, setCurrentEnv, initialEnvSlug } = useEnvironmentContext()
 
   const allItems = useMemo(
     () =>
@@ -98,6 +99,15 @@ export function EhEnvSelector({ className = '' }: EhEnvSelectorProps) {
     }
   }, [allItems, currentEnv, selectItem])
 
+  // Generate placeholder text from URL slug when data is loading
+  const placeholderText = useMemo(() => {
+    if (initialEnvSlug && !currentEnv) {
+      const decodedSlug = decodeSlug(initialEnvSlug)
+      return slugToDisplayName(decodedSlug)
+    }
+    return ''
+  }, [initialEnvSlug, currentEnv])
+
   return (
     <EhBaseSelectorRoot className={className}>
       <Popover open={comboIsOpen}>
@@ -109,6 +119,7 @@ export function EhEnvSelector({ className = '' }: EhEnvSelectorProps) {
                 'group-hover:border-secondary-foreground/60 group-hover:bg-secondary/30 focus:bg-secondary/30 focus:border-secondary-foreground/60',
                 'pr-12 hover:cursor-pointer duration-300',
               )}
+              placeholder={placeholderText}
               {...getInputProps({
                 onMouseUp: (e) => {
                   const userHasSelectedSomeText =
@@ -162,7 +173,7 @@ export function EhEnvSelector({ className = '' }: EhEnvSelectorProps) {
           <div {...getMenuProps()}>
             {displayedItems.map((item, index) => (
               <div
-                key={item.slug}
+                key={`${item.slug}-${index}`}
                 className={cn(
                   'cursor-pointer text-secondary-foreground px-3 py-3 rounded-md',
                   {

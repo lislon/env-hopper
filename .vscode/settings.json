@@ -2,5 +2,21 @@
   "css.customData": [".vscode/tailwind.json"],
   "nxConsole.generateAiAgentRules": true,
   "search.useGlobalIgnoreFiles": false,
-  "vitest.maximumConfigs": 10
+  "vitest.maximumConfigs": 10,
+  "vitest.enable": true,
+  "vitest.commandLine": "pnpm run test:unit",
+  "vitest.rootConfig": "./packages/frontend-core/vitest.config.ts",
+  "testing.automaticallyOpenPeekView": "never",
+  "testing.openTesting": "neverOpen",
+  "testing.gutterEnabled": true,
+  "testing.showInlineTestResults": "onFailure",
+  "files.associations": {
+    "*.test.tsx": "typescriptreact",
+    "*.test.ts": "typescript"
+  },
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  "testing.automaticallyOpenTestResults": "neverOpen"
 }

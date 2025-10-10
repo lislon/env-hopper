@@ -1,5 +1,5 @@
 import type {
-  AvailiabilityMatrixData,
+  AvailabilityMatrixData,
   BootstrapConfigData,
   ResourceJumpsData,
 } from '../common/dataRootTypes'
@@ -91,7 +91,7 @@ export interface RenameRule {
 
 export interface EhBackendCompanySpecificBackend {
   getBootstrapData: () => Promise<BootstrapConfigData>
-  getAvailabilityMatrix: () => Promise<AvailiabilityMatrixData>
+  getAvailabilityMatrix: () => Promise<AvailabilityMatrixData>
   getNameMigrations: (params: RenameRuleParams) => Promise<RenameRule | false>
   getResourceJumps: () => Promise<ResourceJumpsData>
 }

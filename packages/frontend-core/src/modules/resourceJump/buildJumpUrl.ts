@@ -1,17 +1,17 @@
 import type {
   EnvSlug,
-  JumpResouceSlug,
+  JumpResourceSlug,
   ResourceJumpsData,
 } from '@env-hopper/backend-core'
 
 export function buildJumpUrl(
-  jumpResourceSlug: JumpResouceSlug | undefined,
+  jumpResourceSlug: JumpResourceSlug | undefined,
   envSlug: EnvSlug | undefined,
   resourceJumps: ResourceJumpsData,
 ): string {
-  const { baseResouceJumpUrls, resourceJumpsData, envData } = resourceJumps
+  const { baseResourceJumpUrls, resourceJumpsData, envData } = resourceJumps
 
-  const baseUrl = baseResouceJumpUrls[jumpResourceSlug || ''] || ''
+  const baseUrl = baseResourceJumpUrls[jumpResourceSlug || ''] || ''
   let finalUrl = baseUrl
   let prevUrl = ''
 

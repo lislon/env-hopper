@@ -1,6 +1,6 @@
 import { ApiQueryMagazineHistory } from '../environment/ApiQueryMagazineEnvironment'
 import { makePluginInterfaceForCore } from '../pluginCore/makePluginManagerContext'
-import { ApiQueryMagazineResouceJump } from './ApiQueryMagazineResourceJump'
+import { ApiQueryMagazineResourceJump } from './ApiQueryMagazineResourceJump'
 import { findBestMatchByUrl } from './findBestMatchByUrl'
 import type { EhRouterContext } from '~/types/types'
 import type { ResourceJumpLoaderReturn } from './types'
@@ -22,7 +22,7 @@ export async function routeLoader({
   const [bootstrapConfig, resourceJumps] = await Promise.all([
     context.queryClient.ensureQueryData(ApiQueryMagazine.getConfig(context)),
     context.queryClient.ensureQueryData(
-      ApiQueryMagazineResouceJump.getResourceJumps(),
+      ApiQueryMagazineResourceJump.getResourceJumps(),
     ),
   ])
 
@@ -41,11 +41,11 @@ export async function routeLoader({
       ),
     getNameMigrations: (migrationParams) =>
       context.queryClient.ensureQueryData(
-        ApiQueryMagazineResouceJump.getNameMigration(migrationParams),
+        ApiQueryMagazineResourceJump.getNameMigration(migrationParams),
       ),
     getAvailabilityMatrix: () =>
       context.queryClient.ensureQueryData(
-        ApiQueryMagazineResouceJump.getAvailabilityMatrix(),
+        ApiQueryMagazineResourceJump.getAvailabilityMatrix(),
       ),
   })
 

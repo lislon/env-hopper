@@ -28,11 +28,11 @@ export function* mapDisplayedItems(
   }
 }
 
-export function formatResourceTitle(resouceJump: ResourceJumpItem | undefined) {
-  if (resouceJump === undefined) {
+export function formatResourceTitle(resourceJump: ResourceJumpItem | undefined) {
+  if (resourceJump === undefined) {
     return ''
   }
-  return [resouceJump.parent?.displayName, resouceJump.slug]
+  return [resourceJump.parent?.displayName, resourceJump.slug]
     .filter(Boolean)
     .join(' :: ')
 }
@@ -72,7 +72,7 @@ export interface PreselectedBasedOnParamsReturn {
   app: EhAppIndexed | undefined
 }
 
-export function loadEnvAndResouceByRawUrlParams({
+export function loadEnvAndResourceByRawUrlParams({
   rawUrlParams: urlParams,
   config,
   lastUsedEnvSlug: lastUsedEnvSlug,

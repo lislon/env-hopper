@@ -7,7 +7,7 @@ import type {
 } from '@env-hopper/backend-core'
 import { getTrpcFromMeta } from '~/util/reactQueryUtils'
 
-export class ApiQueryMagazineResouceJump {
+export class ApiQueryMagazineResourceJump {
   static getNameMigration(params: RenameRuleParams) {
     return queryOptions<RenameRule | false, Error>({
       queryKey: ['nameMigrations'],

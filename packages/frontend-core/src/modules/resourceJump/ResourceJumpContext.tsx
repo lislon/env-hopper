@@ -12,17 +12,17 @@ import { usePluginManager } from '../pluginCore/PluginManagerContext'
 import { buildJumpUrl } from './buildJumpUrl'
 import type { EhUrlParams } from '~/types/ehTypes'
 import type { ReactNode } from 'react'
-import type { EnvSlug, JumpResouceSlug } from '@env-hopper/backend-core'
+import type { EnvSlug, JumpResourceSlug } from '@env-hopper/backend-core'
 import type { ResourceJumpItem, ResourceJumpLoaderReturn } from './types'
 import { getEhToOptions } from '~/util/route-utils'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 
 export interface ResourceJumpContextIface {
-  setCurrentResourceJumpSlug: (slug: JumpResouceSlug | undefined) => void
+  setCurrentResourceJumpSlug: (slug: JumpResourceSlug | undefined) => void
   currentResourceJump: ResourceJumpItem | undefined
   jumpResources: Array<ResourceJumpItem>
   getJumpUrl: (
-    jumpResourceSlug: JumpResouceSlug | undefined,
+    jumpResourceSlug: JumpResourceSlug | undefined,
     envSlug: EnvSlug | undefined,
   ) => string
 }
@@ -31,7 +31,7 @@ const ResourceJumpContext = createContext<ResourceJumpContextIface | undefined>(
   undefined,
 )
 
-interface ResouceJumpProviderProps {
+interface ResourceJumpProviderProps {
   children: ReactNode
   initialJumpLinkSlug?: string
   resourceJumpLoader: ResourceJumpLoaderReturn
@@ -40,7 +40,7 @@ interface ResouceJumpProviderProps {
 export function ResourceJumpProvider({
   children,
   resourceJumpLoader,
-}: ResouceJumpProviderProps) {
+}: ResourceJumpProviderProps) {
   const { autocompleteFactoryItems } = usePluginManager()
   const indexData = useBootstrapConfig()
   const { currentEnv } = useEnvironmentContext()
@@ -106,7 +106,7 @@ export function ResourceJumpProvider({
 
   const getJumpUrl = useCallback(
     (
-      jumpResourceSlug: JumpResouceSlug | undefined,
+      jumpResourceSlug: JumpResourceSlug | undefined,
       envSlug: EnvSlug | undefined,
     ) => {
       return buildJumpUrl(

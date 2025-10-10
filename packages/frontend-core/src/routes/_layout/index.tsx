@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { routeLoader } from '~/modules/resourceJump/routeLoader'
-import { ResourceJumpLayout } from '~/modules/resourceJump/ui/ResouceJumpLayout'
+import { ResourceJumpLayout } from '~/modules/resourceJump/ui/ResourceJumpLayout'
 
 export const Route = createFileRoute('/_layout/')({
   component: RouteComponent,

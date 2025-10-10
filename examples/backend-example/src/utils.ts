@@ -11,7 +11,7 @@ export interface RandomAvailablityMatrixParams {
   envs: Array<EhEnvIndexed>
 }
 
-export function makeResouceJumpSlugFromAppAndPage(
+export function makeResourceJumpSlugFromAppAndPage(
   app: { slug: string; ui?: { pages?: Array<{ slug: string }> } },
   page: { slug: string },
 ) {
@@ -22,7 +22,7 @@ export function makeResouceJumpSlugFromAppAndPage(
 export function getResourceJumpsFromApp(app: EhAppIndexed): Array<string> {
   return (
     app.ui?.pages.map((page) => {
-      return makeResouceJumpSlugFromAppAndPage(app, page)
+      return makeResourceJumpSlugFromAppAndPage(app, page)
     }) || []
   )
 }

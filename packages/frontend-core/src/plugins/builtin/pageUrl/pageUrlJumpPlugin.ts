@@ -3,7 +3,7 @@ import type {
   PluginPageUrlAutocompleteItem,
 } from './pageUrlTypes'
 import type {
-  EhPluginResouceJumpFactoryCtx,
+  EhPluginResourceJumpFactoryCtx,
   EhPluginResourceJumpable,
 } from '~/modules/pluginCore/types'
 
@@ -12,7 +12,7 @@ export class PageUrlJumpPlugin implements EhPluginResourceJumpable {
 
   factoryPageJumpAutocompleteItems({
     bootstrapConfig,
-  }: EhPluginResouceJumpFactoryCtx): Array<PluginPageUrlAutocompleteItem> {
+  }: EhPluginResourceJumpFactoryCtx): Array<PluginPageUrlAutocompleteItem> {
     return Object.values(bootstrapConfig.apps).flatMap((app) => {
       const parent: PluginPageUrlAutoCompletableParent = {
         type: 'pageUrlParent',

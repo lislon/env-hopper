@@ -1,7 +1,7 @@
 import type { ResourceJumpsData } from '@env-hopper/backend-core'
 import type { PluginInterfaceForCore } from '../pluginCore/makePluginManagerContext'
 
-export interface ResouceJumpItemParent {
+export interface ResourceJumpItemParent {
   type: string
   displayName: string
   hasSingleChild: boolean
@@ -10,7 +10,7 @@ export interface ResouceJumpItemParent {
 export interface ResourceJumpItem {
   type: string
   slug: string
-  parent?: ResouceJumpItemParent
+  parent?: ResourceJumpItemParent
 }
 
 export interface ResourceJumpLoaderReturn {

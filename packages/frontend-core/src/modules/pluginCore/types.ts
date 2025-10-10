@@ -12,13 +12,13 @@ export interface PluginAsyncData<T> {
 
 export interface EhPluginResourceJumpable extends EhPlugin {
   factoryPageJumpAutocompleteItems: (
-    ctx: EhPluginResouceJumpFactoryCtx,
+    ctx: EhPluginResourceJumpFactoryCtx,
   ) => Array<PluginPageUrlAutocompleteItem>
 }
 
 export interface EhPlugin {
   name: PluginName
-  // populatePageJumpItems(): Promise<ResouceJumpItem[]>
+  // populatePageJumpItems(): Promise<ResourceJumpItem[]>
 }
 
 export function isEhPluginResourceJumpable(
@@ -43,11 +43,11 @@ export interface BaseAutoCompleteItemRender {
   isDefaultGroupItem?: boolean
 }
 
-export interface EhPluginResouceJumpFactoryCtx {
+export interface EhPluginResourceJumpFactoryCtx {
   bootstrapConfig: BootstrapConfigData
 }
 
-export interface EhPluginResouceJumpCtx {
+export interface EhPluginResourceJumpCtx {
   env: EhEnvIndexed | undefined
 }
 

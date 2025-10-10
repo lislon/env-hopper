@@ -23,11 +23,11 @@ function makeEnvs(
 }
 
 function makeResourceJumps(
-  resoucesAsCommaSeparated: string | Array<string>,
+  resourcesAsCommaSeparated: string | Array<string>,
 ): Record<string, ResourceJumpItem> {
-  const resourceArray = Array.isArray(resoucesAsCommaSeparated)
-    ? resoucesAsCommaSeparated
-    : resoucesAsCommaSeparated.split(/\s*,\s*/)
+  const resourceArray = Array.isArray(resourcesAsCommaSeparated)
+    ? resourcesAsCommaSeparated
+    : resourcesAsCommaSeparated.split(/\s*,\s*/)
   return objectify(
     resourceArray,
     (slug) => slug,

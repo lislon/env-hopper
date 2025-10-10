@@ -8,7 +8,7 @@ import type { ResourceJumpItem } from '../resourceJump/types'
 import type { PluginInterfaceForCore } from './makePluginManagerContext'
 import type {
   EhPlugin,
-  EhPluginResouceJumpFactoryCtx,
+  EhPluginResourceJumpFactoryCtx,
   PluginName,
 } from './types'
 
@@ -18,14 +18,14 @@ export interface PluginManagerContextIface {
     PluginName,
     PluginManagerInterfaceForPlugins
   >
-  resouceJumpItems: PartialRecord<PluginName, Array<ResourceJumpItem>>
+  resourceJumpItems: PartialRecord<PluginName, Array<ResourceJumpItem>>
   autocompleteFactoryItems: (
-    ctx: EhPluginResouceJumpFactoryCtx,
+    ctx: EhPluginResourceJumpFactoryCtx,
   ) => Array<PluginPageUrlAutocompleteItem>
 }
 
 export interface PluginManagerInterfaceForPlugins {
-  setResouceJumps: (items: Array<ResourceJumpItem>) => void
+  setResourceJumps: (items: Array<ResourceJumpItem>) => void
 }
 
 const PluginManagerContext = createContext<
@@ -42,13 +42,13 @@ export function PluginManagerContextProvider({
   children,
   plugins,
 }: PluginManagerProviderProps) {
-  const [resouceJumpItems, setResouceJumpsItems] = useState<
+  const [resourceJumpItems, setResourceJumpsItems] = useState<
     PartialRecord<PluginName, Array<ResourceJumpItem>>
   >({})
 
   const autocompleteFactoryItems = useCallback(
     (
-      ctx: EhPluginResouceJumpFactoryCtx,
+      ctx: EhPluginResourceJumpFactoryCtx,
     ): Array<PluginPageUrlAutocompleteItem> => {
       return plugins
         .filter((p) => isEhPluginResourceJumpable(p))
@@ -64,8 +64,8 @@ export function PluginManagerContextProvider({
         plugins.map((p) => p.name),
         (pluginName) => pluginName,
         (pluginName) => ({
-          setResouceJumps: (items: Array<ResourceJumpItem>) => {
-            setResouceJumpsItems((old) => ({
+          setResourceJumps: (items: Array<ResourceJumpItem>) => {
+            setResourceJumpsItems((old) => ({
               ...old,
               ...{ [pluginName]: items },
             }))
@@ -73,9 +73,9 @@ export function PluginManagerContextProvider({
         }),
       ),
       autocompleteFactoryItems,
-      resouceJumpItems,
+      resourceJumpItems,
     }
-  }, [autocompleteFactoryItems, plugins, resouceJumpItems])
+  }, [autocompleteFactoryItems, plugins, resourceJumpItems])
 
   return <PluginManagerContext value={value}>{children}</PluginManagerContext>
 }

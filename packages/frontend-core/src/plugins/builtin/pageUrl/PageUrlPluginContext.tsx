@@ -1,6 +1,6 @@
 import { createContext, use, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import type { ResouceJumpItemParent } from '~/modules/resourceJump/types'
+import type { ResourceJumpItemParent } from '~/modules/resourceJump/types'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { usePluginManagerForPlugin } from '~/modules/pluginCore/PluginManagerContext'
 
@@ -17,12 +17,12 @@ interface PageUrlPluginProviderProps {
 export function PageUrlPluginContextProvider({
   children,
 }: PageUrlPluginProviderProps) {
-  const { setResouceJumps } = usePluginManagerForPlugin('pageUrl')
+  const { setResourceJumps } = usePluginManagerForPlugin('pageUrl')
   const { apps } = useBootstrapConfig()
 
   useEffect(() => {
     const jumpLinks = Object.values(apps).flatMap((app) => {
-      const parent: ResouceJumpItemParent = {
+      const parent: ResourceJumpItemParent = {
         type: 'pageUrlParent',
         displayName: app.displayName,
         hasSingleChild: app.ui?.pages.length === 1,
@@ -33,13 +33,13 @@ export function PageUrlPluginContextProvider({
             type: 'pageUrl',
             displayName: page.displayName || page.slug,
             parent: parent,
-            slug: `${app.slug}-${page.slug}`,
+            slug: `${app.slug}-${page.slug}`
           }
         }) || []
       )
     })
-    setResouceJumps(jumpLinks)
-  }, [apps, setResouceJumps])
+    setResourceJumps(jumpLinks)
+  }, [apps, setResourceJumps])
 
   const value: PageUrlPluginContextIface = useMemo(() => ({}), [])
 

@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 import type { ResourceJumpItem } from '../types'
-import type { EhPluginResouceJumpCtx } from '~/modules/pluginCore/types'
+import type { EhPluginResourceJumpCtx } from '~/modules/pluginCore/types'
 import { getJumpUrl } from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
 
 export interface JumpUrlParams extends React.ComponentPropsWithoutRef<'a'> {
   children: ReactNode
-  ctx: EhPluginResouceJumpCtx
+  ctx: EhPluginResourceJumpCtx
   jumpResource: ResourceJumpItem
   id?: string
   // substitution?: EhSubstitutionValue;

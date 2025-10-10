@@ -1,6 +1,6 @@
 import type {
   BaseAutoCompleteItemRender,
-  EhPluginResouceJumpCtx,
+  EhPluginResourceJumpCtx,
 } from '~/modules/pluginCore/types'
 import type { ResourceJumpItem } from '~/modules/resourceJump/types'
 import type { PluginPageUrlAutocompleteItem } from './pageUrlTypes'
@@ -55,7 +55,7 @@ export function formatJumpButtonTitle(
 
 export function getJumpUrl(
   jumpResource: ResourceJumpItem | undefined,
-  ctx: EhPluginResouceJumpCtx,
+  ctx: EhPluginResourceJumpCtx,
 ): string {
   console.log('jump Url', jumpResource, ctx)
 

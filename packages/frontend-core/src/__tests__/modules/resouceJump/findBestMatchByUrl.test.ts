@@ -1,7 +1,7 @@
 import { objectify } from 'radashi'
 import { describe, expect, it } from 'vitest'
 import type {
-  AvailiabilityMatrixData as AvailabilityMatrixData,
+  AvailabilityMatrixData,
   AvailabilityVariant,
   EhEnvIndexed,
 } from '@env-hopper/backend-core'
@@ -82,24 +82,22 @@ describe('findBestMatchByUrl', () => {
       urlAppSlug: urlAppSlug,
       envs: envs,
       resourceJumps: resourceJumps,
-      getAvailabilityMatrix: async () => await Promise.resolve(matrixData),
+      getAvailabilityMatrix: async () => matrixData,
       getNameMigrations: async (r) => {
         if (r.resourceSlug === 'old-app%2Fhome') {
-          return await Promise.resolve({
+          return {
             type: 'resourceRename',
             oldSlug: r.resourceSlug,
             targetSlug: 'test-app',
-          })
+          }
         }
-        return await Promise.resolve(false)
+        return false
       },
       getEnvHistory: async () =>
-        await Promise.resolve(
-          ['staging-env', 'prod-env', 'test-env'].map((envSlug, index) => ({
-            envSlug,
-            timestamp: 100 - index,
-          })),
-        ),
+        ['staging-env', 'prod-env', 'test-env'].map((envSlug, index) => ({
+          envSlug,
+          timestamp: 100 - index,
+        })),
       ...override,
     })
 

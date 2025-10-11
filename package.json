@@ -8,6 +8,7 @@
   "scripts": {
     "build": "nx run-many -t build --projects=*",
     "build:all": "nx run-many --target=build --exclude=examples/** --exclude=e2e/**",
+    "build:all:lenient": "nx run-many --target=build:lenient --exclude=examples/** --exclude=e2e/**",
     "cipublish": "node scripts/publish.js",
     "clean": "pnpm --filter \"./packages/**\" run clean",
     "dev": "nx run-many --target=dev --projects=@env-hopper/frontend-example,@env-hopper/backend-example",
@@ -24,7 +25,7 @@
     "test:pr": "nx affected --targets=prisma:generate,test:eslint,test:unit,test:e2e,test:types,test:build,build",
     "test:syncpack": "syncpack list-mismatches",
     "test:unit": "nx affected --target=test:unit --exclude=examples/**,e2e/**",
-    "watch": "pnpm run build:all && nx watch --all -- pnpm run build:all",
+    "watch": "pnpm run build:all:lenient && nx watch --all -- pnpm run build:all:lenient",
     "xbuild:all": "nx run-many --target=build --exclude=examples/** --exclude=e2e/**",
     "xtest": "nx run-many -t test --projects=*",
     "xtest:e2e": "nx run-many --target=test:e2e",

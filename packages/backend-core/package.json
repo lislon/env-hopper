@@ -30,6 +30,7 @@
   ],
   "scripts": {
     "build": "vite build",
+    "build:lenient": "vite build --mode lenient",
     "clean": "premove ./dist ./coverage ./dist-ts",
     "compile": "tsc --build",
     "dev": "tsx watch src/index.ts",

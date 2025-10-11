@@ -11,7 +11,7 @@ export class EhDb extends Dexie {
     super('envhopper')
     this.version(2).stores({
       bootstrap: '',
-      environmentHistory: '',
+      environmentHistory: 'timestamp',
     })
   }
 }

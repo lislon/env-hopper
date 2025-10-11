@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import type {
-  AvailiabilityMatrixData,
+  AvailabilityMatrixData,
   RenameRule,
   RenameRuleParams,
   ResourceJumpsData,
@@ -16,7 +16,7 @@ export class ApiQueryMagazineResourceJump {
   }
 
   static getAvailabilityMatrix() {
-    return queryOptions<AvailiabilityMatrixData, Error>({
+    return queryOptions<AvailabilityMatrixData, Error>({
       queryKey: ['availabilityMatrix'],
       queryFn: (ctx) => getTrpcFromMeta(ctx).availabilityMatrix.query(),
     })

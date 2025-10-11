@@ -1,6 +1,6 @@
 import { sort } from 'radashi'
 import type {
-  AvailiabilityMatrixData,
+  AvailabilityMatrixData,
   EhEnvIndexed,
   RenameRule,
   RenameRuleParams,
@@ -16,7 +16,7 @@ export interface FindBestMatchingResourceJumpParams {
   envs: Record<string, EhEnvIndexed>
   resourceJumps: Record<string, ResourceJumpItem>
   getEnvHistory: () => Promise<Array<EnvironmentHistoryItem>>
-  getAvailabilityMatrix: () => Promise<AvailiabilityMatrixData>
+  getAvailabilityMatrix: () => Promise<AvailabilityMatrixData>
   getNameMigrations: (params: RenameRuleParams) => Promise<RenameRule | false>
 }
 

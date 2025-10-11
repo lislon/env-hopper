@@ -1,13 +1,13 @@
-import { defineConfig, mergeConfig } from 'vite'
+import { defineConfig, mergeConfig } from 'vitest/config'
 import viteReact from '@vitejs/plugin-react'
 import { tanstackViteConfig } from '@tanstack/config/vite'
 import svgr from 'vite-plugin-svgr'
 import packageJson from './package.json'
 import type { UserConfig } from 'vite'
 
-const config = defineConfig(() => {
+const config = defineConfig(({ mode }) => {
+  const tsconfigPath = mode === 'lenient' ? './tsconfig-lenient.json' : './tsconfig.json'
   const myConfig: UserConfig = {
-    build: {},
     test: {
       name: packageJson.name,
       dir: './src/__tests__',
@@ -24,6 +24,7 @@ const config = defineConfig(() => {
       entry: './src/index.tsx',
       srcDir: './src',
       cjs: false,
+      tsconfigPath,
     }),
   )
 })

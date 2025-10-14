@@ -9,9 +9,9 @@ export class EhDb extends Dexie {
 
   constructor() {
     super('envhopper')
-    this.version(2).stores({
+    this.version(4).stores({
       bootstrap: '',
-      environmentHistory: 'timestamp',
+      environmentHistory: '++id', // Recreate with new schema
     })
   }
 }

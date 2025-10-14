@@ -1,13 +1,13 @@
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import type { EhRouterContext } from '~/types/types'
-import { RooutErrorPage } from '~/ui/components/error/RooutErrorPage'
+import { RootErrorPage } from '~/ui/components/error/RootErrorPage'
 import { NotFoundError } from '~/ui/error/NotFoundError'
 import { LoadingScreen } from '~/ui/layout/LoadingScreen'
 
 export const Route = createRootRouteWithContext<EhRouterContext>()({
   component: RootRoute,
-  errorComponent: RooutErrorPage,
+  errorComponent: RootErrorPage,
   pendingComponent: () => <LoadingScreen />,
   notFoundComponent: () => <NotFoundError />,
   wrapInSuspense: true,

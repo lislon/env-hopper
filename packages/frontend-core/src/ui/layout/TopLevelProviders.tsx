@@ -15,7 +15,7 @@ export interface MainLayoutProps {
 }
 
 export function TopLevelProviders({ children }: MainLayoutProps) {
-  const { data, isPending } = useQueryBootstrapConfig()
+  const { data, isPending, error, isStale, isSuccess} = useQueryBootstrapConfig()
   const [plugins] = useState(() => [new PageUrlJumpPlugin()])
 
   const pluginInterfaceForCore = useMemo(() => {

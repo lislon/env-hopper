@@ -16,11 +16,6 @@ export function frontendViteConfig() {
       },
     },
 
-    // preview: {
-    //   port: 4300,
-    //   host: 'localhost',
-    // },
-
     plugins: [
       // tailwindcss(),
       // removeUseClient(),

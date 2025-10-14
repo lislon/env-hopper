@@ -32,6 +32,9 @@ const router = createEhRouter({
     trpcClient,
     db,
     plugins,
+    boostrapHealth: {
+      bootstrapApiError: undefined
+    }
   },
 })
 

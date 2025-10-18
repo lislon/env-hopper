@@ -1,12 +1,13 @@
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
-import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
+import { use } from 'react'
+import { EnvironmentContext } from '~/modules/environment/EnvironmentContext'
+import { ResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
 
 const ContextDebug: React.FC = () => {
-  const { currentResourceJump } = useResourceJumpContext()
-  const { currentEnv } = useEnvironmentContext()
+  const resourceJumpContext =  use(ResourceJumpContext)
+  const envContext = use(EnvironmentContext)
 
   return (
-    <pre>{JSON.stringify({ currentResourceJump, currentEnv }, null, 2)}</pre>
+    <pre>{JSON.stringify({ currentResourceJump: resourceJumpContext?.currentResourceJump, currentEnv: envContext?.currentEnv }, null, 2)}</pre>
   )
 }
 

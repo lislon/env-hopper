@@ -11,7 +11,7 @@
     "build:all:lenient": "nx run-many --target=build:lenient --exclude=examples/** --exclude=e2e/**",
     "cipublish": "node scripts/publish.js",
     "clean": "pnpm --filter \"./packages/**\" run clean",
-    "dev": "nx run-many --target=dev --projects=@env-hopper/frontend-example,@env-hopper/backend-example",
+    "dev": "nx run-many --target=dev --projects=examples/*",
     "format": "prettier --write . && nx run-many -t test:eslint --fix --projects=*",
     "preinstall": "node -e \"if(process.env.CI == 'true') {console.info('Skipping preinstall...')} else {process.exit(1)}\" || npx -y only-allow pnpm",
     "prepare": "husky",
@@ -91,7 +91,7 @@
     "vite": "catalog:",
     "vitest": "catalog:"
   },
-  "packageManager": "pnpm@10.15.0",
+  "packageManager": "pnpm@10.18.3",
   "pnpm": {
     "overrides": {
       "@env-hopper/backend-core": "workspace:*",

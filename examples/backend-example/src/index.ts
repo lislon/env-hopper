@@ -72,7 +72,7 @@ app.use(
     createContext,
   }),
 )
-if (import.meta.env.PROD) {
-  app.listen(4000)
-}
+const port = process.env.PORT || 4000
+app.listen(port)
+console.log(`Example env-hopper listening on port ${port}`)
 export const viteNodeApp: Express = app

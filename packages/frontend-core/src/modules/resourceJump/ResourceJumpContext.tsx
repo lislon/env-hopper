@@ -27,7 +27,7 @@ export interface ResourceJumpContextIface {
   ) => string
 }
 
-const ResourceJumpContext = createContext<ResourceJumpContextIface | undefined>(
+export const ResourceJumpContext = createContext<ResourceJumpContextIface | undefined>(
   undefined,
 )
 

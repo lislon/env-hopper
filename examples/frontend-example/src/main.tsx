@@ -1,11 +1,8 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
+import '@env-hopper/frontend-core/src/index.css'
 import './index.css'
 import { App, appPropsFactory } from '@env-hopper/frontend-core'
-
-// import { registerSW } from 'virtual:pwa-register';
-
-// registerSW();
 
 // Render the app
 

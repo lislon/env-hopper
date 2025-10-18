@@ -20,13 +20,23 @@
         "default": "./dist/esm/index.js"
       }
     },
+    "./public": {
+      "my-custom-condition": "./public",
+      "default": "./dist/public"
+    },
+    "./index.css": {
+      "my-custom-condition": "./src/index.css",
+      "default": "./dist/index.css"
+    },
+    "./src/index.css": "./src/index.css",
     "./package.json": "./package.json"
   },
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
   "files": [
     "dist",
-    "src"
+    "src",
+    "public"
   ],
   "scripts": {
     "build": "vite build",
@@ -98,6 +108,7 @@
     "tw-animate-css": "^1.3.5",
     "vite": "catalog:",
     "vite-plugin-pwa": "catalog:",
+    "vite-plugin-static-copy": "catalog:",
     "vite-plugin-svgr": "catalog:",
     "vitest": "catalog:"
   },

@@ -18,7 +18,7 @@ export interface EnvironmentContext {
   getHistory: () => Array<EnvironmentHistoryItem>
 }
 
-const EnvironmentContext = createContext<EnvironmentContext | undefined>(
+export const EnvironmentContext = createContext<EnvironmentContext | undefined>(
   undefined,
 )
 

@@ -41,7 +41,8 @@
     "@tanstack/router-plugin": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "vite-plugin-pwa": "catalog:",
-    "vite-plugin-svgr": "catalog:"
+    "vite-plugin-svgr": "catalog:",
+    "vite-plugin-static-copy": "catalog:"
   },
   "devDependencies": {
     "@env-hopper/shared-core": "workspace:*",

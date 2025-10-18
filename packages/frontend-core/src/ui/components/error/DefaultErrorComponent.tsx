@@ -1,4 +1,6 @@
 import type { ErrorComponentProps } from '@tanstack/react-router'
+import { ThemeProvider } from '~/components/theme-provider'
+import { MainLayout } from '~/ui/layout/MainLayout'
 
 export function DefaultErrorComponent({ error }: ErrorComponentProps) {
   //   const { data: config } = useQuery(ApiQueryMagazine.getConfig());
@@ -26,13 +28,20 @@ export function DefaultErrorComponent({ error }: ErrorComponentProps) {
   //     !isDegraded;
 
   return (
-    <>
+    <ThemeProvider
+    attribute="class"
+    defaultTheme="system"
+    enableSystem
+    disableTransitionOnChange
+   >
+    <MainLayout>
       <div className={'mt-8 text-center !max-w-none'} role="alert">
         <h1>Oops!</h1>
         <p>Sorry, an unexpected error has occurred. :( </p>
         <pre className={'text-left mt-8 text-sm'}>{<i>{error.message}</i>}</pre>
         <pre className={'text-left mt-8 text-sm'}>{<i>{error.stack}</i>}</pre>
       </div>
-    </>
+    </MainLayout>
+    </ThemeProvider>
   )
 }

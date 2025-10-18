@@ -14,8 +14,8 @@
     "test:unit": "vitest"
   },
   "dependencies": {
-    "@env-hopper/frontend-build-vite": "^2.0.1-alpha.0",
-    "@env-hopper/frontend-core": "^2.0.1-alpha",
+    "@env-hopper/frontend-build-vite": "workspace:*",
+    "@env-hopper/frontend-core": "workspace:*",
     "cross-env": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
@@ -30,6 +30,8 @@
     "vite": "catalog:",
     "vite-plugin-svgr": "catalog:",
     "vite-tsconfig-paths": "catalog:",
+    "vite-plugin-pwa": "catalog:",
+    "@tanstack/react-router-devtools": "catalog:",
     "vitest": "catalog:"
   }
 }

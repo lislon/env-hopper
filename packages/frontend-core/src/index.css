@@ -1,5 +1,7 @@
 /* @import url(./modules/resourceJump/ui/JumpMainButton.css); */
 @import 'tailwindcss';
+/* Other module imports this css, and we need to tell tailwind to scan our tsx files */
+@source "."; 
 
 /* @import 'tw-animate-css'; */
 

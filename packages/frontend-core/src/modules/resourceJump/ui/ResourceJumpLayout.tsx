@@ -18,7 +18,7 @@ export function ResourceJumpLayout({
 }: ResourceJumpLayoutProps) {
   return (
     <TopLevelProviders>
-      <EnvironmentProvider initialEnvSlug={loaderData.envSlug}>
+      <EnvironmentProvider initialEnvSlug={undefined}>
         <ResourceJumpProvider resourceJumpLoader={loaderData}>
           <MainLayout>
             <div className="flex gap-4 flex-row">

@@ -9,21 +9,23 @@ import { PageUrlJumpPlugin } from '~/plugins/builtin/pageUrl/pageUrlJumpPlugin'
 import { BootstrapConfigProvider } from '~/modules/config/BootstrapConfigContext'
 import { GlobalConfigProvider } from '~/modules/config/GlobalConfigContext'
 import { makePluginInterfaceForCore } from '~/modules/pluginCore/makePluginManagerContext'
+import { isDexieError } from '~/util/error-utils'
+import { DefaultErrorComponent } from '../components/error/DefaultErrorComponent'
 
 export interface MainLayoutProps {
   children: React.ReactNode
 }
 
 export function TopLevelProviders({ children }: MainLayoutProps) {
-  const { data, isPending, error, isStale, isSuccess} = useQueryBootstrapConfig()
+  const { data, isPending, error, isStale, isSuccess, failureCount, failureReason } = useQueryBootstrapConfig()
   const [plugins] = useState(() => [new PageUrlJumpPlugin()])
 
   const pluginInterfaceForCore = useMemo(() => {
-    return data ? makePluginInterfaceForCore(plugins) : null
-  }, [plugins, data])
+    return makePluginInterfaceForCore(plugins)
+  }, [plugins])
 
-  if (isPending || !data || !pluginInterfaceForCore) {
-    return <LoadingScreen />
+  if (!data) {
+    return <LoadingScreen label='configuration' failureCount={failureCount} failureReason={failureReason?.message} />
   }
 
   return (

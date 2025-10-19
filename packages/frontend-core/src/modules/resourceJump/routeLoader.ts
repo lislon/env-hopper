@@ -19,40 +19,40 @@ export async function routeLoader({
   params,
   context,
 }: RouteLoaderCtx): Promise<ResourceJumpLoaderReturn> {
-  const [bootstrapConfig, resourceJumps] = await Promise.all([
-    context.queryClient.ensureQueryData(ApiQueryMagazine.getConfig(context)),
-    context.queryClient.ensureQueryData(
-      ApiQueryMagazineResourceJump.getResourceJumps(),
-    ),
-  ])
+  // const [bootstrapConfig, resourceJumps] = await Promise.all([
+  //   context.queryClient.ensureQueryData(ApiQueryMagazine.getConfig(context)),
+  //   context.queryClient.ensureQueryData(
+  //     ApiQueryMagazineResourceJump.getResourceJumps(),
+  //   ),
+  // ])
 
-  const pluginInterfaceForCore = makePluginInterfaceForCore(context.plugins)
-  const resourceJumpItems =
-    await pluginInterfaceForCore.getResourceJumpsItems(bootstrapConfig)
+  // const pluginInterfaceForCore = makePluginInterfaceForCore(context.plugins)
+  // const resourceJumpItems =
+  //   await pluginInterfaceForCore.getResourceJumpsItems(bootstrapConfig)
 
-  const { env, resourceJump } = await findBestMatchByUrl({
-    urlEnvSlug: params.envSlug,
-    urlAppSlug: params.appSlug,
-    envs: bootstrapConfig.envs,
-    resourceJumps: resourceJumpItems,
-    getEnvHistory: () =>
-      context.queryClient.ensureQueryData(
-        ApiQueryMagazineHistory.getEnvSelectionHistory(context),
-      ),
-    getNameMigrations: (migrationParams) =>
-      context.queryClient.ensureQueryData(
-        ApiQueryMagazineResourceJump.getNameMigration(migrationParams),
-      ),
-    getAvailabilityMatrix: () =>
-      context.queryClient.ensureQueryData(
-        ApiQueryMagazineResourceJump.getAvailabilityMatrix(),
-      ),
-  })
+  // const { env, resourceJump } = await findBestMatchByUrl({
+  //   urlEnvSlug: params.envSlug,
+  //   urlAppSlug: params.appSlug,
+  //   envs: bootstrapConfig.envs,
+  //   resourceJumps: resourceJumpItems,
+  //   getEnvHistory: () =>
+  //     context.queryClient.ensureQueryData(
+  //       ApiQueryMagazineHistory.getEnvSelectionHistory(context),
+  //     ),
+  //   getNameMigrations: (migrationParams) =>
+  //     context.queryClient.ensureQueryData(
+  //       ApiQueryMagazineResourceJump.getNameMigration(migrationParams),
+  //     ),
+  //   getAvailabilityMatrix: () =>
+  //     context.queryClient.ensureQueryData(
+  //       ApiQueryMagazineResourceJump.getAvailabilityMatrix(),
+  //     ),
+  // })
 
   return {
-    envSlug: env?.slug,
-    resourceSlug: resourceJump?.slug,
-    resourceJumps,
-    pluginInterfaceForCore,
+    // envSlug: env?.slug,
+    // resourceSlug: resourceJump?.slug,
+    // resourceJumps,
+    // pluginInterfaceForCore,
   }
 }

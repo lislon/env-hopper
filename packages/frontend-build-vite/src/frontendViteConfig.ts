@@ -136,6 +136,7 @@ export function frontendViteConfig(options?: {
         '/static': 'http://localhost:3002',
       },
     },
+    publicDir: '.vite-merged-public',
     plugins,
   } satisfies UserConfig
 }

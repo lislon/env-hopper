@@ -8,7 +8,7 @@ import { LoadingScreen } from '~/ui/layout/LoadingScreen'
 export const Route = createRootRouteWithContext<EhRouterContext>()({
   component: RootRoute,
   errorComponent: RootErrorPage,
-  pendingComponent: () => <LoadingScreen />,
+  pendingComponent: () => <LoadingScreen label='root pending' />,
   notFoundComponent: () => <NotFoundError />,
   wrapInSuspense: true,
 })

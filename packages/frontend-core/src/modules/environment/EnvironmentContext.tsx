@@ -31,7 +31,7 @@ export function EnvironmentProvider({
   children,
   initialEnvSlug,
 }: EnvironmentProviderProps) {
-  const indexData = useBootstrapConfig()
+  const { envs } = useBootstrapConfig()
   const db = useDb()
   const [history, setHistory] = useState<Array<EnvironmentHistoryItem>>([])
 
@@ -53,9 +53,9 @@ export function EnvironmentProvider({
   const findEnvBySlug = useCallback(
     (envSlug: string | undefined): EhEnvIndexed | undefined => {
       if (!envSlug) return undefined
-      return indexData.envs[envSlug]
+      return envs[envSlug]
     },
-    [indexData.envs],
+    [envs],
   )
 
   // Get current objects from slugs

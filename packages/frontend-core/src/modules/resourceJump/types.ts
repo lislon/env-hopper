@@ -14,8 +14,8 @@ export interface ResourceJumpItem {
 }
 
 export interface ResourceJumpLoaderReturn {
-  envSlug?: string
-  resourceSlug?: string
-  pluginInterfaceForCore: PluginInterfaceForCore
-  resourceJumps: ResourceJumpsData
+  // envSlug?: string
+  // resourceSlug?: string
+  // pluginInterfaceForCore: PluginInterfaceForCore
+  // resourceJumps: ResourceJumpsData
 }

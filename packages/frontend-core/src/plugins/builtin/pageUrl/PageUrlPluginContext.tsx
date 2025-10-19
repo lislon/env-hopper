@@ -18,28 +18,28 @@ export function PageUrlPluginContextProvider({
   children,
 }: PageUrlPluginProviderProps) {
   const { setResourceJumps } = usePluginManagerForPlugin('pageUrl')
-  const { apps } = useBootstrapConfig()
+  // const { apps } = useBootstrapConfig()
 
-  useEffect(() => {
-    const jumpLinks = Object.values(apps).flatMap((app) => {
-      const parent: ResourceJumpItemParent = {
-        type: 'pageUrlParent',
-        displayName: app.displayName,
-        hasSingleChild: app.ui?.pages.length === 1,
-      }
-      return (
-        app.ui?.pages.map((page) => {
-          return {
-            type: 'pageUrl',
-            displayName: page.displayName || page.slug,
-            parent: parent,
-            slug: `${app.slug}-${page.slug}`
-          }
-        }) || []
-      )
-    })
-    setResourceJumps(jumpLinks)
-  }, [apps, setResourceJumps])
+  // useEffect(() => {
+  //   const jumpLinks = Object.values(apps).flatMap((app) => {
+  //     const parent: ResourceJumpItemParent = {
+  //       type: 'pageUrlParent',
+  //       displayName: app.displayName,
+  //       hasSingleChild: app.ui?.pages.length === 1,
+  //     }
+  //     return (
+  //       app.ui?.pages.map((page) => {
+  //         return {
+  //           type: 'pageUrl',
+  //           displayName: page.displayName || page.slug,
+  //           parent: parent,
+  //           slug: `${app.slug}-${page.slug}`
+  //         }
+  //       }) || []
+  //     )
+  //   })
+  //   setResourceJumps(jumpLinks)
+  // }, [apps, setResourceJumps])
 
   const value: PageUrlPluginContextIface = useMemo(() => ({}), [])
 

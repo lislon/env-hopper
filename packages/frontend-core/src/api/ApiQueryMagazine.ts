@@ -9,7 +9,7 @@ export class ApiQueryMagazine {
     return queryOptions<BootstrapConfigData, Error>({
       queryKey: ['config'],
       queryFn,
-      staleTime: 0,
+      staleTime: 0
     })
   }
 }

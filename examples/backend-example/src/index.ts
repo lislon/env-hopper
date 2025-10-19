@@ -1,5 +1,3 @@
-/// <reference types="vite/client" />
-/// <reference types="vite/types/importMeta.d.ts" />
 
 import { createEhTrpcContext, trpcRouter } from '@env-hopper/backend-core'
 import { initTRPC } from '@trpc/server'
@@ -72,7 +70,7 @@ app.use(
     createContext,
   }),
 )
-const port = process.env.PORT || 4000
+const port = process.env.PORT || 3002
 app.listen(port)
 console.log(`Example env-hopper listening on port ${port}`)
 export const viteNodeApp: Express = app

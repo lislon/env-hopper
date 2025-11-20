@@ -24,7 +24,7 @@ import {
   LOCAL_STORAGE_KEY_FAVORITE_ENVS,
   LOCAL_STORAGE_KEY_RECENT_JUMPS,
   LOCAL_STORAGE_KEY_USER_ID,
-  LOCAL_STORAGE_KEY_WATCHED_TUTORIAL,
+  LOCAL_STORAGE_HIDE_SENSITIVE_INFO,
 } from '../lib/local-storage-constants';
 
 export interface EhContextProps {
@@ -52,8 +52,8 @@ export interface EhContextProps {
 
   // most recent in the beginning
   recentJumps: EhJumpHistory[];
-  hadWatchedInitialTutorial: boolean;
-  setHadWatchedInitialTutorial: (yesOrNo: boolean) => void;
+  isHideSensitiveInfo: boolean;
+  setHideSensitiveInfo: (yesOrNo: boolean) => void;
   config: EhClientConfig;
 }
 
@@ -104,8 +104,10 @@ export function EhContextProvider({ children }: EhContextProviderProps) {
     [],
   );
 
-  const [hadWatchedInitialTutorial, setHadWatchedInitialTutorial] =
-    useLocalStorage<boolean>(LOCAL_STORAGE_KEY_WATCHED_TUTORIAL, false);
+  const [isHideSensitiveInfo, setHideSensitiveInfo] = useLocalStorage<boolean>(
+    LOCAL_STORAGE_HIDE_SENSITIVE_INFO,
+    true,
+  );
 
   const listEnvs = config.envs;
   const listApps = config.apps;
@@ -213,8 +215,8 @@ export function EhContextProvider({ children }: EhContextProviderProps) {
       [findSubstitutionIdByUrl],
     ),
     recentJumps,
-    hadWatchedInitialTutorial,
-    setHadWatchedInitialTutorial,
+    isHideSensitiveInfo,
+    setHideSensitiveInfo,
     config,
   };
 

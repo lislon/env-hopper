@@ -12,6 +12,7 @@ import { useMainAppFormContext } from '../../../context/MainFormContextProvider'
 import { interpolateWidgetStr } from '../../../lib/utils';
 import { useModal } from '../../../hooks/useModal';
 import { K8SClientStyle, SettingsModal } from './SettingsModal';
+import { WidgetLeftBorder } from '../WidgetLeftBorder';
 
 export function K8sCliWidget() {
   const { app, env } = useMainAppFormContext();
@@ -72,7 +73,7 @@ export function K8sCliWidget() {
         `${env?.id}` + `${tabContent.help ? `: ${tabContent.help}` : ''}`
       }
     >
-      <div className="py-1 pr-2 flex flex-col gap-1 group h-100">
+      <WidgetLeftBorder className={'group h-10'}>
         <div className="w-4 h-4 hover:cursor-pointer">
           <K8SLogoIcon onClick={openSettingsDialog} />
         </div>
@@ -83,8 +84,8 @@ export function K8sCliWidget() {
             onClick={openSettingsDialog}
           />
         </div>
-      </div>
-      <div className="border-l-2 border-gray-300 dark:border-gray-500 pl-2">
+      </WidgetLeftBorder>
+      <div className="border-l-2 border-gray-300 dark:border-gray-500 pl-2 w-full">
         <ul role="tablist" className="tabs tabs-lifted tabs-xs p-1 ">
           {tabs.map(({ label }, i) => (
             <li

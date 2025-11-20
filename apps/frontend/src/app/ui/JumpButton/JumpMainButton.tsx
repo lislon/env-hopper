@@ -48,7 +48,9 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
             <div>
               <code>{env?.id}</code>
             </div>
-            <div className={'group-hover:underline text-xs text-wrap'}>
+            <div
+              className={'group-hover:underline text-xs text-wrap break-all'}
+            >
               {url}
             </div>
           </div>

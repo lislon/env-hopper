@@ -9,7 +9,6 @@ import { FaqModal } from './FaqModal';
 import { ApiQueryMagazine } from '../api/ApiQueryMagazine';
 import { useQuery } from '@tanstack/react-query';
 import { LoadingScreen } from './Layout/LoadingScreen';
-import { useEhContext } from '../context/EhContext';
 
 export interface MainLayoutProps {
   children: React.ReactNode;
@@ -17,15 +16,9 @@ export interface MainLayoutProps {
 
 function HomeWithContext({ children }: MainLayoutProps) {
   const [openFaq, faqDialog] = useModal();
-  const {
-    hadWatchedInitialTutorial,
-    setHadWatchedInitialTutorial,
-    recentJumps,
-  } = useEhContext();
 
   const onFaqButton = () => {
     openFaq();
-    setHadWatchedInitialTutorial(true);
   };
 
   const isFaqEnabled = import.meta.env.VITE_ABOUT_ENABLED === 'true';
@@ -34,14 +27,7 @@ function HomeWithContext({ children }: MainLayoutProps) {
       footer={<Footer />}
       headerButtons={
         <>
-          {isFaqEnabled && (
-            <FaqButton
-              onClick={onFaqButton}
-              catchAttention={
-                !hadWatchedInitialTutorial && recentJumps.length <= 1
-              }
-            />
-          )}
+          {isFaqEnabled && <FaqButton onClick={onFaqButton} />}
           <ThemeSwitcher />
         </>
       }

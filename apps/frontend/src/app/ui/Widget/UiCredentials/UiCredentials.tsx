@@ -12,6 +12,8 @@ import { useLocalStorage } from '../../../hooks/useLocalStorage';
 import { LOCAL_STORAGE_KEY_UI_PASS_TABS_POSITIONS } from '../../../lib/local-storage-constants';
 import { useMainAppFormContext } from '../../../context/MainFormContextProvider';
 import { interpolateWidgetStr } from '../../../lib/utils';
+import { WidgetLeftBorder } from '../WidgetLeftBorder';
+import { HideSensitiveDataToggle } from '../../HideSensitiveDataToggle';
 
 export interface UiCredentialsProps {
   className?: string;
@@ -41,7 +43,7 @@ function getInitialSelectedTab(
 }
 
 export function UiCredentials({ className }: UiCredentialsProps) {
-  const { listApps, env, app } = useMainAppFormContext();
+  const { listApps, env, app, isHideSensitiveInfo } = useMainAppFormContext();
 
   const ui = app?.widgets?.ui;
   const uis = isMultiPass(ui) ? ui : [ui];
@@ -80,18 +82,19 @@ export function UiCredentials({ className }: UiCredentialsProps) {
 
   return (
     <div
-      className={cn('flex tooltip tooltip-left items-start', className)}
+      className={cn('flex tooltip tooltip-left items-start w-full', className)}
       data-tip={
         `Credentials for the app UI` +
         `${tabContent.desc ? `: ${tabContent.desc}` : ''}`
       }
     >
-      <div className="py-1 pr-2 flex flex-col">
+      <WidgetLeftBorder>
         <div className="w-4 h-4">
           <UiCredsIcon />
         </div>
-      </div>
-      <div className="border-l-2 border-gray-300 dark:border-gray-500 pl-2">
+        <HideSensitiveDataToggle />
+      </WidgetLeftBorder>
+      <div className="border-l-2 border-gray-300 dark:border-gray-500 pl-2 w-full">
         {isMultiPass(ui) && uis.length > 1 && (
           <ul role="tablist" className="tabs tabs-lifted tabs-xs p-1 ">
             {ui.map(({ label }, i) => (
@@ -116,6 +119,7 @@ export function UiCredentials({ className }: UiCredentialsProps) {
           <div>
             <ReadonlyCopyField
               value={interpolateWidgetStr(tabContent.password, env, app)}
+              isHideSensitiveInfo={isHideSensitiveInfo}
             />
           </div>
         </div>

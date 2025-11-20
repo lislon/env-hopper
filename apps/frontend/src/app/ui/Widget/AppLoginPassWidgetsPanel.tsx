@@ -13,7 +13,7 @@ export interface AppWidgetsPanelProps {
 export function AppLoginPassWidgetsPanel({ className }: AppWidgetsPanelProps) {
   return (
     <div className={cn('flex justify-center', className)}>
-      <div className={'flex flex-col gap-4'}>
+      <div className={'flex flex-col gap-4 w-full max-w-[300px]'}>
         <ErrorBoundary fallback={<div>Something went wrong</div>}>
           <UiCredentials />
         </ErrorBoundary>

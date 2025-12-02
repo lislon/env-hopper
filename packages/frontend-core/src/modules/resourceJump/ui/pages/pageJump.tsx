@@ -1,19 +1,13 @@
 import type { EnvBaseInfo } from '@env-hopper/backend-core'
-import { Link } from '@tanstack/react-router'
 import { AppWindow, ExternalLinkIcon, HomeIcon } from 'lucide-react'
-import { alphabetical } from 'radashi'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator
-} from '~/components/ui/breadcrumb'
+import { alphabetical, debounce } from 'radashi'
+import { useMemo, useRef } from 'react'
 import { Input } from '~/components/ui/input'
+import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
+import { CROSS_CUTTING_SINGLE_SLUG } from '~/modules/crossCuttingParams/types'
 import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
 import type { ResourceJumpUI } from '~/modules/resourceJump/types'
-import type { FlagshipResourceJumpUi } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
 
 export function PageJump() {
   const { currentResourceJump, currentFlagship } = useResourceJumpContext()
@@ -72,6 +66,53 @@ export function PageJump() {
   )
 }
 
+export function LateResolvableParamInput({
+  resourceJump,
+}: {
+  resourceJump: ResourceJumpUI
+}) {
+  const { getParamDefBySlug, crossCuttingParams, setCrossCuttingParams } =
+    useCrossCuttingParamsContext()
+
+  const paramSlug = resourceJump.lateResolvableParamSlugs?.[0] || ''
+
+  const paramDef = getParamDefBySlug(paramSlug)
+
+  const paramsObj = crossCuttingParams[paramSlug] || {
+    stringValue: '',
+    slug: CROSS_CUTTING_SINGLE_SLUG,
+  }
+
+  const paramsRef = useRef(crossCuttingParams)
+  paramsRef.current = crossCuttingParams
+
+  const debouncedUpdate = useMemo(
+    () =>
+      debounce({ delay: 100 }, (value: string) => {
+        setCrossCuttingParams({
+          ...paramsRef.current,
+          [paramSlug]: { slug: paramSlug, stringValue: value },
+        })
+      }),
+    [paramSlug, setCrossCuttingParams],
+  )
+
+  if (!paramSlug) {
+    return null
+  }
+
+  return (
+    <Input
+      placeholder={paramDef?.displayName || 'undef ' + paramDef}
+      className="w-fit"
+      defaultValue={paramsObj.stringValue || ''}
+      key={paramSlug}
+      onChange={(v) => {
+        debouncedUpdate(v.target.value)
+      }}
+    />
+  )
+}
 
 export function ResouceJumpRow({
   resourceJump: resouceJump,
@@ -93,13 +134,17 @@ export function ResouceJumpRow({
           )}
           {resouceJump.displayName}
         </div>
-        {resouceJump.lateResolvableParamSlugs?.length && (
-          <Input placeholder="Case ID" className="w-fit"></Input>
-        )}
+        <LateResolvableParamInput resourceJump={resouceJump} />
         <ExternalLinkIcon className="w-4 stroke-secondary-foreground invisible group-hover:visible" />
       </div>
       <div className="text-muted-foreground/50 text-xs hover:visible">
-        {(env && getJumpUrl(resouceJump.slug, env.slug)) || 'pick env'}
+        {env ? (
+          <a href={getJumpUrl(resouceJump.slug, env.slug)}>
+            {getJumpUrl(resouceJump.slug, env.slug)}
+          </a>
+        ) : (
+          'pick env'
+        )}
       </div>
     </div>
   )

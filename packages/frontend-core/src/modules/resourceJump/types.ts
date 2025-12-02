@@ -1,4 +1,5 @@
 import type { ResourceJump } from "@env-hopper/backend-core"
+import type { CrossCuttingLoaderParam } from "~/modules/crossCuttingParams/types"
 import type { FlagshipResourceJumpUi as FlagshipResourceJumpUI } from "~/modules/resourceJump/utils/mapToFlagshipResourceJumps"
 
 export interface ResourceJumpItemParent {
@@ -17,7 +18,9 @@ export interface ResourceJumpLoaderReturn {
   envSlug?: string
   resourceSlug?: string
   subValue?: string
+  crossCuttingParams: Array<CrossCuttingLoaderParam>
 }
+
 
 export interface ResourceJumpHistoryItem {
   resourceSlug: string

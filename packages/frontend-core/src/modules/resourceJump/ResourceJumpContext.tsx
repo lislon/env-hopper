@@ -5,6 +5,7 @@ import type {
 } from '@env-hopper/backend-core'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { mapValues } from 'radashi'
 import type { ReactNode } from 'react'
 import {
   createContext,
@@ -15,6 +16,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
 import { mapToResouceJumpUis } from '~/modules/resourceJump/utils/mapToResouceJumpUis'
 import type { EhUrlParams } from '~/types/ehTypes'
 import { useDb } from '~/userDb/DbContext'
@@ -175,6 +177,11 @@ export function ResourceJumpProvider({
     return found
   }, [currentResourceJumpSlug, resourceJumps])
 
+  const { setCrossCuttingParamsDefs } = useCrossCuttingParamsContext();
+  useEffect(() => {
+    setCrossCuttingParamsDefs(resourceJumpsData?.lateResolvableParams || []);
+  }, [resourceJumpsData, setCrossCuttingParamsDefs]);
+
   // Derive current late resolvable params for the selected resource
   const currentLateResolvableParams = useMemo(() => {
     if (!resourceJumpsData || !currentResourceJumpSlug) {
@@ -253,33 +260,6 @@ export function ResourceJumpProvider({
     resourceJumpLoader.subValue,
   ])
 
-  // Auto-select last used resource jump when visiting environment without resource jump
-  // DISABLED FOR NOW - requires more sophisticated logic to distinguish URL navigation from user selection
-  // TODO: Re-enable when we can detect initial page load vs user interaction
-  // useEffect(() => {
-  //   // Skip if we're still loading or if resource jump is already in URL
-  //   if (isLoadingResourceJumps || resourceJumpLoader.resourceSlug !== undefined) {
-  //     return
-  //   }
-
-  //   // Only run when we have an environment from URL (not user selection) but no resource jump
-  //   if (resourceJumpLoader.envSlug && !currentResourceJumpSlug && history.length > 0) {
-  //     // Find the most recent history entry for this environment
-  //     const recentForEnv = history
-  //       .filter((item) => item.envSlug === resourceJumpLoader.envSlug)
-  //       .sort((a, b) => b.timestamp - a.timestamp)[0]
-
-  //     if (recentForEnv) {
-  //       setCurrentResourceJumpSlug(recentForEnv.resourceSlug)
-  //     }
-  //   }
-  // }, [
-  //   isLoadingResourceJumps,
-  //   resourceJumpLoader.envSlug,
-  //   resourceJumpLoader.resourceSlug,
-  //   currentResourceJumpSlug,
-  //   history,
-  // ])
 
   useEffect(() => {
     if (isLoadingResourceJumps) {
@@ -350,19 +330,24 @@ export function ResourceJumpProvider({
     isLoadingResourceJumps,
   ])
 
+  const { crossCuttingParams } = useCrossCuttingParamsContext();
+
   const getJumpUrl = useCallback(
     (
       jumpResourceSlug: JumpResourceSlug | undefined,
       envSlug: EnvSlug | undefined,
     ) => {
+
+
+
       return buildJumpUrl(
         jumpResourceSlug,
         envSlug,
         resourceJumpsData,
-        allLateResolvableParamValues,
+        mapValues(crossCuttingParams, v => v.stringValue),
       )
     },
-    [resourceJumpsData, allLateResolvableParamValues],
+    [resourceJumpsData, crossCuttingParams],
   )
 
   // On environment change, insert into quick env slots if room and not duplicate

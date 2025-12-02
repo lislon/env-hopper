@@ -52,6 +52,9 @@ export async function routeLoader({
   return {
     envSlug: params.envSlug,
     resourceSlug: params.appSlug,
-    subValue: params.subValue,
+    crossCuttingParams: params.subValue ? [{
+      slug: 'sub-legacy',
+      stringValue: params.subValue,
+    }] : []
   }
 }

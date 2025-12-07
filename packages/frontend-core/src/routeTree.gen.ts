@@ -13,6 +13,7 @@ import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutEnvEnvSlugRouteImport } from './routes/_layout/env/$envSlug'
 import { Route as LayoutAppAppSlugRouteImport } from './routes/_layout/app/$appSlug'
+import { Route as LayoutEnv2EnvSlugAppAppSlugRouteImport } from './routes/_layout/env2.$envSlug.app.$appSlug'
 import { Route as LayoutEnvEnvSlugSubSubValueRouteImport } from './routes/_layout/env/$envSlug/sub/$subValue'
 import { Route as LayoutEnvEnvSlugAppAppSlugRouteImport } from './routes/_layout/env/$envSlug/app/$appSlug'
 import { Route as LayoutAppAppSlugSubSubValueRouteImport } from './routes/_layout/app/$appSlug/sub/$subValue'
@@ -37,6 +38,12 @@ const LayoutAppAppSlugRoute = LayoutAppAppSlugRouteImport.update({
   path: '/app/$appSlug',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutEnv2EnvSlugAppAppSlugRoute =
+  LayoutEnv2EnvSlugAppAppSlugRouteImport.update({
+    id: '/env2/$envSlug/app/$appSlug',
+    path: '/env2/$envSlug/app/$appSlug',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 const LayoutEnvEnvSlugSubSubValueRoute =
   LayoutEnvEnvSlugSubSubValueRouteImport.update({
     id: '/sub/$subValue',
@@ -69,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/app/$appSlug/sub/$subValue': typeof LayoutAppAppSlugSubSubValueRoute
   '/env/$envSlug/app/$appSlug': typeof LayoutEnvEnvSlugAppAppSlugRouteWithChildren
   '/env/$envSlug/sub/$subValue': typeof LayoutEnvEnvSlugSubSubValueRoute
+  '/env2/$envSlug/app/$appSlug': typeof LayoutEnv2EnvSlugAppAppSlugRoute
   '/env/$envSlug/app/$appSlug/sub/$subValue': typeof LayoutEnvEnvSlugAppAppSlugSubSubValueRoute
 }
 export interface FileRoutesByTo {
@@ -78,6 +86,7 @@ export interface FileRoutesByTo {
   '/app/$appSlug/sub/$subValue': typeof LayoutAppAppSlugSubSubValueRoute
   '/env/$envSlug/app/$appSlug': typeof LayoutEnvEnvSlugAppAppSlugRouteWithChildren
   '/env/$envSlug/sub/$subValue': typeof LayoutEnvEnvSlugSubSubValueRoute
+  '/env2/$envSlug/app/$appSlug': typeof LayoutEnv2EnvSlugAppAppSlugRoute
   '/env/$envSlug/app/$appSlug/sub/$subValue': typeof LayoutEnvEnvSlugAppAppSlugSubSubValueRoute
 }
 export interface FileRoutesById {
@@ -89,6 +98,7 @@ export interface FileRoutesById {
   '/_layout/app/$appSlug/sub/$subValue': typeof LayoutAppAppSlugSubSubValueRoute
   '/_layout/env/$envSlug/app/$appSlug': typeof LayoutEnvEnvSlugAppAppSlugRouteWithChildren
   '/_layout/env/$envSlug/sub/$subValue': typeof LayoutEnvEnvSlugSubSubValueRoute
+  '/_layout/env2/$envSlug/app/$appSlug': typeof LayoutEnv2EnvSlugAppAppSlugRoute
   '/_layout/env/$envSlug/app/$appSlug/sub/$subValue': typeof LayoutEnvEnvSlugAppAppSlugSubSubValueRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/app/$appSlug/sub/$subValue'
     | '/env/$envSlug/app/$appSlug'
     | '/env/$envSlug/sub/$subValue'
+    | '/env2/$envSlug/app/$appSlug'
     | '/env/$envSlug/app/$appSlug/sub/$subValue'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/app/$appSlug/sub/$subValue'
     | '/env/$envSlug/app/$appSlug'
     | '/env/$envSlug/sub/$subValue'
+    | '/env2/$envSlug/app/$appSlug'
     | '/env/$envSlug/app/$appSlug/sub/$subValue'
   id:
     | '__root__'
@@ -119,6 +131,7 @@ export interface FileRouteTypes {
     | '/_layout/app/$appSlug/sub/$subValue'
     | '/_layout/env/$envSlug/app/$appSlug'
     | '/_layout/env/$envSlug/sub/$subValue'
+    | '/_layout/env2/$envSlug/app/$appSlug'
     | '/_layout/env/$envSlug/app/$appSlug/sub/$subValue'
   fileRoutesById: FileRoutesById
 }
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/app/$appSlug'
       fullPath: '/app/$appSlug'
       preLoaderRoute: typeof LayoutAppAppSlugRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/env2/$envSlug/app/$appSlug': {
+      id: '/_layout/env2/$envSlug/app/$appSlug'
+      path: '/env2/$envSlug/app/$appSlug'
+      fullPath: '/env2/$envSlug/app/$appSlug'
+      preLoaderRoute: typeof LayoutEnv2EnvSlugAppAppSlugRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/env/$envSlug/sub/$subValue': {
@@ -230,12 +250,14 @@ interface LayoutRouteChildren {
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutAppAppSlugRoute: typeof LayoutAppAppSlugRouteWithChildren
   LayoutEnvEnvSlugRoute: typeof LayoutEnvEnvSlugRouteWithChildren
+  LayoutEnv2EnvSlugAppAppSlugRoute: typeof LayoutEnv2EnvSlugAppAppSlugRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutAppAppSlugRoute: LayoutAppAppSlugRouteWithChildren,
   LayoutEnvEnvSlugRoute: LayoutEnvEnvSlugRouteWithChildren,
+  LayoutEnv2EnvSlugAppAppSlugRoute: LayoutEnv2EnvSlugAppAppSlugRoute,
 }
 
 const LayoutRouteWithChildren =

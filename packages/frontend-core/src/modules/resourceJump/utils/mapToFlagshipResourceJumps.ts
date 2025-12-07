@@ -4,12 +4,13 @@ import type {
   ResourceJumpsData
 } from '@env-hopper/backend-core';
 import { alphabetical, objectify } from 'radashi';
+import type { ResourceJumpUI } from '~/modules/resourceJump/types';
 
 
 export interface FlagshipResourceJumpUi {
   slug: string
   displayName: string;
-  resourceJumps: Array<ResourceJump>;
+  resourceJumps: Array<ResourceJumpUI>;
 }
 
 export function mapToFlagshipResourceJumps(data: Pick<ResourceJumpsData, 'groups' | 'resourceJumps'>): Array<FlagshipResourceJumpUi> {
@@ -19,12 +20,14 @@ export function mapToFlagshipResourceJumps(data: Pick<ResourceJumpsData, 'groups
   const hasGroupedSlugs = new Set<string>();
 
   for (const group of (data.groups || [])) {
-
-    flagships.push({
+    const flagship: FlagshipResourceJumpUi = {
       slug: group.slug,
       displayName: group.displayName,
-      resourceJumps: group.resourceSlugs.map(slug => bySlug[slug]!)
-    });
+      resourceJumps: []
+    }
+
+    flagship.resourceJumps = group.resourceSlugs.map(slug => ({...bySlug[slug]!, flagship }))
+    flagships.push(flagship);
 
     for (const slug of group.resourceSlugs) {
       hasGroupedSlugs.add(slug);
@@ -33,11 +36,13 @@ export function mapToFlagshipResourceJumps(data: Pick<ResourceJumpsData, 'groups
 
   for (const resource of data.resourceJumps) {
     if (!hasGroupedSlugs.has(resource.slug)) {
-      flagships.push({
+      const flagship: FlagshipResourceJumpUi = {
         slug: resource.slug,
         displayName: resource.displayName,
-        resourceJumps: [resource]
-      });
+        resourceJumps: []
+      }
+      flagship.resourceJumps.push({ ...resource, flagship });
+      flagships.push(flagship);
     }
   }
 

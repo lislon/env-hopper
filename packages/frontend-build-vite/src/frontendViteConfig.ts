@@ -1,12 +1,12 @@
-import * as process from 'node:process'
-import * as path from 'node:path'
-import * as fs from 'node:fs'
 import viteReact from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
-import svgr from 'vite-plugin-svgr'
-import { viteStaticCopy } from 'vite-plugin-static-copy'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import * as process from 'node:process'
 import type { UserConfig } from 'vite'
 import type { ManifestOptions } from 'vite-plugin-pwa'
+import { VitePWA } from 'vite-plugin-pwa'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
+import svgr from 'vite-plugin-svgr'
 
 export function frontendViteConfig(options?: {
   appRoot?: string
@@ -125,6 +125,8 @@ export function frontendViteConfig(options?: {
       },
     })
   }
+
+  // plugins.push(tanstackRouter());
 
   return {
     server: {

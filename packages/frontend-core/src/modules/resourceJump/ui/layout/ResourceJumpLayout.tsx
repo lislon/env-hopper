@@ -1,11 +1,12 @@
 import type { TRPCRouter } from '@env-hopper/backend-core'
 import type { QueryClient } from '@tanstack/react-query'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import type { TRPCClient } from '@trpc/client'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { ShortcutButton } from '~/components/ui/shortcut-button'
 import { CrossCuttingParamsProvider } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
-import { EnvironmentProvider } from '~/modules/environment/EnvironmentContext'
-import { ResourceJumpProvider } from '~/modules/resourceJump/ResourceJumpContext'
+import { EnvironmentProvider } from '~/modules/environment/context/EnvironmentContext'
+import { ResourceJumpProvider } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { QuickSearch } from '~/modules/resourceJump/ui/cmdk/QuickSearch'
 import {
   QuickSearchProvider,
@@ -51,6 +52,8 @@ export function ResourceJumpLayout({
   queryClient,
   trpcClient,
 }: ResourceJumpLayoutProps) {
+  console.log('layout', loaderData);
+  
   return (
     <TopLevelProviders queryClient={queryClient} trpcClient={trpcClient}>
       <EnvironmentProvider initialEnvSlug={loaderData.envSlug}>
@@ -79,6 +82,7 @@ export function ResourceJumpLayout({
               </div> */}
                 </div>
                 <ContextDebug />
+                <TanStackRouterDevtools />
                 {/* <QuickJumpBar /> */}
               </MainLayout>
             </QuickSearchProvider>

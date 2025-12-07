@@ -1,9 +1,9 @@
-import Dexie from 'dexie'
 import type {
   BootstrapConfigData,
   ResourceJumpsData,
 } from '@env-hopper/backend-core'
 import type { Table } from 'dexie'
+import Dexie from 'dexie'
 import type { EnvironmentHistoryItem } from '~/modules/environment/types'
 import type { ResourceJumpHistoryItem } from '~/modules/resourceJump/types'
 
@@ -18,14 +18,31 @@ export class EhDb extends Dexie {
   constructor() {
     super('envhopper')
     // Bump version when adding new tables to ensure Dexie upgrades schema
-    this.version(7).stores({
-      bootstrap: '',
-      resourceJumps: '',
-      environmentHistory: '++id',
-      resourceJumpHistory: '++id',
-      quickEnvSlots: 'slot',
-      quickAppSlots: 'slot',
-    })
+    this.version(11)
+      .stores({
+        bootstrap: '',
+        resourceJumps: '',
+        environmentHistory: '++id',
+        resourceJumpHistory: '++id',
+        quickEnvSlots: 'slot',
+        quickAppSlots: 'slot',
+      })
+      .upgrade(async (tx) => {
+        console.log('migration....')
+        await tx
+          .table('resourceJumpHistory')
+          .toCollection()
+          .modify((item) => {
+            console.log('migration of ', item)
+
+            if (!item.type) {
+              item.type = 'switch-selector'
+              delete item.envSlug
+            }
+
+            console.log('now is ', item)
+          })
+      })
   }
 
   /**

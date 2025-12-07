@@ -16,7 +16,7 @@ import type {
   AppAutoCompleteAmend,
   AutoCompleteContext,
 } from '../../../ui/components/commandInput/types'
-import { useResourceJumpContext } from '../ResourceJumpContext'
+import { useResourceJumpContext } from '../context/ResourceJumpContext'
 import { mapDisplayedItems } from '../utils/helpers'
 
 interface EhJumpResourceSelectorProps {

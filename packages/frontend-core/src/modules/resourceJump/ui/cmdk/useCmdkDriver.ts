@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
-import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 
 export interface CmdkDriverInput {
   onOpenChange: (open: boolean) => void

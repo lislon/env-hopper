@@ -10,13 +10,14 @@ import {
   useState,
 } from 'react'
 import { useDb } from '~/userDb/DbContext'
-import { ApiQueryMagazineResourceJump } from '../resourceJump/api/ApiQueryMagazineResourceJump'
-import type { EnvironmentHistoryItem } from './types'
+import { ApiQueryMagazineResourceJump } from '../../resourceJump/api/ApiQueryMagazineResourceJump'
+import type { EnvironmentHistoryItem } from '../types'
+import { useEnvironmentHistory } from './useEnvironmentHistory'
 
 export interface EnvironmentContext {
   setCurrentEnv: (envSlug: string | undefined) => void
   currentEnv: EnvBaseInfo | undefined
-  getHistory: () => Array<EnvironmentHistoryItem>
+  history: Array<EnvironmentHistoryItem>
   initialEnvSlug: string | undefined
   environments: Array<EnvBaseInfo>
 }
@@ -34,24 +35,14 @@ export function EnvironmentProvider({
   children,
   initialEnvSlug,
 }: EnvironmentProviderProps) {
-  const db = useDb()
-  const [history, setHistory] = useState<Array<EnvironmentHistoryItem>>([])
+
+  // Use environment history hook (loads history from DB and provides save)
+  const { history, historySaveEnvSwitch } = useEnvironmentHistory()
 
   // Fetch ResourceJumpsData to get environment information
   const { data: resourceJumpsData } = useQuery(
     ApiQueryMagazineResourceJump.getResourceJumps(),
   )
-
-
-  useEffect(() => {
-    const fetchHistory = async () => {
-      const historyItems = await db.environmentHistory
-        .toCollection()
-        .sortBy('timestamp')
-      setHistory(historyItems)
-    }
-    fetchHistory()
-  }, [db.environmentHistory])
 
   const [currentEnvSlug, setCurrentEnvSlug] = useState<string | undefined>(
     initialEnvSlug,
@@ -61,10 +52,6 @@ export function EnvironmentProvider({
     return resourceJumpsData?.envs || []
   }, [resourceJumpsData])
 
-  // Sync currentEnvSlug with URL changes (from initialEnvSlug prop)
-  useEffect(() => {
-    setCurrentEnvSlug(initialEnvSlug)
-  }, [initialEnvSlug])
 
   // Lookup functions
   const findEnvBySlug = useCallback(
@@ -80,23 +67,23 @@ export function EnvironmentProvider({
   const setCurrentEnv = useCallback(
     (envSlug: string | undefined) => {
       setCurrentEnvSlug(envSlug)
-      const timestamp = Date.now()
       if (envSlug !== undefined) {
-        setHistory((prev) => [...prev, { envSlug, timestamp }])
-        db.environmentHistory.add({ envSlug, timestamp })
-
-        // Don't navigate here - let ResourceJumpContext handle navigation
-        // since it has access to both environment and resource state
+        historySaveEnvSwitch(envSlug)
       }
     },
-    [db.environmentHistory],
+    [historySaveEnvSwitch],
   )
+
+  // Sync currentEnvSlug with URL changes (from initialEnvSlug prop)
+  useEffect(() => {
+    setCurrentEnv(initialEnvSlug)
+  }, [initialEnvSlug, setCurrentEnv])
 
   const value: EnvironmentContext = useMemo(
     () => ({
       setCurrentEnv,
       currentEnv,
-      getHistory: () => history,
+      history,
       initialEnvSlug,
       environments
     }),

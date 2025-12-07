@@ -2,7 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { routeLoader } from '~/modules/resourceJump/routeLoader'
 import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout'
-import { PageJump } from '~/modules/resourceJump/ui/pages/pageJump'
+import { HomePage } from '~/modules/resourceJump/ui/pages/HomePage'
+
 
 export const Route = createFileRoute('/_layout/')({
   component: RouteComponent,
@@ -20,7 +21,7 @@ function RouteComponent() {
       queryClient={queryClient}
       trpcClient={trpcClient}
     >
-      <PageJump />
+      <HomePage />
     </ResourceJumpLayout>
   )
 }

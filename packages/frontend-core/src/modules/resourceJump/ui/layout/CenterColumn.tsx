@@ -7,9 +7,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from '~/components/ui/select'
-import {
-  useResourceJumpContext
-} from '~/modules/resourceJump/ResourceJumpContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { ResourceJumpBreadcrubms } from '~/modules/resourceJump/ui/ResourceJumpBreadcrumbs'
 
 
@@ -42,7 +40,7 @@ export function CenterColumn({ children }: { children: React.ReactNode }) {
           </InputGroupAddon>
         </InputGroup> */}
       </div>
-      <ResourceJumpBreadcrubms />
+      <ResourceJumpBreadcrubms className='pb-4' />
       {children}
       {/* <Tabs defaultValue="account" className="w-[400px]">
         <TabsList defaultValue="pages">

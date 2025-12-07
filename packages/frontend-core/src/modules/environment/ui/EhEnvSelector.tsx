@@ -6,13 +6,13 @@ import React, { useEffect, useMemo } from 'react'
 import { PopoverTrigger } from '~/components/ui/popover'
 import { cn } from '~/lib/utils'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import {
   fuzzySearch,
   makeFuzzySearchIndex,
 } from '~/modules/fuzzyMatchLogic/autoCompleteFilter'
-import { decodeSlug, slugToDisplayName } from '~/util/slug-utils'
 import { EhBaseSelectorRoot } from '~/ui/components/commandInput/EhBaseSelector'
+import { decodeSlug, slugToDisplayName } from '~/util/slug-utils'
 
 interface EhEnvSelectorProps {
   className?: string

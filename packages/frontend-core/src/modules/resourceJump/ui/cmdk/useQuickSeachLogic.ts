@@ -1,6 +1,6 @@
 import { use, useCallback, useMemo } from 'react'
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
-import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { QuickSearchContext } from '~/modules/resourceJump/ui/cmdk/QuickSearchContext'
 import type { QuickOption } from '~/modules/resourceJump/ui/cmdk/types'
 

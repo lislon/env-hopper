@@ -23,11 +23,13 @@ export interface ResourceJumpLoaderReturn {
 
 
 export interface ResourceJumpHistoryItem {
-  resourceSlug: string
-  envSlug: string
+  type: 'switch-selector' | 'external-jump';
+  flagmanSlug?: string
+  resourceSlug?: string
+  envSlug?: string
   timestamp: number
 }
 
 export interface ResourceJumpUI extends ResourceJump {
-  flagship?: FlagshipResourceJumpUI;
+  flagship: FlagshipResourceJumpUI;
 }

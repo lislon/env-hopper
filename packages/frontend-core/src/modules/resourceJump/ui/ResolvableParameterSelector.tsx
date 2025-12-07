@@ -1,8 +1,8 @@
 import { XIcon } from 'lucide-react'
 import { debounce } from 'radashi'
 import { useEffect, useMemo, useRef } from 'react'
-import { useResourceJumpContext } from '../ResourceJumpContext'
 import { cn } from '~/lib/utils'
+import { useResourceJumpContext } from '../context/ResourceJumpContext'
 
 interface ResolvableParameterSelectorProps {
   className?: string

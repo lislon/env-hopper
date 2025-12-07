@@ -5,15 +5,16 @@ import { useMemo, useRef } from 'react'
 import { Input } from '~/components/ui/input'
 import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
 import { CROSS_CUTTING_SINGLE_SLUG } from '~/modules/crossCuttingParams/types'
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
-import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import type { ResourceJumpUI } from '~/modules/resourceJump/types'
 
-export function PageJump() {
+export function AppPageRegular() {
   const { currentResourceJump, currentFlagship } = useResourceJumpContext()
   const { currentEnv } = useEnvironmentContext()
   return (
     <div className="flex flex-col gap-4 w-[600px]">
+      Regular
       {/* <div>
         Related to Case ID - <strong>12q33244</strong>
       </div> */}

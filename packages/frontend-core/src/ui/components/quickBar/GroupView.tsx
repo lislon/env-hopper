@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '~/components/ui/button'
 import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/ApiQueryMagazineResourceJump'
-import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 
 interface GroupViewProps {
   className?: string

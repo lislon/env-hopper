@@ -1,37 +1,37 @@
-import {
-    GlobeIcon,
-    HeartPlusIcon
-} from 'lucide-react'
-import { useState } from 'react'
+import { GlobeIcon } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { Button } from '~/components/ui/button'
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from '~/components/ui/popover'
-import {
-    useEnvironmentContext
-} from '~/modules/environment/EnvironmentContext'
-import {
-    useResourceJumpContext
-} from '~/modules/resourceJump/ResourceJumpContext'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { EnvSwitcher } from '~/modules/resourceJump/ui/EnvSwitcher'
 import { MiniEnvSelectorPopover } from '~/modules/resourceJump/ui/miniEnvSelector/MiniEnvSelectorPopover'
 
-
-
 export function LeftColumn() {
   const { currentEnv, setCurrentEnv, environments } = useEnvironmentContext()
-  const { setCurrentResourceJumpSlug } = useResourceJumpContext()
+  const {
+    setCurrentResourceJumpSlug,
+    leftEnvSelectorValue,
+    setLeftEnvSelectorValue,
+  } = useResourceJumpContext()
 
   const [open, setOpen] = useState(false)
 
+  const inputRef = useRef<HTMLInputElement|null>(null)
+
   const onOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setLeftEnvSelectorValue(inputRef.current?.value || '')
+    }
     setOpen(isOpen)
   }
 
   return (
-    <div className='flex flex-col gap-2'>
+    <div className="flex flex-col gap-2">
       {/* <MiniEnvSelectorPopover /> */}
       {/* <Select onValueChange={setCurrentEnv}>
         <SelectTrigger>
@@ -65,8 +65,13 @@ export function LeftColumn() {
             <GlobeIcon className="stroke-eh-env-foreground" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent>
-          <MiniEnvSelectorPopover onOpenChange={onOpenChange} />
+        <PopoverContent side="bottom" sideOffset={-40} align="center">
+          <MiniEnvSelectorPopover
+            onOpenChange={onOpenChange}
+            initialValue={leftEnvSelectorValue}
+            onValueChange={setLeftEnvSelectorValue}
+            inputRef={inputRef}
+          />
         </PopoverContent>
       </Popover>
       <div className="flex flex-col gap-4">
@@ -87,7 +92,7 @@ export function LeftColumn() {
           <GlobeIcon className="stroke-eh-env-foreground" />
         </div> */}
       </div>
-      <div className='mt-4'>
+      <div className="mt-4">
         <EnvSwitcher />
       </div>
     </div>

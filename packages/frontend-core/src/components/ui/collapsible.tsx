@@ -1,6 +1,6 @@
-import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
-import { ChevronsUpDown } from "lucide-react"
-import { Button } from "~/components/ui/button"
+import * as CollapsiblePrimitive from '@radix-ui/react-collapsible'
+import { ChevronsUpDown } from 'lucide-react'
+import { Button } from '~/components/ui/button'
 
 function Collapsible({
   ...props
@@ -16,14 +16,14 @@ function CollapsibleTrigger({
     <CollapsiblePrimitive.CollapsibleTrigger
       data-slot="collapsible-trigger"
       className="flex items-center"
+      asChild
       {...rest}
     >
-      {children}
-          <Button variant="ghost" size="icon-sm" className="size-8">
-            <ChevronsUpDown />
-            <span className="sr-only">Toggle</span>
-          </Button>
-      </CollapsiblePrimitive.CollapsibleTrigger>
+      <Button variant="ghost" className="">
+        <span> <ChevronsUpDown /></span>
+        <span>{children}</span>
+      </Button>
+    </CollapsiblePrimitive.CollapsibleTrigger>
   )
 }
 
@@ -39,4 +39,3 @@ function CollapsibleContent({
 }
 
 export { Collapsible, CollapsibleContent, CollapsibleTrigger }
-

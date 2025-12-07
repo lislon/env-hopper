@@ -1,9 +1,9 @@
 import cn from 'classnames'
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import {
   formatJumpButtonTitle
 } from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
-import { useResourceJumpContext } from '../ResourceJumpContext'
+import { useResourceJumpContext } from '../context/ResourceJumpContext'
 import { JumpALink } from './JumpALink'
 
 export const JUMP_MAIN_BTN_ID = 'jump-main-button'
@@ -22,7 +22,7 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
       ? getJumpUrl(currentResourceJump.slug, currentEnv.slug)
       : undefined
 
-  const buttonTitle = formatJumpButtonTitle(currentResourceJump);
+  const buttonTitle = currentResourceJump ? formatJumpButtonTitle(currentResourceJump) : 'n/a';
 
   // .btn:active:hover,
   //   .btn:active:focus {

@@ -12,8 +12,8 @@ import {
 import { useMemo, useState } from 'react'
 import { Dialog, DialogContent } from '~/components/ui/dialog'
 import { cn } from '~/lib/utils'
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
-import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { useCmdkDriver } from '~/modules/resourceJump/ui/cmdk/useCmdkDriver'
 import './CmdKQuickSearchDialog.scss'
 

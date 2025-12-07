@@ -1,8 +1,8 @@
 import { Globe, Package, Server } from 'lucide-react'
 import { Button } from '~/components/ui/button'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
-import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 
 interface EnvQuickJumpBarProps {
   className?: string

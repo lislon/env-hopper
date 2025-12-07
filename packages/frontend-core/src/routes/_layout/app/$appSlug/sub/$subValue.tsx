@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { routeLoader } from '~/modules/resourceJump/routeLoader'
 import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout'
-import { PageJump } from '~/modules/resourceJump/ui/pages/pageJump'
+import { AppPage } from '~/modules/resourceJump/ui/pages/AppPage'
 
 export const Route = createFileRoute('/_layout/app/$appSlug/sub/$subValue')({
   component: RouteComponent,
@@ -19,7 +19,7 @@ function RouteComponent() {
       queryClient={queryClient}
       trpcClient={trpcClient}
     >
-      <PageJump />
+      <AppPage />
     </ResourceJumpLayout>
   )
 }

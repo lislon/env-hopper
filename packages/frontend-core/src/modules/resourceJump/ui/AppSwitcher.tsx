@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { BubblesIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { cn } from '~/lib/utils'
-import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 
 export interface AppSwitcherProps {
   className?: string

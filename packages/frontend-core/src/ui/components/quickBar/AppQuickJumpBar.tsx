@@ -8,7 +8,7 @@ import {
   CollapsibleTrigger,
 } from '~/components/ui/collapsible'
 import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/api/ApiQueryMagazineResourceJump'
-import { useResourceJumpContext } from '~/modules/resourceJump/ResourceJumpContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { getUngroupedResources } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
 
 interface AppQuickJumpBarProps {

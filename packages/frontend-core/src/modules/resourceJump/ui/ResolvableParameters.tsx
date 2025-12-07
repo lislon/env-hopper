@@ -1,4 +1,4 @@
-import { useResourceJumpContext } from '../ResourceJumpContext'
+import { useResourceJumpContext } from '../context/ResourceJumpContext'
 import { ResolvableParameterSelector } from './ResolvableParameterSelector'
 
 interface ResolvableParametersProps {

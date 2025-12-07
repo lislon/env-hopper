@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { Outlet } from 'react-router-dom'
 import { routeLoader } from '~/modules/resourceJump/routeLoader'
 import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout'
-import { PageJump } from '~/modules/resourceJump/ui/pages/pageJump'
 
 export const Route = createFileRoute('/_layout/env/$envSlug')({
   component: RouteComponent,
@@ -19,7 +19,10 @@ function RouteComponent() {
       queryClient={queryClient}
       trpcClient={trpcClient}
     >
-      <PageJump />
+      z
+      <Outlet />
+      k
+      {/* <EnvPage /> */}
     </ResourceJumpLayout>
   )
 }

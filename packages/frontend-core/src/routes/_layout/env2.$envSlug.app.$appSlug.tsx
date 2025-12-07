@@ -1,9 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { routeLoader } from '~/modules/resourceJump/routeLoader'
-import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout'
-import { AppPage } from '~/modules/resourceJump/ui/pages/AppPage'
+import { createFileRoute } from '@tanstack/react-router';
+import { routeLoader } from '~/modules/resourceJump/routeLoader';
+import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout';
+import { AppPage } from '~/modules/resourceJump/ui/pages/AppPage';
 
-export const Route = createFileRoute('/_layout/env/$envSlug/app/$appSlug')({
+export const Route = createFileRoute('/_layout/env2/$envSlug/app/$appSlug')({
   component: RouteComponent,
   async loader(ctx) {
     const newLocal = await routeLoader(ctx)
@@ -22,8 +22,6 @@ function RouteComponent() {
       queryClient={queryClient}
       trpcClient={trpcClient}
     >
-      appSLug
-
       <AppPage />
     </ResourceJumpLayout>
   )

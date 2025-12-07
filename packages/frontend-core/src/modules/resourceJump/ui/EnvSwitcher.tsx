@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { BubblesIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { cn } from '~/lib/utils'
-import { useEnvironmentContext } from '~/modules/environment/EnvironmentContext'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 
 
 export function EnvSwitcher() {

@@ -1,16 +1,14 @@
-import { AppSwitcher } from '~/modules/resourceJump/ui/AppSwitcher'
-import { EnvSwitcher } from '~/modules/resourceJump/ui/EnvSwitcher'
 
 export function RightColumn() {
   return (
     <div className='flex gap-2'>
       <div>
         <div className='text-center text-secondary-foreground p-2'>Envs</div>
-        <EnvSwitcher />
+        {/* <EnvSwitcher /> */}
       </div>
       <div>
         <div className='text-center text-secondary-foreground p-2'>Apps</div>
-        <AppSwitcher />
+        {/* <AppSwitcher /> */}
       </div>
     </div>
   )

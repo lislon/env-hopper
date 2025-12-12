@@ -1,19 +1,17 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { Outdent } from 'lucide-react';
 import { routeLoader } from '~/modules/resourceJump/routeLoader';
 import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout';
-import { AppPage } from '~/modules/resourceJump/ui/pages/AppPage';
+import { EnvPage } from '~/modules/resourceJump/ui/pages/EnvPage';
 
-export const Route = createFileRoute('/_layout/env2/$envSlug/app/$appSlug')({
+export const Route = createFileRoute('/_layout/env/$envSlug/')({
   component: RouteComponent,
   async loader(ctx) {
-    const newLocal = await routeLoader(ctx)
-    console.log('kotik');
-    return newLocal
+    return await routeLoader(ctx)
   },
 })
 
 function RouteComponent() {
-  console.log('lisa');
   const urlParams = Route.useLoaderData()
   const { queryClient, trpcClient } = Route.useRouteContext()
   return (
@@ -22,7 +20,7 @@ function RouteComponent() {
       queryClient={queryClient}
       trpcClient={trpcClient}
     >
-      <AppPage />
+      <EnvPage />
     </ResourceJumpLayout>
   )
 }

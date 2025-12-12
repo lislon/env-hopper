@@ -8,7 +8,6 @@ import {
 } from '~/components/ui/popover'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
-import { EnvSwitcher } from '~/modules/resourceJump/ui/EnvSwitcher'
 import { MiniEnvSelectorPopover } from '~/modules/resourceJump/ui/miniEnvSelector/MiniEnvSelectorPopover'
 
 export function LeftColumn() {
@@ -92,9 +91,9 @@ export function LeftColumn() {
           <GlobeIcon className="stroke-eh-env-foreground" />
         </div> */}
       </div>
-      <div className="mt-4">
+      {/* <div className="mt-4">
         <EnvSwitcher />
-      </div>
+      </div> */}
     </div>
   )
 }

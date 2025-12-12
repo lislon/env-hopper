@@ -24,7 +24,7 @@ export interface ResourceJumpLoaderReturn {
 
 export interface ResourceJumpHistoryItem {
   type: 'switch-selector' | 'external-jump';
-  flagmanSlug?: string
+  flagshipSlug?: string
   resourceSlug?: string
   envSlug?: string
   timestamp: number
@@ -32,4 +32,9 @@ export interface ResourceJumpHistoryItem {
 
 export interface ResourceJumpUI extends ResourceJump {
   flagship: FlagshipResourceJumpUI;
+}
+
+export interface SlugAndDisplayName {
+    slug: string;
+    displayName: string;
 }

@@ -19,6 +19,7 @@ const ContextDebug: React.FC = () => {
 
   const showElements: Array<keyof typeof ctxRj> = [];
   if (showCurrentResourceJump) {
+    showElements.push('currentFlagship')
     showElements.push('currentResourceJump')
   }
 
@@ -38,7 +39,7 @@ const ContextDebug: React.FC = () => {
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-3">
             <Checkbox id="terms" checked={showCurrentResourceJump} onClick={() => setCurrentResourceJump(!showCurrentResourceJump)}  />
-            <Label htmlFor="terms">Current ResouceJump</Label>
+            <Label htmlFor="terms">resouceJump</Label>
           </div>
           <div className="flex items-center gap-3">
             <Checkbox id="terms" checked={showHistory} onClick={() => setShowHistory(!showHistory)}  />

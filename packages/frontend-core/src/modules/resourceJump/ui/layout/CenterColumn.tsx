@@ -9,6 +9,7 @@ import {
 } from '~/components/ui/select'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { ResourceJumpBreadcrubms } from '~/modules/resourceJump/ui/ResourceJumpBreadcrumbs'
+import { TopQuickJump } from '~/modules/resourceJump/ui/TopQuickJump'
 
 
 
@@ -17,7 +18,9 @@ export function CenterColumn({ children }: { children: React.ReactNode }) {
   return (
     <div className="max-w-4xl w-full">
       <div className=" mb-4 flex gap-4">
-        <FlagshipResourceJumpSelector className="w-64" />
+        {/* <FlagshipResourceJumpSelector className="w-64" /> */}
+        <TopQuickJump />
+
         {/* <AppSwitcher /> */}
         {/* <Select>
           <SelectTrigger>View: Jump</SelectTrigger>
@@ -58,6 +61,7 @@ export function CenterColumn({ children }: { children: React.ReactNode }) {
 function FlagshipResourceJumpSelector({ className }: { className?: string }) {
   const { currentFlagship, setCurrentFlagship, flagshipJumpResources } =
     useResourceJumpContext()
+
 
   return (
     <Select onValueChange={setCurrentFlagship}>

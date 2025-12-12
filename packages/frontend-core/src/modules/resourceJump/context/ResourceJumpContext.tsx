@@ -19,6 +19,7 @@ import {
 import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpHistory } from '~/modules/resourceJump/context/useResouceJumpHistory'
+import { getFlashipResource } from '~/modules/resourceJump/utils/helpers'
 import { mapToResouceJumpUis } from '~/modules/resourceJump/utils/mapToResouceJumpUis'
 import type { EhUrlParams } from '~/types/ehTypes'
 import { useDb } from '~/userDb/DbContext'
@@ -92,11 +93,16 @@ export function ResourceJumpProvider({
   //   string | undefined
   // >(resourceJumpLoader.resourceSlug)
 
-  const [currentResourceJumpSlug, setCurrentResourceJumpSlug] = useState<
-    string | undefined
-  >(resourceJumpLoader.resourceSlug)
+  // const [currentResourceJumpSlug2, setCurrentResourceJumpSlug] = useState<
+  //   string | undefined
+  // >(resourceJumpLoader.resourceSlug)
 
-  const {history, setHistory, historySaveEnvSwitch, historySaveFlagmanSwitch} = useResourceJumpHistory()
+  const {
+    history,
+    setHistory,
+    historySaveEnvSwitch,
+    historySaveFlagmanSwitch,
+  } = useResourceJumpHistory()
 
   // Global state for all late resolvable param values across all resources
   const [allLateResolvableParamValues, setAllLateResolvableParamValues] =
@@ -115,7 +121,6 @@ export function ResourceJumpProvider({
     [quickSlots],
   )
 
-
   // No local loading effect; quick slots are sourced via React Query
 
   // Sync currentResourceJumpSlug with URL changes
@@ -124,9 +129,10 @@ export function ResourceJumpProvider({
   //   setCurrentResourceJumpSlug(resourceJumpLoader.resourceSlug)
   // }, [resourceJumpLoader.resourceSlug])
 
+  const currentResourceJumpSlug = resourceJumpLoader.resourceSlug
+
   const fixUrlBasedOnSelection = useCallback(
     async (state: EhUrlParams, replace = false) => {
-      
       const newLocal = getEhToOptions(state)
       // await navigate({
       //   ...newLocal,
@@ -139,7 +145,19 @@ export function ResourceJumpProvider({
   // Wrapped setter that saves to history
   const setCurrentResourceJumpSlugWithHistory = useCallback(
     (slug: string | undefined) => {
-      setCurrentResourceJumpSlug(slug)
+      // setCurrentResourceJumpSlug(slug)
+
+      const newLocal = getEhToOptions({
+        appId: slug,
+        envId: currentEnv?.slug,
+        subValue: resourceJumpLoader.subValue,
+      })
+      void navigate({
+        ...newLocal,
+        replace: true
+      })
+
+
       const timestamp = Date.now()
       // if (slug !== undefined && currentEnv?.slug !== undefined) {
       //   const historyItem = {
@@ -154,19 +172,16 @@ export function ResourceJumpProvider({
       // Insert into quick app slots if room and not duplicate
       // Save group slug if resource is in a group, otherwise save resource slug
     },
-    [db, queryClient, resourceJumpsData],
+    [],
   )
 
   const currentResourceJump = useMemo<ResourceJumpUI | undefined>(() => {
     const found: ResourceJumpUI | undefined = resourceJumps.find(
       (item) => item.slug === currentResourceJumpSlug,
     )
-    if (found === undefined) {
-      return undefined
-    }
-
     return found
   }, [currentResourceJumpSlug, resourceJumps])
+  
 
   const { setCrossCuttingParamsDefs } = useCrossCuttingParamsContext()
   useEffect(() => {
@@ -339,24 +354,22 @@ export function ResourceJumpProvider({
   )
 
   const currentFlagship = useMemo(() => {
-    if (!currentResourceJump) {
-      return undefined
-    }
-    return flagshipJumpResources.find((fr) =>
-      fr.resourceJumps.some((rj) => rj.slug === currentResourceJump.slug),
-    )
-  }, [currentResourceJump, flagshipJumpResources])
+    return currentResourceJump?.flagship
+  }, [currentResourceJump])
 
   const setCurrentFlagship = useCallback(
     (slug: string | undefined) => {
       const flagship = flagshipJumpResources.find((rj) => rj.slug === slug)
-      setCurrentResourceJumpSlug(flagship?.resourceJumps[0]?.slug)
-      if (slug) {
-        historySaveFlagmanSwitch(slug)
-      }
 
+      if (flagship) {
+        const resouceJump = getFlashipResource(flagship).slug
+        setCurrentResourceJumpSlugWithHistory(resouceJump)
+        if (slug) {
+          historySaveFlagmanSwitch(slug)
+        }
+      }
     },
-    [flagshipJumpResources, historySaveFlagmanSwitch],
+    [flagshipJumpResources, historySaveFlagmanSwitch, setCurrentResourceJumpSlugWithHistory],
   )
 
   const [leftEnvSelectorValue, setLeftEnvSelectorValue] = useState<string>('')
@@ -381,7 +394,24 @@ export function ResourceJumpProvider({
       setLeftEnvSelectorValue,
       history,
     }),
-    [currentResourceJump, setCurrentResourceJumpSlugWithHistory, isLoadingResourceJumps, getJumpUrl, resourceJumpLoader.resourceSlug, currentLateResolvableParams, currentLateResolvableParamsValue, setLateResolvableParamValue, setLateResolvableParamValues, quickEnvSlots, quickAppSlots, flagshipJumpResources, currentFlagship, setCurrentFlagship, leftEnvSelectorValue, history],
+    [
+      currentResourceJump,
+      setCurrentResourceJumpSlugWithHistory,
+      isLoadingResourceJumps,
+      getJumpUrl,
+      resourceJumpLoader.resourceSlug,
+      currentLateResolvableParams,
+      currentLateResolvableParamsValue,
+      setLateResolvableParamValue,
+      setLateResolvableParamValues,
+      quickEnvSlots,
+      quickAppSlots,
+      flagshipJumpResources,
+      currentFlagship,
+      setCurrentFlagship,
+      leftEnvSelectorValue,
+      history,
+    ],
   )
 
   return <ResourceJumpContext value={value}>{children}</ResourceJumpContext>

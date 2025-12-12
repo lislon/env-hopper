@@ -19,62 +19,67 @@ export interface ShortcutButtonProps
   shortcut?: string
 }
 
-const ShortcutButton = (
-    { ref, text, shortcutKey = 'K', shortcut, className, ...props }: ShortcutButtonProps & { ref?: React.RefObject<HTMLButtonElement | null> },
-  ) => {
-    const displayShortcut = React.useMemo(() => {
-      if (shortcut) return shortcut
+const ShortcutButton = ({
+  ref,
+  text,
+  shortcutKey,
+  shortcut,
+  className,
+  ...props
+}: ShortcutButtonProps & {
+  ref?: React.RefObject<HTMLButtonElement | null>
+}) => {
+  const displayShortcut = React.useMemo(() => {
+    if (shortcut) return shortcut
 
-      // Auto-format the shortcut key based on platform (it's not actually deprecated)
-      const isMac =
-        typeof navigator !== 'undefined' &&
-        navigator.platform.includes('Mac')
-      return isMac ? `⌘${shortcutKey}` : `Ctrl+${shortcutKey}`
-    }, [shortcut, shortcutKey])
+    // Auto-format the shortcut key based on platform (it's not actually deprecated)
+    const isMac =
+      typeof navigator !== 'undefined' && navigator.platform.includes('Mac')
+    return isMac ? `⌘${shortcutKey}` : `Ctrl+${shortcutKey}`
+  }, [shortcut, shortcutKey])
 
-    const { onClick, ...buttonProps } = props
+  const { onClick, ...buttonProps } = props
 
-    return (
-      <div
+  return (
+    <div
+      className={cn(
+        'flex items-center h-10 w-full rounded-md border border-input bg-background text-sm',
+        'hover:bg-accent hover:border-accent/50 cursor-default',
+        'focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:border-accent/50 focus-within:bg-accent',
+        'transition-colors duration-200',
+        className,
+      )}
+      onClick={
+        onClick
+          ? (e) => onClick(e as unknown as React.MouseEvent<HTMLButtonElement>)
+          : undefined
+      }
+    >
+      <button
+        ref={ref}
+        type="button"
         className={cn(
-          'flex items-center h-10 w-full rounded-md border border-input bg-background text-sm',
-          'hover:bg-accent hover:border-accent/50 cursor-default',
-          'focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:border-accent/50 focus-within:bg-accent',
-          'transition-colors duration-200',
-          className,
+          'flex-1 h-full px-3 py-2 text-left transition-colors duration-200',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          'focus-visible:outline-none',
         )}
-        onClick={
-          onClick
-            ? (e) => onClick(e as unknown as React.MouseEvent<HTMLButtonElement>)
-            : undefined
-        }
+        onClick={(e) => {
+          e.stopPropagation()
+          onClick?.(e)
+        }}
+        {...buttonProps}
       >
-        <button
-          ref={ref}
-          type="button"
-          className={cn(
-            'flex-1 h-full px-3 py-2 text-left transition-colors duration-200',
-            'disabled:cursor-not-allowed disabled:opacity-50',
-            'focus-visible:outline-none',
-          )}
-          onClick={(e) => {
-            e.stopPropagation()
-            onClick?.(e)
-          }}
-          {...buttonProps}
-        >
-          <span className="text-muted-foreground">{text}</span>
-        </button>
-        <span
-          className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-lg mr-3 shrink-0"
-        >
+        <span className="text-muted-foreground">{text}</span>
+      </button>
+      {shortcutKey && (
+        <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-lg mr-3 shrink-0">
           {displayShortcut}
         </span>
-      </div>
-    )
-  }
+      )}
+    </div>
+  )
+}
 
 ShortcutButton.displayName = 'ShortcutButton'
 
 export { ShortcutButton }
-

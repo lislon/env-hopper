@@ -1,8 +1,6 @@
 import cn from 'classnames'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
-import {
-  formatJumpButtonTitle
-} from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
+import { formatJumpButtonTitle } from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
 import { useResourceJumpContext } from '../context/ResourceJumpContext'
 import { JumpALink } from './JumpALink'
 
@@ -13,7 +11,8 @@ export interface JumpMainButtonProps {
 }
 
 export function JumpMainButton({ className }: JumpMainButtonProps) {
-  const { currentResourceJump, getJumpUrl, isLoadingResourceJumps } = useResourceJumpContext()
+  const { currentResourceJump, getJumpUrl, isLoadingResourceJumps } =
+    useResourceJumpContext()
 
   const { currentEnv } = useEnvironmentContext()
 
@@ -22,7 +21,9 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
       ? getJumpUrl(currentResourceJump.slug, currentEnv.slug)
       : undefined
 
-  const buttonTitle = currentResourceJump ? formatJumpButtonTitle(currentResourceJump) : 'n/a';
+  const buttonTitle = currentResourceJump
+    ? formatJumpButtonTitle(currentResourceJump)
+    : 'n/a'
 
   // .btn:active:hover,
   //   .btn:active:focus {
@@ -46,7 +47,10 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
             <div className="absolute top-0 bottom-0 right-0 flex items-center text-xl text-hopper invisible lg:visible font-semibold select-none">
               <div className="mr-12">LOADING</div>
             </div>
-            <div className={'flex flex-col gap-6'} data-testid={'jump-main-button-text'}>
+            <div
+              className={'flex flex-col gap-6'}
+              data-testid={'jump-main-button-text'}
+            >
               <div>
                 <code>{buttonTitle}</code>
               </div>
@@ -71,13 +75,7 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
             )}
           >
             <div className="absolute top-0 bottom-0 right-0 flex items-center text-xl text-hopper invisible lg:visible font-semibold select-none">
-              <div
-                className={cn(
-                  'mr-12 group-hover:motion-safe:-translate-x-0.5 group-hover:motion-safe:translate-y-0.5 group-hover:motion-safe:scale-y-90 group-hover:motion-safe:rotate-2 origin-bottom transition-transform motion-safe:duration-100',
-                )}
-              >
-                JUMP
-              </div>
+              <JumpAnimatedLabel />
             </div>
             <div
               className={'flex flex-col gap-6'}
@@ -101,7 +99,10 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
         ) : (
           // Loaded without URL: show not ready state
           <div className="border border-dashed border-black dark:border-white rounded flex justify-center p-4 flex-col cursor-not-allowed w-full">
-            <div className={'flex flex-col gap-6'} data-testid={'jump-main-button-text'}>
+            <div
+              className={'flex flex-col gap-6'}
+              data-testid={'jump-main-button-text'}
+            >
               <div>
                 <code>{buttonTitle}</code>
               </div>
@@ -119,6 +120,18 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
           not ready
         </div>
       )}
+    </div>
+  )
+}
+
+export function JumpAnimatedLabel({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        'mr-12 hover:motion-safe:-translate-x-0.5 hover:motion-safe:translate-y-0.5 hover:motion-safe:scale-y-90 hover:motion-safe:rotate-2 origin-bottom transition-transform motion-safe:duration-100'
+  , className)}
+    >
+      JUMP
     </div>
   )
 }

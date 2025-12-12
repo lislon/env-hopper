@@ -4,6 +4,7 @@ import type {
   BaseAutoCompletableItem,
 } from '~/modules/pluginCore/types'
 import type { ResourceJumpUI } from '~/modules/resourceJump/types'
+import type { FlagshipResourceJumpUi } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
 import {
   getRenderData,
   isAutocompleteItem,
@@ -30,9 +31,18 @@ export function* mapDisplayedItems(
   }
 }
 
-export function isFlagshipPage(resourceJump: ResourceJumpUI | undefined): resourceJump is ResourceJumpUI & Required<Pick<ResourceJumpUI, 'group'>> {
+export function isFlagshipPageByName(resourceJump: ResourceJumpUI | undefined): resourceJump is ResourceJumpUI & Required<Pick<ResourceJumpUI, 'group'>> {
   return resourceJump?.displayName === 'Home' && resourceJump.flagship !== undefined;
 }
+
+export function isFlagshipResource(resourceJump: ResourceJumpUI | undefined) {
+  return resourceJump?.slug === resourceJump?.flagship?.resourceJumps[0]?.slug;
+}
+
+export function getFlashipResource(flagship: FlagshipResourceJumpUi): ResourceJumpUI {
+  return flagship.resourceJumps[0]!;
+}
+
 
 export function formatResourceTitle(
   resourceJump: ResourceJumpUI | undefined,
@@ -41,7 +51,7 @@ export function formatResourceTitle(
   if (resourceJump === undefined) {
     return defaultTitle;
   }
-  if (isFlagshipPage(resourceJump)) {
+  if (isFlagshipPageByName(resourceJump)) {
     return resourceJump.flagship.displayName;
   }
   return resourceJump.displayName;

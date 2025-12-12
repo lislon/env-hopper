@@ -35,7 +35,7 @@ export function useResourceJumpHistory() {
       const timestamp = Date.now()
       const newHistoryItem: ResourceJumpHistoryItem = {
         type: 'switch-selector',
-        flagmanSlug,
+        flagshipSlug: flagmanSlug,
         timestamp,
       }
       setHistory((prevHistory) => [newHistoryItem, ...prevHistory])

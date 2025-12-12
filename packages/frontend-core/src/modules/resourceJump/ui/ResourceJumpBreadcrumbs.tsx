@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router'
 import { HomeIcon } from 'lucide-react'
 import {
   Breadcrumb,
@@ -7,8 +6,11 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from '~/components/ui/breadcrumb'
+import { Link } from '~/components/ui/link'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
+import { getFlashipResource, isFlagshipResource } from '~/modules/resourceJump/utils/helpers'
+import { getEhToOptions } from '~/util/route-utils'
 
 export interface ResourceJumpBreadcrumbsProps {
   className?: string
@@ -17,7 +19,7 @@ export interface ResourceJumpBreadcrumbsProps {
 export function ResourceJumpBreadcrubms({
   className,
 }: ResourceJumpBreadcrumbsProps) {
-  const { currentFlagship } = useResourceJumpContext()
+  const { currentFlagship, currentResourceJump } = useResourceJumpContext()
   const { currentEnv } = useEnvironmentContext()
 
   return (
@@ -46,17 +48,16 @@ export function ResourceJumpBreadcrubms({
             </BreadcrumbItem>
           </>
         )}
-        {currentFlagship && currentEnv && (
+        {currentFlagship && (
           <>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
                 <Link
-                  to={`/env/$envSlug/app/$appSlug`}
-                  params={{
-                    envSlug: currentFlagship.slug,
-                    appSlug: currentFlagship.slug,
-                  }}
+                  {...getEhToOptions({
+                    appId: getFlashipResource(currentFlagship)?.slug,
+                    envId: currentEnv?.slug,
+                  })}
                 >
                   {currentFlagship.displayName}
                 </Link>
@@ -64,6 +65,25 @@ export function ResourceJumpBreadcrubms({
             </BreadcrumbItem>
           </>
         )}
+        {currentResourceJump && !isFlagshipResource(currentResourceJump) && (
+          <>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link
+                  {...getEhToOptions({
+                    appId: currentResourceJump.slug,
+                    envId: currentEnv?.slug,
+                  })}
+                >
+                  {currentResourceJump.displayName}
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+          </>
+
+        )}
+
       </BreadcrumbList>
     </Breadcrumb>
   )

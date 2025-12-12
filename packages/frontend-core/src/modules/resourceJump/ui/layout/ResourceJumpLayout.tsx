@@ -1,24 +1,21 @@
-import type { TRPCRouter } from '@env-hopper/backend-core'
-import type { QueryClient } from '@tanstack/react-query'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import type { TRPCClient } from '@trpc/client'
-import { useHotkeys } from 'react-hotkeys-hook'
-import { ShortcutButton } from '~/components/ui/shortcut-button'
-import { CrossCuttingParamsProvider } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
-import { EnvironmentProvider } from '~/modules/environment/context/EnvironmentContext'
-import { ResourceJumpProvider } from '~/modules/resourceJump/context/ResourceJumpContext'
-import { QuickSearch } from '~/modules/resourceJump/ui/cmdk/QuickSearch'
+import type { TRPCRouter } from '@env-hopper/backend-core';
+import type { QueryClient } from '@tanstack/react-query';
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
+import type { TRPCClient } from '@trpc/client';
+import { CrossCuttingParamsProvider } from '~/modules/crossCuttingParams/CrossCuttingParamsContext';
+import { EnvironmentProvider } from '~/modules/environment/context/EnvironmentContext';
+import { ResourceJumpProvider } from '~/modules/resourceJump/context/ResourceJumpContext';
+import { CommandPalette } from '~/modules/resourceJump/ui/cmdk/CommandPalette';
 import {
-  QuickSearchProvider,
-  useQuickSearchContext,
-} from '~/modules/resourceJump/ui/cmdk/QuickSearchContext'
-import { CenterColumn } from '~/modules/resourceJump/ui/layout/CenterColumn'
-import { LeftColumn } from '~/modules/resourceJump/ui/layout/LeftColumn'
-import { RightColumn } from '~/modules/resourceJump/ui/layout/RightColumn'
-import ContextDebug from '~/ui/components/contextDebug'
-import { MainLayout } from '~/ui/layout/MainLayout'
-import { TopLevelProviders } from '~/ui/layout/TopLevelProviders'
-import type { ResourceJumpLoaderReturn } from '../../types'
+  QuickSearchProvider
+} from '~/modules/resourceJump/ui/cmdk/QuickSearchContext';
+import { CenterColumn } from '~/modules/resourceJump/ui/layout/CenterColumn';
+import { LeftColumn } from '~/modules/resourceJump/ui/layout/LeftColumn';
+import { RightColumn } from '~/modules/resourceJump/ui/layout/RightColumn';
+import ContextDebug from '~/ui/components/contextDebug';
+import { MainLayout } from '~/ui/layout/MainLayout';
+import { TopLevelProviders } from '~/ui/layout/TopLevelProviders';
+import type { ResourceJumpLoaderReturn } from '../../types';
 
 export interface ResourceJumpLayoutProps {
   children: React.ReactNode
@@ -27,24 +24,6 @@ export interface ResourceJumpLayoutProps {
   trpcClient: TRPCClient<TRPCRouter>
 }
 
-function CommandPaletteTrigger() {
-  const { openQuickSearch } = useQuickSearchContext()
-
-  useHotkeys('ctrl+k, cmd+k', (e) => {
-    e.preventDefault()
-    openQuickSearch({ searchMode: 'anything' })
-  })
-
-  return (
-    <>
-      <ShortcutButton
-        text="App / Env / JIRA / Case Id / Anything..."
-        onClick={() => openQuickSearch({ searchMode: 'anything' })}
-      />
-      <QuickSearch />
-    </>
-  )
-}
 
 export function ResourceJumpLayout({
   children,
@@ -60,7 +39,7 @@ export function ResourceJumpLayout({
         <CrossCuttingParamsProvider initialCrossCuttingParams={loaderData.crossCuttingParams}>
           <ResourceJumpProvider resourceJumpLoader={loaderData}>
             <QuickSearchProvider>
-              <MainLayout headerMiddle={<CommandPaletteTrigger />}>
+              <MainLayout headerMiddle={<CommandPalette label='App / Env / JIRA / Case Id / Anything...' cmd='k' />}>
                 <div className="flex gap-32 flex-row">
                   {/* Left Column - fit content: Environment Section */}
                   <div className="flex flex-col gap-4 w-fit flex-shrink-0">

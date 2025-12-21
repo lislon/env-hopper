@@ -71,6 +71,7 @@ function filterSingleResourceJump(
   return {
     resourceJumps: filteredResourceJump ? [filteredResourceJump] : [],
     envs: filteredEnv ? [filteredEnv] : [],
+    lateResolvableParams: resourceJumps.lateResolvableParams,
   }
 }
 

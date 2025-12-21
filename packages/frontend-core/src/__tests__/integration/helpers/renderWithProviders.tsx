@@ -42,6 +42,7 @@ export async function renderApp(options: RenderAppOptions): Promise<
       resourceJump: ReturnType<typeof createResourceJumpUI>
       getCurrentPath: () => string
     }
+    db: EhDb
     container: HTMLElement
   } & ReturnType<typeof render>
 > {
@@ -171,6 +172,7 @@ export async function renderApp(options: RenderAppOptions): Promise<
     user,
     queryClient,
     router,
+    db,
     ui: {
       resourceJump: createResourceJumpUI(result, user),
       getCurrentPath: () => router.state.location.pathname,

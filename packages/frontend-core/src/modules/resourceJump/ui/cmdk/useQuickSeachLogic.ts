@@ -11,7 +11,13 @@ export function useQuickSeachLogic() { const { environments, setCurrentEnv } = u
     flagshipJumpResources,
   } = useResourceJumpContext()
 
-  const { open, searchMode, onOpenChange, setSeachMode } = use(QuickSearchContext)
+  const r = use(QuickSearchContext)
+  if (!r) {
+    throw new Error(
+      'useQuickSeachLogic must be used within a QuickSearchProvider',
+    )
+  }
+  const { open, searchMode, onOpenChange, setSeachMode } = r;
 
   const envsForApps = useMemo(() => {
     return environments.slice(0, 3)

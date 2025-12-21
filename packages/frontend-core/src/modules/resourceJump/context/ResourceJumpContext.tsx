@@ -73,8 +73,6 @@ export function ResourceJumpProvider({
 }: ResourceJumpProviderProps) {
   const { currentEnv } = useEnvironmentContext()
   const navigate = useNavigate()
-  const db = useDb()
-  const queryClient = useQueryClient()
 
   // Fetch ResourceJumpsData using React Query
   const { data: resourceJumpsData, isLoading: isLoadingResourceJumps } =

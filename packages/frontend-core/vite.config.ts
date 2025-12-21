@@ -1,14 +1,16 @@
 import { tanstackViteConfig } from '@tanstack/config/vite'
 import tanstackRouter from '@tanstack/router-plugin/vite'
 import viteReact from '@vitejs/plugin-react'
-import type { UserConfig } from 'vite'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import svgr from 'vite-plugin-svgr'
 import { defineConfig, mergeConfig } from 'vitest/config'
+import ts from 'typescript'
 import packageJson from './package.json'
+import type { UserConfig } from 'vite'
 
 const config = defineConfig(({ mode }) => {
   const tsconfigPath = mode === 'lenient' ? './tsconfig-lenient.json' : './tsconfig.json'
+  
   const myConfig: UserConfig = {
     build: {
       copyPublicDir: false
@@ -47,6 +49,7 @@ const config = defineConfig(({ mode }) => {
     return mergeConfig(
       myConfig,
       tanstackViteConfig({
+        tsconfigPath,
         entry: './src/index.tsx',
         srcDir: './src',
         cjs: false

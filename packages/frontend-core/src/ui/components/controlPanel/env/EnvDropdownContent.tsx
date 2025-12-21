@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Server } from 'lucide-react'
+import type { BaseDropdownContentProps, EnvBaseInfo } from '~/types/ehTypes'
 import { Badge } from '~/components/ui/badge'
 import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/ApiQueryMagazineResourceJump'
-import type { BaseDropdownContentProps, EnvBaseInfo } from '~/types/ehTypes'
 
 interface EnvDropdownContentProps extends BaseDropdownContentProps {}
 

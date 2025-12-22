@@ -6,7 +6,7 @@ import type {
   ResourceJumpsData,
 } from '@env-hopper/backend-core'
 import type { DbAware } from '~/types/ehTypes'
-import type { ResourceJumpHistoryItem } from './types'
+import type { ResourceJumpHistoryItem } from '../types'
 import {
   quickJumpFetcher,
   quickSlotsQueryKey,

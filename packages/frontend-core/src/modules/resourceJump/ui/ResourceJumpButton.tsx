@@ -1,13 +1,8 @@
 import type { EnvBaseInfo } from '@env-hopper/backend-core'
 import type { VariantProps } from 'class-variance-authority'
 import { cva } from 'class-variance-authority'
-import { ExternalLinkIcon, HomeIcon } from 'lucide-react'
+import { ExternalLinkIcon } from 'lucide-react'
 import { LinkExternal } from '~/components/ui/linkExternal'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '~/components/ui/tooltip'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import type { ResourceJumpUI } from '~/modules/resourceJump/types'
 import { JumpAnimatedLabel } from '~/modules/resourceJump/ui/JumpMainButton'
@@ -90,22 +85,4 @@ export function ResourceJumpButton({
       </div>
     </div>
   )
-}
-
-function JumpIcon({ resouceJump }: { resouceJump: ResourceJumpUI }) {
-  if (resouceJump.displayName === 'Home') {
-    return (
-      <Tooltip delayDuration={400}>
-        <TooltipTrigger asChild>
-          <HomeIcon className="stroke-hopper inline w-3 h-3" />
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>This is primary app page</p>
-        </TooltipContent>
-      </Tooltip>
-    )
-  } else {
-    return null
-    // return <AppWindow className="inline stroke-secondary-foreground/50 w-3 h-3" />
-  }
 }

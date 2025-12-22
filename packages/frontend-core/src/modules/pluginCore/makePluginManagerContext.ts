@@ -1,4 +1,3 @@
-import { objectify } from 'radashi'
 import type { EhPlugin } from './types'
 
 export interface PluginInterfaceForCore {

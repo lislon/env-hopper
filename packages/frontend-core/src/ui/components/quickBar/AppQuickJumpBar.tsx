@@ -40,7 +40,7 @@ export function AppQuickJumpBar({ className }: AppQuickJumpBarProps) {
         })
       }
     })
-  }, [resourceJumpsData, currentResourceJump.slug, currentResourceJump])
+  }, [resourceJumpsData, currentResourceJump?.slug, currentResourceJump])
 
   if (isLoading) {
     return (

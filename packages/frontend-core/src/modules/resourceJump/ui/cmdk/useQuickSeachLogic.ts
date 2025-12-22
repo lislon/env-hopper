@@ -6,7 +6,6 @@ import type { QuickOption } from '~/modules/resourceJump/ui/cmdk/types'
 
 export function useQuickSeachLogic() { const { environments, setCurrentEnv } = useEnvironmentContext()
   const {
-    setCurrentResourceJumpSlug,
     setCurrentFlagship,
     flagshipJumpResources,
   } = useResourceJumpContext()
@@ -17,7 +16,7 @@ export function useQuickSeachLogic() { const { environments, setCurrentEnv } = u
       'useQuickSeachLogic must be used within a QuickSearchProvider',
     )
   }
-  const { open, searchMode, onOpenChange, setSeachMode } = r;
+  const { searchMode, onOpenChange } = r;
 
   const envsForApps = useMemo(() => {
     return environments.slice(0, 3)
@@ -31,23 +30,21 @@ export function useQuickSeachLogic() { const { environments, setCurrentEnv } = u
     if (isApp) {
       arr = [
         ...arr,
-        ...flagshipJumpResources];
-        // ...flagshipJumpResources.map(({ slug, displayName }) => ({
-        //   slug,
-        //   displayName,
-        //   type: 'app',
-        // })),
-      // ]
+        ...flagshipJumpResources.map(({ slug, displayName }) => ({
+          slug,
+          displayName,
+          type: 'app' as const,
+        })),
+      ]
     }
     if (isEnv) {
       arr = [
         ...arr,
-        ...environments,
-        // ...environments.map(({ slug, displayName }) => ({
-        //   slug,
-        //   displayName,
-        //   type: 'env',
-        // })),
+        ...environments.map(({ slug, displayName }) => ({
+          slug,
+          displayName,
+          type: 'env' as const,
+        })),
       ]
     }
     return arr

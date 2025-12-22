@@ -31,7 +31,7 @@ export function* mapDisplayedItems(
   }
 }
 
-export function isFlagshipPageByName(resourceJump: ResourceJumpUI | undefined): resourceJump is ResourceJumpUI & Required<Pick<ResourceJumpUI, 'group'>> {
+export function isFlagshipPageByName(resourceJump: ResourceJumpUI | undefined): boolean {
   return resourceJump?.displayName === 'Home' && resourceJump.flagship !== undefined;
 }
 

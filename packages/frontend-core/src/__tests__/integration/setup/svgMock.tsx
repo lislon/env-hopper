@@ -1,7 +1,6 @@
 // Mock SVG component for testing
-import React from 'react'
 
-const SvgMock = (props: any) => (
+const SvgMock = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props}>
     <title>Mock SVG</title>
   </svg>

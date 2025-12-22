@@ -1,6 +1,5 @@
 import type { EnvBaseInfo } from '@env-hopper/backend-core'
 import { Link } from '@tanstack/react-router'
-import { GroupIcon } from 'lucide-react'
 import { counting } from 'radashi'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
@@ -58,33 +57,6 @@ function getTopFlagships(history: Array<ResourceJumpHistoryItem>): Array<TopFlag
   return topFlagships;
 }
 
-export interface JumpButtonProps {
-  resourceJump: ResourceJumpUI
-}
-
-function JumpButton({ resourceJump }: JumpButtonProps) {
-  const { currentEnv } = useEnvironmentContext()
-  const { getJumpUrl } = useResourceJumpContext()
-
-  if (!currentEnv) {
-    return null
-  }
-
-  return (
-    <a
-      href={getJumpUrl(resourceJump.slug, currentEnv.slug)}
-      className="px-4 py-2 rounded-md hover:bg-primary/80 transition"
-    >
-      <span>
-        <GroupIcon className="inline w-4 h-4 mr-2 align-middle stroke-secondary-foreground/50" />
-      </span>
-      <span>
-        {resourceJump.displayName}
-      </span>
-    </a>
-  )
-}
-
 export interface FlagshipBlockProps {
   topFlagship: TopFlagship
 }
@@ -122,7 +94,6 @@ export function EnvPage() {
   const {
     history,
   } = useResourceJumpContext()
-  const { currentEnv } = useEnvironmentContext()
 
   const topFlagships = getTopFlagships(history)
   return (

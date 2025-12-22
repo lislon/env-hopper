@@ -11,9 +11,8 @@ import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJ
 import { MiniEnvSelectorPopover } from '~/modules/resourceJump/ui/miniEnvSelector/MiniEnvSelectorPopover'
 
 export function LeftColumn() {
-  const { currentEnv, setCurrentEnv, environments } = useEnvironmentContext()
+  const { currentEnv } = useEnvironmentContext()
   const {
-    setCurrentResourceJumpSlug,
     leftEnvSelectorValue,
     setLeftEnvSelectorValue,
   } = useResourceJumpContext()

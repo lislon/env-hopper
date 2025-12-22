@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import {
   Command,
   CommandEmpty,
@@ -18,11 +18,9 @@ export interface MiniEnvSelectorPopoverProps {
 export function MiniEnvSelectorPopover({
   onOpenChange,
   initialValue,
-  onValueChange,
   inputRef
 }: MiniEnvSelectorPopoverProps) {
   const { environments, setCurrentEnv } = useEnvironmentContext()
-  const ref = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (inputRef?.current && initialValue) {

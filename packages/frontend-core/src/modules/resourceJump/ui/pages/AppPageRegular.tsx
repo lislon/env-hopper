@@ -3,7 +3,7 @@ import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJ
 import { ResourceJumpButton } from '~/modules/resourceJump/ui/ResourceJumpButton'
 
 export function AppPageRegular() {
-  const { currentResourceJump, currentFlagship } = useResourceJumpContext()
+  const { currentResourceJump } = useResourceJumpContext()
   const { currentEnv } = useEnvironmentContext()
   if (!currentResourceJump) {
     return <div>No Resource Jump selected</div>

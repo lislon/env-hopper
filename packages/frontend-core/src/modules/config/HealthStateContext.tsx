@@ -23,7 +23,7 @@ interface HealthStateProviderProps {
   bootstrapHealth: EnvHopperHealthStateBootstrapPart
 }
 
-export function HealthStateProvider({ childrenbootstrapHealth }: HealthStateProviderProps) {
+export function HealthStateProvider({ children, bootstrapHealth }: HealthStateProviderProps) {
   const [envHopperHealth, setEnvHopperHealth] =
     useState<EnvHopperHealth>('healthy')
 

@@ -9,7 +9,6 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { useDb } from '~/userDb/DbContext'
 import { ApiQueryMagazineResourceJump } from '../../resourceJump/api/ApiQueryMagazineResourceJump'
 import type { EnvironmentHistoryItem } from '../types'
 import { useEnvironmentHistory } from './useEnvironmentHistory'

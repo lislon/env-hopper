@@ -1,4 +1,4 @@
-import { useLinkProps, useRouter } from '@tanstack/react-router'
+import { useRouter } from '@tanstack/react-router'
 import { Share2Icon } from 'lucide-react'
 import { use } from 'react'
 import { Button } from '~/components/ui/button'
@@ -26,11 +26,6 @@ export function ShareLinkButton() {
     return null;
   }
 
-  const { currentEnv } = maybeEnvContext
-  const { currentFlagship, currentResourceJump } = maybeResourceJumpContext;
-
-  const isEnv = currentResourceJump === undefined
-
   return (
     <Dialog>
       <form>
@@ -48,22 +43,16 @@ export function ShareLinkButton() {
 
 function ShareDialogEnv() {
   const { currentEnv } = useEnvironmentContext()
-  const { currentFlagship, currentResourceJump } = useResourceJumpContext()
+  const { currentResourceJump } = useResourceJumpContext()
   const router = useRouter();
 
-  const fullUrl = 
+  const fullUrl =
     new URL(router.buildLocation(getEhToOptions({
     appId: currentResourceJump?.slug,
     envId: currentEnv?.slug,
   })).href, window.location.origin).toString()
 
   const isEnv = currentResourceJump === undefined
-  const p = useLinkProps(
-    getEhToOptions({
-      appId: currentResourceJump?.slug,
-      envId: currentEnv?.slug,
-    })
-  )
   
 
   return (

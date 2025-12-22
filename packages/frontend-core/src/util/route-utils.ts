@@ -18,16 +18,18 @@ export function getEhToOptions({
   envId,
   subValue,
 }: EhUrlParams): ToOptions {
+  // Note: sub/$subValue routes are planned but not yet created
+  // Using type assertions for now - subValue is passed but route ignores it
   if (appId && envId && subValue) {
     return {
       from: '/',
-      to: '/env/$envSlug/app/$appSlug/sub/$subValue',
+      to: '/env/$envSlug/app/$appSlug',
       params: {
         appSlug: escapeAppId(appId),
         envSlug: escapeEnvId(envId),
-        subValue: escapeSubValue(subValue),
       },
-    }
+      search: { subValue: escapeSubValue(subValue) },
+    } as ToOptions
   } else if (appId && envId) {
     return {
       from: '/',
@@ -40,12 +42,12 @@ export function getEhToOptions({
   } else if (appId && subValue) {
     return {
       from: '/',
-      to: '/app/$appSlug/sub/$subValue',
+      to: '/app/$appSlug',
       params: {
         appSlug: escapeAppId(appId),
-        subValue: escapeSubValue(subValue),
       },
-    }
+      search: { subValue: escapeSubValue(subValue) },
+    } as ToOptions
   } else if (appId) {
     return {
       from: '/',

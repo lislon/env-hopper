@@ -43,7 +43,7 @@ export function QuickSearchProvider({
   )
 
 
-  const value: QuickSearchContextIface = useMemo(
+  const value: QuickSearchContextPrivateIface = useMemo(
     () => ({
       open,
       onOpenChange,

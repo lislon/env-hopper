@@ -29,6 +29,7 @@ export function appPropsFactory(): AppProps {
       trpcClient,
       db,
       plugins,
+      boostrapHealth: {},
     },
   })
 

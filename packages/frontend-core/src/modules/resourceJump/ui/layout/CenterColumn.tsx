@@ -1,13 +1,3 @@
-import {
-  LayoutGridIcon
-} from 'lucide-react'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '~/components/ui/select'
-import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { ResourceJumpBreadcrubms } from '~/modules/resourceJump/ui/ResourceJumpBreadcrumbs'
 import { TopQuickJump } from '~/modules/resourceJump/ui/TopQuickJump'
 
@@ -55,31 +45,5 @@ export function CenterColumn({ children }: { children: React.ReactNode }) {
         <TabsContent value="dev-info">Links for developer</TabsContent>
       </Tabs> */}
     </div>
-  )
-}
-
-function FlagshipResourceJumpSelector({ className }: { className?: string }) {
-  const { currentFlagship, setCurrentFlagship, flagshipJumpResources } =
-    useResourceJumpContext()
-
-
-  return (
-    <Select onValueChange={setCurrentFlagship}>
-      <SelectTrigger>
-        <span
-          className={`text-lg flex text-eh-app-foreground gap-4 items-center ${className ?? 'w-64'}`}
-        >
-          <LayoutGridIcon className="stroke-eh-app-foreground" />
-          <span>{currentFlagship?.displayName ?? 'Select Resource Jump'}</span>
-        </span>
-      </SelectTrigger>
-      <SelectContent>
-        {flagshipJumpResources.slice(0, 5).map((env) => (
-          <SelectItem key={env.slug} value={env.slug}>
-            {env.displayName}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   )
 }

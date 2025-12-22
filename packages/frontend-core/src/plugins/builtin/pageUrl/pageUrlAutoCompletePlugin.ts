@@ -1,8 +1,7 @@
 import type {
   BaseAutoCompleteItemRender,
-  EhPluginResourceJumpCtx,
 } from '~/modules/pluginCore/types'
-import type { ResourceJumpItem, ResourceJumpUI } from '~/modules/resourceJump/types'
+import type { ResourceJumpUI } from '~/modules/resourceJump/types'
 import { formatResourceTitle } from '~/modules/resourceJump/utils/helpers'
 import type { PluginPageUrlAutocompleteItem } from './pageUrlTypes'
 
@@ -39,14 +38,4 @@ export function formatJumpButtonTitle(
   item: ResourceJumpUI,
 ): string {
   return formatResourceTitle(item)
-}
-
-export function getJumpUrl(
-  jumpResource: ResourceJumpItem | undefined,
-  ctx: EhPluginResourceJumpCtx,
-): string {
-  if (!jumpResource) {
-    return ''
-  }
-  return `https://${jumpResource.slug}.ru`
 }

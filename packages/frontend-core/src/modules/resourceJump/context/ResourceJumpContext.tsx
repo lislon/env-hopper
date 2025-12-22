@@ -3,7 +3,7 @@ import type {
   JumpResourceSlug,
   LateResolvableParam,
 } from '@env-hopper/backend-core'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { mapValues } from 'radashi'
 import type { ReactNode } from 'react'
@@ -22,7 +22,6 @@ import { useResourceJumpHistory } from '~/modules/resourceJump/context/useResouc
 import { getFlashipResource } from '~/modules/resourceJump/utils/helpers'
 import { mapToResouceJumpUis } from '~/modules/resourceJump/utils/mapToResouceJumpUis'
 import type { EhUrlParams } from '~/types/ehTypes'
-import { useDb } from '~/userDb/DbContext'
 import { getEhToOptions } from '~/util/route-utils'
 import { ApiQueryMagazineResourceJump } from '../api/ApiQueryMagazineResourceJump'
 import type {
@@ -97,8 +96,6 @@ export function ResourceJumpProvider({
 
   const {
     history,
-    setHistory,
-    historySaveEnvSwitch,
     historySaveFlagmanSwitch,
   } = useResourceJumpHistory()
 
@@ -130,14 +127,11 @@ export function ResourceJumpProvider({
   const currentResourceJumpSlug = resourceJumpLoader.resourceSlug
 
   const fixUrlBasedOnSelection = useCallback(
-    async (state: EhUrlParams, replace = false) => {
-      const newLocal = getEhToOptions(state)
-      // await navigate({
-      //   ...newLocal,
-      //   replace,
-      // })
+    async (state: EhUrlParams, _replace = false) => {
+      // Note: Navigation logic commented out - URL sync handled elsewhere
+      void getEhToOptions(state)
     },
-    [navigate],
+    [],
   )
 
   // Wrapped setter that saves to history
@@ -154,9 +148,6 @@ export function ResourceJumpProvider({
         ...newLocal,
         replace: true
       })
-
-
-      const timestamp = Date.now()
       // if (slug !== undefined && currentEnv?.slug !== undefined) {
       //   const historyItem = {
       //     resourceSlug: slug,

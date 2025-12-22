@@ -23,7 +23,7 @@ const ContextDebug: React.FC = () => {
     showElements.push('currentResourceJump')
   }
 
-  const ctx = {
+  const ctx: Record<string, unknown> = {
               ...pick(ctxRj, showElements),
             };
             if (showHistory) {

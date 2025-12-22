@@ -10,10 +10,15 @@ import type { UserConfig } from 'vite'
 
 const config = defineConfig(({ mode }) => {
   const tsconfigPath = mode === 'lenient' ? './tsconfig-lenient.json' : './tsconfig.json'
-  
+
   const myConfig: UserConfig = {
     build: {
-      copyPublicDir: false
+      copyPublicDir: false,
+      rollupOptions: {
+        output: {
+          preserveModulesRoot: 'src'
+        }
+      }
     },
     test: {
       name: packageJson.name,

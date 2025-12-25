@@ -28,7 +28,7 @@
     "test:pr": "nx affected --targets=prisma:generate,test:eslint,test:unit,test:e2e,test:types,test:build,build",
     "test:syncpack": "syncpack list-mismatches",
     "test:unit": "nx affected --target=test:unit --exclude=examples/**,e2e/**",
-    "watch": "pnpm run build:all:lenient && nx watch --all -- pnpm run build:all:lenient",
+    "watch": "pnpm run build:all:lenient && nx watch --all -- nx run \\$NX_PROJECT_NAME:build:lenient",
     "xbuild:all": "nx run-many --target=build --exclude=examples/** --exclude=e2e/**",
     "xtest": "nx run-many -t test --projects=*",
     "xtest:e2e": "nx run-many --target=test:e2e",

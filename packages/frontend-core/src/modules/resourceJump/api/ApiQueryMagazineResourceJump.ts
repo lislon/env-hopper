@@ -7,10 +7,6 @@ import type {
 } from '@env-hopper/backend-core'
 import type { DbAware } from '~/types/ehTypes'
 import type { ResourceJumpHistoryItem } from '../types'
-import {
-  quickJumpFetcher,
-  quickSlotsQueryKey,
-} from '~/api/unsorted/quickJumpFetcher'
 import { resourceJumpsFetcher } from '~/api/unsorted/resourceJumpsFetcher'
 import { getTrpcFromMeta } from '~/util/reactQueryUtils'
 
@@ -33,20 +29,6 @@ export class ApiQueryMagazineResourceJump {
     const queryFn = resourceJumpsFetcher()
     return queryOptions<ResourceJumpsData | undefined, Error>({
       queryKey: ['resourceJumps'],
-      queryFn,
-    })
-  }
-
-  static getQuickSlots() {
-    const queryFn = quickJumpFetcher()
-    return queryOptions<
-      {
-        envSlots: Array<string | undefined>
-        appSlots: Array<string | undefined>
-      },
-      Error
-    >({
-      queryKey: quickSlotsQueryKey,
       queryFn,
     })
   }

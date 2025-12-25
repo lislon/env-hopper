@@ -11,6 +11,7 @@ import * as trpcExpress from '@trpc/server/adapters/express'
 import type { Express } from 'express'
 import express from 'express'
 import { getRandomAvailabilityMatrix } from './utils.js'
+import { log } from 'console'
 
 interface DataShape {
   bootstrapConfigData: BootstrapConfigData
@@ -55,7 +56,8 @@ const createContext = () => {
       })
     },
     async getResourceJumps() {
-      return (await loadStaticData()).resourceJumpsData
+      const newLocal = await loadStaticData();
+      return (newLocal).resourceJumpsData
     },
   }
   return createEhTrpcContext({

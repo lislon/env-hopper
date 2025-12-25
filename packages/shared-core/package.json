@@ -41,7 +41,6 @@
     "eta": "^3.5.0"
   },
   "devDependencies": {
-    "@env-hopper/backend-core": "workspace:*",
     "@types/node": "catalog:",
     "esbuild": "catalog:",
     "tsx": "catalog:",

@@ -1,4 +1,4 @@
-import type { ToOptions } from '@tanstack/react-router'
+import { linkOptions } from '@tanstack/react-router'
 import type { EhUrlParams } from '~/types/ehTypes'
 
 export function escapeAppId(appId: string) {
@@ -13,61 +13,36 @@ export function escapeEnvId(envId: string) {
   return encodeURIComponent(envId)
 }
 
-export function getEhToOptions({
-  appId,
-  envId,
-  subValue,
-}: EhUrlParams): ToOptions {
-  // Note: sub/$subValue routes are planned but not yet created
-  // Using type assertions for now - subValue is passed but route ignores it
-  if (appId && envId && subValue) {
-    return {
+export function getEhToOptions({ appId, envId }: EhUrlParams) {
+  if (appId && envId) {
+    return linkOptions({
       from: '/',
       to: '/env/$envSlug/app/$appSlug',
       params: {
         appSlug: escapeAppId(appId),
         envSlug: escapeEnvId(envId),
       },
-      search: { subValue: escapeSubValue(subValue) },
-    } as ToOptions
-  } else if (appId && envId) {
-    return {
-      from: '/',
-      to: '/env/$envSlug/app/$appSlug',
-      params: {
-        appSlug: escapeAppId(appId),
-        envSlug: escapeEnvId(envId),
-      },
-    }
-  } else if (appId && subValue) {
-    return {
-      from: '/',
-      to: '/app/$appSlug',
-      params: {
-        appSlug: escapeAppId(appId),
-      },
-      search: { subValue: escapeSubValue(subValue) },
-    } as ToOptions
+    })
   } else if (appId) {
-    return {
+    return linkOptions({
       from: '/',
       to: '/app/$appSlug',
       params: {
         appSlug: escapeAppId(appId),
       },
-    }
+    })
   } else if (envId) {
-    return {
+    return linkOptions({
       from: '/',
       to: '/env/$envSlug',
       params: {
         envSlug: escapeEnvId(envId),
       },
-    }
+    })
   } else {
-    return {
+    return linkOptions({
       from: '/',
       to: '/',
-    }
+    })
   }
 }

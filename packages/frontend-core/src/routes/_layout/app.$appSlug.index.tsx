@@ -11,7 +11,6 @@ export const Route = createFileRoute('/_layout/app/$appSlug/')({
 })
 
 function RouteComponent() {
-  console.log('$appSlug only');
   const urlParams = Route.useLoaderData()
   const { queryClient, trpcClient } = Route.useRouteContext()
   return (

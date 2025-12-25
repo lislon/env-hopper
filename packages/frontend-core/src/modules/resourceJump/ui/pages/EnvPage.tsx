@@ -101,7 +101,7 @@ export function EnvPage() {
       {/* <div className='text-xl text-eh-env-foreground font-semibold'>{currentEnv?.displayName}</div> */}
       <div className='grid grid-cols-2 gap-8'>
         {topFlagships.map(tp => {
-          return <FlagshipBlock key={tp.flagship.slug} topFlagship={tp} />;
+          return <FlagshipBlock key={tp.flagship.slug} topFlagship={tp} />
         })}
       </div>
       {/* <div>

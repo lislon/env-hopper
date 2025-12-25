@@ -32,7 +32,7 @@ export function ShareLinkButton() {
         <DialogTrigger asChild>
           <Button variant="outline">
             <Share2Icon className="w-4 h-4" />
-            Share link
+            <span className='hidden md:block'>Share link</span>
           </Button>
         </DialogTrigger>
         <ShareDialogEnv />

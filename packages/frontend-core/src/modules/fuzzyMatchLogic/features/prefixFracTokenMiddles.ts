@@ -9,7 +9,7 @@ export function prefixFracAcrossTokens(
 ): number {
   const entryTokens = tokenize(entry.displayName)
 
-  const scores = []
+  const scores: number[] = []
 
   for (let i = 0, j = 0; i < needleTokens.length && j < entryTokens.length; ) {
     const needleToken = needleTokens[i]!

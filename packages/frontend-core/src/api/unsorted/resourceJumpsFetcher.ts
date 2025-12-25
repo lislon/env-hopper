@@ -9,13 +9,11 @@ import { getDbFromMeta, getTrpcFromMeta } from '~/util/reactQueryUtils'
 export const queryKey: QueryKey = ['resourceJumps']
 
 export interface ResourceJumpsFetcherParams {
-  dbOnly?: boolean
   db?: EhDb
   trpcClient?: TRPCClient<TRPCRouter>
 }
 
 export function resourceJumpsFetcher({
-  dbOnly = false,
   db,
   trpcClient,
 }: ResourceJumpsFetcherParams = {}): (
@@ -30,6 +28,5 @@ export function resourceJumpsFetcher({
       ? () => db.resourceJumps
       : (ctx) => getDbFromMeta(ctx).resourceJumps,
     queryKey,
-    dbOnly,
   })
 }

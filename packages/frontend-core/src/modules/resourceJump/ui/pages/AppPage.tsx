@@ -7,9 +7,6 @@ import { isFlagshipResource } from '~/modules/resourceJump/utils/helpers'
 export function AppPage() {
   const { currentResourceJump} = useResourceJumpContext()
 
-  console.log('App Page', currentResourceJump?.slug, isFlagshipResource(currentResourceJump));
-  
-
   if (isFlagshipResource(currentResourceJump)) {
     return <AppPageFlagship />
   } else {

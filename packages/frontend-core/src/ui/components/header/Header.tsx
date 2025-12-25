@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import type React from 'react'
 import EnvHopperLogo from '~/assets/env-hopper-logo.svg?react'
 import { ThemeSwitcher } from '~/components/ThemeSwitcher'
@@ -10,15 +11,16 @@ export interface HeaderProps {
 
 export function Header({ middle }: HeaderProps) {
   return (
-    <div className="flex items-center mb-4 justify-between">
+    <div className="flex items-center mb-4 justify-between gap-2">
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <EnvHopperLogo className="h-16 w-16" />
-          <h1 className="text-lg font-bold">Env‑Hopper</h1>
-        </div>
+        <Link to="/">
+          <div className="flex items-center gap-2">
+            <EnvHopperLogo className="h-16 w-16" />
+            <span className="text-lg font-bold hidden md:block">Env‑Hopper</span>
+          </div>
+        </Link>
       </div>
-      {middle && <div className='min-w-[300px]'>{middle}</div>}
-
+      {middle && <div className="sm:min-w-[300px]">{middle}</div>}
       <div className="flex items-center gap-3">
         <ShareLinkButton />
         <ThemeSwitcher />

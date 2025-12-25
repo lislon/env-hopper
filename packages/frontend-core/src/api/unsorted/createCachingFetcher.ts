@@ -44,7 +44,6 @@ export interface CachingFetcherParams<T> {
   networkFetchFn: (ctx: QueryFunctionContext) => Promise<T>
   getDbTable: (ctx: QueryFunctionContext) => Table<T>
   queryKey: ReadonlyArray<unknown>
-  dbOnly?: boolean
 }
 
 /**
@@ -59,7 +58,6 @@ export function createCachingFetcher<T>({
   networkFetchFn,
   getDbTable,
   queryKey,
-  dbOnly = false,
 }: CachingFetcherParams<T>): (
   ctx: QueryFunctionContext,
 ) => Promise<T | undefined> {
@@ -79,16 +77,6 @@ export function createCachingFetcher<T>({
       throw new DexieErrorWrapper(e)
     }
 
-    // If dbOnly is true, return cached data or undefined, don't fetch from network
-    if (dbOnly) {
-      if (cached) {
-        // Pre-populate React Query cache with cached data
-        queryClient.setQueryData(queryKey, cached)
-        // Mark as stale so it will be refetched by useQuery
-        queryClient.invalidateQueries({ queryKey, refetchType: 'none' })
-      }
-      return cached
-    }
 
     // If we have cached data, return it immediately and sync in background
     if (cached) {

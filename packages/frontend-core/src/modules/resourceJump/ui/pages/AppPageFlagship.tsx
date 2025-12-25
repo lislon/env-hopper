@@ -1,5 +1,6 @@
 import { alphabetical, group } from 'radashi'
 import { useState } from 'react'
+import { Skeleton } from '~/components/ui/skeleton'
 import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
@@ -12,7 +13,7 @@ import {
 import { useMostRelevantLateParamSlug } from '~/modules/resourceJump/utils/statistics/useMostRelevantLateParamSlug'
 
 export function AppPageFlagship() {
-  const { currentResourceJump, currentFlagship } =
+  const { currentResourceJump, currentFlagship, isLoadingResourceJumps } =
     useResourceJumpContext()
   const { currentEnv } = useEnvironmentContext()
   const mostRelevantSlug = useMostRelevantLateParamSlug()
@@ -48,12 +49,20 @@ export function AppPageFlagship() {
     <div className="flex flex-col gap-4">
       <div className="flex gap-4 items-center justify-between">
         <div className="flex flex-col gap-1 items-start py-4 grow-1">
-          <ResourceJumpButton
-            variant="flagship"
-            resourceJump={getFlashipResource(currentResourceJump!.flagship)}
-            env={currentEnv}
-            onClick={() => onClickResourceJump(getFlashipResource(currentResourceJump!.flagship).slug)}
-          />
+          {isLoadingResourceJumps || !currentResourceJump ? (
+            <Skeleton className="h-4 w-[250px]" />
+          ) : (
+            <ResourceJumpButton
+              variant="flagship"
+              resourceJump={getFlashipResource(currentResourceJump.flagship)}
+              env={currentEnv}
+              onClick={() =>
+                onClickResourceJump(
+                  getFlashipResource(currentResourceJump.flagship).slug,
+                )
+              }
+            />
+          )}
         </div>
         <div>
           <LateResolvableParamsInput
@@ -73,7 +82,9 @@ export function AppPageFlagship() {
                 env={currentEnv}
                 key={rj.slug}
                 onClick={() => onClickResourceJump(rj.slug)}
-                className={rj.slug === selected ? 'bg-accent/50 rounded-lg' : ''}
+                className={
+                  rj.slug === selected ? 'bg-accent/50 rounded-lg' : ''
+                }
               />
             ))}
           </div>
@@ -89,8 +100,9 @@ export function AppPageFlagship() {
                 env={currentEnv}
                 key={rj.slug}
                 onClick={() => onClickResourceJump(rj.slug)}
-                className={rj.slug === selected ? 'bg-accent/50 rounded-lg' : ''}
-
+                className={
+                  rj.slug === selected ? 'bg-accent/50 rounded-lg' : ''
+                }
               />
             ))}
           </div>

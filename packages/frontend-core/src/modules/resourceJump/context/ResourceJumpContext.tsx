@@ -1,12 +1,6 @@
-import type {
-  EnvSlug,
-  JumpResourceSlug,
-  LateResolvableParam,
-} from '@env-hopper/backend-core'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { mapValues } from 'radashi'
-import type { ReactNode } from 'react'
 import {
   createContext,
   use,
@@ -16,22 +10,28 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
-import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
-import { useResourceJumpHistory } from '~/modules/resourceJump/context/useResouceJumpHistory'
-import { getFlashipResource } from '~/modules/resourceJump/utils/helpers'
-import { mapToResouceJumpUis } from '~/modules/resourceJump/utils/mapToResouceJumpUis'
-import type { EhUrlParams } from '~/types/ehTypes'
-import { getEhToOptions } from '~/util/route-utils'
 import { ApiQueryMagazineResourceJump } from '../api/ApiQueryMagazineResourceJump'
+import { buildJumpUrl } from '../utils/buildJumpUrl'
+import { mapToFlagshipResourceJumps } from '../utils/mapToFlagshipResourceJumps'
+import type {
+  EnvSlug,
+  JumpResourceSlug,
+  LateResolvableParam,
+} from '@env-hopper/backend-core'
+import type { ReactNode } from 'react'
+import type { EhUrlParams } from '~/types/ehTypes'
 import type {
   ResourceJumpHistoryItem,
   ResourceJumpLoaderReturn,
   ResourceJumpUI,
 } from '../types'
-import { buildJumpUrl } from '../utils/buildJumpUrl'
 import type { FlagshipResourceJumpUi } from '../utils/mapToFlagshipResourceJumps'
-import { mapToFlagshipResourceJumps } from '../utils/mapToFlagshipResourceJumps'
+import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
+import { useResourceJumpHistory } from '~/modules/resourceJump/context/useResouceJumpHistory'
+import { getFlashipResource } from '~/modules/resourceJump/utils/helpers'
+import { mapToResouceJumpUis } from '~/modules/resourceJump/utils/mapToResouceJumpUis'
+import { getEhToOptions } from '~/util/route-utils'
 
 export interface ResourceJumpContextIface {
   setCurrentResourceJumpSlug: (slug: JumpResourceSlug | undefined) => void
@@ -49,8 +49,6 @@ export interface ResourceJumpContextIface {
   setCurrentFlagship: (slug: string | undefined) => void
   setLateResolvableParamValue: (slug: string, value: string) => void
   setLateResolvableParamValues: (values: Record<string, string>) => void
-  quickEnvSlots: Array<string | undefined>
-  quickAppSlots: Array<string | undefined>
   leftEnvSelectorValue: string
   setLeftEnvSelectorValue: (value: string) => void
   history: Array<ResourceJumpHistoryItem>
@@ -74,47 +72,28 @@ export function ResourceJumpProvider({
   const navigate = useNavigate()
 
   // Fetch ResourceJumpsData using React Query
-  const { data: resourceJumpsData, isLoading: isLoadingResourceJumps } =
+  const { data: apiData, isLoading: isLoadingResourceJumps, isError, isFetched  } =
     useQuery(ApiQueryMagazineResourceJump.getResourceJumps())
 
-  const [flagshipJumpResources] = useState<Array<FlagshipResourceJumpUi>>(() =>
-    resourceJumpsData ? mapToFlagshipResourceJumps(resourceJumpsData) : [],
+  const flagshipJumpResources = useMemo<Array<FlagshipResourceJumpUi>>(() =>
+    apiData ? mapToFlagshipResourceJumps(apiData) : [],
+  [apiData]
   )
-  const [resourceJumps] = useState<Array<ResourceJumpUI>>(() =>
-    resourceJumpsData
-      ? mapToResouceJumpUis(resourceJumpsData, flagshipJumpResources)
+  const resourceJumps = useMemo<Array<ResourceJumpUI>>(() =>
+    apiData
+      ? mapToResouceJumpUis(apiData, flagshipJumpResources)
       : [],
-  )
-
-  // const [currentFlagshipResourceJumpSlug, setCurrentFlagshipResourceJumpSlug] = useState<
-  //   string | undefined
-  // >(resourceJumpLoader.resourceSlug)
-
-  // const [currentResourceJumpSlug2, setCurrentResourceJumpSlug] = useState<
-  //   string | undefined
-  // >(resourceJumpLoader.resourceSlug)
+   [apiData, flagshipJumpResources])
 
   const {
     history,
     historySaveFlagmanSwitch,
+    historySaveResourceSwitch,
   } = useResourceJumpHistory()
 
   // Global state for all late resolvable param values across all resources
   const [allLateResolvableParamValues, setAllLateResolvableParamValues] =
     useState<Record<string, string>>({})
-
-  // Quick slot memories (global per user)
-  const { data: quickSlots } = useQuery(
-    ApiQueryMagazineResourceJump.getQuickSlots(),
-  )
-  const quickEnvSlots: Array<string | undefined> = useMemo(
-    () => quickSlots?.envSlots ?? Array(7).fill(undefined),
-    [quickSlots],
-  )
-  const quickAppSlots: Array<string | undefined> = useMemo(
-    () => quickSlots?.appSlots ?? Array(8).fill(undefined),
-    [quickSlots],
-  )
 
   // No local loading effect; quick slots are sourced via React Query
 
@@ -126,6 +105,12 @@ export function ResourceJumpProvider({
 
   const currentResourceJumpSlug = resourceJumpLoader.resourceSlug
 
+  useEffect(() => {
+    if (resourceJumpLoader.resourceSlug) {
+      historySaveResourceSwitch(resourceJumpLoader.resourceSlug);
+    }
+  }, [historySaveResourceSwitch, resourceJumpLoader.resourceSlug])
+
   const fixUrlBasedOnSelection = useCallback(
     async (state: EhUrlParams, _replace = false) => {
       // Note: Navigation logic commented out - URL sync handled elsewhere
@@ -134,11 +119,8 @@ export function ResourceJumpProvider({
     [],
   )
 
-  // Wrapped setter that saves to history
   const setCurrentResourceJumpSlugWithHistory = useCallback(
     (slug: string | undefined) => {
-      // setCurrentResourceJumpSlug(slug)
-
       const newLocal = getEhToOptions({
         appId: slug,
         envId: currentEnv?.slug,
@@ -148,20 +130,12 @@ export function ResourceJumpProvider({
         ...newLocal,
         replace: true
       })
-      // if (slug !== undefined && currentEnv?.slug !== undefined) {
-      //   const historyItem = {
-      //     resourceSlug: slug,
-      //     envSlug: currentEnv.slug,
-      //     timestamp,
-      //   }
-      //   setHistory((prev) => [...prev, historyItem])
-      //   db.resourceJumpHistory.add(historyItem)
-      // }
-
-      // Insert into quick app slots if room and not duplicate
-      // Save group slug if resource is in a group, otherwise save resource slug
+      if (slug !== undefined) {
+        console.log('Saving resource jump switch to history:', slug)
+        historySaveResourceSwitch(slug, currentEnv?.slug)
+      }
     },
-    [],
+    [currentEnv?.slug, historySaveResourceSwitch, navigate, resourceJumpLoader.subValue],
   )
 
   const currentResourceJump = useMemo<ResourceJumpUI | undefined>(() => {
@@ -174,27 +148,27 @@ export function ResourceJumpProvider({
 
   const { setCrossCuttingParamsDefs } = useCrossCuttingParamsContext()
   useEffect(() => {
-    setCrossCuttingParamsDefs(resourceJumpsData?.lateResolvableParams || [])
-  }, [resourceJumpsData, setCrossCuttingParamsDefs])
+    setCrossCuttingParamsDefs(apiData?.lateResolvableParams || [])
+  }, [apiData, setCrossCuttingParamsDefs])
 
   // Derive current late resolvable params for the selected resource
   const currentLateResolvableParams = useMemo(() => {
-    if (!resourceJumpsData || !currentResourceJumpSlug) {
+    if (!apiData || !currentResourceJumpSlug) {
       return []
     }
-    const resourceJump = resourceJumpsData.resourceJumps.find(
+    const resourceJump = apiData.resourceJumps.find(
       (rj) => rj.slug === currentResourceJumpSlug,
     )
     if (!resourceJump?.lateResolvableParamSlugs) {
       return []
     }
     const paramMap = new Map(
-      resourceJumpsData.lateResolvableParams.map((p) => [p.slug, p]),
+      apiData.lateResolvableParams.map((p) => [p.slug, p]),
     )
     return resourceJump.lateResolvableParamSlugs
       .map((slug) => paramMap.get(slug))
       .filter((p): p is LateResolvableParam => p !== undefined)
-  }, [currentResourceJumpSlug, resourceJumpsData])
+  }, [currentResourceJumpSlug, apiData])
 
   // Derive current late resolvable param values for the selected resource
   const currentLateResolvableParamsValue = useMemo(() => {
@@ -335,11 +309,11 @@ export function ResourceJumpProvider({
       return buildJumpUrl(
         jumpResourceSlug,
         envSlug,
-        resourceJumpsData,
+        apiData,
         mapValues(crossCuttingParams, (v) => v.stringValue),
       )
     },
-    [resourceJumpsData, crossCuttingParams],
+    [apiData, crossCuttingParams],
   )
 
   const currentFlagship = useMemo(() => {
@@ -374,8 +348,6 @@ export function ResourceJumpProvider({
       currentLateResolvableParamsValue,
       setLateResolvableParamValue,
       setLateResolvableParamValues,
-      quickEnvSlots,
-      quickAppSlots,
       flagshipJumpResources,
       currentFlagship,
       setCurrentFlagship,
@@ -393,8 +365,6 @@ export function ResourceJumpProvider({
       currentLateResolvableParamsValue,
       setLateResolvableParamValue,
       setLateResolvableParamValues,
-      quickEnvSlots,
-      quickAppSlots,
       flagshipJumpResources,
       currentFlagship,
       setCurrentFlagship,

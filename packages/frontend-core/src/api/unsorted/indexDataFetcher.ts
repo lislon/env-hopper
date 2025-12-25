@@ -9,12 +9,10 @@ export const queryKey: QueryKey = ['bootstrapConfig']
 
 export interface IndexDataFetcherParams {
   trpcClient: TRPCClient<TRPCRouter>
-  dbOnly?: boolean
 }
 
 export function indexDataFetcher({
   trpcClient,
-  dbOnly = false,
 }: IndexDataFetcherParams): (
   ctx: QueryFunctionContext,
 ) => Promise<BootstrapConfigData | undefined> {
@@ -23,6 +21,5 @@ export function indexDataFetcher({
     networkFetchFn: () => trpcClient.bootstrap.query(),
     getDbTable: (ctx) => getDbFromMeta(ctx).bootstrap,
     queryKey,
-    dbOnly,
   })
 }

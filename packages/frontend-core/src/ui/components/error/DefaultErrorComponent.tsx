@@ -1,4 +1,6 @@
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import type { ErrorComponentProps } from '@tanstack/react-router'
+import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { BugIcon, RefreshCcwIcon } from 'lucide-react'
 import { useState } from 'react'
 import { ThemeProvider } from '~/components/theme-provider'
@@ -103,8 +105,12 @@ export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
                 {<i>{error.stack}</i>}
               </pre>
             </div>
+
           </EmptyContent>
         </Empty>
+                <TanStackRouterDevtools />
+                <ReactQueryDevtools initialIsOpen={false} />
+
       </MainLayout>
     </ThemeProvider>
   )

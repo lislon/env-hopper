@@ -1,6 +1,6 @@
 import { createRouter } from '@tanstack/react-router'
-import { routeTree } from '~/routeTree.gen'
 import type { EhRouterInitParams } from '~/types/types'
+import { routeTree } from '~/routeTree.gen'
 
 export function createEhRouter({ context, history }: EhRouterInitParams) {
   return createRouter({
@@ -11,6 +11,7 @@ export function createEhRouter({ context, history }: EhRouterInitParams) {
     // This will ensure that the loader is always called when the route is preloaded or visited
     defaultPreloadStaleTime: 0,
     defaultNotFoundComponent: () => <div>404 - Page Not Found</div>,
+    pathParamsAllowedCharacters: ['@'],
   })
 }
 

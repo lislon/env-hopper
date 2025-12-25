@@ -33,6 +33,7 @@ export function QuickSearch() {
       open={open}
       onOpenChange={onOpenChange}
       commandProps={{ vimBindings: true }}
+      position="top"
     >
       <div className="flex p-3 gap-2 text-xs items-baseline">
         <div

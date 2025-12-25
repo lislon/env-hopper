@@ -1,7 +1,9 @@
-import type { TRPCRouter } from '@env-hopper/backend-core';
-import type { QueryClient } from '@tanstack/react-query';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import type {QueryClient} from '@tanstack/react-query';
+import type { TRPCRouter } from '@env-hopper/backend-core';
 import type { TRPCClient } from '@trpc/client';
+import type { ResourceJumpLoaderReturn } from '../../types';
 import { CrossCuttingParamsProvider } from '~/modules/crossCuttingParams/CrossCuttingParamsContext';
 import { EnvironmentProvider } from '~/modules/environment/context/EnvironmentContext';
 import { ResourceJumpProvider } from '~/modules/resourceJump/context/ResourceJumpContext';
@@ -15,7 +17,6 @@ import { RightColumn } from '~/modules/resourceJump/ui/layout/RightColumn';
 import ContextDebug from '~/ui/components/contextDebug';
 import { MainLayout } from '~/ui/layout/MainLayout';
 import { TopLevelProviders } from '~/ui/layout/TopLevelProviders';
-import type { ResourceJumpLoaderReturn } from '../../types';
 
 export interface ResourceJumpLayoutProps {
   children: React.ReactNode
@@ -31,7 +32,6 @@ export function ResourceJumpLayout({
   queryClient,
   trpcClient,
 }: ResourceJumpLayoutProps) {
-  console.log('layout', loaderData);
   
   return (
     <TopLevelProviders queryClient={queryClient} trpcClient={trpcClient}>
@@ -39,18 +39,18 @@ export function ResourceJumpLayout({
         <CrossCuttingParamsProvider initialCrossCuttingParams={loaderData.crossCuttingParams}>
           <ResourceJumpProvider resourceJumpLoader={loaderData}>
             <QuickSearchProvider>
-              <MainLayout headerMiddle={<CommandPalette label='App / Env / JIRA / Case Id / Anything...' cmd='k' />}>
+              <MainLayout headerMiddle={<CommandPalette label='Quick search' cmd='k' />}>
                 <div className="flex gap-32 flex-row">
                   {/* Left Column - fit content: Environment Section */}
-                  <div className="flex flex-col gap-4 w-fit flex-shrink-0">
+                  <div className="flex-col gap-4 w-fit flex-shrink-0 hidden lg:flex">
                     <LeftColumn />
                   </div>
                   <div className="flex flex-col gap-4 flex-1">
                     <CenterColumn>{children}</CenterColumn>
                   </div>
-                  <div className="flex flex-col gap-4 w-fit">
+                  {/* <div className="flex flex-col gap-4 w-fit">
                     <RightColumn />
-                  </div>
+                  </div> */}
 
                   {/* Center Column - max width: Application Section with Tabs */}
                   {/* <ApplicationSectionWithTabs /> */}
@@ -61,7 +61,7 @@ export function ResourceJumpLayout({
               </div> */}
                 </div>
                 <ContextDebug />
-                <TanStackRouterDevtools />
+
                 {/* <QuickJumpBar /> */}
               </MainLayout>
             </QuickSearchProvider>

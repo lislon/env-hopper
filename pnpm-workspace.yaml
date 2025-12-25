@@ -10,6 +10,7 @@ catalog:
   '@tanstack/react-query': ^5.80.3
   '@tanstack/react-router': ^1.131.27
   '@tanstack/react-router-devtools': 1.131.27
+  '@tanstack/react-query-devtools': ^5.91.1
   '@tanstack/react-virtual': ^3.13.0
   '@tanstack/router-plugin': 1.131.27
   '@testing-library/jest-dom': 6.6.3

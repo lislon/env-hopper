@@ -1,6 +1,6 @@
 import { initTRPC } from '@trpc/server'
 import z from 'zod'
-import type { ResourceJumpsData } from '../types'
+import type { BootstrapConfigData, ResourceJumpsData } from '../types'
 import type { EhTrpcContext } from './ehTrpcContext'
 import type { TRPCRootObject } from '@trpc/server'
 
@@ -20,7 +20,7 @@ const router: typeof t.router = t.router
 const publicProcedure: typeof t.procedure = t.procedure
 
 export const trpcRouter = router({
-  bootstrap: publicProcedure.query(async ({ ctx }) => {
+  bootstrap: publicProcedure.query(async ({ ctx }): Promise<BootstrapConfigData> => {
     return await ctx.companySpecificBackend.getBootstrapData()
   }),
 

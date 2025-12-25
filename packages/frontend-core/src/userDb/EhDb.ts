@@ -12,8 +12,6 @@ export class EhDb extends Dexie {
   resourceJumps!: Table<ResourceJumpsData>
   environmentHistory!: Table<EnvironmentHistoryItem>
   resourceJumpHistory!: Table<ResourceJumpHistoryItem>
-  quickEnvSlots!: Table<{ slot: number; envSlug: string; createdAt: number }>
-  quickAppSlots!: Table<{ slot: number; appSlug: string; createdAt: number }>
 
   constructor() {
     super('envhopper')
@@ -24,8 +22,6 @@ export class EhDb extends Dexie {
         resourceJumps: '',
         environmentHistory: '++id',
         resourceJumpHistory: '++id',
-        quickEnvSlots: 'slot',
-        quickAppSlots: 'slot',
       })
       .upgrade(async (tx) => {
         console.log('migration....')

@@ -8,8 +8,7 @@ export function CenterColumn({ children }: { children: React.ReactNode }) {
   return (
     <div className="max-w-4xl w-full">
       <div className=" mb-4 flex gap-4">
-        {/* <FlagshipResourceJumpSelector className="w-64" /> */}
-        <TopQuickJump />
+        {/* <TopQuickJump /> */}
 
         {/* <AppSwitcher /> */}
         {/* <Select>

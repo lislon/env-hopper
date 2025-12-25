@@ -12,7 +12,6 @@ export function MainLayout({ children, headerMiddle }: MainLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 flex">
-        {/* <LeftPanel className="h-screen" /> */}
         <main className="flex-1 w-full flex justify-center font-sans p-6">
           <div className="w-full space-y-6">
             <Header middle={headerMiddle} />

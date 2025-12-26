@@ -1,13 +1,13 @@
 import { ThemeProvider } from '~/components/theme-provider'
-import { MainLayout } from './MainLayout'
-import { Spinner } from '~/components/ui/spinner'
 import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '~/components/ui/empty'
+    Empty,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+} from '~/ui/empty'
+import { Spinner } from '~/ui/spinner'
+import { MainLayout } from './MainLayout'
 
 export interface LoadingFallbackProps {
   label?: string

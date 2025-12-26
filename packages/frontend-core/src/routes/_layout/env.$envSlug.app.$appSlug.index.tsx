@@ -1,7 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { routeLoader } from '~/modules/resourceJump/routeLoader';
-import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout';
-import { AppPage } from '~/modules/resourceJump/ui/pages/AppPage';
+import { createFileRoute } from '@tanstack/react-router'
+import { routeLoader } from '~/modules/resourceJump/routeLoader'
+import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout'
+import { AppPage } from '~/modules/resourceJump/ui/pages/AppPage'
 
 export const Route = createFileRoute('/_layout/env/$envSlug/app/$appSlug/')({
   component: RouteComponent,
@@ -11,7 +11,6 @@ export const Route = createFileRoute('/_layout/env/$envSlug/app/$appSlug/')({
 })
 
 function RouteComponent() {
-  console.log('$env + $app route component');
   const urlParams = Route.useLoaderData()
   const { queryClient, trpcClient } = Route.useRouteContext()
   return (

@@ -1,29 +1,30 @@
 import { HomeIcon } from 'lucide-react'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
+import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
+import {
+  getFlashipResource,
+  isFlagshipResource,
+} from '~/modules/resourceJump/utils/helpers'
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from '~/components/ui/breadcrumb'
-import { Link } from '~/components/ui/link'
-import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
-import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
-import { getFlashipResource, isFlagshipResource } from '~/modules/resourceJump/utils/helpers'
+} from '~/ui/breadcrumb'
+import { Link } from '~/ui/link'
 import { getEhToOptions } from '~/util/route-utils'
 
 export interface ResourceJumpBreadcrumbsProps {
   className?: string
 }
 
-export function ResourceJumpBreadcrubms({
-  className,
-}: ResourceJumpBreadcrumbsProps) {
+export function ResourceJumpBreadcrubms() {
   const { currentFlagship, currentResourceJump } = useResourceJumpContext()
   const { currentEnv } = useEnvironmentContext()
 
   return (
-    <Breadcrumb className={className}>
+    <Breadcrumb className="pb-4">
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
@@ -55,7 +56,7 @@ export function ResourceJumpBreadcrubms({
               <BreadcrumbLink asChild>
                 <Link
                   {...getEhToOptions({
-                    appId: getFlashipResource(currentFlagship)?.slug,
+                    appId: getFlashipResource(currentFlagship).slug,
                     envId: currentEnv?.slug,
                   })}
                 >
@@ -81,9 +82,7 @@ export function ResourceJumpBreadcrubms({
               </BreadcrumbLink>
             </BreadcrumbItem>
           </>
-
         )}
-
       </BreadcrumbList>
     </Breadcrumb>
   )

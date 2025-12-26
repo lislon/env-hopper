@@ -8,31 +8,43 @@
     "build": "tsdown",
     "clean": "premove ./dist ./coverage ./dist-ts",
     "compile": "tsc --build",
-    "dev": "tsx watch src/index.ts",
+    "db:reset": "prisma db push --force-reset --schema=../../packages/backend-core/prisma/schema.prisma && pnpm run db:sync",
+    "db:sync": "tsx src/local/sync.ts",
+    "dev": "tsx watch --conditions=my-custom-condition src/index.ts",
+    "prisma:generate": "prisma generate --schema=../../packages/backend-core/prisma/schema.prisma",
+    "prisma:push": "prisma db push --schema=../../packages/backend-core/prisma/schema.prisma",
+    "prisma:studio": "prisma studio --schema=../../packages/backend-core/prisma/schema.prisma",
+    "setup": "pnpm run prisma:generate && pnpm run db:reset",
     "start": "node dist/index.js",
     "test:eslint": "eslint ./src",
     "test:unit": "vitest run"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^3.0.11",
     "@env-hopper/backend-core": "^2.0.1-alpha",
     "@env-hopper/shared-core": "^2.0.1-alpha",
+    "@prisma/client": "catalog:",
     "@trpc/server": "catalog:",
+    "better-auth": "^1.4.15",
     "cross-env": "catalog:",
+    "dotenv-defaults": "catalog:",
     "express": "catalog:",
     "radashi": "catalog:",
-    "rand-seed": "^3.0.0",
-    "zod": "catalog:"
+    "rand-seed": "^3.0.0"
   },
   "devDependencies": {
     "@types/express": "catalog:",
     "@types/node": "catalog:",
     "esbuild": "catalog:",
+    "prisma": "catalog:",
+    "prisma-json-types-generator": "catalog:",
     "tsdown": "^0.15.7",
     "tsup": "^8.5.0",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plugin-node": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "zod-prisma-types": "^3.3.10"
   }
 }

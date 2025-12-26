@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Button } from '~/components/ui/button'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '~/components/ui/collapsible'
 import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/api/ApiQueryMagazineResourceJump'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { getUngroupedResources } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
+import { Button } from '~/ui/button'
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '~/ui/collapsible'
 
 interface AppQuickJumpBarProps {
   className?: string
@@ -23,7 +23,7 @@ export function AppQuickJumpBar({ className }: AppQuickJumpBarProps) {
   )
 
   // Track which groups are expanded (default to expanded if current resource is in the group)
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => new Set())
 
   // Auto-expand groups that contain the current resource
   useEffect(() => {
@@ -48,7 +48,7 @@ export function AppQuickJumpBar({ className }: AppQuickJumpBarProps) {
         <div className="flex flex-col gap-2 w-full">
           {Array.from({ length: 7 }).map((_, i) => (
             <Button
-              key={i}
+              key={`skeleton-${i}`}
               variant="ghost"
               disabled
               className="justify-start text-left animate-pulse"
@@ -83,9 +83,7 @@ export function AppQuickJumpBar({ className }: AppQuickJumpBarProps) {
               variant="ghost"
               onClick={() => setCurrentResourceJumpSlug(resource.slug)}
               className={`justify-start text-left w-full ${
-                isActive
-                  ? 'bg-accent text-accent-foreground font-medium'
-                  : ''
+                isActive ? 'bg-accent text-accent-foreground font-medium' : ''
               }`}
             >
               <span className="text-xs truncate flex-1">
@@ -145,13 +143,14 @@ export function AppQuickJumpBar({ className }: AppQuickJumpBarProps) {
               <CollapsibleContent className="pl-4">
                 <div className="flex flex-col gap-1 mt-1">
                   {groupResources.map((resource) => {
-                    const isActive =
-                      resource.slug === currentResourceJump?.slug
+                    const isActive = resource.slug === currentResourceJump?.slug
                     return (
                       <Button
                         key={resource.slug}
                         variant="ghost"
-                        onClick={() => setCurrentResourceJumpSlug(resource.slug)}
+                        onClick={() =>
+                          setCurrentResourceJumpSlug(resource.slug)
+                        }
                         className={`justify-start text-left w-full ${
                           isActive
                             ? 'bg-accent text-accent-foreground font-medium'

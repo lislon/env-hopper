@@ -2,17 +2,16 @@ import type { EnvBaseInfo } from '@env-hopper/backend-core'
 import type { VariantProps } from 'class-variance-authority'
 import { cva } from 'class-variance-authority'
 import { ExternalLinkIcon } from 'lucide-react'
-import { LinkExternal } from '~/components/ui/linkExternal'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import type { ResourceJumpUI } from '~/modules/resourceJump/types'
-import { JumpAnimatedLabel } from '~/modules/resourceJump/ui/JumpMainButton'
 import { isFlagshipResource } from '~/modules/resourceJump/utils/helpers'
+import { LinkExternal } from '~/ui/linkExternal'
 
 const linkVariants = cva('flex items-center group-hover:underline', {
   variants: {
     variant: {
-      default: 'gap-2 text-lg',
-      flagship: 'gap-2 text-3xl font-semibold',
+      default: 'gap-2',
+      flagship: 'gap-2 font-semibold',
     },
   },
   defaultVariants: {
@@ -25,18 +24,6 @@ const iconVariants = cva('', {
     variant: {
       default: 'h-3 w-3',
       flagship: 'h-6 w-6',
-    },
-  },
-  defaultVariants: {
-    variant: 'default',
-  },
-})
-
-const subLinkVariant = cva('text-secondary-foreground/40 group-hover:underline', {
-  variants: {
-    variant: {
-      default: '',
-      flagship: 'text-sm',
     },
   },
   defaultVariants: {
@@ -76,11 +63,11 @@ export function ResourceJumpButton({
               {/* <LateResolvableParamInput resourceJump={resouceJump} /> */}
               {/* <ExternalLinkIcon className="w-4 stroke-secondary-foreground invisible group-hover:visible" /> */}
             </div>
-            <div className={subLinkVariant({ variant })}>
+            {/* <div className={subLinkVariant({ variant })}>
               {getJumpUrl(resouceJump.slug, env?.slug)}
-            </div>
+            </div> */}
           </div>
-          <JumpAnimatedLabel className='invisible group-hover:visible text-lg py-3 px-5 hidden lg:flex' />
+          {/* <JumpAnimatedLabel className='invisible group-hover:visible text-lg py-3 px-5 hidden lg:flex' /> */}
         </LinkExternal>
       </div>
     </div>

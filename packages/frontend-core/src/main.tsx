@@ -1,15 +1,15 @@
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 // import { registerSW } from 'virtual:pwa-register';
-import type { TRPCRouter } from '@env-hopper/backend-core'
 import { createBrowserHistory } from '@tanstack/react-router'
 import { createTRPCClient, httpBatchLink } from '@trpc/client'
+import { EhDb as DbClass } from './userDb/EhDb'
+import type { TRPCRouter } from '@env-hopper/backend-core'
+import type { EhPlugin } from './modules/pluginCore/types'
 import { createQueryClient } from '~/api/infra/createQueryClient'
 import { App } from '~/App'
 import { createEhRouter } from '~/util/createEhRouter'
 import './index.css'
-import type { EhPlugin } from './modules/pluginCore/types'
-import { EhDb as DbClass } from './userDb/EhDb'
 
 // registerSW();
 

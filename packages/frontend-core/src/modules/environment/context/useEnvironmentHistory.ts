@@ -1,38 +1,30 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { useCallback } from 'react'
 import type { EnvironmentHistoryItem } from '~/modules/environment/types'
 import { useDb } from '~/userDb/DbContext'
 
 export function useEnvironmentHistory() {
   const db = useDb()
 
-  const [history, setHistory] = useState<Array<EnvironmentHistoryItem>>([])
-
-  // Load history on mount
-  useEffect(() => {
-    const fetchHistory = async () => {
-      const historyItems = await db.environmentHistory
-        .toCollection()
-        .limit(10)
-        .sortBy('timestamp')
-      setHistory(historyItems)
-    }
-    fetchHistory()
-  }, [db.environmentHistory])
+  const history = useLiveQuery(async () => {
+    const days30Ago = Date.now() - 30 * 24 * 60 * 60 * 1000
+    return await db.environmentHistory
+      .where('timestamp')
+      .aboveOrEqual(days30Ago)
+      .sortBy('timestamp')
+  })
 
   const historySaveEnvSwitch = useCallback(
     (envSlug: string) => {
       const timestamp = Date.now()
       const newHistoryItem: EnvironmentHistoryItem = { envSlug, timestamp }
       db.environmentHistory.add(newHistoryItem)
-      // update in-memory only; persisting is handled by caller
-      setHistory((prev) => [newHistoryItem, ...prev])
     },
     [db.environmentHistory],
   )
 
   return {
-    history,
-    setHistory,
+    history: history || [],
     historySaveEnvSwitch,
   }
 }

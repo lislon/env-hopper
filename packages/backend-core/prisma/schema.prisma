@@ -1,4 +1,5 @@
-// Prisma schema for backend
+// Prisma schema for backend-core library
+// Uses EH_CORE_DATABASE_URL environment variable
 
 datasource db {
   provider = "postgresql"
@@ -9,44 +10,112 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model App {
-  id           Int                @id @default(autoincrement())
-  name         String             @unique
-  displayName  String
-  services     DeployableService[]
-  uiPageGroups UIPageGroup[]
+generator json {
+  provider = "prisma-json-types-generator"
 }
 
-model DeployableService {
-  id          Int    @id @default(autoincrement())
-  name        String
-  displayName String
-  app         App    @relation(fields: [appId], references: [id])
-  appId       Int
+// ========== Better Auth Models ==========
+model user {
+  id            String    @id
+  name          String?
+  email         String?   @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          String    @default("user") // 'user' | 'admin'
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      account[]
+  sessions      session[]
 }
 
-model UIPageGroup {
-  id          Int      @id @default(autoincrement())
-  name        String
-  displayName String
-  app         App      @relation(fields: [appId], references: [id])
-  appId       Int
-  pages       UIPage[]
+model session {
+  id        String   @id
+  token     String   @unique
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model UIPage {
-  id            Int        @id @default(autoincrement())
-  name          String
-  displayName   String
-  uiPageGroup   UIPageGroup @relation(fields: [uiPageGroupId], references: [id])
-  uiPageGroupId Int
+model account {
+  id                 String  @id
+  userId             String
+  user               user    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId          String
+  providerId         String
+  refreshToken       String?
+  accessToken        String?
+  accessTokenExpiresAt DateTime?
+  refreshTokenExpiresAt DateTime?
+  idToken            String?
+  scope              String?
+  password           String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([providerId, accountId])
 }
 
-model User {
-  id        Int    @id @default(autoincrement())
-  uid       String @unique
-  username  String @unique
-  email     String @unique
-  firstName String
-  lastName  String
+model verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([identifier, value])
+}
+
+// ========== EnvHopper Models ==========
+model DbAppForCatalog {
+  id              String    @id @default(cuid())
+  slug            String    @unique // URL-friendly identifier for navigation
+  displayName     String
+  description     String
+  /// [AccessMethod]
+  access          Json
+  teams           String[]  @default([])
+  /// [AppRole]
+  roles           Json?
+  approverName    String?
+  approverEmail   String?
+  notes           String?
+  tags            String[]  @default([])
+  appUrl          String?
+  /// [AppLink[]]
+  links           Json?     // Array of {displayName?: string, url: string}
+  iconName        String?   // Optional icon identifier matching DbAsset.name
+  screenshotIds   String[]  @default([]) // Ordered array of DbAsset IDs
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([displayName])
+  @@index([slug])
+  @@index([tags])
+}
+
+enum AssetType {
+  icon
+  screenshot
+}
+
+model DbAsset {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  assetType       AssetType @default(icon)
+  content         Bytes     // Binary storage for all asset types (SVG, PNG, etc)
+  checksum        String    @unique // SHA-256 of content for deduplication
+  mimeType        String    // e.g., "image/svg+xml", "image/png", "image/jpeg"
+  fileSize        Int       // Size in bytes
+  width           Int?      // Image width in pixels
+  height          Int?      // Image height in pixels
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([name])
+  @@index([assetType])
 }

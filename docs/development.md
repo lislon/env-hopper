@@ -1,6 +1,5 @@
 # Development docs
 
-
 ## How to publish new major versron
 
 ```

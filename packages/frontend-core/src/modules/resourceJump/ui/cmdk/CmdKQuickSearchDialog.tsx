@@ -3,18 +3,18 @@ import * as RadioGroupPrimitive from '@radix-ui/react-radio-group'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { Command } from 'cmdk'
 import {
-  BedIcon,
-  GlobeIcon,
-  HomeIcon,
-  SearchIcon,
-  SquareArrowOutUpRightIcon
+    BedIcon,
+    GlobeIcon,
+    HomeIcon,
+    SearchIcon,
+    SquareArrowOutUpRightIcon,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Dialog, DialogContent } from '~/components/ui/dialog'
 import { cn } from '~/lib/utils'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { useCmdkDriver } from '~/modules/resourceJump/ui/cmdk/useCmdkDriver'
+import { Dialog, DialogContent } from '~/ui/dialog'
 import './CmdKQuickSearchDialog.scss'
 
 export interface CmdKQuickSearchDialogProps {
@@ -28,11 +28,12 @@ export function CmdKQuickSearchDialog({
 }: CmdKQuickSearchDialogProps) {
   const { flagshipJumpResources } = useResourceJumpContext()
 
-  const { environments } = useEnvironmentContext();
+  const { environments } = useEnvironmentContext()
 
-  const { envsForApps, onResourceJumpSelected, onEnvironmentSelected } = useCmdkDriver({
-    onOpenChange,
-  })
+  const { envsForApps, onResourceJumpSelected, onEnvironmentSelected } =
+    useCmdkDriver({
+      onOpenChange,
+    })
 
   const [flagship, setFlagship] = useState('')
 
@@ -72,30 +73,26 @@ export function CmdKQuickSearchDialog({
                           subtitle="Retrieve user input"
                           slug={slug}
                           key={slug}
-                          type='application'
+                          type="application"
                         >
                           <BedIcon />
                         </Item>
                       ))}
                   </Command.Group>
                   <Command.Group heading="Environments">
-                    {environments
-                      .slice(0, 50)
-                      .map(({ slug, displayName }) => (
-                        <Item
-                          value={displayName}
-                          subtitle="Retrieve user input"
-                          slug={slug}
-                          key={slug}
-                          type='environment'
-                          onSelect={() => onEnvironmentSelected(slug)}
-                        >
-                          <GlobeIcon />
-                        </Item>
-                      ))}
+                    {environments.slice(0, 50).map(({ slug, displayName }) => (
+                      <Item
+                        value={displayName}
+                        subtitle="Retrieve user input"
+                        slug={slug}
+                        key={slug}
+                        type="environment"
+                        onSelect={() => onEnvironmentSelected(slug)}
+                      >
+                        <GlobeIcon />
+                      </Item>
+                    ))}
                   </Command.Group>
-
-
                 </div>
                 <hr cmdk-framer-separator="" />
                 <div cmdk-framer-right="" className="flex flex-col">
@@ -247,12 +244,14 @@ function Item({
   slug: string
   value: string
   subtitle: string
-  type: 'application' | 'environment',
-  onSelect?: (value: string) => void;
+  type: 'application' | 'environment'
+  onSelect?: (value: string) => void
 }) {
   return (
     <Command.Item value={slug} onSelect={onSelect}>
-      <div cmdk-framer-icon-wrapper="" cmdk-framer-icon-wrapper-type={type}>{children}</div>
+      <div cmdk-framer-icon-wrapper="" cmdk-framer-icon-wrapper-type={type}>
+        {children}
+      </div>
       <div cmdk-framer-item-meta="">
         {value}
         <span cmdk-framer-item-subtitle="">{subtitle}</span>

@@ -5,7 +5,7 @@ export interface PluginInterfaceForCore {
 }
 
 export function makePluginInterfaceForCore(
-  plugins: Array<EhPlugin>,
+  _plugins: Array<EhPlugin>,
 ): PluginInterfaceForCore {
   return {
     // Future plugin interface methods can be added here

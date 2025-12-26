@@ -1,4 +1,5 @@
 import pluginReact from '@eslint-react/eslint-plugin'
+import type { Linter } from 'eslint'
 import pluginReactHooks from 'eslint-plugin-react-hooks'
 import rootConfig from './root-symlink.eslint.config'
 
@@ -22,4 +23,4 @@ export default [
       'react-hooks/rules-of-hooks': 'error',
     },
   },
-]
+] as Array<Linter.Config>

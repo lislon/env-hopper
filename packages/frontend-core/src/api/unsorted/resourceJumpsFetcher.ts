@@ -27,6 +27,6 @@ export function resourceJumpsFetcher({
     getDbTable: db
       ? () => db.resourceJumps
       : (ctx) => getDbFromMeta(ctx).resourceJumps,
-    queryKey,
+    queryKey: ['resourceJumps'],
   })
 }

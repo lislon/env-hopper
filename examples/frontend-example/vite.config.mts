@@ -1,16 +1,14 @@
-import { defineConfig, type UserConfig } from 'vite'
 import { frontendViteConfig } from '@env-hopper/frontend-build-vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
 import tailwindcss from '@tailwindcss/vite'
-import packageJson from './package.json'
 import { fileURLToPath, URL } from 'node:url'
+import { defineConfig } from 'vite'
+import tsconfigPaths from 'vite-tsconfig-paths'
+import packageJson from './package.json'
 
 const config = defineConfig(() => {
   const cfg = frontendViteConfig({
     appRoot: import.meta.dirname,
-    pwa: {
-      
-    }
+    pwa: {},
   })
 
   return {
@@ -24,7 +22,7 @@ const config = defineConfig(() => {
         '~': fileURLToPath(
           new URL('../../packages/frontend-core/src', import.meta.url),
         ),
-      },  
+      },
     },
 
     build: {

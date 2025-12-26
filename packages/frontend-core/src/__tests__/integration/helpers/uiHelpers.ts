@@ -62,9 +62,7 @@ export function createResourceJumpUI(_result: RenderResult, user: UserEvent) {
         await waitFor(() => {
           expect(section.querySelector('button')).not.toBeNull()
         })
-        const first = section.querySelector(
-          'button',
-        )
+        const first = section.querySelector('button')
         if (!first) {
           throw new Error('No quick bar buttons found')
         }

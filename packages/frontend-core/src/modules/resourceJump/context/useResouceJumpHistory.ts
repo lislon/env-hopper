@@ -1,20 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
-import type { ResourceJumpHistoryItem } from "~/modules/resourceJump/types";
-import { useDb } from "~/userDb/DbContext";
+import { useCallback, useEffect, useState } from 'react'
+import type { ResourceJumpHistoryItem } from '~/modules/resourceJump/types'
+import { useDb } from '~/userDb/DbContext'
 
-const MAX_HISTORY_ITEMS = 1000;
-const DISPLAY_HISTORY_ITEMS = 100;
+const MAX_HISTORY_ITEMS = 1000
+const DISPLAY_HISTORY_ITEMS = 100
 
 function isSameHistoryItem(
   a: ResourceJumpHistoryItem,
-  b: Omit<ResourceJumpHistoryItem, 'timestamp'>
+  b: Omit<ResourceJumpHistoryItem, 'timestamp'>,
 ): boolean {
   return (
     a.type === b.type &&
     a.resourceSlug === b.resourceSlug &&
     a.envSlug === b.envSlug &&
     a.flagshipSlug === b.flagshipSlug
-  );
+  )
 }
 
 export function useResourceJumpHistory() {
@@ -35,60 +35,66 @@ export function useResourceJumpHistory() {
 
   // Trim history if it exceeds MAX_HISTORY_ITEMS
   const trimHistory = useCallback(async () => {
-    const count = await db.resourceJumpHistory.count();
+    const count = await db.resourceJumpHistory.count()
     if (count > MAX_HISTORY_ITEMS) {
-      const itemsToDelete = count - MAX_HISTORY_ITEMS;
+      const itemsToDelete = count - MAX_HISTORY_ITEMS
       const oldestItems = await db.resourceJumpHistory
         .toCollection()
-        .sortBy('timestamp');
-      const idsToDelete = oldestItems.slice(0, itemsToDelete).map(item => item.id).filter((id): id is number => id !== undefined);
-      await db.resourceJumpHistory.bulkDelete(idsToDelete);
+        .sortBy('timestamp')
+      const idsToDelete = oldestItems
+        .slice(0, itemsToDelete)
+        .map((item) => item.id)
+        .filter((id): id is number => id !== undefined)
+      await db.resourceJumpHistory.bulkDelete(idsToDelete)
     }
-  }, [db.resourceJumpHistory]);
+  }, [db.resourceJumpHistory])
 
   const saveHistoryItem = useCallback(
     async (newItem: Omit<ResourceJumpHistoryItem, 'timestamp'>) => {
-      const timestamp = Date.now();
+      const timestamp = Date.now()
       const historyItem: ResourceJumpHistoryItem = {
         ...newItem,
         timestamp,
-      };
+      }
 
       // Check if last item is the same (deduplication)
-      const lastItem = history[0];
+      const lastItem = history[0]
       if (lastItem && isSameHistoryItem(lastItem, newItem)) {
-        return;
+        return
       }
 
       // Add new item
-      const id = await db.resourceJumpHistory.add(historyItem);
-      setHistory((prev) => [{ ...historyItem, id }, ...prev.slice(0, DISPLAY_HISTORY_ITEMS - 1)]);
+      const id = await db.resourceJumpHistory.add(historyItem)
+      setHistory((prev) => [
+        { ...historyItem, id },
+        ...prev.slice(0, DISPLAY_HISTORY_ITEMS - 1),
+      ])
 
       // Trim if needed (async, don't await)
-      void trimHistory();
+      void trimHistory()
     },
-    [db.resourceJumpHistory, history, trimHistory]
-  );
+    [db.resourceJumpHistory, history, trimHistory],
+  )
 
   const historySaveEnvSwitch = useCallback(
     (envSlug: string) => {
       void saveHistoryItem({
         type: 'switch-selector',
         envSlug,
-      });
+      })
     },
-    [saveHistoryItem]
-  );
+    [saveHistoryItem],
+  )
 
   const historySaveFlagmanSwitch = useCallback(
     (flagmanSlug: string) => {
       void saveHistoryItem({
         type: 'switch-selector',
         flagshipSlug: flagmanSlug,
-      });
+      })
     },
-    [saveHistoryItem]
-  );
+    [saveHistoryItem],
+  )
 
   const historySaveResourceSwitch = useCallback(
     (resourceSlug: string, envSlug?: string) => {
@@ -96,10 +102,10 @@ export function useResourceJumpHistory() {
         type: 'switch-selector',
         resourceSlug,
         envSlug,
-      });
+      })
     },
-    [saveHistoryItem]
-  );
+    [saveHistoryItem],
+  )
 
   return {
     history,

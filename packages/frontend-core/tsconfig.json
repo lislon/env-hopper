@@ -10,5 +10,12 @@
       "~/*": ["./src/*"]
     }
   },
-  "include": ["src", "*.config.ts", "*.config.js", "package.json", "src/modules/resourceJump/ui/pages/SingleJumpPage.tsx"]
+  "include": [
+    "src",
+    "*.config.ts",
+    "*.config.js",
+    "package.json",
+    "src/modules/resourceJump/ui/pages/SingleJumpPage.tsx"
+  ],
+  "exclude": ["eslint.config.ts", "root-symlink.eslint.config.js"]
 }

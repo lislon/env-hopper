@@ -1,8 +1,16 @@
 import { useRouter } from '@tanstack/react-router'
 import { Share2Icon } from 'lucide-react'
 import { use } from 'react'
-import { Button } from '~/components/ui/button'
-import { Card, CardContent } from '~/components/ui/card'
+import {
+    EnvironmentContext,
+    useEnvironmentContext,
+} from '~/modules/environment/context/EnvironmentContext'
+import {
+    ResourceJumpContext,
+    useResourceJumpContext,
+} from '~/modules/resourceJump/context/ResourceJumpContext'
+import { Button } from '~/ui/button'
+import { Card, CardContent } from '~/ui/card'
 import {
     Dialog,
     DialogClose,
@@ -11,19 +19,17 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from '~/components/ui/dialog'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import { Link } from '~/components/ui/link'
-import { EnvironmentContext, useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
-import { ResourceJumpContext, useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
+} from '~/ui/dialog'
+import { Input } from '~/ui/input'
+import { Label } from '~/ui/label'
+import { Link } from '~/ui/link'
 import { getEhToOptions } from '~/util/route-utils'
 
 export function ShareLinkButton() {
-  const maybeEnvContext = use(EnvironmentContext);
-  const maybeResourceJumpContext = use(ResourceJumpContext);
+  const maybeEnvContext = use(EnvironmentContext)
+  const maybeResourceJumpContext = use(ResourceJumpContext)
   if (!maybeEnvContext || !maybeResourceJumpContext) {
-    return null;
+    return null
   }
 
   return (
@@ -32,7 +38,7 @@ export function ShareLinkButton() {
         <DialogTrigger asChild>
           <Button variant="outline">
             <Share2Icon className="w-4 h-4" />
-            <span className='hidden md:block'>Share link</span>
+            <span className="hidden md:block">Share link</span>
           </Button>
         </DialogTrigger>
         <ShareDialogEnv />
@@ -44,16 +50,19 @@ export function ShareLinkButton() {
 function ShareDialogEnv() {
   const { currentEnv } = useEnvironmentContext()
   const { currentResourceJump } = useResourceJumpContext()
-  const router = useRouter();
+  const router = useRouter()
 
-  const fullUrl =
-    new URL(router.buildLocation(getEhToOptions({
-    appId: currentResourceJump?.slug,
-    envId: currentEnv?.slug,
-  })).href, window.location.origin).toString()
+  const fullUrl = new URL(
+    router.buildLocation(
+      getEhToOptions({
+        appId: currentResourceJump?.slug,
+        envId: currentEnv?.slug,
+      }),
+    ).href,
+    window.location.origin,
+  ).toString()
 
   const isEnv = currentResourceJump === undefined
-  
 
   return (
     <DialogContent>
@@ -85,22 +94,27 @@ function ShareDialogEnv() {
 
         <div className="grid gap-3">
           <Label htmlFor="name-1">Formatted URL</Label>
-        <Card>
-          <CardContent>
-            <Link
-              {...getEhToOptions({
-                appId: currentResourceJump?.slug,
-                envId: currentEnv?.slug,
-              })}
-            >
-              {currentEnv?.displayName} (Env-Hopper)
-            </Link>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardContent>
+              <Link
+                {...getEhToOptions({
+                  appId: currentResourceJump?.slug,
+                  envId: currentEnv?.slug,
+                })}
+              >
+                {currentEnv?.displayName} (Env-Hopper)
+              </Link>
+            </CardContent>
+          </Card>
         </div>
         <div className="grid gap-3">
           <Label htmlFor="share-raw-url">Raw URL</Label>
-          <Input id="share-raw-url" name="share-raw-url" defaultValue={fullUrl} onClick={(e) => e.currentTarget.select()} />
+          <Input
+            id="share-raw-url"
+            name="share-raw-url"
+            defaultValue={fullUrl}
+            onClick={(e) => e.currentTarget.select()}
+          />
         </div>
       </div>
       <DialogFooter>

@@ -33,13 +33,18 @@ export async function routeLoader({
   // Call the query function to pre-populate cache
   await queryFn(ctx)
 
-
   return {
     envSlug: params.envSlug,
-    resourceSlug: params.appSlug ? decodeURIComponent(params.appSlug) : undefined,
-    crossCuttingParams: params.subValue ? [{
-      slug: 'sub-legacy',
-      stringValue: params.subValue,
-    }] : []
+    resourceSlug: params.appSlug
+      ? decodeURIComponent(params.appSlug)
+      : undefined,
+    crossCuttingParams: params.subValue
+      ? [
+          {
+            slug: 'sub-legacy',
+            stringValue: params.subValue,
+          },
+        ]
+      : [],
   }
 }

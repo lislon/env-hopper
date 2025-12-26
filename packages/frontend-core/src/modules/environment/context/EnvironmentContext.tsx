@@ -1,6 +1,4 @@
-import type { EnvBaseInfo } from '@env-hopper/backend-core'
 import { useQuery } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
 import {
   createContext,
   use,
@@ -10,8 +8,10 @@ import {
   useState,
 } from 'react'
 import { ApiQueryMagazineResourceJump } from '../../resourceJump/api/ApiQueryMagazineResourceJump'
-import type { EnvironmentHistoryItem } from '../types'
 import { useEnvironmentHistory } from './useEnvironmentHistory'
+import type { EnvironmentHistoryItem } from '../types'
+import type { ReactNode } from 'react'
+import type { EnvBaseInfo } from '@env-hopper/backend-core'
 
 export interface EnvironmentContext {
   setCurrentEnv: (envSlug: string | undefined) => void
@@ -34,7 +34,6 @@ export function EnvironmentProvider({
   children,
   initialEnvSlug,
 }: EnvironmentProviderProps) {
-
   // Use environment history hook (loads history from DB and provides save)
   const { history, historySaveEnvSwitch } = useEnvironmentHistory()
 
@@ -50,7 +49,6 @@ export function EnvironmentProvider({
   const environments = useMemo(() => {
     return resourceJumpsData?.envs || []
   }, [resourceJumpsData])
-
 
   // Lookup functions
   const findEnvBySlug = useCallback(
@@ -84,7 +82,7 @@ export function EnvironmentProvider({
       currentEnv,
       history,
       initialEnvSlug,
-      environments
+      environments,
     }),
     [currentEnv, setCurrentEnv, history, initialEnvSlug, environments],
   )

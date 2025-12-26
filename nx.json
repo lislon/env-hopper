@@ -51,7 +51,7 @@
     },
     "build": {
       "cache": true,
-      "dependsOn": ["^build"],
+      "dependsOn": ["prisma:generate", "^build"],
       "inputs": ["production", "^production"],
       "outputs": ["{projectRoot}/build", "{projectRoot}/dist"]
     },

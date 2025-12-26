@@ -1,12 +1,11 @@
+import type { ReactNode } from 'react'
 import { createContext, use, useMemo, useState } from 'react'
-import type { ReactNode} from 'react';
 
 export type EnvHopperHealth = 'healthy' | 'degraded'
 
 export interface EnvHopperHealthStateBootstrapPart {
-  bootstrapApiError?: unknown;
+  bootstrapApiError?: unknown
 }
-
 
 export interface HealthStateContext {
   envHopperHealth: EnvHopperHealth
@@ -17,13 +16,14 @@ const HealthStateContext = createContext<HealthStateContext | undefined>(
   undefined,
 )
 
-
 interface HealthStateProviderProps {
   children: ReactNode
   bootstrapHealth: EnvHopperHealthStateBootstrapPart
 }
 
-export function HealthStateProvider({ children, bootstrapHealth }: HealthStateProviderProps) {
+export function HealthStateProvider({
+  children,
+}: HealthStateProviderProps) {
   const [envHopperHealth, setEnvHopperHealth] =
     useState<EnvHopperHealth>('healthy')
 

@@ -32,8 +32,7 @@ export interface EhBackendAppUIBaseInput {
 }
 
 export interface EhBackendAppUIInput
-  extends EhBackendAppUIBaseInput,
-    EhAppUiIndexed {
+  extends EhBackendAppUIBaseInput, EhAppUiIndexed {
   pages: Array<EhBackendPageInput>
 }
 

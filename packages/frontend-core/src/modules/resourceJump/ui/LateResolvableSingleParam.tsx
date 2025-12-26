@@ -1,15 +1,10 @@
 import { debounce } from 'radashi'
 import { useMemo, useRef } from 'react'
-import { Input } from '~/components/ui/input'
 import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
 import { CROSS_CUTTING_SINGLE_SLUG } from '~/modules/crossCuttingParams/types'
+import { Input } from '~/ui/input'
 
-
-export function LateResolvableParamInput({
-  paramSlug,
-}: {
-  paramSlug: string
-}) {
+export function LateResolvableParamInput({ paramSlug }: { paramSlug: string }) {
   const { getParamDefBySlug, crossCuttingParams, setCrossCuttingParams } =
     useCrossCuttingParamsContext()
 

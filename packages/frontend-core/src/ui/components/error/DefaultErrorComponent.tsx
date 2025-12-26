@@ -3,8 +3,7 @@ import type { ErrorComponentProps } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { BugIcon, RefreshCcwIcon } from 'lucide-react'
 import { useState } from 'react'
-import { ThemeProvider } from '~/components/theme-provider'
-import { Button } from '~/components/ui/button'
+import { Button } from '~/ui/button'
 import {
   Empty,
   EmptyContent,
@@ -12,8 +11,9 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '~/components/ui/empty'
+} from '~/ui/empty'
 import { MainLayout } from '~/ui/layout/MainLayout'
+import { TopLevelProvidersForErrors } from '~/ui/layout/TopLevelProvidersForErrors'
 import { useDb } from '~/userDb/DbContext'
 import { isDexieError, isDexieMigrationError } from '~/util/error-utils'
 
@@ -39,10 +39,14 @@ export function Treatment({ error, reset }: ErrorComponentProps) {
 
   if (isDexieError(error)) {
     const isMigrationError = isDexieMigrationError(error)
-    const buttonText = isMigrationError 
-      ? (isResetting ? 'Clearing database...' : 'Clear database and reload')
-      : (isResetting ? 'Resetting...' : 'Try reset local settings')
-    
+    const buttonText = isMigrationError
+      ? isResetting
+        ? 'Clearing database...'
+        : 'Clear database and reload'
+      : isResetting
+        ? 'Resetting...'
+        : 'Try reset local settings'
+
     return (
       <Button
         variant="outline"
@@ -76,12 +80,7 @@ export function Treatment({ error, reset }: ErrorComponentProps) {
 
 export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
+    <TopLevelProvidersForErrors>
       <MainLayout>
         <Empty role="alert">
           <EmptyHeader>
@@ -105,13 +104,11 @@ export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
                 {<i>{error.stack}</i>}
               </pre>
             </div>
-
           </EmptyContent>
         </Empty>
-                <TanStackRouterDevtools />
-                <ReactQueryDevtools initialIsOpen={false} />
-
+        <TanStackRouterDevtools />
+        <ReactQueryDevtools initialIsOpen={false} />
       </MainLayout>
-    </ThemeProvider>
+    </TopLevelProvidersForErrors>
   )
 }

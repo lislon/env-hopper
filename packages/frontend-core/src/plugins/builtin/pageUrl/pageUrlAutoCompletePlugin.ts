@@ -1,9 +1,7 @@
-import type {
-  BaseAutoCompleteItemRender,
-} from '~/modules/pluginCore/types'
+import type { BaseAutoCompleteItemRender } from '~/modules/pluginCore/types'
 import type { ResourceJumpUI } from '~/modules/resourceJump/types'
-import { formatResourceTitle } from '~/modules/resourceJump/utils/helpers'
 import type { PluginPageUrlAutocompleteItem } from './pageUrlTypes'
+import { formatResourceTitle } from '~/modules/resourceJump/utils/helpers'
 
 export function isAutocompleteItem(
   item: { type?: string } | null | undefined,
@@ -34,8 +32,6 @@ export function autocompleteFilter(
   })
 }
 
-export function formatJumpButtonTitle(
-  item: ResourceJumpUI,
-): string {
+export function formatJumpButtonTitle(item: ResourceJumpUI): string {
   return formatResourceTitle(item)
 }

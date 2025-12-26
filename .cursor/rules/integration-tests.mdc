@@ -1,9 +1,0 @@
----
-description: Integration testing rules for frontend-core
-globs: packages/frontend-core/src/__tests__/integration/**/*
-alwaysApply: true
----
-
-Use the semantic API provided by `ui` for common actions instead of manual DOM queries.
-Integration test should use from user perspective.
-

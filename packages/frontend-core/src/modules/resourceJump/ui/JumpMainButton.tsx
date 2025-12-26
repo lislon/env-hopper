@@ -1,8 +1,8 @@
 import cn from 'classnames'
-import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
-import { formatJumpButtonTitle } from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
 import { useResourceJumpContext } from '../context/ResourceJumpContext'
 import { JumpALink } from './JumpALink'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
+import { formatJumpButtonTitle } from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
 
 export const JUMP_MAIN_BTN_ID = 'jump-main-button'
 
@@ -128,8 +128,9 @@ export function JumpAnimatedLabel({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'mr-12 hover:motion-safe:-translate-x-0.5 hover:motion-safe:translate-y-0.5 hover:motion-safe:scale-y-90 hover:motion-safe:rotate-2 origin-bottom transition-transform motion-safe:duration-100'
-  , className)}
+        'mr-12 hover:motion-safe:-translate-x-0.5 hover:motion-safe:translate-y-0.5 hover:motion-safe:scale-y-90 hover:motion-safe:rotate-2 origin-bottom transition-transform motion-safe:duration-100',
+        className,
+      )}
     >
       JUMP
     </div>

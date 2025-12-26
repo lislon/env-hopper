@@ -7,7 +7,7 @@ export interface CrossCuttingLoaderParam {
 export interface CrossCuttingParamDef {
   slug: string
   displayName: string
-//   scope: 'global' | 'environment';
+  //   scope: 'global' | 'environment';
 }
 
 export interface CrossCuttingParamValue {
@@ -15,4 +15,4 @@ export interface CrossCuttingParamValue {
   stringValue: string
 }
 
-export const CROSS_CUTTING_SINGLE_SLUG = 'single';
+export const CROSS_CUTTING_SINGLE_SLUG = 'single'

@@ -1,5 +1,6 @@
 ---
-description: 'Describe what this custom agent does and when to use it.'
-tools: []
+description: 'When user asks for a ready-made solutions, best practices, popular libraries'
+tools: ['read', 'search', 'web', 'tanstack-mcp/*']
 ---
-Define what this custom agent accomplishes for the user, when to use it, and the edges it won't cross. Specify its ideal inputs/outputs, the tools it may call, and how it reports progress or asks for help. 
+
+Do a search in internet, if it's a library keep attention if this library is maintained. Ask user questions.

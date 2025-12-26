@@ -3,10 +3,7 @@ import { createContext, use, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import type { PartialRecord } from '~/types/utilityTypes'
 import type { PluginInterfaceForCore } from './makePluginManagerContext'
-import type {
-  EhPlugin,
-  PluginName,
-} from './types'
+import type { EhPlugin, PluginName } from './types'
 
 export interface PluginManagerContextIface {
   plugins: Array<EhPlugin>
@@ -41,7 +38,7 @@ export function PluginManagerContextProvider({
       () => ({
         // Future plugin interface methods can be added here
       }),
-    );
+    )
   }, [plugins])
 
   const value: PluginManagerContextIface = useMemo(() => {

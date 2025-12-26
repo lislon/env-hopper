@@ -18,5 +18,12 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit"
   },
-  "testing.automaticallyOpenTestResults": "neverOpen"
+  "testing.automaticallyOpenTestResults": "neverOpen",
+  "chat.tools.terminal.autoApprove": {
+    "docker-compose": true,
+    "/^nx run @env-hopper/shared-core:compile$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
 }

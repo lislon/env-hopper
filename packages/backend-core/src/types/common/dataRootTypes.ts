@@ -32,18 +32,31 @@ export interface AvailabilityVariant {
 
 export type ResourceJumpMetaInfo = Record<string, string>
 
-export interface EnvBaseInfo {
+export interface Sluggable {
+  slug: string
+}
+
+export interface DisplayNamable {
+  displayName: string
+}
+
+export interface SlugAndDisplayable extends Sluggable, DisplayNamable {
+  slug: string
+  displayName: string
+}
+
+export interface EnvBaseInfo extends SlugAndDisplayable {
   slug: string
   displayName: string
   templateParams?: Record<string, string>
 }
 
-export interface LateResolvableParam {
+export interface LateResolvableParam extends SlugAndDisplayable {
   slug: string
   displayName: string
 }
 
-export interface ResourceJump {
+export interface ResourceJump extends SlugAndDisplayable {
   slug: string
   displayName: string
   urlTemplate: DefaultWithOverridesAndTemplate
@@ -61,4 +74,27 @@ export interface ResourceJumpsData {
   envs: Array<EnvBaseInfo>
   lateResolvableParams: Array<LateResolvableParam>
   groups?: Array<ResourceJumpGroup>
+}
+
+export interface ResourceJumpsExtendedData {
+  // resourceJumps: Array<Pick<ResourceJump, 'slug'>>
+  envs: Array<EnvInfoExtended>
+  // groups?: Array<ResourceJumpGroup>
+}
+
+export interface EnvInfoExtended extends Sluggable {
+  slug: string
+  description?: string
+  owner?: User
+}
+
+// export interface ResourceJumpExtended extends Sluggable {
+//   slug: string
+//   description?: string;
+//   owner?: User;
+// }
+
+export interface User {
+  id: string
+  displayName: string
 }

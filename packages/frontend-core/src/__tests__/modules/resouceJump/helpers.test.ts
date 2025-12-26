@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { PluginPageUrlAutocompleteItem } from '~/plugins/builtin/pageUrl/pageUrlTypes.js'
 import { mapDisplayedItems } from '../../../modules/resourceJump/utils/helpers.js'
+import type { PluginPageUrlAutocompleteItem } from '~/plugins/builtin/pageUrl/pageUrlTypes.js'
 
 describe('mapDisplayedItems', () => {
   it('should not mark ungrouped items as children', () => {

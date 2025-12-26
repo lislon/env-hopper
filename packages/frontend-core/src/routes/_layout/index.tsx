@@ -1,27 +1,78 @@
 import { createFileRoute } from '@tanstack/react-router'
-
-import { routeLoader } from '~/modules/resourceJump/routeLoader'
+import { z } from 'zod'
+import { getAppMode } from '~/lib/getAppMode'
+import { routeLoader as resourceJumpRouteLoader } from '~/modules/resourceJump/routeLoader'
+import { appCatalogRouteLoader } from '~/modules/appCatalog/routeLoader'
 import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout'
+import { AppCatalogLayout } from '~/modules/appCatalog/ui/layout/AppCatalogLayout'
 import { HomePage } from '~/modules/resourceJump/ui/pages/HomePage'
+import { AppCatalogPage } from '~/modules/appCatalog/ui/pages/AppCatalogPage'
 
+const searchSchema = z.object({
+  app: z.string().optional(),
+})
+
+export type RootLayoutLoaderReturn =
+  | { envHopperLoader: { envSlug: string | undefined; resourceSlug: string | undefined; crossCuttingParams: Array<{ slug: string; stringValue: string }> } }
+  | { appCatalogLoader: Record<string, never> }
 
 export const Route = createFileRoute('/_layout/')({
   component: RouteComponent,
+  validateSearch: searchSchema,
   loader(ctx) {
-    return routeLoader(ctx)
+    const appMode = getAppMode()
+    if (appMode === 'hopper') {
+      return resourceJumpRouteLoader({
+        params: {
+          envSlug: undefined,
+          appSlug: undefined,
+          subValue: undefined,
+        },
+        context: ctx.context,
+      }).then((loaderData) => ({
+        envHopperLoader: loaderData,
+      }) as RootLayoutLoaderReturn)
+    } else {
+      return appCatalogRouteLoader({
+        context: ctx.context,
+      }).then((loaderData) => ({
+        appCatalogLoader: loaderData,
+      }) as RootLayoutLoaderReturn)
+    }
   },
 })
 
 function RouteComponent() {
-  const urlParams = Route.useLoaderData()
+  const appMode = getAppMode()
+  const loaderData = Route.useLoaderData()
   const { queryClient, trpcClient } = Route.useRouteContext()
-  return (
-    <ResourceJumpLayout
-      loaderData={urlParams}
-      queryClient={queryClient}
-      trpcClient={trpcClient}
-    >
-      <HomePage />
-    </ResourceJumpLayout>
-  )
+
+  // Show catalog layout by default in catalog mode
+  if (appMode === 'catalog' && 'appCatalogLoader' in loaderData) {
+    return (
+      <AppCatalogLayout
+        queryClient={queryClient}
+        trpcClient={trpcClient}
+      >
+        <AppCatalogPage />
+      </AppCatalogLayout>
+    )
+  }
+
+  // Show hopper layout in hopper mode
+  if ('envHopperLoader' in loaderData) {
+    return (
+      <ResourceJumpLayout
+        loaderData={loaderData.envHopperLoader}
+        queryClient={queryClient}
+        trpcClient={trpcClient}
+      >
+        <HomePage />
+      </ResourceJumpLayout>
+    )
+  }
+
+  return null
 }
+
+

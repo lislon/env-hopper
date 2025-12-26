@@ -5,11 +5,11 @@ import type {
 } from '~/modules/pluginCore/types'
 import type { ResourceJumpUI } from '~/modules/resourceJump/types'
 import type { FlagshipResourceJumpUi } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
+import type { EhUrlParams } from '~/types/ehTypes'
 import {
   getRenderData,
   isAutocompleteItem,
 } from '~/plugins/builtin/pageUrl/pageUrlAutoCompletePlugin'
-import type { EhUrlParams } from '~/types/ehTypes'
 
 export function* mapDisplayedItems(
   displayedItems: Array<BaseAutoCompletableItem>,
@@ -31,30 +31,43 @@ export function* mapDisplayedItems(
   }
 }
 
-export function isFlagshipPageByName(resourceJump: ResourceJumpUI | undefined): boolean {
-  return resourceJump?.displayName === 'Home' && resourceJump.flagship !== undefined;
+export function isFlagshipPageByName(
+  resourceJump: ResourceJumpUI | undefined,
+): boolean {
+  return (
+    !!resourceJump &&
+    resourceJump.displayName === 'Home' &&
+    !!resourceJump.flagship
+  )
 }
 
-export function isFlagshipResource(resourceJump: ResourceJumpUI | undefined) {
-  return resourceJump?.slug === resourceJump?.flagship?.resourceJumps[0]?.slug;
+export function isFlagshipResource(
+  resourceJump: ResourceJumpUI | undefined,
+): boolean {
+  if (!resourceJump?.flagship) return false
+  return resourceJump.slug === resourceJump.flagship.resourceJumps[0]?.slug
 }
 
-export function getFlashipResource(flagship: FlagshipResourceJumpUi): ResourceJumpUI {
-  return flagship.resourceJumps[0]!;
+export function getFlashipResource(
+  flagship: FlagshipResourceJumpUi,
+): ResourceJumpUI {
+  return flagship.resourceJumps[0]!
 }
-
 
 export function formatResourceTitle(
   resourceJump: ResourceJumpUI | undefined,
-  defaultTitle:string = '' 
+  defaultTitle: string = '',
 ) {
   if (resourceJump === undefined) {
-    return defaultTitle;
+    return defaultTitle
   }
   if (isFlagshipPageByName(resourceJump)) {
-    return resourceJump.flagship.displayName;
+    return resourceJump.flagship.displayName
   }
-  return resourceJump.displayName;
+  if (resourceJump.flagship.displayName === resourceJump.displayName) {
+    return resourceJump.displayName
+  }
+  return resourceJump.flagship.displayName + ' :: ' + resourceJump.displayName
 }
 
 export function getByIdRelaxed<T extends { slug: string }>(

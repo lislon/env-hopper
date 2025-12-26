@@ -4,20 +4,14 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "backend-example - Debug",
+      "name": "Backend Example",
       "skipFiles": ["<node_internals>/**"],
       "cwd": "${workspaceFolder}/examples/backend-example",
-      "program": "${workspaceFolder}/examples/backend-example/node_modules/.bin/vite",
-      "args": []
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "frontend-example - Debug",
-      "skipFiles": ["<node_internals>/**"],
-      "cwd": "${workspaceFolder}/packages/frontend-core",
-      "program": "${workspaceFolder}/packages/frontend-core/node_modules/.bin/vite",
-      "args": []
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "tsx", "watch", "src/index.ts"],
+      "envFile": "${workspaceFolder}/examples/backend-example/.env",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }

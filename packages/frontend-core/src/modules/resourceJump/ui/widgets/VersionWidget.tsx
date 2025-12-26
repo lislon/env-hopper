@@ -13,7 +13,3 @@ export function VersionWidget({ className }: VersionWidgetProps) {
     </div>
   )
 }
-
-
-
-

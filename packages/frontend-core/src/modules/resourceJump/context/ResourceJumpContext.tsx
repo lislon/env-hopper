@@ -37,6 +37,7 @@ export interface ResourceJumpContextIface {
   setCurrentResourceJumpSlug: (slug: JumpResourceSlug | undefined) => void
   currentResourceJump: ResourceJumpUI | undefined
   flagshipJumpResources: Array<FlagshipResourceJumpUi>
+  resourceJumps: Array<ResourceJumpUI>
   isLoadingResourceJumps: boolean
   getJumpUrl: (
     jumpResourceSlug: JumpResourceSlug | undefined,
@@ -72,24 +73,21 @@ export function ResourceJumpProvider({
   const navigate = useNavigate()
 
   // Fetch ResourceJumpsData using React Query
-  const { data: apiData, isLoading: isLoadingResourceJumps, isError, isFetched  } =
-    useQuery(ApiQueryMagazineResourceJump.getResourceJumps())
-
-  const flagshipJumpResources = useMemo<Array<FlagshipResourceJumpUi>>(() =>
-    apiData ? mapToFlagshipResourceJumps(apiData) : [],
-  [apiData]
+  const { data: apiData, isLoading: isLoadingResourceJumps } = useQuery(
+    ApiQueryMagazineResourceJump.getResourceJumps(),
   )
-  const resourceJumps = useMemo<Array<ResourceJumpUI>>(() =>
-    apiData
-      ? mapToResouceJumpUis(apiData, flagshipJumpResources)
-      : [],
-   [apiData, flagshipJumpResources])
 
-  const {
-    history,
-    historySaveFlagmanSwitch,
-    historySaveResourceSwitch,
-  } = useResourceJumpHistory()
+  const flagshipJumpResources = useMemo<Array<FlagshipResourceJumpUi>>(
+    () => (apiData ? mapToFlagshipResourceJumps(apiData) : []),
+    [apiData],
+  )
+  const resourceJumps = useMemo<Array<ResourceJumpUI>>(
+    () => (apiData ? mapToResouceJumpUis(apiData, flagshipJumpResources) : []),
+    [apiData, flagshipJumpResources],
+  )
+
+  const { history, historySaveFlagmanSwitch, historySaveResourceSwitch } =
+    useResourceJumpHistory()
 
   // Global state for all late resolvable param values across all resources
   const [allLateResolvableParamValues, setAllLateResolvableParamValues] =
@@ -107,7 +105,7 @@ export function ResourceJumpProvider({
 
   useEffect(() => {
     if (resourceJumpLoader.resourceSlug) {
-      historySaveResourceSwitch(resourceJumpLoader.resourceSlug);
+      historySaveResourceSwitch(resourceJumpLoader.resourceSlug)
     }
   }, [historySaveResourceSwitch, resourceJumpLoader.resourceSlug])
 
@@ -128,14 +126,19 @@ export function ResourceJumpProvider({
       })
       void navigate({
         ...newLocal,
-        replace: true
+        replace: true,
       })
       if (slug !== undefined) {
         console.log('Saving resource jump switch to history:', slug)
         historySaveResourceSwitch(slug, currentEnv?.slug)
       }
     },
-    [currentEnv?.slug, historySaveResourceSwitch, navigate, resourceJumpLoader.subValue],
+    [
+      currentEnv?.slug,
+      historySaveResourceSwitch,
+      navigate,
+      resourceJumpLoader.subValue,
+    ],
   )
 
   const currentResourceJump = useMemo<ResourceJumpUI | undefined>(() => {
@@ -144,7 +147,6 @@ export function ResourceJumpProvider({
     )
     return found
   }, [currentResourceJumpSlug, resourceJumps])
-  
 
   const { setCrossCuttingParamsDefs } = useCrossCuttingParamsContext()
   useEffect(() => {
@@ -332,7 +334,11 @@ export function ResourceJumpProvider({
         }
       }
     },
-    [flagshipJumpResources, historySaveFlagmanSwitch, setCurrentResourceJumpSlugWithHistory],
+    [
+      flagshipJumpResources,
+      historySaveFlagmanSwitch,
+      setCurrentResourceJumpSlugWithHistory,
+    ],
   )
 
   const [leftEnvSelectorValue, setLeftEnvSelectorValue] = useState<string>('')
@@ -354,6 +360,7 @@ export function ResourceJumpProvider({
       leftEnvSelectorValue,
       setLeftEnvSelectorValue,
       history,
+      resourceJumps,
     }),
     [
       currentResourceJump,
@@ -370,6 +377,7 @@ export function ResourceJumpProvider({
       setCurrentFlagship,
       leftEnvSelectorValue,
       history,
+      resourceJumps,
     ],
   )
 

@@ -1,10 +1,10 @@
+import { objectify } from 'radashi'
+import { describe, expect, it } from 'vitest'
 import type {
   AvailabilityMatrixData,
   AvailabilityVariant,
   EhEnvIndexed,
 } from '@env-hopper/backend-core'
-import { objectify } from 'radashi'
-import { describe, expect, it } from 'vitest'
 import type { ResourceJumpItem } from '~/modules/resourceJump/types'
 import type { FindBestMatchingResourceJumpParams } from '~/modules/resourceJump/utils/findBestMatchByUrl'
 import { findBestMatchByUrl } from '~/modules/resourceJump/utils/findBestMatchByUrl'

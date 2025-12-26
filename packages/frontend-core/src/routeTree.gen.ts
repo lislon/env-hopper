@@ -9,24 +9,108 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as LayoutRouteImport } from './routes/_layout'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AdminIconsRouteImport } from './routes/admin/icons'
+import { Route as AdminChatRouteImport } from './routes/admin/chat'
+import { Route as AdminAppForCatalogRouteImport } from './routes/admin/app-for-catalog'
+import { Route as LayoutLoginRouteImport } from './routes/_layout/login'
+import { Route as AdminAppForCatalogIndexRouteImport } from './routes/admin/app-for-catalog/index'
+import { Route as LayoutEnvsIndexRouteImport } from './routes/_layout/envs.index'
+import { Route as LayoutDashboardIndexRouteImport } from './routes/_layout/dashboard.index'
+import { Route as LayoutCatalogIndexRouteImport } from './routes/_layout/catalog.index'
+import { Route as LayoutAppsIndexRouteImport } from './routes/_layout/apps.index'
+import { Route as AdminAppForCatalogIdRouteImport } from './routes/admin/app-for-catalog/$id'
 import { Route as LayoutEnvEnvSlugIndexRouteImport } from './routes/_layout/env.$envSlug.index'
+import { Route as LayoutCatalogAppsIndexRouteImport } from './routes/_layout/catalog.apps.index'
 import { Route as LayoutAppAppSlugIndexRouteImport } from './routes/_layout/app.$appSlug.index'
 import { Route as LayoutEnvEnvSlugAppAppSlugIndexRouteImport } from './routes/_layout/env.$envSlug.app.$appSlug.index'
 
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => LayoutRoute,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIconsRoute = AdminIconsRouteImport.update({
+  id: '/icons',
+  path: '/icons',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminChatRoute = AdminChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAppForCatalogRoute = AdminAppForCatalogRouteImport.update({
+  id: '/app-for-catalog',
+  path: '/app-for-catalog',
+  getParentRoute: () => AdminRoute,
+} as any)
+const LayoutLoginRoute = LayoutLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const AdminAppForCatalogIndexRoute = AdminAppForCatalogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminAppForCatalogRoute,
+} as any)
+const LayoutEnvsIndexRoute = LayoutEnvsIndexRouteImport.update({
+  id: '/envs/',
+  path: '/envs/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutDashboardIndexRoute = LayoutDashboardIndexRouteImport.update({
+  id: '/dashboard/',
+  path: '/dashboard/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCatalogIndexRoute = LayoutCatalogIndexRouteImport.update({
+  id: '/catalog/',
+  path: '/catalog/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutAppsIndexRoute = LayoutAppsIndexRouteImport.update({
+  id: '/apps/',
+  path: '/apps/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const AdminAppForCatalogIdRoute = AdminAppForCatalogIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminAppForCatalogRoute,
+} as any)
 const LayoutEnvEnvSlugIndexRoute = LayoutEnvEnvSlugIndexRouteImport.update({
   id: '/env/$envSlug/',
   path: '/env/$envSlug/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutCatalogAppsIndexRoute = LayoutCatalogAppsIndexRouteImport.update({
+  id: '/catalog/apps/',
+  path: '/catalog/apps/',
   getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutAppAppSlugIndexRoute = LayoutAppAppSlugIndexRouteImport.update({
@@ -43,21 +127,61 @@ const LayoutEnvEnvSlugAppAppSlugIndexRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
-  '/app/$appSlug': typeof LayoutAppAppSlugIndexRoute
-  '/env/$envSlug': typeof LayoutEnvEnvSlugIndexRoute
-  '/env/$envSlug/app/$appSlug': typeof LayoutEnvEnvSlugAppAppSlugIndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/login': typeof LayoutLoginRoute
+  '/admin/app-for-catalog': typeof AdminAppForCatalogRouteWithChildren
+  '/admin/chat': typeof AdminChatRoute
+  '/admin/icons': typeof AdminIconsRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/app-for-catalog/$id': typeof AdminAppForCatalogIdRoute
+  '/apps/': typeof LayoutAppsIndexRoute
+  '/catalog/': typeof LayoutCatalogIndexRoute
+  '/dashboard/': typeof LayoutDashboardIndexRoute
+  '/envs/': typeof LayoutEnvsIndexRoute
+  '/admin/app-for-catalog/': typeof AdminAppForCatalogIndexRoute
+  '/app/$appSlug/': typeof LayoutAppAppSlugIndexRoute
+  '/catalog/apps/': typeof LayoutCatalogAppsIndexRoute
+  '/env/$envSlug/': typeof LayoutEnvEnvSlugIndexRoute
+  '/env/$envSlug/app/$appSlug/': typeof LayoutEnvEnvSlugAppAppSlugIndexRoute
 }
 export interface FileRoutesByTo {
+  '/login': typeof LayoutLoginRoute
+  '/admin/chat': typeof AdminChatRoute
+  '/admin/icons': typeof AdminIconsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/': typeof LayoutIndexRoute
+  '/admin': typeof AdminIndexRoute
+  '/admin/app-for-catalog/$id': typeof AdminAppForCatalogIdRoute
+  '/apps': typeof LayoutAppsIndexRoute
+  '/catalog': typeof LayoutCatalogIndexRoute
+  '/dashboard': typeof LayoutDashboardIndexRoute
+  '/envs': typeof LayoutEnvsIndexRoute
+  '/admin/app-for-catalog': typeof AdminAppForCatalogIndexRoute
   '/app/$appSlug': typeof LayoutAppAppSlugIndexRoute
+  '/catalog/apps': typeof LayoutCatalogAppsIndexRoute
   '/env/$envSlug': typeof LayoutEnvEnvSlugIndexRoute
   '/env/$envSlug/app/$appSlug': typeof LayoutEnvEnvSlugAppAppSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
+  '/admin': typeof AdminRouteWithChildren
+  '/_layout/login': typeof LayoutLoginRoute
+  '/admin/app-for-catalog': typeof AdminAppForCatalogRouteWithChildren
+  '/admin/chat': typeof AdminChatRoute
+  '/admin/icons': typeof AdminIconsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/_layout/': typeof LayoutIndexRoute
+  '/admin/': typeof AdminIndexRoute
+  '/admin/app-for-catalog/$id': typeof AdminAppForCatalogIdRoute
+  '/_layout/apps/': typeof LayoutAppsIndexRoute
+  '/_layout/catalog/': typeof LayoutCatalogIndexRoute
+  '/_layout/dashboard/': typeof LayoutDashboardIndexRoute
+  '/_layout/envs/': typeof LayoutEnvsIndexRoute
+  '/admin/app-for-catalog/': typeof AdminAppForCatalogIndexRoute
   '/_layout/app/$appSlug/': typeof LayoutAppAppSlugIndexRoute
+  '/_layout/catalog/apps/': typeof LayoutCatalogAppsIndexRoute
   '/_layout/env/$envSlug/': typeof LayoutEnvEnvSlugIndexRoute
   '/_layout/env/$envSlug/app/$appSlug/': typeof LayoutEnvEnvSlugAppAppSlugIndexRoute
 }
@@ -65,32 +189,92 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
+    | '/login'
+    | '/admin/app-for-catalog'
+    | '/admin/chat'
+    | '/admin/icons'
+    | '/auth/callback'
+    | '/admin/'
+    | '/admin/app-for-catalog/$id'
+    | '/apps/'
+    | '/catalog/'
+    | '/dashboard/'
+    | '/envs/'
+    | '/admin/app-for-catalog/'
+    | '/app/$appSlug/'
+    | '/catalog/apps/'
+    | '/env/$envSlug/'
+    | '/env/$envSlug/app/$appSlug/'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/login'
+    | '/admin/chat'
+    | '/admin/icons'
+    | '/auth/callback'
+    | '/'
+    | '/admin'
+    | '/admin/app-for-catalog/$id'
+    | '/apps'
+    | '/catalog'
+    | '/dashboard'
+    | '/envs'
+    | '/admin/app-for-catalog'
     | '/app/$appSlug'
+    | '/catalog/apps'
     | '/env/$envSlug'
     | '/env/$envSlug/app/$appSlug'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app/$appSlug' | '/env/$envSlug' | '/env/$envSlug/app/$appSlug'
   id:
     | '__root__'
     | '/_layout'
+    | '/admin'
+    | '/_layout/login'
+    | '/admin/app-for-catalog'
+    | '/admin/chat'
+    | '/admin/icons'
+    | '/auth/callback'
     | '/_layout/'
+    | '/admin/'
+    | '/admin/app-for-catalog/$id'
+    | '/_layout/apps/'
+    | '/_layout/catalog/'
+    | '/_layout/dashboard/'
+    | '/_layout/envs/'
+    | '/admin/app-for-catalog/'
     | '/_layout/app/$appSlug/'
+    | '/_layout/catalog/apps/'
     | '/_layout/env/$envSlug/'
     | '/_layout/env/$envSlug/app/$appSlug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
+  AdminRoute: typeof AdminRouteWithChildren
+  AuthCallbackRoute: typeof AuthCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_layout': {
       id: '/_layout'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof LayoutRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_layout/': {
       id: '/_layout/'
@@ -99,24 +283,108 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/icons': {
+      id: '/admin/icons'
+      path: '/icons'
+      fullPath: '/admin/icons'
+      preLoaderRoute: typeof AdminIconsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/chat': {
+      id: '/admin/chat'
+      path: '/chat'
+      fullPath: '/admin/chat'
+      preLoaderRoute: typeof AdminChatRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/app-for-catalog': {
+      id: '/admin/app-for-catalog'
+      path: '/app-for-catalog'
+      fullPath: '/admin/app-for-catalog'
+      preLoaderRoute: typeof AdminAppForCatalogRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_layout/login': {
+      id: '/_layout/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LayoutLoginRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/admin/app-for-catalog/': {
+      id: '/admin/app-for-catalog/'
+      path: '/'
+      fullPath: '/admin/app-for-catalog/'
+      preLoaderRoute: typeof AdminAppForCatalogIndexRouteImport
+      parentRoute: typeof AdminAppForCatalogRoute
+    }
+    '/_layout/envs/': {
+      id: '/_layout/envs/'
+      path: '/envs'
+      fullPath: '/envs/'
+      preLoaderRoute: typeof LayoutEnvsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/dashboard/': {
+      id: '/_layout/dashboard/'
+      path: '/dashboard'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof LayoutDashboardIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/catalog/': {
+      id: '/_layout/catalog/'
+      path: '/catalog'
+      fullPath: '/catalog/'
+      preLoaderRoute: typeof LayoutCatalogIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/apps/': {
+      id: '/_layout/apps/'
+      path: '/apps'
+      fullPath: '/apps/'
+      preLoaderRoute: typeof LayoutAppsIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/admin/app-for-catalog/$id': {
+      id: '/admin/app-for-catalog/$id'
+      path: '/$id'
+      fullPath: '/admin/app-for-catalog/$id'
+      preLoaderRoute: typeof AdminAppForCatalogIdRouteImport
+      parentRoute: typeof AdminAppForCatalogRoute
+    }
     '/_layout/env/$envSlug/': {
       id: '/_layout/env/$envSlug/'
       path: '/env/$envSlug'
-      fullPath: '/env/$envSlug'
+      fullPath: '/env/$envSlug/'
       preLoaderRoute: typeof LayoutEnvEnvSlugIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/catalog/apps/': {
+      id: '/_layout/catalog/apps/'
+      path: '/catalog/apps'
+      fullPath: '/catalog/apps/'
+      preLoaderRoute: typeof LayoutCatalogAppsIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/app/$appSlug/': {
       id: '/_layout/app/$appSlug/'
       path: '/app/$appSlug'
-      fullPath: '/app/$appSlug'
+      fullPath: '/app/$appSlug/'
       preLoaderRoute: typeof LayoutAppAppSlugIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
     '/_layout/env/$envSlug/app/$appSlug/': {
       id: '/_layout/env/$envSlug/app/$appSlug/'
       path: '/env/$envSlug/app/$appSlug'
-      fullPath: '/env/$envSlug/app/$appSlug'
+      fullPath: '/env/$envSlug/app/$appSlug/'
       preLoaderRoute: typeof LayoutEnvEnvSlugAppAppSlugIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
@@ -124,15 +392,27 @@ declare module '@tanstack/react-router' {
 }
 
 interface LayoutRouteChildren {
+  LayoutLoginRoute: typeof LayoutLoginRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
+  LayoutAppsIndexRoute: typeof LayoutAppsIndexRoute
+  LayoutCatalogIndexRoute: typeof LayoutCatalogIndexRoute
+  LayoutDashboardIndexRoute: typeof LayoutDashboardIndexRoute
+  LayoutEnvsIndexRoute: typeof LayoutEnvsIndexRoute
   LayoutAppAppSlugIndexRoute: typeof LayoutAppAppSlugIndexRoute
+  LayoutCatalogAppsIndexRoute: typeof LayoutCatalogAppsIndexRoute
   LayoutEnvEnvSlugIndexRoute: typeof LayoutEnvEnvSlugIndexRoute
   LayoutEnvEnvSlugAppAppSlugIndexRoute: typeof LayoutEnvEnvSlugAppAppSlugIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
+  LayoutLoginRoute: LayoutLoginRoute,
   LayoutIndexRoute: LayoutIndexRoute,
+  LayoutAppsIndexRoute: LayoutAppsIndexRoute,
+  LayoutCatalogIndexRoute: LayoutCatalogIndexRoute,
+  LayoutDashboardIndexRoute: LayoutDashboardIndexRoute,
+  LayoutEnvsIndexRoute: LayoutEnvsIndexRoute,
   LayoutAppAppSlugIndexRoute: LayoutAppAppSlugIndexRoute,
+  LayoutCatalogAppsIndexRoute: LayoutCatalogAppsIndexRoute,
   LayoutEnvEnvSlugIndexRoute: LayoutEnvEnvSlugIndexRoute,
   LayoutEnvEnvSlugAppAppSlugIndexRoute: LayoutEnvEnvSlugAppAppSlugIndexRoute,
 }
@@ -140,8 +420,39 @@ const LayoutRouteChildren: LayoutRouteChildren = {
 const LayoutRouteWithChildren =
   LayoutRoute._addFileChildren(LayoutRouteChildren)
 
+interface AdminAppForCatalogRouteChildren {
+  AdminAppForCatalogIdRoute: typeof AdminAppForCatalogIdRoute
+  AdminAppForCatalogIndexRoute: typeof AdminAppForCatalogIndexRoute
+}
+
+const AdminAppForCatalogRouteChildren: AdminAppForCatalogRouteChildren = {
+  AdminAppForCatalogIdRoute: AdminAppForCatalogIdRoute,
+  AdminAppForCatalogIndexRoute: AdminAppForCatalogIndexRoute,
+}
+
+const AdminAppForCatalogRouteWithChildren =
+  AdminAppForCatalogRoute._addFileChildren(AdminAppForCatalogRouteChildren)
+
+interface AdminRouteChildren {
+  AdminAppForCatalogRoute: typeof AdminAppForCatalogRouteWithChildren
+  AdminChatRoute: typeof AdminChatRoute
+  AdminIconsRoute: typeof AdminIconsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAppForCatalogRoute: AdminAppForCatalogRouteWithChildren,
+  AdminChatRoute: AdminChatRoute,
+  AdminIconsRoute: AdminIconsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
+  AdminRoute: AdminRouteWithChildren,
+  AuthCallbackRoute: AuthCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

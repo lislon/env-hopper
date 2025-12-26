@@ -7,6 +7,7 @@ export interface FuzzySearchInputEntry {
 
 export interface FuzzySearchContext {
   index: FuzzySearchIndex
+  freqGetter?: (slug: string) => number
 }
 
 export interface FuzzySearchIndex {

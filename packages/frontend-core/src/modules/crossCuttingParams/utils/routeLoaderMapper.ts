@@ -1,5 +1,7 @@
-import type { CrossCuttingLoaderParam } from "~/modules/crossCuttingParams/types";
+import type { CrossCuttingLoaderParam } from '~/modules/crossCuttingParams/types'
 
-export function routeLoaderMapper(subValue: string | undefined): Array<CrossCuttingLoaderParam> {
-    return [];
+export function routeLoaderMapper(
+  _subValue: string | undefined,
+): Array<CrossCuttingLoaderParam> {
+  return []
 }

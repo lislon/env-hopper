@@ -1,12 +1,15 @@
-import { objectify } from 'radashi';
-import type { ReactNode } from 'react';
-import { createContext, use, useCallback, useMemo, useState } from 'react';
-import type { CrossCuttingParamDef, CrossCuttingParamValue } from '~/modules/crossCuttingParams/types';
-
-
+import { objectify } from 'radashi'
+import { createContext, use, useCallback, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
+import type {
+  CrossCuttingParamDef,
+  CrossCuttingParamValue,
+} from '~/modules/crossCuttingParams/types'
 
 export interface CrossCuttingParamsContext {
-  setCrossCuttingParams: (params: Record<string, CrossCuttingParamValue>) => void
+  setCrossCuttingParams: (
+    params: Record<string, CrossCuttingParamValue>,
+  ) => void
   crossCuttingParams: Record<string, CrossCuttingParamValue>
   setCrossCuttingParamsDefs: (param: Array<CrossCuttingParamDef>) => void
   getParamDefBySlug: (slug: string) => CrossCuttingParamDef | undefined
@@ -25,10 +28,13 @@ export function CrossCuttingParamsProvider({
   children,
   initialCrossCuttingParams,
 }: CrossCuttingParamsProviderProps) {
-
   const [crossCuttingParams, setCrossCuttingParams] = useState<
-     Record<string, CrossCuttingParamValue>
-  >(() => initialCrossCuttingParams ? objectify(initialCrossCuttingParams, k => k.slug) : {})
+    Record<string, CrossCuttingParamValue>
+  >(() =>
+    initialCrossCuttingParams
+      ? objectify(initialCrossCuttingParams, (k) => k.slug)
+      : {},
+  )
 
   const [crossCuttingParamDefs, setCrossCuttingParamsDefs] = useState<
     Array<CrossCuttingParamDef>
@@ -46,12 +52,16 @@ export function CrossCuttingParamsProvider({
       setCrossCuttingParams,
       crossCuttingParams,
       setCrossCuttingParamsDefs,
-      getParamDefBySlug
+      getParamDefBySlug,
     }),
     [crossCuttingParams, getParamDefBySlug],
   )
 
-  return <CrossCuttingParamsContext value={value}>{children}</CrossCuttingParamsContext>
+  return (
+    <CrossCuttingParamsContext value={value}>
+      {children}
+    </CrossCuttingParamsContext>
+  )
 }
 
 export function useCrossCuttingParamsContext(): CrossCuttingParamsContext {

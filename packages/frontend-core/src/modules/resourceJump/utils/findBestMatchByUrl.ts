@@ -1,14 +1,14 @@
+import { sort } from 'radashi'
 import type {
   AvailabilityMatrixData,
   EhEnvIndexed,
   RenameRule,
   RenameRuleParams,
 } from '@env-hopper/backend-core'
-import { sort } from 'radashi'
 import type { AvailabilitySlugPair } from '~/util/availabilityMatrixUtils'
-import { findAvailableResources } from '~/util/availabilityMatrixUtils'
 import type { EnvironmentHistoryItem } from '../../environment/types'
 import type { ResourceJumpItem } from '../types'
+import { findAvailableResources } from '~/util/availabilityMatrixUtils'
 
 export interface FindBestMatchingResourceJumpParams {
   urlEnvSlug: string | undefined

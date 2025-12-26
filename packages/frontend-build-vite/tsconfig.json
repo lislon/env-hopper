@@ -4,5 +4,6 @@
     "outDir": "dist-ts",
     "rootDir": "."
   },
-  "include": ["src", "*.config.ts", "*.config.js", "package.json"]
+  "include": ["src", "*.config.ts", "*.config.js", "package.json"],
+  "exclude": ["eslint.config.ts", "root-symlink.eslint.config.js"]
 }

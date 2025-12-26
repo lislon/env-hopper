@@ -1,7 +1,7 @@
-import { createFileRoute } from '@tanstack/react-router';
-import { routeLoader } from '~/modules/resourceJump/routeLoader';
-import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout';
-import { EnvPage } from '~/modules/resourceJump/ui/pages/EnvPage';
+import { createFileRoute } from '@tanstack/react-router'
+import { routeLoader } from '~/modules/resourceJump/routeLoader'
+import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout'
+import { EnvPage } from '~/modules/resourceJump/ui/pages/EnvPage'
 
 export const Route = createFileRoute('/_layout/env/$envSlug/')({
   component: RouteComponent,

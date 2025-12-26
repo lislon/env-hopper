@@ -68,18 +68,22 @@ export function createCachingFetcher<T>({
     // Get dbTable from context
     const dbTable = getDbTable(ctx)
 
+    // console.log('fetching...', queryKey);
+
     // Try to get cached data from IndexedDB
     let cached: T | undefined = undefined
     try {
       cached = await dbTable.get(cacheKey)
+      // console.log('Fetching cached data for', cacheKey, cached);
     } catch (e) {
-      console.log(`Error fetching cached data for ${cacheKey}:`, e)
+      // console.log(`Error fetching cached data for ${cacheKey}:`, e)
       throw new DexieErrorWrapper(e)
     }
 
-
     // If we have cached data, return it immediately and sync in background
     if (cached) {
+      // console.log('fetching... sync in back', queryKey);
+
       void syncFromNetwork(
         {
           networkFetchFn,
@@ -97,8 +101,7 @@ export function createCachingFetcher<T>({
       return cached
     }
 
-    // No cache, fetch from network
-    return await syncFromNetwork(
+    const newLocal = await syncFromNetwork(
       {
         networkFetchFn,
         getDbTable,
@@ -108,6 +111,9 @@ export function createCachingFetcher<T>({
       },
       ctx,
     )
+    console.log('no cache, sync from network ', queryKey, newLocal)
+
+    return newLocal
   }
 }
 

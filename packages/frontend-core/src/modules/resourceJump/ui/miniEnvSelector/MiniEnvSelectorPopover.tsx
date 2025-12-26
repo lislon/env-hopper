@@ -1,24 +1,24 @@
 import { useEffect } from 'react'
-import {
-  Command,
-  CommandEmpty,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '~/components/ui/command'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
+import {
+    Command,
+    CommandEmpty,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from '~/ui/command'
 
 export interface MiniEnvSelectorPopoverProps {
   initialValue?: string
   onValueChange?: (value: string) => void
   onOpenChange?: (open: boolean) => void
-  inputRef?: React.RefObject<HTMLInputElement|null>
+  inputRef?: React.RefObject<HTMLInputElement | null>
 }
 
 export function MiniEnvSelectorPopover({
   onOpenChange,
   initialValue,
-  inputRef
+  inputRef,
 }: MiniEnvSelectorPopoverProps) {
   const { environments, setCurrentEnv } = useEnvironmentContext()
 

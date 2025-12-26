@@ -4,11 +4,13 @@ import type {
   RenameRule,
   RenameRuleParams,
   ResourceJumpsData,
+  ResourceJumpsExtendedData,
 } from '@env-hopper/backend-core'
 import type { DbAware } from '~/types/ehTypes'
 import type { ResourceJumpHistoryItem } from '../types'
 import { resourceJumpsFetcher } from '~/api/unsorted/resourceJumpsFetcher'
 import { getTrpcFromMeta } from '~/util/reactQueryUtils'
+import { resourceJumpsExtendedFetcher } from '~/api/unsorted/resourceJumpsExtendedFetcher'
 
 export class ApiQueryMagazineResourceJump {
   static getNameMigration(params: RenameRuleParams) {
@@ -29,6 +31,14 @@ export class ApiQueryMagazineResourceJump {
     const queryFn = resourceJumpsFetcher()
     return queryOptions<ResourceJumpsData | undefined, Error>({
       queryKey: ['resourceJumps'],
+      queryFn,
+    })
+  }
+
+  static getResourceJumpsExtended() {
+    const queryFn = resourceJumpsExtendedFetcher()
+    return queryOptions<ResourceJumpsExtendedData | undefined, Error>({
+      queryKey: ['resourceJumpsExtended'],
       queryFn,
     })
   }

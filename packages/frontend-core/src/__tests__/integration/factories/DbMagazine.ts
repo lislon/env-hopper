@@ -7,8 +7,7 @@ export interface DbMagazineInstance {
 export const DbMagazine = {
   default: (): DbMagazineInstance => {
     return {
-      setup: async (db: EhDb) => {
-      },
+      setup: async (_db: EhDb) => {},
     }
   },
 }

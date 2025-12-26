@@ -12,6 +12,24 @@ As of 2024-May-27 project is currently in development, not ready to be used on p
 
 ## Local development
 
+### Quick Start
+
+To start both backend and frontend with hot reload:
+
+```bash
+pnpm run -w dev
+```
+
+This command will:
+- Start the backend server on `http://localhost:4001`
+- Start the frontend dev server on `http://localhost:4000`
+- Watch for changes in both projects (no restart needed)
+- Run both servers in parallel
+
+Navigate to `http://localhost:4000` to view the application.
+
+### Manual Setup (if needed)
+
 ```
 npm install
 npx nx run backend:generate

@@ -1,16 +1,17 @@
 import { alphabetical, group } from 'radashi'
 import { useState } from 'react'
-import { Skeleton } from '~/components/ui/skeleton'
 import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { LateResolvableParamsInput } from '~/modules/resourceJump/ui/LateResolvableTopParam'
 import { ResourceJumpButton } from '~/modules/resourceJump/ui/ResourceJumpButton'
 import {
-  getFlashipResource,
-  isFlagshipResource,
+    getFlashipResource,
+    isFlagshipResource,
 } from '~/modules/resourceJump/utils/helpers'
 import { useMostRelevantLateParamSlug } from '~/modules/resourceJump/utils/statistics/useMostRelevantLateParamSlug'
+import { Card, CardContent, CardHeader } from '~/ui/card'
+import { Skeleton } from '~/ui/skeleton'
 
 export function AppPageFlagship() {
   const { currentResourceJump, currentFlagship, isLoadingResourceJumps } =
@@ -18,8 +19,8 @@ export function AppPageFlagship() {
   const { currentEnv } = useEnvironmentContext()
   const mostRelevantSlug = useMostRelevantLateParamSlug()
   const { crossCuttingParams } = useCrossCuttingParamsContext()
-  
-  const [selected, setSelected] = useState('');
+
+  const [selected, setSelected] = useState('')
 
   const resourceJumpsList =
     currentFlagship?.resourceJumps.filter((rj) => !isFlagshipResource(rj)) || []
@@ -42,26 +43,33 @@ export function AppPageFlagship() {
   const regular = alphabetical(grouped['regular'] || [], (p) => p.displayName)
 
   const onClickResourceJump = (slug: string) => {
-    setSelected(slug);
+    setSelected(slug)
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex gap-4 items-center justify-between">
-        <div className="flex flex-col gap-1 items-start py-4 grow-1">
+    <div className="flex flex-col gap-4 items-center">
+      <div className="flex gap-4 items-center justify-center w-full">
+        <div className="flex gap-1 justify-center between py-4 w-full">
           {isLoadingResourceJumps || !currentResourceJump ? (
-            <Skeleton className="h-4 w-[250px]" />
+            <Skeleton className="h-4 w-5" />
           ) : (
-            <ResourceJumpButton
-              variant="flagship"
-              resourceJump={getFlashipResource(currentResourceJump.flagship)}
-              env={currentEnv}
-              onClick={() =>
-                onClickResourceJump(
-                  getFlashipResource(currentResourceJump.flagship).slug,
-                )
-              }
-            />
+            <Card className="min-w-8/12">
+              <CardHeader>Jump</CardHeader>
+              <CardContent>
+                <ResourceJumpButton
+                  variant="flagship"
+                  resourceJump={getFlashipResource(
+                    currentResourceJump.flagship,
+                  )}
+                  env={currentEnv}
+                  onClick={() =>
+                    onClickResourceJump(
+                      getFlashipResource(currentResourceJump.flagship).slug,
+                    )
+                  }
+                />
+              </CardContent>
+            </Card>
           )}
         </div>
         <div>

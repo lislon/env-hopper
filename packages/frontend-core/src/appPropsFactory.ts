@@ -1,11 +1,11 @@
-import type { TRPCRouter } from '@env-hopper/backend-core'
 import { createBrowserHistory } from '@tanstack/react-router'
 import { createTRPCClient, httpBatchLink } from '@trpc/client'
-import { createQueryClient } from '~/api/infra/createQueryClient'
-import { createEhRouter } from '~/util/createEhRouter'
+import { EhDb } from './userDb/EhDb'
+import type { TRPCRouter } from '@env-hopper/backend-core'
 import type { AppProps } from './App'
 import type { EhPlugin } from './modules/pluginCore/types'
-import { EhDb } from './userDb/EhDb'
+import { createQueryClient } from '~/api/infra/createQueryClient'
+import { createEhRouter } from '~/util/createEhRouter'
 
 // registerSW();
 export function appPropsFactory(): AppProps {

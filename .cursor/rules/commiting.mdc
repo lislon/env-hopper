@@ -1,6 +1,0 @@
----
-description: Commiting rules
----
-
-- When user ask to commit use AI as an author.
-- Do not use GPG

@@ -9,7 +9,6 @@ export interface AppSwitcherProps {
 export function AppSwitcher({ className }: AppSwitcherProps) {
   const { setCurrentFlagship, currentFlagship } = useResourceJumpContext()
 
-
   const values = useMostRelevantQuickFlaships()
 
   return (
@@ -20,6 +19,4 @@ export function AppSwitcher({ className }: AppSwitcherProps) {
       className={className}
     />
   )
-
-
 }

@@ -10,7 +10,12 @@ export interface SmoothSwitcherProps {
   className?: string
 }
 
-export function SmoothSwitcher({values, onValueSelect, selectedValueSlug, className}: SmoothSwitcherProps) {
+export function SmoothSwitcher({
+  values,
+  onValueSelect,
+  selectedValueSlug,
+  className,
+}: SmoothSwitcherProps) {
   const [showArrowKeyHint, setShowArrowKeyHint] = useState(false)
 
   const layoutId = useId()
@@ -21,7 +26,7 @@ export function SmoothSwitcher({values, onValueSelect, selectedValueSlug, classN
       slug: e.slug,
       displayName: e.displayName,
     }))
-  }, [values]);
+  }, [values])
 
   // useEffect(() => {
   //   function listener(e: KeyboardEvent) {
@@ -55,7 +60,10 @@ export function SmoothSwitcher({values, onValueSelect, selectedValueSlug, classN
   // }, [currentEnv?.slug, setCurrentEnv, values])
 
   return (
-    <motion.div className={cn('flex flex-col gap-1 items-stretch', className)} layout>
+    <motion.div
+      className={cn('flex flex-col gap-1 items-stretch', className)}
+      layout
+    >
       {valuesEx.map(({ slug, displayName, icon }) => {
         const isActive = selectedValueSlug === slug
         return (

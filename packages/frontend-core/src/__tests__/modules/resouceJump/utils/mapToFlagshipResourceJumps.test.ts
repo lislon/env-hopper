@@ -1,5 +1,5 @@
-import type { ResourceJumpsData } from '@env-hopper/backend-core'
 import { describe, expect, it } from 'vitest'
+import type { ResourceJumpsData } from '@env-hopper/backend-core'
 import {
   tmResourceJump,
   tmResourceJumpGroup,

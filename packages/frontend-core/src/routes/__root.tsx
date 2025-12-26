@@ -4,20 +4,23 @@ import type { EhRouterContext } from '~/types/types'
 import { RootErrorPage } from '~/ui/components/error/RootErrorPage'
 import { NotFoundError } from '~/ui/error/NotFoundError'
 import { LoadingScreen } from '~/ui/layout/LoadingScreen'
+import { TopLevelProvidersForErrors } from '~/ui/layout/TopLevelProvidersForErrors'
 
 export const Route = createRootRouteWithContext<EhRouterContext>()({
   component: RootRoute,
   errorComponent: RootErrorPage,
-  pendingComponent: () => <LoadingScreen label='root pending' />,
+  pendingComponent: () => <LoadingScreen label="root pending" />,
   notFoundComponent: () => <NotFoundError />,
   wrapInSuspense: true,
 })
 
 function RootRoute() {
   return (
-    <div className="min-h-screen bg-base-200">
-      <Outlet />
-      {import.meta.env.MODE === 'dev' ? <TanStackRouterDevtools /> : null}
-    </div>
+    <TopLevelProvidersForErrors>
+      <div className="min-h-screen bg-base-200">
+        <Outlet />
+        {import.meta.env.MODE === 'dev' ? <TanStackRouterDevtools /> : null}
+      </div>
+    </TopLevelProvidersForErrors>
   )
 }

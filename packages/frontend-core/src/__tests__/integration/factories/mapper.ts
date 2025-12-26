@@ -1,7 +1,3 @@
-import { createTRPCMsw, httpLink } from 'msw-trpc'
-import { createApp } from './app'
-import { createEnv } from './env'
-import type { SetupServerApi } from 'msw/node'
 import type {
   BootstrapConfigData,
   ResourceJump,
@@ -9,6 +5,10 @@ import type {
   ResourceJumpsData,
   TRPCRouter,
 } from '@env-hopper/backend-core'
+import { createTRPCMsw, httpLink } from 'msw-trpc'
+import type { SetupServerApi } from 'msw/node'
+import { createApp } from './app'
+import { createEnv } from './env'
 import type {
   FeatureAppConfig,
   FeatureBackendConfig,
@@ -113,6 +113,13 @@ export function mapFeatureConfigToBackend(config: FeatureBackendConfig): {
         envs: resourceJumpEnvs,
         lateResolvableParams,
         groups,
+      },
+      resourceJumpsExtended: {
+        envs: [],
+      },
+      appCatalog: {
+        apps: [],
+        categories: []
       },
       // Minimal empty data for other procedures (not used in tests)
       availabilityMatrix: {

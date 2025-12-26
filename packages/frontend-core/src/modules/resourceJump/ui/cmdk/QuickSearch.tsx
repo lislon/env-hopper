@@ -1,32 +1,30 @@
 import { AppWindowIcon, GlobeIcon, SearchIcon } from 'lucide-react'
 import { use } from 'react'
-import type { SearchMode } from './types'
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from '~/components/ui/command'
 import { cn } from '~/lib/utils'
-import { useQuickSeachLogic } from '~/modules/resourceJump/ui/cmdk/useQuickSeachLogic'
 import { QuickSearchContext } from '~/modules/resourceJump/ui/cmdk/QuickSearchContext'
+import {
+    CommandDialog,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+    CommandSeparator,
+} from '~/ui/command'
+import type { SearchMode } from './types'
+import { useQuickSearchLogic } from './useQuickSearchLogic'
 
-export interface QuickSearchProps {
-}
+export interface QuickSearchProps {}
 
 export function QuickSearch() {
-
-  const { onSelect, options } = useQuickSeachLogic()
+  const { onSelect, options } = useQuickSearchLogic()
   const ctx = use(QuickSearchContext)
   if (!ctx) {
     throw new Error(
       'useQuickSearchContext must be used within a QuickSearchProvider',
     )
   }
-  const { open, onOpenChange, searchMode, setSeachMode, } = ctx;
+  const { open, onOpenChange, searchMode, setSearchMode } = ctx
 
   return (
     <CommandDialog
@@ -41,11 +39,11 @@ export function QuickSearch() {
             'px-2 h-6 border border-dashed border-eh-app-foreground rounded-lg content-center text-center',
             searchMode === 'anything' ? 'bg-eh-app-foreground/10' : '',
           )}
-          onClick={() => setSeachMode('anything')}
+          onClick={() => setSearchMode('anything')}
           role="button"
           tabIndex={0}
           onKeyDown={(e) =>
-            (e.key === 'Enter' || e.key === ' ') && setSeachMode('anything')
+            (e.key === 'Enter' || e.key === ' ') && setSearchMode('anything')
           }
         >
           <SearchIcon className="inline w-3 h-3 mr-1" />
@@ -56,11 +54,11 @@ export function QuickSearch() {
             'px-2 h-6 border border-dashed border-eh-app-foreground rounded-lg content-center text-center',
             searchMode === 'app' ? 'bg-eh-app-foreground/10' : '',
           )}
-          onClick={() => setSeachMode('app')}
+          onClick={() => setSearchMode('app')}
           role="button"
           tabIndex={0}
           onKeyDown={(e) =>
-            (e.key === 'Enter' || e.key === ' ') && setSeachMode('app')
+            (e.key === 'Enter' || e.key === ' ') && setSearchMode('app')
           }
         >
           <AppWindowIcon className="inline w-3 h-3 mr-1" />
@@ -71,11 +69,11 @@ export function QuickSearch() {
             'px-2 h-6 border border-dashed border-eh-app-foreground rounded-lg content-center text-center',
             searchMode === 'env' ? 'bg-eh-app-foreground/10' : '',
           )}
-          onClick={() => setSeachMode('env')}
+          onClick={() => setSearchMode('env')}
           role="button"
           tabIndex={0}
           onKeyDown={(e) =>
-            (e.key === 'Enter' || e.key === ' ') && setSeachMode('env')
+            (e.key === 'Enter' || e.key === ' ') && setSearchMode('env')
           }
         >
           <GlobeIcon className="inline w-3 h-3 mr-1" />

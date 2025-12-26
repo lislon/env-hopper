@@ -1,25 +1,23 @@
 import { GlobeIcon } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { Button } from '~/components/ui/button'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '~/components/ui/popover'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { MiniEnvSelectorPopover } from '~/modules/resourceJump/ui/miniEnvSelector/MiniEnvSelectorPopover'
+import { Button } from '~/ui/button'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '~/ui/popover'
 
 export function LeftColumn() {
   const { currentEnv } = useEnvironmentContext()
-  const {
-    leftEnvSelectorValue,
-    setLeftEnvSelectorValue,
-  } = useResourceJumpContext()
+  const { leftEnvSelectorValue, setLeftEnvSelectorValue } =
+    useResourceJumpContext()
 
   const [open, setOpen] = useState(false)
 
-  const inputRef = useRef<HTMLInputElement|null>(null)
+  const inputRef = useRef<HTMLInputElement | null>(null)
 
   const onOpenChange = (isOpen: boolean) => {
     if (!isOpen) {

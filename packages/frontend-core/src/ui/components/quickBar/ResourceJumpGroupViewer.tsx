@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { Button } from '~/components/ui/button'
 import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/api/ApiQueryMagazineResourceJump'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { getPrimaryResourceSlug } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
+import { Button } from '~/ui/button'
 
 interface ResourceJumpGroupViewerProps {
   className?: string
@@ -49,7 +49,10 @@ export function ResourceJumpGroupViewer({
   )
 
   return (
-    <div className={`flex flex-col gap-2 ${className}`} data-testid="resource-jump-group-viewer">
+    <div
+      className={`flex flex-col gap-2 ${className}`}
+      data-testid="resource-jump-group-viewer"
+    >
       <div className="text-sm text-muted-foreground font-medium">
         {group.displayName}
       </div>
@@ -62,9 +65,7 @@ export function ResourceJumpGroupViewer({
               variant="ghost"
               onClick={() => setCurrentResourceJumpSlug(resource.slug)}
               className={`justify-start text-left w-full ${
-                isActive
-                  ? 'bg-accent text-accent-foreground font-medium'
-                  : ''
+                isActive ? 'bg-accent text-accent-foreground font-medium' : ''
               }`}
             >
               <span className="text-sm truncate flex-1">
@@ -77,7 +78,3 @@ export function ResourceJumpGroupViewer({
     </div>
   )
 }
-
-
-
-

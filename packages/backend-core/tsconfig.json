@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.json",
-  "include": ["src", "*.config.ts", "*.config.js", "package.json"],
+  "include": ["src/**/*.ts", "*.config.ts", "*.config.js", "package.json"],
+  "exclude": ["src/generated/**", "eslint.config.ts", "root-symlink.eslint.config.js"],
   "compilerOptions": {
     "outDir": "./dist-ts",
     "rootDir": "."

@@ -21,8 +21,8 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.11",
-    "@env-hopper/backend-core": "^2.0.1-alpha",
-    "@env-hopper/shared-core": "^2.0.1-alpha",
+    "@env-hopper/backend-core": "^2.0.1-alpha.1",
+    "@env-hopper/shared-core": "^2.0.1-alpha.1",
     "@prisma/client": "catalog:",
     "@trpc/server": "catalog:",
     "better-auth": "^1.4.15",

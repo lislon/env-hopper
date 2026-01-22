@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/frontend-build-vite",
-  "version": "2.0.1-alpha.0",
+  "version": "2.0.1-alpha.1",
   "description": "Vite build config for Env Hopper frontend",
   "homepage": "https://github.com/lislon/env-hopper",
   "repository": {
@@ -41,8 +41,8 @@
     "@tanstack/router-plugin": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "vite-plugin-pwa": "catalog:",
-    "vite-plugin-svgr": "catalog:",
-    "vite-plugin-static-copy": "catalog:"
+    "vite-plugin-static-copy": "catalog:",
+    "vite-plugin-svgr": "catalog:"
   },
   "devDependencies": {
     "@env-hopper/shared-core": "workspace:*",

@@ -24,6 +24,10 @@ await publish({
       name: '@env-hopper/frontend-build-vite',
       packageDir: 'packages/frontend-build-vite',
     },
+    {
+      name: '@env-hopper/table-sync',
+      packageDir: 'packages/table-sync',
+    },
   ],
   branchConfigs: {
     main: {

@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@env-hopper/frontend-build-vite": "^2.0.1-alpha.1",
-    "@env-hopper/frontend-core": "^2.0.1-alpha.1",
+    "@env-hopper/frontend-core": "^2.0.1-alpha.5",
     "cross-env": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"

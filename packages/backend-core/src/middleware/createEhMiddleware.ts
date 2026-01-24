@@ -1,6 +1,10 @@
 import express, { Router } from 'express'
 import * as trpcExpress from '@trpc/server/adapters/express'
-import type { EhMiddlewareOptions, EhMiddlewareResult, MiddlewareContext } from './types'
+import type {
+  EhMiddlewareOptions,
+  EhMiddlewareResult,
+  MiddlewareContext,
+} from './types'
 import { EhDatabaseManager } from './database'
 import { createBackendResolver } from './backendResolver'
 import { registerFeatures } from './featureRegistry'
@@ -8,61 +12,6 @@ import { createTrpcRouter } from '../server/controller'
 import { createEhTrpcContext } from '../server/ehTrpcContext'
 import { createAuth } from '../modules/auth/auth'
 
-/**
- * Creates a fully-configured env-hopper middleware.
- *
- * @example
- * ```typescript
- * // Simple usage with inline backend
- * const eh = await createEhMiddleware({
- *   basePath: '/api',
- *   database: { url: process.env.DATABASE_URL! },
- *   auth: {
- *     baseURL: 'http://localhost:4000',
- *     secret: process.env.AUTH_SECRET!,
- *   },
- *   backend: {
- *     getBootstrapData: async () => loadStaticData(),
- *     getAvailabilityMatrix: async () => ({}),
- *     getNameMigrations: async () => false,
- *     getResourceJumps: async () => ({ resourceJumps: [], envs: [], lateResolvableParams: [] }),
- *     getResourceJumpsExtended: async () => ({ envs: [] }),
- *   },
- * })
- *
- * app.use(eh.router)
- * await eh.connect()
- * ```
- *
- * @example
- * ```typescript
- * // With DI-resolved backend (e.g., tsyringe)
- * const eh = await createEhMiddleware({
- *   basePath: '/api',
- *   database: {
- *     host: cfg.db.host,
- *     port: cfg.db.port,
- *     database: cfg.db.name,
- *     username: cfg.db.username,
- *     password: cfg.db.password,
- *     schema: cfg.db.schema,
- *   },
- *   auth: {
- *     baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:4000',
- *     secret: process.env.BETTER_AUTH_SECRET!,
- *     providers: getAuthProvidersFromEnv(),
- *     plugins: getAuthPluginsFromEnv(),
- *   },
- *   // Factory function - resolved fresh per request from DI container
- *   backend: () => container.resolve(EhBackend),
- *   hooks: {
- *     onRoutesRegistered: (router) => {
- *       router.get('/health', (_, res) => res.send('ok'))
- *     },
- *   },
- * })
- * ```
- */
 export async function createEhMiddleware(
   options: EhMiddlewareOptions,
 ): Promise<EhMiddlewareResult> {
@@ -76,7 +25,8 @@ export async function createEhMiddleware(
   const assetsEnabled = features.assets !== false
   const screenshotsEnabled = features.screenshots !== false
   const legacyIconEnabled = features.legacyIconEndpoint === true
-  const needsDatabase = iconsEnabled || assetsEnabled || screenshotsEnabled || legacyIconEnabled
+  const needsDatabase =
+    iconsEnabled || assetsEnabled || screenshotsEnabled || legacyIconEnabled
 
   // Validate database is provided when needed
   if (needsDatabase && !options.database) {

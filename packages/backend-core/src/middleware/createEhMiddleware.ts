@@ -19,30 +19,10 @@ export async function createEhMiddleware(
   const basePath = options.basePath ?? '/api'
   const normalizedOptions = { ...options, basePath }
 
-  // Check if database-dependent features are enabled
-  const features = options.features ?? {}
-  const iconsEnabled = features.icons !== false
-  const assetsEnabled = features.assets !== false
-  const screenshotsEnabled = features.screenshots !== false
-  const legacyIconEnabled = features.legacyIconEndpoint === true
-  const needsDatabase =
-    iconsEnabled || assetsEnabled || screenshotsEnabled || legacyIconEnabled
-
-  // Validate database is provided when needed
-  if (needsDatabase && !options.database) {
-    throw new Error(
-      'Database configuration is required when icons, assets, screenshots, or legacyIconEndpoint features are enabled. ' +
-        'Either provide database config or disable these features.',
-    )
-  }
-
-  // Initialize database manager only if database config is provided
-  let dbManager: EhDatabaseManager | null = null
-  if (options.database) {
-    dbManager = new EhDatabaseManager(options.database)
-    // Initialize the client (which also sets the global singleton)
-    dbManager.getClient()
-  }
+  // Initialize database manager
+  const dbManager = new EhDatabaseManager(options.database)
+  // Initialize the client (which also sets the global singleton)
+  dbManager.getClient()
 
   // Create auth instance
   const auth = createAuth({
@@ -103,9 +83,7 @@ export async function createEhMiddleware(
     trpcRouter,
 
     async connect(): Promise<void> {
-      if (dbManager) {
-        await dbManager.connect()
-      }
+      await dbManager.connect()
       if (options.hooks?.onDatabaseConnected) {
         await options.hooks.onDatabaseConnected()
       }
@@ -115,9 +93,7 @@ export async function createEhMiddleware(
       if (options.hooks?.onDatabaseDisconnecting) {
         await options.hooks.onDatabaseDisconnecting()
       }
-      if (dbManager) {
-        await dbManager.disconnect()
-      }
+      await dbManager.disconnect()
     },
 
     addRoutes(callback: (router: Router) => void): void {

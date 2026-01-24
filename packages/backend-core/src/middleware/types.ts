@@ -74,6 +74,8 @@ export interface EhFeatureToggles {
   adminChat?: boolean
   /** Enable legacy icon endpoint at /static/icon/:icon (default: false) */
   legacyIconEndpoint?: boolean
+  /** Enable catalog backup/restore endpoints (default: true) */
+  catalogBackup?: boolean
 }
 
 /**
@@ -117,11 +119,10 @@ export interface EhMiddlewareOptions {
   basePath?: string
 
   /**
-   * Database connection configuration.
-   * Required when icons, assets, or screenshots features are enabled.
-   * Can be omitted when these features are disabled and you manage your own database.
+   * Database connection configuration (required).
+   * Backend-core manages the database for all features.
    */
-  database?: EhDatabaseConfig
+  database: EhDatabaseConfig
 
   /** Auth configuration (required) */
   auth: EhAuthConfig

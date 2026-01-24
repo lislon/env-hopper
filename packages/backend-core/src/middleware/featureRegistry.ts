@@ -10,6 +10,14 @@ import { registerAssetRestController } from '../modules/assets/assetRestControll
 import { registerScreenshotRestController } from '../modules/assets/screenshotRestController'
 import { createAdminChatHandler } from '../modules/admin/chat/createAdminChatHandler'
 import { getAssetByName } from '../modules/icons/iconService'
+import {
+  exportAsset,
+  exportCatalog,
+  importAsset,
+  importCatalog,
+  listAssets,
+} from '../modules/appCatalogAdmin/catalogBackupController'
+import multer from 'multer'
 
 interface FeatureRegistration {
   name: keyof EhFeatureToggles
@@ -119,6 +127,27 @@ const FEATURES: Array<FeatureRegistration> = [
           res.status(404).send('Icon not found')
         }
       })
+    },
+  },
+  {
+    name: 'catalogBackup',
+    defaultEnabled: true,
+    register: (router, options) => {
+      const basePath = options.basePath
+      const upload = multer({ storage: multer.memoryStorage() })
+
+      // Catalog backup/restore endpoints
+      router.get(`${basePath}/catalog/backup/export`, exportCatalog)
+      router.post(`${basePath}/catalog/backup/import`, importCatalog)
+
+      // Asset backup/restore endpoints
+      router.get(`${basePath}/catalog/backup/assets`, listAssets)
+      router.get(`${basePath}/catalog/backup/assets/:name`, exportAsset)
+      router.post(
+        `${basePath}/catalog/backup/assets`,
+        upload.single('file'),
+        importAsset,
+      )
     },
   },
 ]

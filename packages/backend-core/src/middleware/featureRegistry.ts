@@ -30,6 +30,7 @@ interface FeatureRegistration {
   ) => void
 }
 
+// Optional features that can be toggled
 const FEATURES: Array<FeatureRegistration> = [
   {
     name: 'auth',
@@ -57,33 +58,6 @@ const FEATURES: Array<FeatureRegistration> = [
       // Use toNodeHandler to adapt better-auth for Express/Node.js
       const authHandler = toNodeHandler(ctx.auth)
       router.all(`${basePath}/auth/{*any}`, authHandler)
-    },
-  },
-  {
-    name: 'icons',
-    defaultEnabled: true,
-    register: (router, options) => {
-      registerIconRestController(router, {
-        basePath: `${options.basePath}/icons`,
-      })
-    },
-  },
-  {
-    name: 'assets',
-    defaultEnabled: true,
-    register: (router, options) => {
-      registerAssetRestController(router, {
-        basePath: `${options.basePath}/assets`,
-      })
-    },
-  },
-  {
-    name: 'screenshots',
-    defaultEnabled: true,
-    register: (router, options) => {
-      registerScreenshotRestController(router, {
-        basePath: `${options.basePath}/screenshots`,
-      })
     },
   },
   {
@@ -129,27 +103,6 @@ const FEATURES: Array<FeatureRegistration> = [
       })
     },
   },
-  {
-    name: 'catalogBackup',
-    defaultEnabled: true,
-    register: (router, options) => {
-      const basePath = options.basePath
-      const upload = multer({ storage: multer.memoryStorage() })
-
-      // Catalog backup/restore endpoints
-      router.get(`${basePath}/catalog/backup/export`, exportCatalog)
-      router.post(`${basePath}/catalog/backup/import`, importCatalog)
-
-      // Asset backup/restore endpoints
-      router.get(`${basePath}/catalog/backup/assets`, listAssets)
-      router.get(`${basePath}/catalog/backup/assets/:name`, exportAsset)
-      router.post(
-        `${basePath}/catalog/backup/assets`,
-        upload.single('file'),
-        importAsset,
-      )
-    },
-  },
 ]
 
 /**
@@ -161,6 +114,38 @@ export function registerFeatures(
     EhMiddlewareOptions,
   context: MiddlewareContext,
 ): void {
+  const basePath = options.basePath
+
+  // Always-on features (required for core functionality)
+
+  // Icons
+  registerIconRestController(router, {
+    basePath: `${basePath}/icons`,
+  })
+
+  // Assets
+  registerAssetRestController(router, {
+    basePath: `${basePath}/assets`,
+  })
+
+  // Screenshots
+  registerScreenshotRestController(router, {
+    basePath: `${basePath}/screenshots`,
+  })
+
+  // Catalog backup/restore
+  const upload = multer({ storage: multer.memoryStorage() })
+  router.get(`${basePath}/catalog/backup/export`, exportCatalog)
+  router.post(`${basePath}/catalog/backup/import`, importCatalog)
+  router.get(`${basePath}/catalog/backup/assets`, listAssets)
+  router.get(`${basePath}/catalog/backup/assets/:name`, exportAsset)
+  router.post(
+    `${basePath}/catalog/backup/assets`,
+    upload.single('file'),
+    importAsset,
+  )
+
+  // Optional toggleable features
   const toggles = options.features || {}
 
   for (const feature of FEATURES) {

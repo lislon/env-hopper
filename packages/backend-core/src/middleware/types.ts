@@ -57,25 +57,19 @@ export interface EhAdminChatConfig {
 
 /**
  * Feature toggles for enabling/disabling specific functionality.
- * All features are enabled by default.
+ *
+ * Note: Icons, assets, screenshots, and catalog backup are always enabled.
+ * Only these optional features can be toggled:
  */
 export interface EhFeatureToggles {
   /** Enable tRPC endpoints (default: true) */
   trpc?: boolean
   /** Enable auth endpoints (default: true) */
   auth?: boolean
-  /** Enable icon REST endpoints (default: true) */
-  icons?: boolean
-  /** Enable asset REST endpoints (default: true) */
-  assets?: boolean
-  /** Enable screenshot REST endpoints (default: true) */
-  screenshots?: boolean
   /** Enable admin chat endpoint (default: true if adminChat config provided) */
   adminChat?: boolean
   /** Enable legacy icon endpoint at /static/icon/:icon (default: false) */
   legacyIconEndpoint?: boolean
-  /** Enable catalog backup/restore endpoints (default: true) */
-  catalogBackup?: boolean
 }
 
 /**

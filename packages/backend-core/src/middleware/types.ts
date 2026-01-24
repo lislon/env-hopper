@@ -141,6 +141,22 @@ export interface EhMiddlewareOptions {
 
 /**
  * Result of middleware initialization.
+ *
+ * @example
+ * ```typescript
+ * const eh = await createEhMiddleware({ ... })
+ *
+ * // Mount routes
+ * app.use(eh.router)
+ *
+ * // Connect to database
+ * await eh.connect()
+ *
+ * // Cleanup on shutdown
+ * process.on('SIGTERM', async () => {
+ *   await eh.disconnect()
+ * })
+ * ```
  */
 export interface EhMiddlewareResult {
   /** Express router with all env-hopper routes */
@@ -163,5 +179,7 @@ export interface EhMiddlewareResult {
 export interface MiddlewareContext {
   auth: BetterAuth
   trpcRouter: TRPCRouter
-  createContext: () => Promise<{ companySpecificBackend: EhBackendCompanySpecificBackend }>
+  createContext: () => Promise<{
+    companySpecificBackend: EhBackendCompanySpecificBackend
+  }>
 }

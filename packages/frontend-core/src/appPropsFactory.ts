@@ -12,7 +12,7 @@ export function appPropsFactory(): AppProps {
   const trpcClient = createTRPCClient<TRPCRouter>({
     links: [
       httpBatchLink({
-        url: `${window.location.origin}/trpc`,
+        url: `${window.location.origin}/api/trpc`,
       }),
     ],
   })

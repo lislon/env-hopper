@@ -420,7 +420,7 @@ importers:
         specifier: ^2.0.1-alpha.1
         version: link:../../packages/frontend-build-vite
       '@env-hopper/frontend-core':
-        specifier: ^2.0.1-alpha.1
+        specifier: ^2.0.1-alpha.4
         version: link:../../packages/frontend-core
       cross-env:
         specifier: 'catalog:'

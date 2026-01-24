@@ -14,6 +14,14 @@ export function getDbClient(): PrismaClient {
 }
 
 /**
+ * Sets the internal Prisma client instance.
+ * Used by middleware to bridge with existing getDbClient() usage.
+ */
+export function setDbClient(client: PrismaClient): void {
+  prismaClient = client
+}
+
+/**
  * Connects to the database.
  * Call this before performing database operations.
  */

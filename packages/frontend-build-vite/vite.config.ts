@@ -1,7 +1,19 @@
 import { tanstackViteConfig } from '@tanstack/vite-config'
+import { defineConfig, mergeConfig } from 'vite'
 
-export default tanstackViteConfig({
-  entry: './src/index.ts',
-  srcDir: './src',
-  cjs: false,
-})
+export default mergeConfig(
+  tanstackViteConfig({
+    entry: './src/index.ts',
+    srcDir: './src',
+    cjs: false,
+  }),
+  defineConfig({
+    build: {
+      rollupOptions: {
+        output: {
+          preserveModulesRoot: 'src',
+        },
+      },
+    },
+  }),
+)

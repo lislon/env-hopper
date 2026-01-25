@@ -1,29 +1,29 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-    createColumnHelper,
-    flexRender,
-    getCoreRowModel,
-    useReactTable,
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
 } from '@tanstack/react-table'
 import { Trash2, Upload } from 'lucide-react'
 import { useState } from 'react'
 import { useTRPC } from '~/api/infra/trpc'
 import { Button } from '~/ui/button'
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from '~/ui/card'
 import { Input } from '~/ui/input'
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '~/ui/table'
 
 type Icon = {
@@ -44,7 +44,7 @@ const columns = [
     cell: (props) => (
       <div className="w-12 h-12 flex items-center justify-center">
         <img
-          src={`/api/icons/${props.row.original.id}`}
+          src={`/api/icons/${props.row.original.name}`}
           alt={props.row.original.name}
           className="max-w-full max-h-full object-contain"
         />
@@ -80,7 +80,7 @@ const columns = [
 function IconActions({ icon }: { icon: Icon }) {
   const trpc = useTRPC()
   const queryClient = useQueryClient()
-  
+
   const deleteMutation = useMutation({
     ...trpc.icon.delete.mutationOptions(),
     onSuccess: () => {
@@ -133,6 +133,11 @@ function IconUploadForm() {
     }
   }
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    handleUpload()
+  }
+
   return (
     <Card className="mb-8">
       <CardHeader>
@@ -142,31 +147,32 @@ function IconUploadForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-4 items-end">
-          <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">Icon Name</label>
-            <Input
-              value={iconName}
-              onChange={(e) => setIconName(e.target.value)}
-              placeholder="icon-name"
-            />
+        <form onSubmit={handleSubmit}>
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <label className="block text-sm font-medium mb-2">
+                Icon Name
+              </label>
+              <Input
+                value={iconName}
+                onChange={(e) => setIconName(e.target.value)}
+                placeholder="icon-name"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium mb-2">File</label>
+              <Input
+                type="file"
+                accept="image/svg+xml,image/png,image/jpeg,image/webp"
+                onChange={handleFileSelect}
+              />
+            </div>
+            <Button type="submit" disabled={!selectedFile || !iconName}>
+              <Upload className="w-4 h-4 mr-2" />
+              Upload
+            </Button>
           </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">File</label>
-            <Input
-              type="file"
-              accept="image/svg+xml,image/png,image/jpeg,image/webp"
-              onChange={handleFileSelect}
-            />
-          </div>
-          <Button
-            onClick={handleUpload}
-            disabled={!selectedFile || !iconName}
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Upload
-          </Button>
-        </div>
+        </form>
       </CardContent>
     </Card>
   )
@@ -174,7 +180,9 @@ function IconUploadForm() {
 
 function IconTable() {
   const trpc = useTRPC()
-  const { data: icons = [], isLoading } = useQuery(trpc.icon.list.queryOptions())
+  const { data: icons = [], isLoading } = useQuery(
+    trpc.icon.list.queryOptions(),
+  )
 
   const table = useReactTable({
     data: icons,
@@ -203,7 +211,7 @@ function IconTable() {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}

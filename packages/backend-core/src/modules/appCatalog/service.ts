@@ -17,8 +17,8 @@ export async function getAppsFromPrisma(): Promise<Array<AppForCatalog>> {
   const rows = await prisma.dbAppForCatalog.findMany()
 
   return rows.map((row) => {
-    const approvalMethod =
-      row.approvalMethod as unknown as AppForCatalog['approvalMethod']
+    const access = row.access as unknown as AppForCatalog['access']
+    const approver = row.approver as unknown as AppForCatalog['approver']
     const teams = (row.teams as unknown as Array<string> | null) ?? []
     const tags = (row.tags as unknown as AppForCatalog['tags']) ?? []
     const screenshotIds =
@@ -32,7 +32,8 @@ export async function getAppsFromPrisma(): Promise<Array<AppForCatalog>> {
       slug: row.slug,
       displayName: row.displayName,
       description: row.description,
-      approvalMethod,
+      access,
+      approver,
       teams,
       notes,
       tags,

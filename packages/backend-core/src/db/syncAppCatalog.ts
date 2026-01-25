@@ -1,7 +1,4 @@
-import type {
-  AppForCatalog,
-  ApprovalMethod,
-} from '../types/common/appCatalogTypes'
+import type { AppForCatalog } from '../types/common/appCatalogTypes'
 import { getDbClient } from './client'
 import { TABLE_SYNC_MAGAZINE } from './tableSyncMagazine'
 import { tableSyncPrisma } from './tableSyncPrismaAdapter'
@@ -11,72 +8,6 @@ export interface SyncAppCatalogResult {
   updated: number
   deleted: number
   total: number
-}
-
-/**
- * Maps legacy access structure to approvalMethod structure
- *
- * Legacy structure examples:
- * - { type: 'bot', providerId: 'natero', prompt: '...' } → serviceId: 'natero-bot'
- * - { type: 'ticketing', providerId: 'engprodsupport' } → serviceId: 'service-desk'
- * - { type: 'email', contacts: [...] } → person approval with first contact
- */
-function mapAccessToApprovalMethod(
-  access: any,
-  approver: any,
-): ApprovalMethod | null {
-  if (!access) {
-    return null
-  }
-
-  // Map bot access to service approval
-  if (access.type === 'bot') {
-    return {
-      type: 'service',
-      serviceId: 'natero-bot', // Maps to getServiceApprovals() in NateraEhBackend
-      prompt: access.prompt,
-    }
-  }
-
-  // Map ticketing access to service approval
-  if (access.type === 'ticketing') {
-    return {
-      type: 'service',
-      serviceId: 'service-desk', // Maps to getServiceApprovals() in NateraEhBackend
-      requestFormTemplate: `Provider: ${access.providerId}`,
-    }
-  }
-
-  // Map email contact to person approval
-  if (
-    access.type === 'email' &&
-    access.contacts &&
-    access.contacts.length > 0
-  ) {
-    const contact = access.contacts[0]
-    return {
-      type: 'person',
-      person: {
-        firstName: contact.role?.split(' ')[0] || 'Contact',
-        lastName: contact.role?.split(' ').slice(1).join(' ') || 'Person',
-        email: contact.email,
-      },
-      additionalInfo: contact.role,
-    }
-  }
-
-  // If we have an approver, use it
-  if (approver) {
-    return {
-      type: 'person',
-      person: approver,
-    }
-  }
-
-  // Unknown access type
-  return {
-    type: 'unknown',
-  }
 }
 
 /**
@@ -105,18 +36,13 @@ export async function syncAppCatalog(
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '')
 
-      // Map legacy access/approver to approvalMethod
-      const approvalMethod = mapAccessToApprovalMethod(
-        (app as any).access,
-        (app as any).approver,
-      )
-
       return {
         slug,
         displayName: app.displayName,
         description: app.description,
-        approvalMethod: approvalMethod,
-        teams: (app as any).teams ?? [],
+        access: app.access ?? null,
+        teams: app.teams ?? [],
+        approver: app.approver ?? null,
         notes: app.notes ?? null,
         tags: app.tags ?? [],
         appUrl: app.appUrl ?? null,

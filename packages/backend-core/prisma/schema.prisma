@@ -76,9 +76,11 @@ model DbAppForCatalog {
   slug            String    @unique // URL-friendly identifier for navigation
   displayName     String
   description     String
-  /// [ApprovalMethod] - Approval method (none/service/person/other/unknown)
-  approvalMethod  Json?
-  teams           String[]  @default([]) // Teams that use this app
+  /// [AccessMethod]
+  access          Json?
+  teams           String[]  @default([])
+  /// [Approver] - Approver system (bot/ticket/person)
+  approver        Json?
   notes           String?
   tags            String[]  @default([])
   appUrl          String?

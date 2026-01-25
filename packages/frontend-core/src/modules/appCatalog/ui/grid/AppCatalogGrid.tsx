@@ -14,10 +14,16 @@ export interface AppCatalogGridProps {
 
 function getIconUrl(iconName: string): string {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'
-  return `${baseUrl}/api/icons/by-name/${iconName}`
+  return `${baseUrl}/api/icons/${iconName}`
 }
 
-function AppIcon({ app, className }: { app: AppForCatalog; className?: string }) {
+function AppIcon({
+  app,
+  className,
+}: {
+  app: AppForCatalog
+  className?: string
+}) {
   const [imageError, setImageError] = React.useState(false)
 
   // Use iconName from backend if available
@@ -88,7 +94,13 @@ function AppScreenshot({ app }: { app: AppForCatalog }) {
   )
 }
 
-function AppCard({ app, onClick }: { app: AppForCatalog; onClick?: () => void }) {
+function AppCard({
+  app,
+  onClick,
+}: {
+  app: AppForCatalog
+  onClick?: () => void
+}) {
   const hasUrl = app.appUrl
 
   return (

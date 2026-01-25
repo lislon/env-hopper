@@ -15,7 +15,7 @@ export interface AppDetailModalProps {
 
 function getIconUrl(iconName: string): string {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'
-  return `${baseUrl}/api/icons/by-name/${iconName}`
+  return `${baseUrl}/api/icons/${iconName}`
 }
 
 function AppIcon({ app }: { app: AppForCatalog }) {

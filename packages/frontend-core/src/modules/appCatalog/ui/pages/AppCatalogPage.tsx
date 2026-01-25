@@ -11,7 +11,7 @@ import { Input } from '~/ui/input'
 export function AppCatalogPage() {
   const navigate = useNavigate()
   const router = useRouter()
-  const search = useSearch({ strict: false }) 
+  const search = useSearch({ strict: false })
   const { apps, isLoadingApps } = useAppCatalogContext()
   const [searchValue, setSearchValue] = useState('')
 
@@ -23,14 +23,14 @@ export function AppCatalogPage() {
 
     return apps.filter((app) => {
       const name = app.displayName.toLowerCase() || ''
+      const slug = app.slug.toLowerCase() || ''
       const description = app.description?.toLowerCase() || ''
-      const id = app.id.toLowerCase() || ''
       const tags = app.tags?.join(' ').toLowerCase() || ''
 
       return (
         name.includes(normalizedSearchValue) ||
+        slug.includes(normalizedSearchValue) ||
         description.includes(normalizedSearchValue) ||
-        id.includes(normalizedSearchValue) ||
         tags.includes(normalizedSearchValue)
       )
     })
@@ -54,7 +54,9 @@ export function AppCatalogPage() {
   }
 
   const selectedAppSlug = search.app
-  const selectedApp = selectedAppSlug ? apps.find((a) => a.slug === selectedAppSlug) : null
+  const selectedApp = selectedAppSlug
+    ? apps.find((a) => a.slug === selectedAppSlug)
+    : null
 
   return (
     <div className="py-6 flex flex-col gap-4 w-full max-w-7xl">
@@ -79,7 +81,11 @@ export function AppCatalogPage() {
       <AppCatalogGrid apps={filteredApps} onAppClick={handleAppClick} />
 
       {selectedApp && (
-        <AppDetailModal app={selectedApp} isOpen={true} onClose={handleCloseModal} />
+        <AppDetailModal
+          app={selectedApp}
+          isOpen={true}
+          onClose={handleCloseModal}
+        />
       )}
     </div>
   )

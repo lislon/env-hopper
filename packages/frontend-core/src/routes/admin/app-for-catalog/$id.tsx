@@ -105,6 +105,9 @@ const formSchema = z.object({
       'manual',
     ])
     .default('none'),
+  // Access method fields
+  accessUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  accessInstructions: z.string().optional(),
   iconName: z.string().optional(),
   appUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   notes: z.string().optional(),
@@ -155,6 +158,10 @@ function RouteComponent() {
             ((app.access as { type?: unknown }).type as
               | AccessType
               | undefined) || 'none',
+          accessUrl: (app.access as { url?: string } | undefined)?.url || '',
+          accessInstructions:
+            (app.access as { instructions?: string } | undefined)
+              ?.instructions || '',
           iconName: app.iconName || '',
           appUrl: app.appUrl || '',
           notes: app.notes || '',
@@ -190,6 +197,8 @@ function RouteComponent() {
           displayName: '',
           description: '',
           accessType: 'none',
+          accessUrl: '',
+          accessInstructions: '',
           iconName: '',
           appUrl: '',
           notes: '',
@@ -204,6 +213,7 @@ function RouteComponent() {
   // Watch form values for reactivity
   const hasApproverValue = form.watch('hasApprover')
   const approverTypeValue = form.watch('approverType')
+  const accessTypeValue = form.watch('accessType')
 
   const createMutation = useMutation({
     ...trpc.appCatalogAdmin.create.mutationOptions(),
@@ -254,7 +264,13 @@ function RouteComponent() {
       // Only create access object if type is not 'none'
       const access =
         formData.accessType !== 'none'
-          ? ({ type: formData.accessType } as {
+          ? ({
+              type: formData.accessType,
+              ...(formData.accessUrl && { url: formData.accessUrl }),
+              ...(formData.accessInstructions && {
+                instructions: formData.accessInstructions,
+              }),
+            } as {
               type: ValidAccessType
             } & Record<string, unknown>)
           : undefined
@@ -443,7 +459,6 @@ function RouteComponent() {
                       name="iconName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Icon</FormLabel>
                           <FormControl>
                             <IconPickerField
                               value={field.value}
@@ -456,6 +471,59 @@ function RouteComponent() {
                       )}
                     />
                   </div>
+
+                  {/* Access Method Configuration */}
+                  {(accessTypeValue === 'ticketing' ||
+                    accessTypeValue === 'self-service') && (
+                    <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                      <div className="font-medium text-sm">
+                        Access Method Details
+                      </div>
+                      <FormField
+                        control={formControl}
+                        name="accessUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>URL</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="url"
+                                placeholder="https://..."
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              {accessTypeValue === 'ticketing'
+                                ? 'URL to the ticketing system or request form'
+                                : 'URL to the self-service portal'}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={formControl}
+                        name="accessInstructions"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Instructions</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Enter instructions for accessing this app..."
+                                rows={4}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Step-by-step instructions for users to request or
+                              access this app
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
 
                   <FormField
                     control={formControl}

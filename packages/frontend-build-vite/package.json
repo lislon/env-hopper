@@ -17,12 +17,12 @@
       "my-custom-condition": "./src/index.ts",
       "import": {
         "types": "./dist/esm/index.d.ts",
-        "default": "./dist/esm/index.js"
+        "default": "./dist/esm/packages/frontend-build-vite/src/index.js"
       }
     },
     "./package.json": "./package.json"
   },
-  "module": "dist/esm/index.js",
+  "module": "dist/esm/packages/frontend-build-vite/src/index.js",
   "types": "dist/esm/index.d.ts",
   "files": [
     "dist",
@@ -48,6 +48,7 @@
     "@env-hopper/shared-core": "workspace:*",
     "@tanstack/vite-config": "catalog:",
     "@types/node": "catalog:",
+    "chokidar": "^5.0.0",
     "esbuild": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",

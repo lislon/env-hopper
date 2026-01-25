@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/shared-core",
-  "version": "2.0.1-alpha.1",
+  "version": "2.0.1-alpha.6",
   "description": "Shared core utilities for Env Hopper",
   "homepage": "https://github.com/lislon/env-hopper",
   "repository": {

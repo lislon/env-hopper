@@ -77,12 +77,10 @@ model DbAppForCatalog {
   displayName     String
   description     String
   /// [AccessMethod]
-  access          Json
+  access          Json?
   teams           String[]  @default([])
-  /// [AppRole]
-  roles           Json?
-  approverName    String?
-  approverEmail   String?
+  /// [Approver] - Approver system (bot/ticket/person)
+  approver        Json?
   notes           String?
   tags            String[]  @default([])
   appUrl          String?

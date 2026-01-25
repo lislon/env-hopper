@@ -4,33 +4,73 @@ import { getDbClient } from '../../db'
 import type { EhTrpcContext } from '../../server/ehTrpcContext'
 
 // Zod schema for access method (simplified for now - you can expand this)
-const AccessMethodSchema = z.object({
-  type: z.enum(['bot', 'ticketing', 'email', 'self-service', 'documentation', 'manual']),
-}).passthrough()
+const AccessMethodSchema = z
+  .object({
+    type: z.enum([
+      'bot',
+      'ticketing',
+      'email',
+      'self-service',
+      'documentation',
+      'manual',
+    ]),
+  })
+  .passthrough()
 
 const AppLinkSchema = z.object({
   displayName: z.string().optional(),
   url: z.string().url(),
 })
 
-const AppRoleSchema = z.object({
-  id: z.string(),
+const AppRoleInApproverSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
 })
 
-const ApproverSchema = z.object({
-  name: z.string(),
-  email: z.string().email(),
-})
+// Approver schema
+const ApproverSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('bot'),
+    comment: z.string().optional(),
+    roles: z.array(AppRoleInApproverSchema).optional(),
+    approvalPolicy: z.string().optional(),
+    postApprovalInstructions: z.string().optional(),
+    seeMoreUrls: z.array(z.string()).optional(),
+    url: z.string().optional(),
+    prompt: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('ticket'),
+    comment: z.string().optional(),
+    roles: z.array(AppRoleInApproverSchema).optional(),
+    approvalPolicy: z.string().optional(),
+    postApprovalInstructions: z.string().optional(),
+    seeMoreUrls: z.array(z.string()).optional(),
+    url: z.string().optional(),
+    requestFormTemplate: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('person'),
+    comment: z.string().optional(),
+    roles: z.array(AppRoleInApproverSchema).optional(),
+    approvalPolicy: z.string().optional(),
+    postApprovalInstructions: z.string().optional(),
+    seeMoreUrls: z.array(z.string()).optional(),
+    email: z.string().optional(),
+    url: z.string().optional(),
+    description: z.string().optional(),
+  }),
+])
 
 const CreateAppForCatalogSchema = z.object({
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
+  slug: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
   displayName: z.string().min(1),
   description: z.string(),
-  access: AccessMethodSchema,
+  access: AccessMethodSchema.optional(),
   teams: z.array(z.string()).optional(),
-  roles: z.array(AppRoleSchema).optional(),
   approver: ApproverSchema.optional(),
   notes: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -44,7 +84,9 @@ const UpdateAppForCatalogSchema = CreateAppForCatalogSchema.partial().extend({
   id: z.string(),
 })
 
-export function createAppCatalogAdminRouter(t: TRPCRootObject<EhTrpcContext, {}, {}>) {
+export function createAppCatalogAdminRouter(
+  t: TRPCRootObject<EhTrpcContext, {}, {}>,
+) {
   const router = t.router
   const publicProcedure = t.procedure
 
@@ -69,13 +111,11 @@ export function createAppCatalogAdminRouter(t: TRPCRootObject<EhTrpcContext, {},
       .input(CreateAppForCatalogSchema)
       .mutation(async ({ input }) => {
         const prisma = getDbClient()
-        const { approver, ...rest } = input
 
         return prisma.dbAppForCatalog.create({
           data: {
-            ...rest,
-            approverName: approver?.name ?? null,
-            approverEmail: approver?.email ?? null,
+            ...input,
+            approver: input.approver as any,
             teams: input.teams ?? [],
             tags: input.tags ?? [],
             screenshotIds: input.screenshotIds ?? [],
@@ -87,15 +127,14 @@ export function createAppCatalogAdminRouter(t: TRPCRootObject<EhTrpcContext, {},
       .input(UpdateAppForCatalogSchema)
       .mutation(async ({ input }) => {
         const prisma = getDbClient()
-        const { id, approver, ...rest } = input
+        const { id, ...updateData } = input
 
         return prisma.dbAppForCatalog.update({
           where: { id },
           data: {
-            ...rest,
-            ...(approver !== undefined && {
-              approverName: approver.name || null,
-              approverEmail: approver.email || null,
+            ...updateData,
+            ...(updateData.approver !== undefined && {
+              approver: updateData.approver as any,
             }),
           },
         })

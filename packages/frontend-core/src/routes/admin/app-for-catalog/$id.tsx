@@ -8,6 +8,7 @@ import { useTRPC } from '~/api/infra/trpc'
 import { IconPickerField } from '~/components/IconPickerField'
 import type { Screenshot } from '~/modules/appCatalog/ScreenshotManager'
 import { ScreenshotManager } from '~/modules/appCatalog/ScreenshotManager'
+import { ApproverFormFields } from '~/modules/appCatalog/admin/ApproverFormFields'
 import { Button } from '~/ui/button'
 import {
   Card,
@@ -39,12 +40,13 @@ export const Route = createFileRoute('/admin/app-for-catalog/$id')({
   component: RouteComponent,
   async loader({ params, context }) {
     const { id } = params
-    if (id === 'new') {
-      return { app: null }
-    }
-
     const { trpcClient } = context
-    const app = await trpcClient.appCatalogAdmin.getById.query({ id })
+
+    const app =
+      id === 'new'
+        ? null
+        : await trpcClient.appCatalogAdmin.getById.query({ id })
+
     return { app }
   },
   staticData: {
@@ -55,6 +57,7 @@ export const Route = createFileRoute('/admin/app-for-catalog/$id')({
 })
 
 type AccessType =
+  | 'none'
   | 'bot'
   | 'ticketing'
   | 'email'
@@ -62,13 +65,23 @@ type AccessType =
   | 'documentation'
   | 'manual'
 
+type ValidAccessType = Exclude<AccessType, 'none'>
+type ApproverType = 'bot' | 'ticket' | 'person'
+
 const ACCESS_TYPES: ReadonlyArray<{ value: AccessType; label: string }> = [
+  { value: 'none', label: 'None' },
   { value: 'self-service', label: 'Self Service' },
   { value: 'ticketing', label: 'Ticketing' },
   { value: 'bot', label: 'Bot' },
   { value: 'email', label: 'Email' },
   { value: 'documentation', label: 'Documentation' },
   { value: 'manual', label: 'Manual' },
+]
+
+const APPROVER_TYPES: ReadonlyArray<{ value: ApproverType; label: string }> = [
+  { value: 'bot', label: 'Bot' },
+  { value: 'ticket', label: 'Ticket System' },
+  { value: 'person', label: 'Person/Group' },
 ]
 
 const formSchema = z.object({
@@ -81,18 +94,39 @@ const formSchema = z.object({
     ),
   displayName: z.string().min(1, 'Display name is required'),
   description: z.string().min(1, 'Description is required'),
-  accessType: z.enum([
-    'self-service',
-    'ticketing',
-    'bot',
-    'email',
-    'documentation',
-    'manual',
-  ]),
+  accessType: z
+    .enum([
+      'none',
+      'self-service',
+      'ticketing',
+      'bot',
+      'email',
+      'documentation',
+      'manual',
+    ])
+    .default('none'),
   iconName: z.string().optional(),
   appUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   notes: z.string().optional(),
   links: z.string().default('[]'),
+  // Approver fields
+  hasApprover: z.boolean().default(false),
+  approverType: z.enum(['bot', 'ticket', 'person']).optional(),
+  approver: z
+    .object({
+      comment: z.string().optional(),
+      roles: z.string().optional(),
+      approvalPolicy: z.string().optional(),
+      postApprovalInstructions: z.string().optional(),
+      seeMoreUrls: z.string().optional(),
+      // Type-specific fields
+      url: z.string().optional(),
+      prompt: z.string().optional(),
+      requestFormTemplate: z.string().optional(),
+      email: z.string().optional(),
+      description: z.string().optional(),
+    })
+    .optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -107,6 +141,9 @@ function RouteComponent() {
 
   const app = loaderData.app
 
+  const approver = app?.approver as any
+  const hasApprover = !!approver
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema as unknown as never),
     defaultValues: app
@@ -117,7 +154,7 @@ function RouteComponent() {
           accessType:
             ((app.access as { type?: unknown }).type as
               | AccessType
-              | undefined) || 'self-service',
+              | undefined) || 'none',
           iconName: app.iconName || '',
           appUrl: app.appUrl || '',
           notes: app.notes || '',
@@ -126,19 +163,47 @@ function RouteComponent() {
             null,
             2,
           ),
+          hasApprover,
+          approverType: approver?.type,
+          approver: hasApprover
+            ? {
+                comment: approver.comment || '',
+                roles: JSON.stringify(approver.roles || [], null, 2),
+                approvalPolicy: approver.approvalPolicy || '',
+                postApprovalInstructions:
+                  approver.postApprovalInstructions || '',
+                seeMoreUrls: JSON.stringify(
+                  approver.seeMoreUrls || [],
+                  null,
+                  2,
+                ),
+                url: approver.url || '',
+                prompt: approver.prompt || '',
+                requestFormTemplate: approver.requestFormTemplate || '',
+                email: approver.email || '',
+                description: approver.description || '',
+              }
+            : undefined,
         }
       : {
           slug: '',
           displayName: '',
           description: '',
-          accessType: 'self-service',
+          accessType: 'none',
           iconName: '',
           appUrl: '',
           notes: '',
           links: '[]',
+          hasApprover: false,
+          approverType: undefined,
+          approver: undefined,
         },
   })
   const formControl = form.control as unknown as Control<FieldValues>
+
+  // Watch form values for reactivity
+  const hasApproverValue = form.watch('hasApprover')
+  const approverTypeValue = form.watch('approverType')
 
   const createMutation = useMutation({
     ...trpc.appCatalogAdmin.create.mutationOptions(),
@@ -175,9 +240,9 @@ function RouteComponent() {
   const onSubmit = (formData: FormData) => {
     try {
       type AppLink = { displayName?: string; url: string }
-      const parsed: unknown = JSON.parse(formData.links)
-      const links: Array<AppLink> | undefined = Array.isArray(parsed)
-        ? parsed.filter(
+      const linksData: unknown = JSON.parse(formData.links)
+      const links: Array<AppLink> | undefined = Array.isArray(linksData)
+        ? linksData.filter(
             (l): l is AppLink =>
               typeof l === 'object' &&
               l !== null &&
@@ -186,8 +251,49 @@ function RouteComponent() {
           )
         : undefined
 
-      const access: { type: AccessType } & Record<string, unknown> = {
-        type: formData.accessType,
+      // Only create access object if type is not 'none'
+      const access =
+        formData.accessType !== 'none'
+          ? ({ type: formData.accessType } as {
+              type: ValidAccessType
+            } & Record<string, unknown>)
+          : undefined
+
+      // Process approver data
+      let approverPayload: any = undefined
+      if (formData.hasApprover && formData.approverType && formData.approver) {
+        const roles = formData.approver.roles
+          ? JSON.parse(formData.approver.roles)
+          : undefined
+        const seeMoreUrls = formData.approver.seeMoreUrls
+          ? JSON.parse(formData.approver.seeMoreUrls)
+          : undefined
+
+        approverPayload = {
+          type: formData.approverType,
+          comment: formData.approver.comment || undefined,
+          roles: roles && Array.isArray(roles) ? roles : undefined,
+          approvalPolicy: formData.approver.approvalPolicy || undefined,
+          postApprovalInstructions:
+            formData.approver.postApprovalInstructions || undefined,
+          seeMoreUrls:
+            seeMoreUrls && Array.isArray(seeMoreUrls) ? seeMoreUrls : undefined,
+        }
+
+        // Add type-specific fields
+        if (formData.approverType === 'bot') {
+          approverPayload.url = formData.approver.url || undefined
+          approverPayload.prompt = formData.approver.prompt || undefined
+        } else if (formData.approverType === 'ticket') {
+          approverPayload.url = formData.approver.url || undefined
+          approverPayload.requestFormTemplate =
+            formData.approver.requestFormTemplate || undefined
+        } else {
+          approverPayload.email = formData.approver.email || undefined
+          approverPayload.url = formData.approver.url || undefined
+          approverPayload.description =
+            formData.approver.description || undefined
+        }
       }
 
       const payload = {
@@ -199,6 +305,7 @@ function RouteComponent() {
         appUrl: formData.appUrl || undefined,
         notes: formData.notes || undefined,
         links: links && links.length > 0 ? links : undefined,
+        approver: approverPayload,
       }
 
       if (isNew) {
@@ -212,7 +319,10 @@ function RouteComponent() {
     } catch (error) {
       form.setError('links', {
         type: 'validate',
-        message: 'Invalid JSON in links field',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Invalid JSON in form fields',
       })
     }
   }
@@ -405,6 +515,71 @@ function RouteComponent() {
                       </FormItem>
                     )}
                   />
+
+                  {/* Approver Configuration */}
+                  <div className="pt-6 border-t">
+                    <div className="space-y-4">
+                      <FormField
+                        control={formControl}
+                        name="hasApprover"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center gap-2">
+                            <FormControl>
+                              <input
+                                type="checkbox"
+                                checked={field.value}
+                                onChange={field.onChange}
+                                className="h-4 w-4"
+                              />
+                            </FormControl>
+                            <FormLabel className="!mt-0">
+                              Configure Approver
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+
+                      {hasApproverValue && (
+                        <div className="space-y-4 pl-6">
+                          <FormField
+                            control={formControl}
+                            name="approverType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Approver Type *</FormLabel>
+                                <Select
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select approver type..." />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {APPROVER_TYPES.map((type) => (
+                                      <SelectItem
+                                        key={type.value}
+                                        value={type.value}
+                                      >
+                                        {type.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <ApproverFormFields
+                            control={formControl}
+                            approverType={approverTypeValue}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
                   <div className="flex gap-2 pt-4">
                     <Button type="submit" disabled={isPending}>

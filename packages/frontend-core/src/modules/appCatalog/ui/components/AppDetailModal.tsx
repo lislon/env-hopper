@@ -1,10 +1,11 @@
-import type { AppForCatalog } from '@env-hopper/backend-core'
+import type { AppForCatalog, Approver } from '@env-hopper/backend-core'
 import { AppWindow, ExternalLink, X } from 'lucide-react'
 import React, { useEffect } from 'react'
 import { Badge } from '~/ui/badge'
 import { Button } from '~/ui/button'
 import { ScrollArea } from '~/ui/scroll-area'
 import { Separator } from '~/ui/separator'
+import { ApproverDisplay } from './ApproverDisplay'
 
 export interface AppDetailModalProps {
   app: AppForCatalog
@@ -39,10 +40,12 @@ function AppIcon({ app }: { app: AppForCatalog }) {
 }
 
 function ScreenshotGallery({ app }: { app: AppForCatalog }) {
-  const [imageErrors, setImageErrors] = React.useState<Set<string>>(() => new Set())
+  const [imageErrors, setImageErrors] = React.useState<Set<string>>(
+    () => new Set(),
+  )
 
   const screenshotIds = app.screenshotIds || []
-  
+
   if (screenshotIds.length === 0) {
     return (
       <div className="w-full h-96 bg-muted/30 rounded-lg flex items-center justify-center text-muted-foreground">
@@ -90,7 +93,9 @@ function AccessSection({ app }: { app: AppForCatalog }) {
     return (
       <div className="space-y-2">
         <div className="text-sm font-medium">Access Method</div>
-        <div className="text-sm text-muted-foreground">Contact administrator</div>
+        <div className="text-sm text-muted-foreground">
+          Contact administrator
+        </div>
       </div>
     )
   }
@@ -118,17 +123,28 @@ function AccessSection({ app }: { app: AppForCatalog }) {
     <div className="space-y-2">
       <div className="text-sm font-medium">Access Method</div>
       <div className="text-sm text-muted-foreground">{getAccessLabel()}</div>
-      {access.type === 'documentation' && 'url' in access && typeof access.url === 'string' && (
-        <a
-          href={access.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-        >
-          View documentation
-          <ExternalLink className="size-3" />
-        </a>
-      )}
+      {access.type === 'documentation' &&
+        'url' in access &&
+        typeof access.url === 'string' && (
+          <a
+            href={access.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+          >
+            View documentation
+            <ExternalLink className="size-3" />
+          </a>
+        )}
+    </div>
+  )
+}
+
+function ApproverSection({ approver }: { approver: Approver }) {
+  return (
+    <div className="space-y-2">
+      <div className="text-sm font-medium">Approval Required</div>
+      <ApproverDisplay approver={approver} />
     </div>
   )
 }
@@ -177,7 +193,10 @@ export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
         </Button>
 
         {/* Scrollable Content */}
-        <ScrollArea className="h-full w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+        <ScrollArea
+          className="h-full w-full max-w-5xl"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="bg-background rounded-lg shadow-2xl border border-border p-8 space-y-8">
             {/* Screenshots Section */}
             <ScreenshotGallery app={app} />
@@ -215,6 +234,9 @@ export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
 
               {/* Access Section */}
               <AccessSection app={app} />
+
+              {/* Approver Section */}
+              {app.approver && <ApproverSection approver={app.approver} />}
 
               {/* Tags */}
               {app.tags && app.tags.length > 0 && (

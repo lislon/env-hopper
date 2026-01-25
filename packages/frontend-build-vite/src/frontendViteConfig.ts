@@ -167,6 +167,11 @@ export function frontendViteConfig(options?: {
         },
       },
     },
+    resolve: {
+      // Use 'my-custom-condition' to resolve @env-hopper/frontend-core to source files
+      // This enables HMR when developing the core library alongside the consuming app
+      conditions: ['my-custom-condition'],
+    },
     publicDir: '.vite-merged-public',
     plugins,
   } satisfies UserConfig

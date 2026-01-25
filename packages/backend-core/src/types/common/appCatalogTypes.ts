@@ -7,31 +7,60 @@
  */
 
 // ============================================================================
-// ACCESS METHOD PROVIDER CONFIGURATION
+// APPROVER TYPES (per app configuration)
 // ============================================================================
 
 /**
- * Bot provider configuration - for chat/AI bots that handle access requests
+ * Role that can be requested for an app
  */
-export interface BotProvider {
-  id: string
+export interface AppRole {
   name: string
-  platform?: 'slack' | 'teams' | 'web' | 'other'
-  url?: string
-  icon?: string
-  instructions?: string
+  description?: string
 }
 
 /**
- * Ticketing system provider configuration
+ * Common fields for all approver types
  */
-export interface TicketingProvider {
-  id: string
-  name: string
-  system: 'jira' | 'servicenow' | 'zendesk' | 'freshdesk' | 'other'
-  baseUrl: string
-  icon?: string
+export interface BaseApprover {
+  comment?: string
+  roles?: Array<AppRole>
+  approvalPolicy?: string
+  postApprovalInstructions?: string
+  seeMoreUrls?: Array<string>
 }
+
+/**
+ * Bot approver configuration for an app
+ */
+export interface BotApprover extends BaseApprover {
+  type: 'bot'
+  url?: string
+  prompt?: string
+}
+
+/**
+ * Ticket approver configuration for an app
+ */
+export interface TicketApprover extends BaseApprover {
+  type: 'ticket'
+  url?: string
+  requestFormTemplate?: string
+}
+
+/**
+ * Person/Group approver configuration for an app
+ */
+export interface PersonApprover extends BaseApprover {
+  type: 'person'
+  email?: string
+  url?: string
+  description?: string
+}
+
+/**
+ * Union of all approver types
+ */
+export type Approver = BotApprover | TicketApprover | PersonApprover
 
 // ============================================================================
 // UNIVERSAL ACCESS METHOD TYPES
@@ -114,23 +143,6 @@ export type AccessMethod =
 // ============================================================================
 
 /**
- * Approver information for apps that require specific approval
- */
-export interface Approver {
-  name: string
-  email: string
-}
-
-/**
- * Available roles for an application
- */
-export interface AppRole {
-  id: string
-  name: string
-  description?: string
-}
-
-/**
  * Application entry in the catalog
  */
 export interface AppForCatalog {
@@ -140,7 +152,6 @@ export interface AppForCatalog {
   description?: string
   access?: AccessMethod
   teams?: Array<string>
-  roles?: Array<AppRole>
   approver?: Approver
   notes?: string
   tags?: Array<string>

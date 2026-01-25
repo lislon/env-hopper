@@ -18,10 +18,6 @@ export async function getAppsFromPrisma(): Promise<Array<AppForCatalog>> {
 
   return rows.map((row) => {
     const access = row.access as unknown as AppForCatalog['access']
-    const roles =
-      row.roles == null
-        ? undefined
-        : (row.roles as unknown as AppForCatalog['roles'])
     const teams = (row.teams as unknown as Array<string> | null) ?? []
     const tags = (row.tags as unknown as AppForCatalog['tags']) ?? []
     const screenshotIds =
@@ -29,6 +25,7 @@ export async function getAppsFromPrisma(): Promise<Array<AppForCatalog>> {
     const notes = row.notes == null ? undefined : row.notes
     const appUrl = row.appUrl == null ? undefined : row.appUrl
     const iconName = row.iconName == null ? undefined : row.iconName
+    const approver = row.approver as unknown as AppForCatalog['approver']
 
     return {
       id: row.id,
@@ -37,11 +34,7 @@ export async function getAppsFromPrisma(): Promise<Array<AppForCatalog>> {
       description: row.description,
       access,
       teams,
-      roles,
-      approver:
-        row.approverName && row.approverEmail
-          ? { name: row.approverName, email: row.approverEmail }
-          : undefined,
+      approver,
       notes,
       tags,
       appUrl,

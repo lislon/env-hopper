@@ -44,7 +44,7 @@
     "clean": "premove ./dist ./coverage ./dist-ts",
     "compile": "tsc --build && tsc-alias",
     "dev": "vite",
-    "dev:watch": "pnpm run build:lenient -- --watch",
+    "dev:watch": "vite build --mode lenient --watch",
     "test": "pnpm run test:unit",
     "test:eslint": "eslint ./src",
     "test:unit": "echo 'Tests disabled'",

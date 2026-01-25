@@ -3,7 +3,6 @@
   "compilerOptions": {
     "noUnusedLocals": false,
     "strict": false,
-    "strictNullChecks": true,
-    "suppressExcessPropertyErrors": true
+    "strictNullChecks": true
   }
 }

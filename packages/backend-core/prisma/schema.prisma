@@ -76,11 +76,9 @@ model DbAppForCatalog {
   slug            String    @unique // URL-friendly identifier for navigation
   displayName     String
   description     String
-  /// [AccessMethod]
-  access          Json?
-  teams           String[]  @default([])
-  /// [Approver] - Approver system (bot/ticket/person)
-  approver        Json?
+  /// [ApprovalMethod] - Approval method (none/service/person/other/unknown)
+  approvalMethod  Json?
+  teams           String[]  @default([]) // Teams that use this app
   notes           String?
   tags            String[]  @default([])
   appUrl          String?
@@ -103,7 +101,7 @@ enum AssetType {
 
 model DbAsset {
   id              String    @id @default(cuid())
-  name            String    @unique
+  name            String    @unique // Name with extension (e.g., "jira.svg", "github.png")
   assetType       AssetType @default(icon)
   content         Bytes     // Binary storage for all asset types (SVG, PNG, etc)
   checksum        String    @unique // SHA-256 of content for deduplication

@@ -2,6 +2,7 @@ import type { Request, Response, Router } from 'express'
 import multer from 'multer'
 import { createHash } from 'node:crypto'
 import { getDbClient } from '../../db'
+import { getExtensionFromFilename, getExtensionFromMimeType } from './iconUtils'
 
 // Configure multer for memory storage
 const upload = multer({
@@ -51,10 +52,20 @@ export function registerIconRestController(
           return
         }
 
-        const name = req.body['name'] as string
+        let name = req.body['name'] as string
         if (!name) {
           res.status(400).json({ error: 'Name is required' })
           return
+        }
+
+        // Extract extension from original filename or derive from MIME type
+        const extension =
+          getExtensionFromFilename(req.file.originalname) ||
+          getExtensionFromMimeType(req.file.mimetype)
+
+        // Add extension to name if not already present
+        if (!name.includes('.')) {
+          name = `${name}.${extension}`
         }
 
         const prisma = getDbClient()
@@ -86,14 +97,17 @@ export function registerIconRestController(
     },
   )
 
-  // Get icon binary by ID
-  router.get(`${basePath}/:id`, async (req: Request, res: Response) => {
+  // Get icon binary by name (e.g., /api/icons/jira.svg)
+  router.get(`${basePath}/:name`, async (req: Request, res: Response) => {
     try {
-      const { id } = req.params
+      const { name } = req.params
 
       const prisma = getDbClient()
-      const icon = await prisma.dbAsset.findUnique({
-        where: { id },
+      const icon = await prisma.dbAsset.findFirst({
+        where: {
+          name,
+          assetType: 'icon',
+        },
         select: {
           content: true,
           mimeType: true,
@@ -121,14 +135,17 @@ export function registerIconRestController(
 
   // Get icon metadata only (no binary content)
   router.get(
-    `${basePath}/:id/metadata`,
+    `${basePath}/:name/metadata`,
     async (req: Request, res: Response) => {
       try {
-        const { id } = req.params
+        const { name } = req.params
 
         const prisma = getDbClient()
-        const icon = await prisma.dbAsset.findUnique({
-          where: { id },
+        const icon = await prisma.dbAsset.findFirst({
+          where: {
+            name,
+            assetType: 'icon',
+          },
           select: {
             id: true,
             name: true,
@@ -148,42 +165,6 @@ export function registerIconRestController(
       } catch (error) {
         console.error('Error fetching icon metadata:', error)
         res.status(500).json({ error: 'Failed to fetch icon metadata' })
-      }
-    },
-  )
-
-  // Get icon binary by name
-  router.get(
-    `${basePath}/by-name/:name`,
-    async (req: Request, res: Response) => {
-      try {
-        const { name } = req.params
-
-        const prisma = getDbClient()
-        const icon = await prisma.dbAsset.findUnique({
-          where: { name },
-          select: {
-            content: true,
-            mimeType: true,
-            name: true,
-          },
-        })
-
-        if (!icon) {
-          res.status(404).json({ error: 'Icon not found' })
-          return
-        }
-
-        // Set appropriate headers
-        res.setHeader('Content-Type', icon.mimeType)
-        res.setHeader('Content-Disposition', `inline; filename="${icon.name}"`)
-        res.setHeader('Cache-Control', 'public, max-age=86400') // Cache for 1 day
-
-        // Send binary content
-        res.send(icon.content)
-      } catch (error) {
-        console.error('Error fetching icon by name:', error)
-        res.status(500).json({ error: 'Failed to fetch icon' })
       }
     },
   )

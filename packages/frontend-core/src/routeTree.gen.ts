@@ -16,8 +16,10 @@ import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminIconsRouteImport } from './routes/admin/icons'
 import { Route as AdminChatRouteImport } from './routes/admin/chat'
+import { Route as AdminApprovalMethodsRouteImport } from './routes/admin/approval-methods'
 import { Route as AdminAppForCatalogRouteImport } from './routes/admin/app-for-catalog'
 import { Route as LayoutLoginRouteImport } from './routes/_layout/login'
+import { Route as AdminApprovalMethodsIndexRouteImport } from './routes/admin/approval-methods/index'
 import { Route as AdminAppForCatalogIndexRouteImport } from './routes/admin/app-for-catalog/index'
 import { Route as LayoutEnvsIndexRouteImport } from './routes/_layout/envs.index'
 import { Route as LayoutDashboardIndexRouteImport } from './routes/_layout/dashboard.index'
@@ -63,6 +65,11 @@ const AdminChatRoute = AdminChatRouteImport.update({
   path: '/chat',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminApprovalMethodsRoute = AdminApprovalMethodsRouteImport.update({
+  id: '/approval-methods',
+  path: '/approval-methods',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAppForCatalogRoute = AdminAppForCatalogRouteImport.update({
   id: '/app-for-catalog',
   path: '/app-for-catalog',
@@ -73,6 +80,12 @@ const LayoutLoginRoute = LayoutLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => LayoutRoute,
 } as any)
+const AdminApprovalMethodsIndexRoute =
+  AdminApprovalMethodsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminApprovalMethodsRoute,
+  } as any)
 const AdminAppForCatalogIndexRoute = AdminAppForCatalogIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -130,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LayoutLoginRoute
   '/admin/app-for-catalog': typeof AdminAppForCatalogRouteWithChildren
+  '/admin/approval-methods': typeof AdminApprovalMethodsRouteWithChildren
   '/admin/chat': typeof AdminChatRoute
   '/admin/icons': typeof AdminIconsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -140,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/': typeof LayoutDashboardIndexRoute
   '/envs/': typeof LayoutEnvsIndexRoute
   '/admin/app-for-catalog/': typeof AdminAppForCatalogIndexRoute
+  '/admin/approval-methods/': typeof AdminApprovalMethodsIndexRoute
   '/app/$appSlug/': typeof LayoutAppAppSlugIndexRoute
   '/catalog/apps/': typeof LayoutCatalogAppsIndexRoute
   '/env/$envSlug/': typeof LayoutEnvEnvSlugIndexRoute
@@ -158,6 +173,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof LayoutDashboardIndexRoute
   '/envs': typeof LayoutEnvsIndexRoute
   '/admin/app-for-catalog': typeof AdminAppForCatalogIndexRoute
+  '/admin/approval-methods': typeof AdminApprovalMethodsIndexRoute
   '/app/$appSlug': typeof LayoutAppAppSlugIndexRoute
   '/catalog/apps': typeof LayoutCatalogAppsIndexRoute
   '/env/$envSlug': typeof LayoutEnvEnvSlugIndexRoute
@@ -169,6 +185,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/_layout/login': typeof LayoutLoginRoute
   '/admin/app-for-catalog': typeof AdminAppForCatalogRouteWithChildren
+  '/admin/approval-methods': typeof AdminApprovalMethodsRouteWithChildren
   '/admin/chat': typeof AdminChatRoute
   '/admin/icons': typeof AdminIconsRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -180,6 +197,7 @@ export interface FileRoutesById {
   '/_layout/dashboard/': typeof LayoutDashboardIndexRoute
   '/_layout/envs/': typeof LayoutEnvsIndexRoute
   '/admin/app-for-catalog/': typeof AdminAppForCatalogIndexRoute
+  '/admin/approval-methods/': typeof AdminApprovalMethodsIndexRoute
   '/_layout/app/$appSlug/': typeof LayoutAppAppSlugIndexRoute
   '/_layout/catalog/apps/': typeof LayoutCatalogAppsIndexRoute
   '/_layout/env/$envSlug/': typeof LayoutEnvEnvSlugIndexRoute
@@ -192,6 +210,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/admin/app-for-catalog'
+    | '/admin/approval-methods'
     | '/admin/chat'
     | '/admin/icons'
     | '/auth/callback'
@@ -202,6 +221,7 @@ export interface FileRouteTypes {
     | '/dashboard/'
     | '/envs/'
     | '/admin/app-for-catalog/'
+    | '/admin/approval-methods/'
     | '/app/$appSlug/'
     | '/catalog/apps/'
     | '/env/$envSlug/'
@@ -220,6 +240,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/envs'
     | '/admin/app-for-catalog'
+    | '/admin/approval-methods'
     | '/app/$appSlug'
     | '/catalog/apps'
     | '/env/$envSlug'
@@ -230,6 +251,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/_layout/login'
     | '/admin/app-for-catalog'
+    | '/admin/approval-methods'
     | '/admin/chat'
     | '/admin/icons'
     | '/auth/callback'
@@ -241,6 +263,7 @@ export interface FileRouteTypes {
     | '/_layout/dashboard/'
     | '/_layout/envs/'
     | '/admin/app-for-catalog/'
+    | '/admin/approval-methods/'
     | '/_layout/app/$appSlug/'
     | '/_layout/catalog/apps/'
     | '/_layout/env/$envSlug/'
@@ -304,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminChatRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/approval-methods': {
+      id: '/admin/approval-methods'
+      path: '/approval-methods'
+      fullPath: '/admin/approval-methods'
+      preLoaderRoute: typeof AdminApprovalMethodsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/app-for-catalog': {
       id: '/admin/app-for-catalog'
       path: '/app-for-catalog'
@@ -317,6 +347,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof LayoutLoginRouteImport
       parentRoute: typeof LayoutRoute
+    }
+    '/admin/approval-methods/': {
+      id: '/admin/approval-methods/'
+      path: '/'
+      fullPath: '/admin/approval-methods/'
+      preLoaderRoute: typeof AdminApprovalMethodsIndexRouteImport
+      parentRoute: typeof AdminApprovalMethodsRoute
     }
     '/admin/app-for-catalog/': {
       id: '/admin/app-for-catalog/'
@@ -433,8 +470,20 @@ const AdminAppForCatalogRouteChildren: AdminAppForCatalogRouteChildren = {
 const AdminAppForCatalogRouteWithChildren =
   AdminAppForCatalogRoute._addFileChildren(AdminAppForCatalogRouteChildren)
 
+interface AdminApprovalMethodsRouteChildren {
+  AdminApprovalMethodsIndexRoute: typeof AdminApprovalMethodsIndexRoute
+}
+
+const AdminApprovalMethodsRouteChildren: AdminApprovalMethodsRouteChildren = {
+  AdminApprovalMethodsIndexRoute: AdminApprovalMethodsIndexRoute,
+}
+
+const AdminApprovalMethodsRouteWithChildren =
+  AdminApprovalMethodsRoute._addFileChildren(AdminApprovalMethodsRouteChildren)
+
 interface AdminRouteChildren {
   AdminAppForCatalogRoute: typeof AdminAppForCatalogRouteWithChildren
+  AdminApprovalMethodsRoute: typeof AdminApprovalMethodsRouteWithChildren
   AdminChatRoute: typeof AdminChatRoute
   AdminIconsRoute: typeof AdminIconsRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -442,6 +491,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAppForCatalogRoute: AdminAppForCatalogRouteWithChildren,
+  AdminApprovalMethodsRoute: AdminApprovalMethodsRouteWithChildren,
   AdminChatRoute: AdminChatRoute,
   AdminIconsRoute: AdminIconsRoute,
   AdminIndexRoute: AdminIndexRoute,

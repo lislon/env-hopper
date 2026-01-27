@@ -52,7 +52,7 @@ const columns = [
     cell: (info) => (
       <Link
         to="/admin/app-for-catalog/$id"
-        params={{ id: info.row.original.id }}
+        params={{ id: info.row.original.slug }}
       >
         <span className="font-medium cursor-pointer hover:underline truncate">
           {info.getValue()}
@@ -72,13 +72,6 @@ const columns = [
       )
     },
     size: 140,
-  }),
-  columnHelper.accessor('access', {
-    header: 'Access',
-    cell: (info) => (
-      <span className="text-sm truncate">{info.getValue()?.type || 'N/A'}</span>
-    ),
-    size: 80,
   }),
   columnHelper.accessor('iconName', {
     header: 'Icon',
@@ -141,7 +134,7 @@ function AppActions({ app }: { app: AppForCatalogRow }) {
   return (
     <div className="flex gap-2">
       <Button variant="ghost" size="sm" asChild>
-        <Link to="/admin/app-for-catalog/$id" params={{ id: app.id }}>
+        <Link to="/admin/app-for-catalog/$id" params={{ id: app.slug }}>
           <Edit className="w-4 h-4" />
         </Link>
       </Button>

@@ -1,11 +1,13 @@
-import type { AppForCatalog, Approver } from '@env-hopper/backend-core'
-import { AppWindow, ExternalLink, X } from 'lucide-react'
+import type { AppForCatalog } from '@env-hopper/backend-core'
+import { AppWindow, Edit, ExternalLink, X } from 'lucide-react'
 import React, { useEffect } from 'react'
+import { Link } from '@tanstack/react-router'
+import { useUser } from '~/modules/auth/AuthContext'
+import { isAdmin } from '~/modules/auth/authUtils'
 import { Badge } from '~/ui/badge'
 import { Button } from '~/ui/button'
 import { ScrollArea } from '~/ui/scroll-area'
 import { Separator } from '~/ui/separator'
-import { ApproverDisplay } from './ApproverDisplay'
 
 export interface AppDetailModalProps {
   app: AppForCatalog
@@ -140,16 +142,20 @@ function AccessSection({ app }: { app: AppForCatalog }) {
   )
 }
 
-function ApproverSection({ approver }: { approver: Approver }) {
-  return (
-    <div className="space-y-2">
-      <div className="text-sm font-medium">Approval Required</div>
-      <ApproverDisplay approver={approver} />
-    </div>
-  )
-}
+// TODO: Phase 4-6 - Implement new ApprovalDetailsSection component
+// function ApproverSection({ approver }: { approver: Approver }) {
+//   return (
+//     <div className="space-y-2">
+//       <div className="text-sm font-medium">Approval Required</div>
+//       <ApproverDisplay approver={approver} />
+//     </div>
+//   )
+// }
 
 export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
+  const user = useUser()
+  const userIsAdmin = isAdmin(user)
+
   // Close on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -191,6 +197,21 @@ export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
           <X className="size-5" />
           <span className="sr-only">Close</span>
         </Button>
+
+        {/* Edit Button (Admin only) */}
+        {userIsAdmin && app.slug && (
+          <Button
+            variant="default"
+            size="sm"
+            asChild
+            className="absolute top-6 right-20 z-10 bg-background/80 backdrop-blur hover:bg-background"
+          >
+            <Link to="/admin/app-for-catalog/$id" params={{ id: app.slug }}>
+              <Edit className="size-4 mr-2" />
+              Edit
+            </Link>
+          </Button>
+        )}
 
         {/* Scrollable Content */}
         <ScrollArea
@@ -235,8 +256,8 @@ export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
               {/* Access Section */}
               <AccessSection app={app} />
 
-              {/* Approver Section */}
-              {app.approver && <ApproverSection approver={app.approver} />}
+              {/* Approval Details Section - TODO: Update to use new approval system */}
+              {/* {app.approvalDetails && <ApprovalDetailsSection approvalDetails={app.approvalDetails} />} */}
 
               {/* Tags */}
               {app.tags && app.tags.length > 0 && (

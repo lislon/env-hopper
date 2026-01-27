@@ -8,7 +8,8 @@ import { useTRPC } from '~/api/infra/trpc'
 import { IconPickerField } from '~/components/IconPickerField'
 import type { Screenshot } from '~/modules/appCatalog/ScreenshotManager'
 import { ScreenshotManager } from '~/modules/appCatalog/ScreenshotManager'
-import { ApproverFormFields } from '~/modules/appCatalog/admin/ApproverFormFields'
+import { ApprovalMethodSelector } from '~/modules/approvalMethod/ApprovalMethodSelector'
+import { ApprovalDetailsFormFields } from '~/modules/approvalMethod/ApprovalDetailsFormFields'
 import { Button } from '~/ui/button'
 import {
   Card,
@@ -27,13 +28,6 @@ import {
   FormMessage,
 } from '~/ui/form'
 import { Input } from '~/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/ui/select'
 import { Textarea } from '~/ui/textarea'
 
 export const Route = createFileRoute('/admin/app-for-catalog/$id')({
@@ -45,7 +39,7 @@ export const Route = createFileRoute('/admin/app-for-catalog/$id')({
     const app =
       id === 'new'
         ? null
-        : await trpcClient.appCatalogAdmin.getById.query({ id })
+        : await trpcClient.appCatalogAdmin.getBySlug.query({ slug: id })
 
     return { app }
   },
@@ -66,23 +60,6 @@ type AccessType =
   | 'manual'
 
 type ValidAccessType = Exclude<AccessType, 'none'>
-type ApproverType = 'bot' | 'ticket' | 'person'
-
-const ACCESS_TYPES: ReadonlyArray<{ value: AccessType; label: string }> = [
-  { value: 'none', label: 'None' },
-  { value: 'self-service', label: 'Self Service' },
-  { value: 'ticketing', label: 'Ticketing' },
-  { value: 'bot', label: 'Bot' },
-  { value: 'email', label: 'Email' },
-  { value: 'documentation', label: 'Documentation' },
-  { value: 'manual', label: 'Manual' },
-]
-
-const APPROVER_TYPES: ReadonlyArray<{ value: ApproverType; label: string }> = [
-  { value: 'bot', label: 'Bot' },
-  { value: 'ticket', label: 'Ticket System' },
-  { value: 'person', label: 'Person/Group' },
-]
 
 const formSchema = z.object({
   slug: z
@@ -112,22 +89,29 @@ const formSchema = z.object({
   appUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
   notes: z.string().optional(),
   links: z.string().default('[]'),
-  // Approver fields
-  hasApprover: z.boolean().default(false),
-  approverType: z.enum(['bot', 'ticket', 'person']).optional(),
-  approver: z
+  // Approval Method fields
+  hasApproval: z.boolean().default(false),
+  approvalMethodId: z.string().optional(),
+  approvalDetails: z
     .object({
-      comment: z.string().optional(),
-      roles: z.string().optional(),
-      approvalPolicy: z.string().optional(),
+      approvalMethodId: z.string().optional(),
+      comments: z.string().optional(),
+      requestPrompt: z.string().optional(),
       postApprovalInstructions: z.string().optional(),
-      seeMoreUrls: z.string().optional(),
-      // Type-specific fields
-      url: z.string().optional(),
-      prompt: z.string().optional(),
-      requestFormTemplate: z.string().optional(),
-      email: z.string().optional(),
-      description: z.string().optional(),
+      roles: z
+        .array(
+          z.object({ name: z.string(), description: z.string().optional() }),
+        )
+        .optional(),
+      approvers: z
+        .array(
+          z.object({ displayName: z.string(), contact: z.string().optional() }),
+        )
+        .optional(),
+      urls: z
+        .array(z.object({ label: z.string().optional(), url: z.string() }))
+        .optional(),
+      whoToReachOut: z.string().optional(),
     })
     .optional(),
 })
@@ -144,8 +128,8 @@ function RouteComponent() {
 
   const app = loaderData.app
 
-  const approver = app?.approver as any
-  const hasApprover = !!approver
+  const approvalDetails = app?.approvalDetails as any
+  const hasApproval = !!approvalDetails
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema as unknown as never),
@@ -154,10 +138,6 @@ function RouteComponent() {
           slug: app.slug || '',
           displayName: app.displayName || '',
           description: app.description || '',
-          accessType:
-            ((app.access as { type?: unknown }).type as
-              | AccessType
-              | undefined) || 'none',
           accessUrl: (app.access as { url?: string } | undefined)?.url || '',
           accessInstructions:
             (app.access as { instructions?: string } | undefined)
@@ -170,50 +150,30 @@ function RouteComponent() {
             null,
             2,
           ),
-          hasApprover,
-          approverType: approver?.type,
-          approver: hasApprover
-            ? {
-                comment: approver.comment || '',
-                roles: JSON.stringify(approver.roles || [], null, 2),
-                approvalPolicy: approver.approvalPolicy || '',
-                postApprovalInstructions:
-                  approver.postApprovalInstructions || '',
-                seeMoreUrls: JSON.stringify(
-                  approver.seeMoreUrls || [],
-                  null,
-                  2,
-                ),
-                url: approver.url || '',
-                prompt: approver.prompt || '',
-                requestFormTemplate: approver.requestFormTemplate || '',
-                email: approver.email || '',
-                description: approver.description || '',
-              }
-            : undefined,
+          hasApproval,
+          approvalMethodId: approvalDetails?.approvalMethodId,
+          approvalDetails: hasApproval ? approvalDetails : undefined,
         }
       : {
           slug: '',
           displayName: '',
           description: '',
-          accessType: 'none',
           accessUrl: '',
           accessInstructions: '',
           iconName: '',
           appUrl: '',
           notes: '',
           links: '[]',
-          hasApprover: false,
-          approverType: undefined,
-          approver: undefined,
+          hasApproval: false,
+          approvalMethodId: undefined,
+          approvalDetails: undefined,
         },
   })
   const formControl = form.control as unknown as Control<FieldValues>
 
   // Watch form values for reactivity
-  const hasApproverValue = form.watch('hasApprover')
-  const approverTypeValue = form.watch('approverType')
-  const accessTypeValue = form.watch('accessType')
+  const hasApprovalValue = form.watch('hasApproval')
+  const approvalMethodIdValue = form.watch('approvalMethodId')
 
   const createMutation = useMutation({
     ...trpc.appCatalogAdmin.create.mutationOptions(),
@@ -242,7 +202,7 @@ function RouteComponent() {
         queryKey: trpc.appCatalogAdmin.list.queryKey(),
       })
       queryClient.invalidateQueries({
-        queryKey: trpc.appCatalogAdmin.getById.queryKey({ id }),
+        queryKey: trpc.appCatalogAdmin.getBySlug.queryKey({ slug: id }),
       })
     },
   })
@@ -275,40 +235,29 @@ function RouteComponent() {
             } & Record<string, unknown>)
           : undefined
 
-      // Process approver data
-      let approverPayload: any = undefined
-      if (formData.hasApprover && formData.approverType && formData.approver) {
-        const roles = formData.approver.roles
-          ? JSON.parse(formData.approver.roles)
-          : undefined
-        const seeMoreUrls = formData.approver.seeMoreUrls
-          ? JSON.parse(formData.approver.seeMoreUrls)
-          : undefined
-
-        approverPayload = {
-          type: formData.approverType,
-          comment: formData.approver.comment || undefined,
-          roles: roles && Array.isArray(roles) ? roles : undefined,
-          approvalPolicy: formData.approver.approvalPolicy || undefined,
+      // Process approval details
+      let approvalDetailsPayload: any = undefined
+      if (
+        formData.hasApproval &&
+        formData.approvalMethodId &&
+        formData.approvalDetails
+      ) {
+        approvalDetailsPayload = {
+          approvalMethodId: formData.approvalMethodId,
+          comments: formData.approvalDetails.comments || undefined,
+          requestPrompt: formData.approvalDetails.requestPrompt || undefined,
           postApprovalInstructions:
-            formData.approver.postApprovalInstructions || undefined,
-          seeMoreUrls:
-            seeMoreUrls && Array.isArray(seeMoreUrls) ? seeMoreUrls : undefined,
-        }
-
-        // Add type-specific fields
-        if (formData.approverType === 'bot') {
-          approverPayload.url = formData.approver.url || undefined
-          approverPayload.prompt = formData.approver.prompt || undefined
-        } else if (formData.approverType === 'ticket') {
-          approverPayload.url = formData.approver.url || undefined
-          approverPayload.requestFormTemplate =
-            formData.approver.requestFormTemplate || undefined
-        } else {
-          approverPayload.email = formData.approver.email || undefined
-          approverPayload.url = formData.approver.url || undefined
-          approverPayload.description =
-            formData.approver.description || undefined
+            formData.approvalDetails.postApprovalInstructions || undefined,
+          roles: formData.approvalDetails.roles?.length
+            ? formData.approvalDetails.roles
+            : undefined,
+          approvers: formData.approvalDetails.approvers?.length
+            ? formData.approvalDetails.approvers
+            : undefined,
+          urls: formData.approvalDetails.urls?.length
+            ? formData.approvalDetails.urls
+            : undefined,
+          whoToReachOut: formData.approvalDetails.whoToReachOut || undefined,
         }
       }
 
@@ -321,14 +270,17 @@ function RouteComponent() {
         appUrl: formData.appUrl || undefined,
         notes: formData.notes || undefined,
         links: links && links.length > 0 ? links : undefined,
-        approver: approverPayload,
+        approvalDetails: approvalDetailsPayload,
       }
 
       if (isNew) {
         createMutation.mutate(payload)
       } else {
+        if (!app?.id) {
+          throw new Error('App ID is required for update')
+        }
         updateMutation.mutate({
-          id,
+          id: app.id,
           ...payload,
         })
       }
@@ -428,34 +380,6 @@ function RouteComponent() {
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={formControl}
-                      name="accessType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Access Type *</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {ACCESS_TYPES.map((type) => (
-                                <SelectItem key={type.value} value={type.value}>
-                                  {type.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={formControl}
                       name="iconName"
                       render={({ field }) => (
                         <FormItem>
@@ -471,59 +395,6 @@ function RouteComponent() {
                       )}
                     />
                   </div>
-
-                  {/* Access Method Configuration */}
-                  {(accessTypeValue === 'ticketing' ||
-                    accessTypeValue === 'self-service') && (
-                    <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-                      <div className="font-medium text-sm">
-                        Access Method Details
-                      </div>
-                      <FormField
-                        control={formControl}
-                        name="accessUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>URL</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="url"
-                                placeholder="https://..."
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              {accessTypeValue === 'ticketing'
-                                ? 'URL to the ticketing system or request form'
-                                : 'URL to the self-service portal'}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={formControl}
-                        name="accessInstructions"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Instructions</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Enter instructions for accessing this app..."
-                                rows={4}
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              Step-by-step instructions for users to request or
-                              access this app
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  )}
 
                   <FormField
                     control={formControl}
@@ -584,12 +455,12 @@ function RouteComponent() {
                     )}
                   />
 
-                  {/* Approver Configuration */}
+                  {/* Approval Configuration */}
                   <div className="pt-6 border-t">
                     <div className="space-y-4">
                       <FormField
                         control={formControl}
-                        name="hasApprover"
+                        name="hasApproval"
                         render={({ field }) => (
                           <FormItem className="flex items-center gap-2">
                             <FormControl>
@@ -601,48 +472,34 @@ function RouteComponent() {
                               />
                             </FormControl>
                             <FormLabel className="!mt-0">
-                              Configure Approver
+                              Configure Approval
                             </FormLabel>
                           </FormItem>
                         )}
                       />
 
-                      {hasApproverValue && (
+                      {hasApprovalValue && (
                         <div className="space-y-4 pl-6">
                           <FormField
                             control={formControl}
-                            name="approverType"
+                            name="approvalMethodId"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Approver Type *</FormLabel>
-                                <Select
-                                  value={field.value}
-                                  onValueChange={field.onChange}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select approver type..." />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {APPROVER_TYPES.map((type) => (
-                                      <SelectItem
-                                        key={type.value}
-                                        value={type.value}
-                                      >
-                                        {type.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                                <FormLabel>Approval Method *</FormLabel>
+                                <FormControl>
+                                  <ApprovalMethodSelector
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                  />
+                                </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
 
-                          <ApproverFormFields
+                          <ApprovalDetailsFormFields
                             control={formControl}
-                            approverType={approverTypeValue}
+                            approvalMethodId={approvalMethodIdValue}
                           />
                         </div>
                       )}
@@ -697,8 +554,11 @@ function RouteComponent() {
                 return { id: data.id, url: `/api/assets/${data.id}` }
               }}
               onScreenshotsChange={(screenshots: Array<Screenshot>) => {
+                if (!app?.id) {
+                  throw new Error('App ID is required for screenshot update')
+                }
                 updateScreenshotsMutation.mutate({
-                  id,
+                  id: app.id,
                   screenshotIds: screenshots.map((s) => s.id),
                 })
               }}

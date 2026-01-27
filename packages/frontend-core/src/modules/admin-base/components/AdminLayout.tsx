@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import {
+  CheckSquare,
   ChevronLeft,
   ChevronRight,
   ImageIcon,
@@ -39,6 +40,11 @@ const navItems: Array<NavItem> = [
     path: '/admin/app-for-catalog',
     icon: LayoutDashboard,
   },
+  {
+    name: 'Approval Methods',
+    path: '/admin/approval-methods',
+    icon: CheckSquare,
+  },
 ]
 
 export function AdminLayout({ children }: AdminLayoutProps) {
@@ -74,7 +80,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               const Icon = item.icon
               return (
                 <Link key={item.path} to={item.path} className="block">
-                  {({ isActive }) => (
+                  {({ isActive }: { isActive: boolean }) => (
                     <Button
                       variant="ghost"
                       className={cn(

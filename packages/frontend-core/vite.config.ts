@@ -70,8 +70,9 @@ const config = defineConfig(({ mode }) => {
     },
     plugins: [
       tanstackRouter({
-        autoCodeSplitting: true,
-        // Automatically generates routes when files change in dev mode
+        autoCodeSplitting: false,
+        // Disabled: was creating 40+ chunks for each route component
+        // For lazy loading admin routes, use .lazy.tsx files instead
       }),
       viteReact(),
       svgr(),

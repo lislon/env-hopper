@@ -1,3 +1,28 @@
 #!/bin/sh
 
+# Run lint-staged for formatting and linting
 npx lint-staged
+
+# Run tests on affected packages to catch build errors before CI
+echo ""
+echo "🧪 Running tests on affected packages..."
+echo ""
+
+# Check if there are staged changes (to avoid running on empty commits)
+if ! git diff --cached --quiet; then
+  # Run affected tests (skip prisma:generate as it's already done in CI setup)
+  # Using --parallel=3 to speed up the checks
+  pnpm exec nx affected --targets=test:eslint,test:unit,test:types,compile --parallel=3 --exclude=examples/**,e2e/**
+  
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Pre-commit tests failed!"
+    echo "Please fix the errors before committing."
+    echo ""
+    exit 1
+  fi
+  
+  echo ""
+  echo "✅ All affected package tests passed!"
+  echo ""
+fi

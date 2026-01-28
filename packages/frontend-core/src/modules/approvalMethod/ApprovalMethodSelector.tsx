@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { ApprovalMethod } from '@env-hopper/backend-core'
 import { Check, ChevronsUpDown, Plus } from 'lucide-react'
 import { useTRPC } from '~/api/infra/trpc'
 import { cn } from '~/lib/utils'
@@ -37,9 +36,7 @@ export function ApprovalMethodSelector({
   const trpc = useTRPC()
   const queryClient = useQueryClient()
 
-  const { data: methods = [] } = useQuery<Array<ApprovalMethod>>(
-    ApiQueryMagazineApprovalMethod.list(),
-  )
+  const { data: methods = [] } = useQuery(ApiQueryMagazineApprovalMethod.list())
 
   const createMutation = useMutation({
     ...trpc.approvalMethod.create.mutationOptions(),

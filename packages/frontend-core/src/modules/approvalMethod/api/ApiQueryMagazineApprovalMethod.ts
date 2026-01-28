@@ -1,39 +1,34 @@
 import { queryOptions } from '@tanstack/react-query'
-import type { ApprovalMethod } from '@env-hopper/backend-core'
 import { getTrpcFromMeta } from '~/util/reactQueryUtils'
 
+/**
+ * Query options for ApprovalMethod data.
+ *
+ * Note: We let tRPC infer the return types directly rather than using
+ * the backend's ApprovalMethod type, because tRPC serializes Date → string
+ * over JSON. This ensures end-to-end type safety without manual casting.
+ */
 export class ApiQueryMagazineApprovalMethod {
   static list() {
-    return queryOptions<Array<ApprovalMethod>, Error>({
-      queryKey: ['approvalMethod', 'list'],
-      queryFn: async (ctx) => {
-        const result = await getTrpcFromMeta(ctx).approvalMethod.list.query()
-        return result as Array<ApprovalMethod>
-      },
+    return queryOptions({
+      queryKey: ['approvalMethod', 'list'] as const,
+      queryFn: (ctx) => getTrpcFromMeta(ctx).approvalMethod.list.query(),
     })
   }
 
   static getById(id: string) {
-    return queryOptions<ApprovalMethod | null, Error>({
-      queryKey: ['approvalMethod', 'getById', id],
-      queryFn: async (ctx) => {
-        const result = await getTrpcFromMeta(ctx).approvalMethod.getById.query({
-          id,
-        })
-        return result as ApprovalMethod | null
-      },
+    return queryOptions({
+      queryKey: ['approvalMethod', 'getById', id] as const,
+      queryFn: (ctx) =>
+        getTrpcFromMeta(ctx).approvalMethod.getById.query({ id }),
     })
   }
 
   static listByType(type: 'service' | 'personTeam' | 'custom') {
-    return queryOptions<Array<ApprovalMethod>, Error>({
-      queryKey: ['approvalMethod', 'listByType', type],
-      queryFn: async (ctx) => {
-        const result = await getTrpcFromMeta(
-          ctx,
-        ).approvalMethod.listByType.query({ type })
-        return result as Array<ApprovalMethod>
-      },
+    return queryOptions({
+      queryKey: ['approvalMethod', 'listByType', type] as const,
+      queryFn: (ctx) =>
+        getTrpcFromMeta(ctx).approvalMethod.listByType.query({ type }),
     })
   }
 }

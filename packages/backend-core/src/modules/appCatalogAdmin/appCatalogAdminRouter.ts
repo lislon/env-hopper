@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { getDbClient } from '../../db'
 import { adminProcedure, router } from '../../server/trpcSetup'
+import type { AccessMethod, AppApprovalDetails } from '../../types/index'
 
 // Zod schema for access method (simplified for now - you can expand this)
 const AccessMethodSchema = z
@@ -102,12 +103,24 @@ export function createAppCatalogAdminRouter() {
       .mutation(async ({ input }) => {
         const prisma = getDbClient()
 
+        // Type assertion needed because Zod's passthrough() creates index signatures
+        // that don't structurally match Prisma's typed JSON fields.
+        // This is safe because Zod validates the input shape.
         return prisma.dbAppForCatalog.create({
           data: {
-            ...input,
-            approvalDetails: input.approvalDetails as unknown as object,
+            slug: input.slug,
+            displayName: input.displayName,
+            description: input.description,
+            access: input.access as AccessMethod | undefined,
             teams: input.teams ?? [],
+            approvalDetails: input.approvalDetails as
+              | AppApprovalDetails
+              | undefined,
+            notes: input.notes,
             tags: input.tags ?? [],
+            appUrl: input.appUrl,
+            links: input.links as Array<{ displayName?: string; url: string }>,
+            iconName: input.iconName,
             screenshotIds: input.screenshotIds ?? [],
           },
         })
@@ -119,12 +132,42 @@ export function createAppCatalogAdminRouter() {
         const prisma = getDbClient()
         const { id, ...updateData } = input
 
+        // Type assertion needed because Zod's passthrough() creates index signatures
         return prisma.dbAppForCatalog.update({
           where: { id },
           data: {
-            ...updateData,
+            ...(updateData.slug !== undefined && { slug: updateData.slug }),
+            ...(updateData.displayName !== undefined && {
+              displayName: updateData.displayName,
+            }),
+            ...(updateData.description !== undefined && {
+              description: updateData.description,
+            }),
+            ...(updateData.access !== undefined && {
+              access: updateData.access as unknown as AccessMethod | undefined,
+            }),
+            ...(updateData.teams !== undefined && { teams: updateData.teams }),
             ...(updateData.approvalDetails !== undefined && {
-              approvalDetails: updateData.approvalDetails as unknown as object,
+              approvalDetails: updateData.approvalDetails as
+                | AppApprovalDetails
+                | undefined,
+            }),
+            ...(updateData.notes !== undefined && { notes: updateData.notes }),
+            ...(updateData.tags !== undefined && { tags: updateData.tags }),
+            ...(updateData.appUrl !== undefined && {
+              appUrl: updateData.appUrl,
+            }),
+            ...(updateData.links !== undefined && {
+              links: updateData.links as Array<{
+                displayName?: string
+                url: string
+              }>,
+            }),
+            ...(updateData.iconName !== undefined && {
+              iconName: updateData.iconName,
+            }),
+            ...(updateData.screenshotIds !== undefined && {
+              screenshotIds: updateData.screenshotIds,
             }),
           },
         })

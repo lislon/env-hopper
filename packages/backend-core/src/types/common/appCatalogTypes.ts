@@ -6,17 +6,11 @@
  * abstracting away specific tools (Jira, Slack, etc.) into generic categories.
  */
 
-// ============================================================================
-// APPROVER TYPES (per app configuration)
-// ============================================================================
+import type { AppApprovalDetails, AppRole } from './approvalMethodTypes'
 
-/**
- * Role that can be requested for an app
- */
-export interface AppRole {
-  name: string
-  description?: string
-}
+// ============================================================================
+// APPROVER TYPES (per app configuration) - DEPRECATED
+// ============================================================================
 
 /**
  * Common fields for all approver types
@@ -152,7 +146,7 @@ export interface AppForCatalog {
   description?: string
   access?: AccessMethod
   teams?: Array<string>
-  approver?: Approver
+  approvalDetails?: AppApprovalDetails
   notes?: string
   tags?: Array<string>
   appUrl?: string

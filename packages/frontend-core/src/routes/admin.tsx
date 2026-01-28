@@ -2,8 +2,39 @@ import { Outlet, createFileRoute } from '@tanstack/react-router'
 import { ThemeProvider } from '~/components/theme-provider'
 import { AdminConfigProvider, AdminLayout } from '~/modules/admin-base'
 import { TopLevelProviders } from '~/ui/layout/TopLevelProviders'
+import { AuthorizationError } from '~/errors/AuthorizationError'
+import { isAdmin } from '~/modules/auth/authUtils'
 
 export const Route = createFileRoute('/admin')({
+  beforeLoad: async () => {
+    // Fetch current user session
+    const response = await fetch('/api/auth/session', {
+      credentials: 'include',
+    })
+
+    let user = null
+    if (response.ok) {
+      const data = await response.json()
+      user = data?.user || null
+    }
+
+    // Check if user is authenticated
+    if (!user) {
+      throw new AuthorizationError({
+        message: 'You must be logged in to access the admin panel',
+        resource: 'Admin Panel',
+      })
+    }
+
+    // Check if user has admin role
+    if (!isAdmin(user)) {
+      throw new AuthorizationError({
+        message: 'You need administrator privileges to access this area',
+        requiredRoles: ['env_hopper_ui_super_admins'],
+        resource: 'Admin Panel',
+      })
+    }
+  },
   component: AdminLayoutRoute,
   staticData: {
     breadcrumb: { title: 'Admin' },

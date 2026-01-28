@@ -21,6 +21,21 @@ export type EhDatabaseConfig =
     }
 
 /**
+ * Mock user configuration for development/testing.
+ * When provided, bypasses authentication and injects this user into all requests.
+ */
+export interface EhDevMockUser {
+  /** User ID */
+  id: string
+  /** User email */
+  email: string
+  /** User display name */
+  name: string
+  /** User groups (for authorization) */
+  groups: Array<string>
+}
+
+/**
  * Auth configuration for Better Auth integration.
  */
 export interface EhAuthConfig {
@@ -38,6 +53,8 @@ export interface EhAuthConfig {
   sessionUpdateAge?: number
   /** Application name shown in auth UI */
   appName?: string
+  /** Development mock user - bypasses auth when provided */
+  devMockUser?: EhDevMockUser
 }
 
 /**
@@ -177,4 +194,5 @@ export interface MiddlewareContext {
   createContext: () => Promise<{
     companySpecificBackend: EhBackendCompanySpecificBackend
   }>
+  authConfig: EhAuthConfig
 }

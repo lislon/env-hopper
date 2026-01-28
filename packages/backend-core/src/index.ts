@@ -91,6 +91,13 @@ export { syncAssets, type SyncAssetsConfig } from './modules/assets/syncAssets'
 // App Catalog Admin
 export { createAppCatalogAdminRouter } from './modules/appCatalogAdmin/appCatalogAdminRouter'
 
+// Approval Methods
+export { createApprovalMethodRouter } from './modules/approvalMethod/approvalMethodRouter'
+export {
+  syncApprovalMethods,
+  type ApprovalMethodSyncInput,
+} from './modules/approvalMethod/syncApprovalMethods'
+
 // Database utilities
 export {
   connectDb,

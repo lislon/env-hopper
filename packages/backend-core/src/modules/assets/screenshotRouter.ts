@@ -1,12 +1,8 @@
-import type { TRPCRootObject } from '@trpc/server'
 import { z } from 'zod'
 import { getDbClient } from '../../db'
-import type { EhTrpcContext } from '../../server/ehTrpcContext'
+import { publicProcedure, router } from '../../server/trpcSetup'
 
-export function createScreenshotRouter(t: TRPCRootObject<EhTrpcContext, {}, {}>) {
-  const router = t.router
-  const publicProcedure = t.procedure
-
+export function createScreenshotRouter() {
   return router({
     list: publicProcedure.query(async () => {
       const prisma = getDbClient()
@@ -52,7 +48,7 @@ export function createScreenshotRouter(t: TRPCRootObject<EhTrpcContext, {}, {}>)
       .input(z.object({ appSlug: z.string() }))
       .query(async ({ input }) => {
         const prisma = getDbClient()
-        
+
         // Find app by slug
         const app = await prisma.dbAppForCatalog.findUnique({
           where: { slug: input.appSlug },
@@ -86,7 +82,7 @@ export function createScreenshotRouter(t: TRPCRootObject<EhTrpcContext, {}, {}>)
       .input(z.object({ appSlug: z.string() }))
       .query(async ({ input }) => {
         const prisma = getDbClient()
-        
+
         // Find app by slug
         const app = await prisma.dbAppForCatalog.findUnique({
           where: { slug: input.appSlug },

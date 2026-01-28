@@ -40,11 +40,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    // Use AbortController to cancel fetch on unmount (e.g., React StrictMode double-mount)
+    const abortController = new AbortController()
+
     // Fetch session from backend
     async function fetchSession() {
       try {
         const response = await fetch('/api/auth/session', {
           credentials: 'include',
+          signal: abortController.signal,
         })
         if (response.ok) {
           const data = await response.json()
@@ -61,6 +65,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem(STORAGE_KEY)
         }
       } catch (error) {
+        // Ignore abort errors (happens on cleanup)
+        if (error instanceof Error && error.name === 'AbortError') {
+          return
+        }
         console.error('Failed to fetch session:', error)
         setSession(null)
         setUser(null)
@@ -71,6 +79,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     fetchSession()
+
+    // Cleanup: abort fetch on unmount
+    return () => {
+      abortController.abort()
+    }
   }, [])
 
   const value: AuthContextType = useMemo(

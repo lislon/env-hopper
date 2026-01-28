@@ -18,12 +18,10 @@ export function createAuthRouter(
 
   return router({
     getSession: publicProcedure.query(async ({ ctx }) => {
-      // Session will be extracted from cookies by better-auth middleware
-      // For now, return user info if available in context
-      const contextWithUser = ctx as EhTrpcContext & { user?: unknown }
+      // User is now extracted in the tRPC context creation
       return {
-        user: contextWithUser.user ?? null,
-        isAuthenticated: !!contextWithUser.user,
+        user: ctx.user ?? null,
+        isAuthenticated: !!ctx.user,
       }
     }),
     getProviders: publicProcedure.query(() => {

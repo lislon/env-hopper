@@ -1,7 +1,6 @@
-import type { TRPCRootObject } from '@trpc/server'
 import { z } from 'zod'
 import { getDbClient } from '../../db'
-import type { EhTrpcContext } from '../../server/ehTrpcContext'
+import { adminProcedure, router } from '../../server/trpcSetup'
 
 // Zod schema for access method (simplified for now - you can expand this)
 const AccessMethodSchema = z
@@ -22,45 +21,32 @@ const AppLinkSchema = z.object({
   url: z.string().url(),
 })
 
-const AppRoleInApproverSchema = z.object({
+// New AppApprovalDetails schema
+const AppRoleSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
 })
 
-// Approver schema
-const ApproverSchema = z.discriminatedUnion('type', [
-  z.object({
-    type: z.literal('bot'),
-    comment: z.string().optional(),
-    roles: z.array(AppRoleInApproverSchema).optional(),
-    approvalPolicy: z.string().optional(),
-    postApprovalInstructions: z.string().optional(),
-    seeMoreUrls: z.array(z.string()).optional(),
-    url: z.string().optional(),
-    prompt: z.string().optional(),
-  }),
-  z.object({
-    type: z.literal('ticket'),
-    comment: z.string().optional(),
-    roles: z.array(AppRoleInApproverSchema).optional(),
-    approvalPolicy: z.string().optional(),
-    postApprovalInstructions: z.string().optional(),
-    seeMoreUrls: z.array(z.string()).optional(),
-    url: z.string().optional(),
-    requestFormTemplate: z.string().optional(),
-  }),
-  z.object({
-    type: z.literal('person'),
-    comment: z.string().optional(),
-    roles: z.array(AppRoleInApproverSchema).optional(),
-    approvalPolicy: z.string().optional(),
-    postApprovalInstructions: z.string().optional(),
-    seeMoreUrls: z.array(z.string()).optional(),
-    email: z.string().optional(),
-    url: z.string().optional(),
-    description: z.string().optional(),
-  }),
-])
+const ApproverContactSchema = z.object({
+  displayName: z.string(),
+  contact: z.string().optional(),
+})
+
+const ApprovalUrlSchema = z.object({
+  label: z.string().optional(),
+  url: z.string().url(),
+})
+
+const AppApprovalDetailsSchema = z.object({
+  approvalMethodId: z.string(),
+  comments: z.string().optional(),
+  requestPrompt: z.string().optional(),
+  postApprovalInstructions: z.string().optional(),
+  roles: z.array(AppRoleSchema).optional(),
+  approvers: z.array(ApproverContactSchema).optional(),
+  urls: z.array(ApprovalUrlSchema).optional(),
+  whoToReachOut: z.string().optional(),
+})
 
 const CreateAppForCatalogSchema = z.object({
   slug: z
@@ -71,7 +57,7 @@ const CreateAppForCatalogSchema = z.object({
   description: z.string(),
   access: AccessMethodSchema.optional(),
   teams: z.array(z.string()).optional(),
-  approver: ApproverSchema.optional(),
+  approvalDetails: AppApprovalDetailsSchema.optional(),
   notes: z.string().optional(),
   tags: z.array(z.string()).optional(),
   appUrl: z.string().url().optional(),
@@ -84,21 +70,16 @@ const UpdateAppForCatalogSchema = CreateAppForCatalogSchema.partial().extend({
   id: z.string(),
 })
 
-export function createAppCatalogAdminRouter(
-  t: TRPCRootObject<EhTrpcContext, {}, {}>,
-) {
-  const router = t.router
-  const publicProcedure = t.procedure
-
+export function createAppCatalogAdminRouter() {
   return router({
-    list: publicProcedure.query(async () => {
+    list: adminProcedure.query(async () => {
       const prisma = getDbClient()
       return prisma.dbAppForCatalog.findMany({
         orderBy: { displayName: 'asc' },
       })
     }),
 
-    getById: publicProcedure
+    getById: adminProcedure
       .input(z.object({ id: z.string() }))
       .query(async ({ input }) => {
         const prisma = getDbClient()
@@ -107,7 +88,16 @@ export function createAppCatalogAdminRouter(
         })
       }),
 
-    create: publicProcedure
+    getBySlug: adminProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        const prisma = getDbClient()
+        return prisma.dbAppForCatalog.findUnique({
+          where: { slug: input.slug },
+        })
+      }),
+
+    create: adminProcedure
       .input(CreateAppForCatalogSchema)
       .mutation(async ({ input }) => {
         const prisma = getDbClient()
@@ -115,7 +105,7 @@ export function createAppCatalogAdminRouter(
         return prisma.dbAppForCatalog.create({
           data: {
             ...input,
-            approver: input.approver as any,
+            approvalDetails: input.approvalDetails as unknown as object,
             teams: input.teams ?? [],
             tags: input.tags ?? [],
             screenshotIds: input.screenshotIds ?? [],
@@ -123,7 +113,7 @@ export function createAppCatalogAdminRouter(
         })
       }),
 
-    update: publicProcedure
+    update: adminProcedure
       .input(UpdateAppForCatalogSchema)
       .mutation(async ({ input }) => {
         const prisma = getDbClient()
@@ -133,14 +123,29 @@ export function createAppCatalogAdminRouter(
           where: { id },
           data: {
             ...updateData,
-            ...(updateData.approver !== undefined && {
-              approver: updateData.approver as any,
+            ...(updateData.approvalDetails !== undefined && {
+              approvalDetails: updateData.approvalDetails as unknown as object,
             }),
           },
         })
       }),
 
-    delete: publicProcedure
+    updateScreenshots: adminProcedure
+      .input(
+        z.object({
+          id: z.string(),
+          screenshotIds: z.array(z.string()),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        const prisma = getDbClient()
+        return prisma.dbAppForCatalog.update({
+          where: { id: input.id },
+          data: { screenshotIds: input.screenshotIds },
+        })
+      }),
+
+    delete: adminProcedure
       .input(z.object({ id: z.string() }))
       .mutation(async ({ input }) => {
         const prisma = getDbClient()

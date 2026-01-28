@@ -3,7 +3,6 @@ import { AppWindow, Edit, ExternalLink, X } from 'lucide-react'
 import React, { useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useUser } from '~/modules/auth/AuthContext'
-import { isAdmin } from '~/modules/auth/authUtils'
 import { Badge } from '~/ui/badge'
 import { Button } from '~/ui/button'
 import { ScrollArea } from '~/ui/scroll-area'
@@ -154,7 +153,7 @@ function AccessSection({ app }: { app: AppForCatalog }) {
 
 export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
   const user = useUser()
-  const userIsAdmin = isAdmin(user)
+  const isAuthenticated = !!user
 
   // Close on Escape key
   useEffect(() => {
@@ -187,37 +186,37 @@ export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
     >
       {/* Modal Container with wide borders */}
       <div className="relative h-full w-full flex items-center justify-center p-4 sm:p-8 lg:p-16">
-        {/* Close Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-6 right-6 z-10 size-10 rounded-full bg-background/80 backdrop-blur hover:bg-background"
-          onClick={onClose}
-        >
-          <X className="size-5" />
-          <span className="sr-only">Close</span>
-        </Button>
-
-        {/* Edit Button (Admin only) */}
-        {userIsAdmin && app.slug && (
-          <Button
-            variant="default"
-            size="sm"
-            asChild
-            className="absolute top-6 right-20 z-10 bg-background/80 backdrop-blur hover:bg-background"
-          >
-            <Link to="/admin/app-for-catalog/$id" params={{ id: app.slug }}>
-              <Edit className="size-4 mr-2" />
-              Edit
-            </Link>
-          </Button>
-        )}
-
-        {/* Scrollable Content */}
+        {/* Scrollable Content with positioned buttons */}
         <ScrollArea
-          className="h-full w-full max-w-5xl"
+          className="relative h-full w-full max-w-5xl"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Close Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-6 right-6 z-10 size-10 rounded-full bg-background/80 backdrop-blur hover:bg-background"
+            onClick={onClose}
+          >
+            <X className="size-5" />
+            <span className="sr-only">Close</span>
+          </Button>
+
+          {/* Edit Button (Authenticated users) */}
+          {isAuthenticated && app.slug && (
+            <Button
+              variant="default"
+              size="sm"
+              asChild
+              className="absolute top-6 right-[4.5rem] z-10"
+            >
+              <Link to="/admin/app-for-catalog/$id" params={{ id: app.slug }}>
+                <Edit className="size-4 mr-2" />
+                Edit
+              </Link>
+            </Button>
+          )}
+
           <div className="bg-background rounded-lg shadow-2xl border border-border p-8 space-y-8">
             {/* Screenshots Section */}
             <ScreenshotGallery app={app} />

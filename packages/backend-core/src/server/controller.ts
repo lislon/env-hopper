@@ -1,44 +1,19 @@
-import { initTRPC } from '@trpc/server'
 import z from 'zod'
 
 import { getAppCatalogData } from '../modules/appCatalog/service'
-import type { AppCatalogData, BootstrapConfigData, ResourceJumpsData } from '../types'
-
-import type { TRPCRootObject } from '@trpc/server'
+import type {
+  AppCatalogData,
+  BootstrapConfigData,
+  ResourceJumpsData,
+} from '../types'
 
 import { createAppCatalogAdminRouter } from '../modules/appCatalogAdmin/appCatalogAdminRouter.js'
+import { createApprovalMethodRouter } from '../modules/approvalMethod/approvalMethodRouter.js'
 import { createScreenshotRouter } from '../modules/assets/screenshotRouter.js'
 import type { BetterAuth } from '../modules/auth/auth'
 import { createAuthRouter } from '../modules/auth/authRouter.js'
 import { createIconRouter } from '../modules/icons/iconRouter.js'
-import type { EhTrpcContext } from './ehTrpcContext'
-
-/**
- * Initialization of tRPC backend
- * Should be done only once per backend!
- */
-const t: TRPCRootObject<EhTrpcContext, {}, {}> = initTRPC
-  .context<EhTrpcContext>()
-  .create({
-    errorFormatter({ error, shape }: { error: unknown; shape: unknown }) {
-      // Log all tRPC errors to console
-      console.error('[tRPC Error]', {
-        path: (shape as { data?: { path?: string } }).data?.path,
-        code: (error as { code?: string }).code,
-        message: (error as { message?: string }).message,
-        cause: (error as { cause?: unknown }).cause,
-        stack: (error as { stack?: string }).stack,
-      })
-      return shape
-    },
-  })
-
-/**
- * Export reusable router and procedure helpers
- * that can be used throughout the router
- */
-const router: typeof t.router = t.router
-const publicProcedure: typeof t.procedure = t.procedure
+import { publicProcedure, router, t } from './trpcSetup'
 
 /**
  * Create the main tRPC router with optional auth instance
@@ -89,18 +64,23 @@ export function createTrpcRouter(auth?: BetterAuth) {
         )
       }),
 
-    appCatalog: publicProcedure.query(async ({ ctx }): Promise<AppCatalogData> => {
-      return await getAppCatalogData(ctx.companySpecificBackend.getApps)
-    }),
+    appCatalog: publicProcedure.query(
+      async ({ ctx }): Promise<AppCatalogData> => {
+        return await getAppCatalogData(ctx.companySpecificBackend.getApps)
+      },
+    ),
 
     // Icon management routes
-    icon: createIconRouter(t),
+    icon: createIconRouter(),
 
     // Screenshot management routes
-    screenshot: createScreenshotRouter(t),
+    screenshot: createScreenshotRouter(),
 
     // App catalog admin routes
-    appCatalogAdmin: createAppCatalogAdminRouter(t),
+    appCatalogAdmin: createAppCatalogAdminRouter(),
+
+    // Approval method routes
+    approvalMethod: createApprovalMethodRouter(),
 
     // Auth routes (requires auth instance)
     auth: createAuthRouter(t, auth),

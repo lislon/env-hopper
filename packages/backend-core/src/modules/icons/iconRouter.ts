@@ -1,14 +1,10 @@
-import type { TRPCRootObject } from '@trpc/server'
 import { z } from 'zod'
 import { getDbClient } from '../../db'
-import type { EhTrpcContext } from '../../server/ehTrpcContext'
 import { generateChecksum, getImageDimensions } from '../assets/assetUtils'
 import { getExtensionFromMimeType } from './iconUtils'
+import { adminProcedure, publicProcedure, router } from '../../server/trpcSetup'
 
-export function createIconRouter(t: TRPCRootObject<EhTrpcContext, {}, {}>) {
-  const router = t.router
-  const publicProcedure = t.procedure
-
+export function createIconRouter() {
   return router({
     list: publicProcedure.query(async () => {
       const prisma = getDbClient()
@@ -46,7 +42,7 @@ export function createIconRouter(t: TRPCRootObject<EhTrpcContext, {}, {}>) {
         })
       }),
 
-    create: publicProcedure
+    create: adminProcedure
       .input(
         z.object({
           name: z.string().min(1), // Name with extension (e.g., "jira.svg")
@@ -95,7 +91,7 @@ export function createIconRouter(t: TRPCRootObject<EhTrpcContext, {}, {}>) {
         })
       }),
 
-    update: publicProcedure
+    update: adminProcedure
       .input(
         z.object({
           id: z.string(),
@@ -137,7 +133,7 @@ export function createIconRouter(t: TRPCRootObject<EhTrpcContext, {}, {}>) {
         })
       }),
 
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.string() }))
       .mutation(async ({ input }) => {
         const prisma = getDbClient()
@@ -146,7 +142,7 @@ export function createIconRouter(t: TRPCRootObject<EhTrpcContext, {}, {}>) {
         })
       }),
 
-    deleteMany: publicProcedure
+    deleteMany: adminProcedure
       .input(z.object({ ids: z.array(z.string()) }))
       .mutation(async ({ input }) => {
         const prisma = getDbClient()

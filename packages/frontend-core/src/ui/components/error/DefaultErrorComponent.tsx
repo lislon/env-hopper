@@ -1,6 +1,4 @@
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import type { ErrorComponentProps } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { BugIcon, RefreshCcwIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '~/ui/button'
@@ -12,10 +10,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '~/ui/empty'
-import { MainLayout } from '~/ui/layout/MainLayout'
-import { TopLevelProvidersForErrors } from '~/ui/layout/TopLevelProvidersForErrors'
 import { useDb } from '~/userDb/DbContext'
 import { isDexieError, isDexieMigrationError } from '~/util/error-utils'
+import { BaseErrorPage } from './BaseErrorPage'
 
 export function Treatment({ error, reset }: ErrorComponentProps) {
   const db = useDb()
@@ -80,35 +77,31 @@ export function Treatment({ error, reset }: ErrorComponentProps) {
 
 export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
   return (
-    <TopLevelProvidersForErrors>
-      <MainLayout>
-        <Empty role="alert">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <BugIcon />
-            </EmptyMedia>
-            <EmptyTitle>Ooops!</EmptyTitle>
-            <EmptyDescription>
-              Error inside env-hopper occured: {<i>{error.message}</i>}
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Treatment error={error} reset={reset} />
+    <BaseErrorPage>
+      <Empty role="alert">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <BugIcon />
+          </EmptyMedia>
+          <EmptyTitle>Ooops!</EmptyTitle>
+          <EmptyDescription>
+            Error inside env-hopper occured: {<i>{error.message}</i>}
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Treatment error={error} reset={reset} />
 
-            <div
-              className={
-                'mt-8 text-center max-w-[90vw] max-h-[80vh] overflow-auto'
-              }
-            >
-              <pre className={'text-left mt-8 text-sm'}>
-                {<i>{error.stack}</i>}
-              </pre>
-            </div>
-          </EmptyContent>
-        </Empty>
-        <TanStackRouterDevtools />
-        <ReactQueryDevtools initialIsOpen={false} />
-      </MainLayout>
-    </TopLevelProvidersForErrors>
+          <div
+            className={
+              'mt-8 text-center max-w-[90vw] max-h-[80vh] overflow-auto'
+            }
+          >
+            <pre className={'text-left mt-8 text-sm'}>
+              {<i>{error.stack}</i>}
+            </pre>
+          </div>
+        </EmptyContent>
+      </Empty>
+    </BaseErrorPage>
   )
 }

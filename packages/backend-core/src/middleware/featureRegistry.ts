@@ -18,6 +18,7 @@ import {
   listAssets,
 } from '../modules/appCatalogAdmin/catalogBackupController'
 import multer from 'multer'
+import { createMockSessionResponse } from '../modules/auth/devMockUserUtils'
 
 interface FeatureRegistration {
   name: keyof EhFeatureToggles
@@ -39,21 +40,30 @@ const FEATURES: Array<FeatureRegistration> = [
       const basePath = options.basePath
 
       // Explicit session endpoint handler
-      router.get(`${basePath}/auth/session`, async (req, res) => {
-        try {
-          const session = await ctx.auth.api.getSession({
-            headers: req.headers as HeadersInit,
-          })
-          if (session) {
-            res.json(session)
-          } else {
-            res.status(401).json({ error: 'Not authenticated' })
+      router.get(
+        `${basePath}/auth/session`,
+        async (req, res): Promise<void> => {
+          try {
+            // Check if dev mock user is configured
+            if (ctx.authConfig.devMockUser) {
+              res.json(createMockSessionResponse(ctx.authConfig.devMockUser))
+              return
+            }
+
+            const session = await ctx.auth.api.getSession({
+              headers: req.headers as HeadersInit,
+            })
+            if (session) {
+              res.json(session)
+            } else {
+              res.status(401).json({ error: 'Not authenticated' })
+            }
+          } catch (error) {
+            console.error('[Auth Session Error]', error)
+            res.status(500).json({ error: 'Internal server error' })
           }
-        } catch (error) {
-          console.error('[Auth Session Error]', error)
-          res.status(500).json({ error: 'Internal server error' })
-        }
-      })
+        },
+      )
 
       // Use toNodeHandler to adapt better-auth for Express/Node.js
       const authHandler = toNodeHandler(ctx.auth)

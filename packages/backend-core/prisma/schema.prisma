@@ -71,6 +71,26 @@ model verification {
 }
 
 // ========== EnvHopper Models ==========
+
+enum ApprovalMethodType {
+  service
+  personTeam
+  custom
+}
+
+model DbApprovalMethod {
+  id          String             @id @default(cuid())
+  type        ApprovalMethodType
+  displayName String
+  /// [ApprovalMethodConfig] - Type-specific configuration
+  config      Json?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([type, displayName])
+  @@index([type])
+}
+
 model DbAppForCatalog {
   id              String    @id @default(cuid())
   slug            String    @unique // URL-friendly identifier for navigation
@@ -79,8 +99,8 @@ model DbAppForCatalog {
   /// [AccessMethod]
   access          Json?
   teams           String[]  @default([])
-  /// [Approver] - Approver system (bot/ticket/person)
-  approver        Json?
+  /// [AppApprovalDetails] - Per-app approval configuration linking to ApprovalMethod
+  approvalDetails Json?
   notes           String?
   tags            String[]  @default([])
   appUrl          String?

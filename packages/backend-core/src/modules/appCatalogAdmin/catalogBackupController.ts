@@ -3,7 +3,7 @@ import { getDbClient } from '../../db'
 
 /**
  * Export the complete app catalog as JSON
- * Includes all fields from DbAppForCatalog
+ * Includes all fields from DbAppForCatalog and DbApprovalMethod
  */
 export async function exportCatalog(
   _req: Request,
@@ -17,10 +17,16 @@ export async function exportCatalog(
       orderBy: { slug: 'asc' },
     })
 
+    // Fetch all approval methods
+    const approvalMethods = await prisma.dbApprovalMethod.findMany({
+      orderBy: { displayName: 'asc' },
+    })
+
     res.json({
-      version: '1.0',
+      version: '2.0',
       exportDate: new Date().toISOString(),
       apps,
+      approvalMethods,
     })
   } catch (error) {
     console.error('Error exporting catalog:', error)
@@ -38,7 +44,7 @@ export async function importCatalog(
 ): Promise<void> {
   try {
     const prisma = getDbClient()
-    const { apps } = req.body
+    const { apps, approvalMethods } = req.body
 
     if (!Array.isArray(apps)) {
       res
@@ -49,10 +55,27 @@ export async function importCatalog(
 
     // Use transaction to ensure atomicity
     await prisma.$transaction(async (tx) => {
+      // Delete all existing approval methods first (due to potential FK references)
+      if (Array.isArray(approvalMethods)) {
+        await tx.dbApprovalMethod.deleteMany({})
+      }
+
       // Delete all existing catalog entries
       await tx.dbAppForCatalog.deleteMany({})
 
-      // Insert new entries
+      // Insert approval methods first
+      if (Array.isArray(approvalMethods)) {
+        for (const method of approvalMethods) {
+          // Remove id, createdAt, updatedAt to let Prisma generate new ones
+          const { id, createdAt, updatedAt, ...methodData } = method
+
+          await tx.dbApprovalMethod.create({
+            data: methodData,
+          })
+        }
+      }
+
+      // Insert app catalog entries
       for (const app of apps) {
         // Remove id, createdAt, updatedAt to let Prisma generate new ones
         const { id, createdAt, updatedAt, ...appData } = app
@@ -63,7 +86,15 @@ export async function importCatalog(
       }
     })
 
-    res.json({ success: true, imported: apps.length })
+    res.json({
+      success: true,
+      imported: {
+        apps: apps.length,
+        approvalMethods: Array.isArray(approvalMethods)
+          ? approvalMethods.length
+          : 0,
+      },
+    })
   } catch (error) {
     console.error('Error importing catalog:', error)
     res.status(500).json({ error: 'Failed to import catalog' })

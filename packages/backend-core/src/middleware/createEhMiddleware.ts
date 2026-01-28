@@ -11,6 +11,7 @@ import { registerFeatures } from './featureRegistry'
 import { createTrpcRouter } from '../server/controller'
 import { createEhTrpcContext } from '../server/ehTrpcContext'
 import { createAuth } from '../modules/auth/auth'
+import { createMockUserFromDevConfig } from '../modules/auth/devMockUserUtils'
 
 export async function createEhMiddleware(
   options: EhMiddlewareOptions,
@@ -42,9 +43,29 @@ export async function createEhMiddleware(
   const resolveBackend = createBackendResolver(options.backend)
 
   // Create tRPC context factory
-  const createContext = async () => {
+  const createContext = async ({
+    req,
+  }: trpcExpress.CreateExpressContextOptions) => {
     const companySpecificBackend = await resolveBackend()
-    return createEhTrpcContext({ companySpecificBackend })
+
+    let user = null
+
+    // Check if dev mock user is configured
+    if (options.auth.devMockUser) {
+      user = createMockUserFromDevConfig(options.auth.devMockUser)
+    } else {
+      // Extract user from session
+      try {
+        const session = await auth.api.getSession({
+          headers: req.headers as HeadersInit,
+        })
+        user = session?.user ?? null
+      } catch (error) {
+        console.error('[tRPC Context] Failed to get session:', error)
+      }
+    }
+
+    return createEhTrpcContext({ companySpecificBackend, user })
   }
 
   // Create Express router
@@ -55,7 +76,11 @@ export async function createEhMiddleware(
   const middlewareContext: MiddlewareContext = {
     auth,
     trpcRouter,
-    createContext,
+    createContext: async () => {
+      const companySpecificBackend = await resolveBackend()
+      return createEhTrpcContext({ companySpecificBackend })
+    },
+    authConfig: options.auth,
   }
 
   // Register tRPC middleware (if enabled)

@@ -42,7 +42,7 @@ export async function syncAppCatalog(
         description: app.description,
         access: app.access ?? null,
         teams: app.teams ?? [],
-        approver: app.approver ?? null,
+        approvalDetails: app.approvalDetails ?? null,
         notes: app.notes ?? null,
         tags: app.tags ?? [],
         appUrl: app.appUrl ?? null,

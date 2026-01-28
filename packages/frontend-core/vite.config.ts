@@ -70,9 +70,18 @@ const config = defineConfig(({ mode }) => {
     },
     plugins: [
       tanstackRouter({
-        autoCodeSplitting: false,
-        // Disabled: was creating 40+ chunks for each route component
-        // For lazy loading admin routes, use .lazy.tsx files instead
+        autoCodeSplitting: true,
+        codeSplittingOptions: {
+          // Only split admin routes - everything else stays in main bundle
+          splitBehavior: ({ routeId }) => {
+            if (routeId.startsWith('/admin')) {
+              // Admin routes: split component into separate chunk
+              return [['component'], ['pendingComponent', 'errorComponent']]
+            }
+            // Non-admin routes: don't split, keep in main bundle
+            return []
+          },
+        },
       }),
       viteReact(),
       svgr(),

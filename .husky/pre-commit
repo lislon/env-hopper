@@ -3,6 +3,15 @@
 # Run lint-staged for formatting and linting
 npx lint-staged
 
+# Skip affected tests in CI/CD
+# (tests are already run before publishing, and base branch may not exist)
+if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
+  echo ""
+  echo "⏭️  Skipping affected tests in CI/CD (already run before publish)"
+  echo ""
+  exit 0
+fi
+
 # Run tests on affected packages to catch build errors before CI
 echo ""
 echo "🧪 Running tests on affected packages..."
@@ -10,9 +19,42 @@ echo ""
 
 # Check if there are staged changes (to avoid running on empty commits)
 if ! git diff --cached --quiet; then
-  # Run affected tests (skip prisma:generate as it's already done in CI setup)
+  # Try to determine the base branch, fallback to HEAD~1 if main doesn't exist
+  BASE_BRANCH="main"
+  
+  # Check if main branch exists locally
+  if ! git rev-parse --verify "$BASE_BRANCH" >/dev/null 2>&1; then
+    # Try to get the default branch from remote
+    DEFAULT_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "")
+    
+    if [ -n "$DEFAULT_BRANCH" ] && git rev-parse --verify "$DEFAULT_BRANCH" >/dev/null 2>&1; then
+      BASE_BRANCH="$DEFAULT_BRANCH"
+      echo "📌 Using default branch: $BASE_BRANCH"
+    else
+      # Try to fetch the default branch from remote
+      if git fetch origin main:main 2>/dev/null; then
+        BASE_BRANCH="main"
+        echo "📌 Fetched main branch from remote"
+      elif git fetch origin alpha:alpha 2>/dev/null && git rev-parse --verify "alpha" >/dev/null 2>&1; then
+        BASE_BRANCH="alpha"
+        echo "📌 Using alpha branch as fallback"
+      elif git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+        # Last resort: compare against previous commit
+        BASE_BRANCH="HEAD~1"
+        echo "📌 Using HEAD~1 as fallback (comparing against previous commit)"
+      else
+        # If this is the first commit, skip affected check
+        echo ""
+        echo "⏭️  Skipping affected tests (no base branch available)"
+        echo ""
+        exit 0
+      fi
+    fi
+  fi
+
+  # Run affected tests with explicit base branch
   # Using --parallel=3 to speed up the checks
-  pnpm exec nx affected --targets=test:eslint,test:unit,test:types,compile --parallel=3 --exclude=examples/**,e2e/**
+  pnpm exec nx affected --base="$BASE_BRANCH" --targets=test:eslint,test:unit,test:types,compile --parallel=3 --exclude=examples/**,e2e/**
   
   if [ $? -ne 0 ]; then
     echo ""

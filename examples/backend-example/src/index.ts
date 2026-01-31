@@ -16,7 +16,12 @@ import type {
   ResourceJumpsData,
   ResourceJumpsExtendedData,
 } from '@env-hopper/backend-core'
-import { getAuthProviders, validateAuthConfig } from './config/authProviders.js'
+import {
+  getAdminGroups,
+  getAuthPlugins,
+  getAuthProviders,
+  validateAuthConfig,
+} from './config/authProviders.js'
 import { getRandomAvailabilityMatrix } from './utils.js'
 
 loadEnv()
@@ -108,6 +113,8 @@ const eh = await createEhMiddleware({
       process.env.BETTER_AUTH_SECRET ||
       'dev-secret-change-in-production-minimum-32-chars!',
     providers: getAuthProviders(),
+    plugins: getAuthPlugins(),
+    adminGroups: getAdminGroups(),
     sessionExpiresIn: 60 * 60 * 24 * 30, // 30 days
     sessionUpdateAge: 60 * 60 * 24, // Refresh after 1 day
   },

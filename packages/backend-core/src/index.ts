@@ -30,16 +30,9 @@ export { registerAuthRoutes } from './modules/auth/registerAuthRoutes'
 export { createAuthRouter, type AuthRouter } from './modules/auth/authRouter'
 
 export {
-  getAuthProvidersFromEnv,
-  getAuthPluginsFromEnv,
-  validateAuthConfig,
-} from './modules/auth/authProviders'
-
-export {
   getUserGroups,
   isMemberOfAnyGroup,
   isMemberOfAllGroups,
-  getAdminGroupsFromEnv,
   isAdmin,
   requireAdmin,
   requireGroups,

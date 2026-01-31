@@ -6,15 +6,15 @@ import { AuthorizationError } from '~/errors/AuthorizationError'
 import { isAdmin } from '~/modules/auth/authUtils'
 
 export const Route = createFileRoute('/admin')({
-  beforeLoad: async () => {
+  beforeLoad: async ({ context }) => {
     // Fetch current user session
-    const response = await fetch('/api/auth/session', {
+    const sessionResponse = await fetch('/api/auth/session', {
       credentials: 'include',
     })
 
     let user = null
-    if (response.ok) {
-      const data = await response.json()
+    if (sessionResponse.ok) {
+      const data = await sessionResponse.json()
       user = data?.user || null
     }
 
@@ -26,11 +26,15 @@ export const Route = createFileRoute('/admin')({
       })
     }
 
+    // Fetch auth config from backend to get adminGroups
+    const authConfig = await context.trpcClient.authConfig.query()
+    const adminGroups = authConfig.adminGroups
+
     // Check if user has admin role
-    if (!isAdmin(user)) {
+    if (!isAdmin(user, adminGroups)) {
       throw new AuthorizationError({
         message: 'You need administrator privileges to access this area',
-        requiredRoles: ['env_hopper_ui_super_admins'],
+        requiredRoles: adminGroups,
         resource: 'Admin Panel',
       })
     }

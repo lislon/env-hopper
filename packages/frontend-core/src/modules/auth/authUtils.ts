@@ -1,17 +1,4 @@
 /**
- * Get admin group names from environment variables
- * Default: env_hopper_ui_super_admins
- */
-function getAdminGroupsFromEnv(): Array<string> {
-  const adminGroups =
-    import.meta.env.VITE_AUTH_ADMIN_GROUPS || 'env_hopper_ui_super_admins'
-  return adminGroups
-    .split(',')
-    .map((g: string) => g.trim())
-    .filter(Boolean)
-}
-
-/**
  * Extract groups from user object
  */
 function getUserGroups(user: any): Array<string> {
@@ -40,11 +27,15 @@ function isMemberOfAnyGroup(user: any, allowedGroups: Array<string>): boolean {
 
 /**
  * Check if user has admin permissions
+ * @param user User object
+ * @param adminGroups Admin group names (fetched from backend via authConfig endpoint)
  */
-export function isAdmin(user: any): boolean {
+export function isAdmin(
+  user: any,
+  adminGroups: Array<string> = ['env_hopper_ui_super_admins'],
+): boolean {
   if (!user) {
     return false
   }
-  const adminGroups = getAdminGroupsFromEnv()
   return isMemberOfAnyGroup(user, adminGroups)
 }

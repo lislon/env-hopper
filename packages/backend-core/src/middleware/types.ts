@@ -55,6 +55,8 @@ export interface EhAuthConfig {
   appName?: string
   /** Development mock user - bypasses auth when provided */
   devMockUser?: EhDevMockUser
+  /** Admin group names for authorization (default: ['env_hopper_ui_super_admins']) */
+  adminGroups?: Array<string>
 }
 
 /**

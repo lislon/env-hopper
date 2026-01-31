@@ -119,7 +119,7 @@ export function mapFeatureConfigToBackend(config: FeatureBackendConfig): {
       },
       appCatalog: {
         apps: [],
-        categories: []
+        categories: [],
       },
       // Minimal empty data for other procedures (not used in tests)
       availabilityMatrix: {
@@ -133,6 +133,9 @@ export function mapFeatureConfigToBackend(config: FeatureBackendConfig): {
         resourceJumps: [],
         envs: [],
         lateResolvableParams: [],
+      },
+      authConfig: {
+        adminGroups: ['env_hopper_ui_super_admins'],
       },
     }
 

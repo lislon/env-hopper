@@ -70,31 +70,27 @@ export function isMemberOfAllGroups(
 }
 
 /**
- * Get admin group names from environment variables
- * Default: env_hopper_ui_super_admins
- */
-export function getAdminGroupsFromEnv(): Array<string> {
-  const adminGroups =
-    process.env.AUTH_ADMIN_GROUPS || 'env_hopper_ui_super_admins'
-  return adminGroups
-    .split(',')
-    .map((g) => g.trim())
-    .filter(Boolean)
-}
-
-/**
  * Check if user has admin permissions
+ * @param user User object with groups
+ * @param adminGroups List of admin group names (default: ['env_hopper_ui_super_admins'])
  */
-export function isAdmin(user: UserWithGroups | null | undefined): boolean {
-  const adminGroups = getAdminGroupsFromEnv()
+export function isAdmin(
+  user: UserWithGroups | null | undefined,
+  adminGroups: Array<string> = ['env_hopper_ui_super_admins'],
+): boolean {
   return isMemberOfAnyGroup(user, adminGroups)
 }
 
 /**
  * Require admin permissions - throws error if not admin
+ * @param user User object with groups
+ * @param adminGroups List of admin group names (default: ['env_hopper_ui_super_admins'])
  */
-export function requireAdmin(user: UserWithGroups | null | undefined): void {
-  if (!isAdmin(user)) {
+export function requireAdmin(
+  user: UserWithGroups | null | undefined,
+  adminGroups: Array<string> = ['env_hopper_ui_super_admins'],
+): void {
+  if (!isAdmin(user, adminGroups)) {
     throw new Error('Forbidden: Admin access required')
   }
 }

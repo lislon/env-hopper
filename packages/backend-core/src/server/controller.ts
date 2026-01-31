@@ -27,6 +27,12 @@ export function createTrpcRouter(auth?: BetterAuth) {
       },
     ),
 
+    authConfig: publicProcedure.query(async ({ ctx }) => {
+      return {
+        adminGroups: ctx.adminGroups,
+      }
+    }),
+
     availabilityMatrix: publicProcedure.query(async ({ ctx }) => {
       return await ctx.companySpecificBackend.getAvailabilityMatrix()
     }),

@@ -42,6 +42,9 @@ export async function createEhMiddleware(
   // Normalize backend provider to async factory function
   const resolveBackend = createBackendResolver(options.backend)
 
+  // Get admin groups from config with default
+  const adminGroups = options.auth.adminGroups ?? ['env_hopper_ui_super_admins']
+
   // Create tRPC context factory
   const createContext = async ({
     req,
@@ -65,7 +68,7 @@ export async function createEhMiddleware(
       }
     }
 
-    return createEhTrpcContext({ companySpecificBackend, user })
+    return createEhTrpcContext({ companySpecificBackend, user, adminGroups })
   }
 
   // Create Express router
@@ -78,7 +81,10 @@ export async function createEhMiddleware(
     trpcRouter,
     createContext: async () => {
       const companySpecificBackend = await resolveBackend()
-      return createEhTrpcContext({ companySpecificBackend })
+      return createEhTrpcContext({
+        companySpecificBackend,
+        adminGroups,
+      })
     },
     authConfig: options.auth,
   }

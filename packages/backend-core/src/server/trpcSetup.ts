@@ -55,7 +55,7 @@ const isAdminMiddleware = t.middleware(({ ctx, next }) => {
     })
   }
 
-  if (!isAdmin(ctx.user)) {
+  if (!isAdmin(ctx.user, ctx.adminGroups)) {
     throw new TRPCError({
       code: 'FORBIDDEN',
       message: 'You must be an admin to access this resource',

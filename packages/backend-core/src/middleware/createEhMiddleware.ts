@@ -52,10 +52,12 @@ export async function createEhMiddleware(
     const companySpecificBackend = await resolveBackend()
 
     let user = null
+    let userGroups: Array<string> = []
 
     // Check if dev mock user is configured
     if (options.auth.devMockUser) {
       user = createMockUserFromDevConfig(options.auth.devMockUser)
+      userGroups = options.auth.devMockUser.groups
     } else {
       // Extract user from session
       try {
@@ -63,12 +65,47 @@ export async function createEhMiddleware(
           headers: req.headers as HeadersInit,
         })
         user = session?.user ?? null
+
+        // If user is authenticated and Okta is configured, decode groups from access token
+        if (user && options.auth.oktaGroupsClaim) {
+          try {
+            // Get the current access token (auto-refreshes if expired)
+            // Note: better-auth requires providerId, but we use 'okta' as default
+            const tokenResult = await auth.api.getAccessToken({
+              body: {
+                providerId: 'okta',
+              },
+              headers: req.headers as HeadersInit,
+            })
+
+            if (tokenResult.accessToken) {
+              // Decode JWT to extract groups claim
+              const parts = tokenResult.accessToken.split('.')
+              if (parts.length === 3 && parts[1]) {
+                const payload = JSON.parse(
+                  Buffer.from(parts[1], 'base64').toString(),
+                )
+                const groups = payload[options.auth.oktaGroupsClaim]
+                userGroups = Array.isArray(groups) ? groups : []
+              }
+            }
+          } catch (error) {
+            console.error('[tRPC Context] Failed to get access token:', error)
+          }
+        }
       } catch (error) {
         console.error('[tRPC Context] Failed to get session:', error)
       }
     }
 
-    return createEhTrpcContext({ companySpecificBackend, user, adminGroups })
+    // Attach groups to user object for authorization checks
+    const userWithGroups = user ? { ...user, groups: userGroups } : null
+
+    return createEhTrpcContext({
+      companySpecificBackend,
+      user: userWithGroups,
+      adminGroups,
+    })
   }
 
   // Create Express router

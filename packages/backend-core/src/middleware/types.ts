@@ -57,6 +57,8 @@ export interface EhAuthConfig {
   devMockUser?: EhDevMockUser
   /** Admin group names for authorization (default: ['env_hopper_ui_super_admins']) */
   adminGroups?: Array<string>
+  /** Okta groups claim name (e.g., 'env_hopper_ui_groups') - used to extract groups from access token JWT */
+  oktaGroupsClaim?: string
 }
 
 /**

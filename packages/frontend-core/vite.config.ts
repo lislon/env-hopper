@@ -53,13 +53,12 @@ const config = defineConfig(({ mode }) => {
     },
     build: {
       copyPublicDir: false,
-      logLevel: 'verbose',
       rollupOptions: {
         onLog(level, log, handler) {
           // Log all chunk-related messages
           if (
-            log.message?.includes('chunk') ||
-            log.message?.includes('Chunk') ||
+            log.message.includes('chunk') ||
+            log.message.includes('Chunk') ||
             log.code === 'CHUNK_NAMING_CONFLICT' ||
             log.code === 'PLUGIN_WARNING' ||
             log.code === 'PLUGIN_ERROR'
@@ -67,7 +66,7 @@ const config = defineConfig(({ mode }) => {
             console.log(`[FRONTEND-CORE ROLLUP ${level}]`, log)
           }
           // Also log module resolution for admin routes
-          if (log.message?.includes('admin') || log.id?.includes('admin')) {
+          if (log.message.includes('admin') || log.id?.includes('admin')) {
             console.log(`[FRONTEND-CORE ROLLUP ${level}]`, log)
           }
           handler(level, log)
@@ -87,9 +86,7 @@ const config = defineConfig(({ mode }) => {
                   isEntry: chunkInfo.isEntry,
                   isDynamicEntry: chunkInfo.isDynamicEntry,
                   facadeModuleId: chunkInfo.facadeModuleId,
-                  moduleIds: chunkInfo.moduleIds?.slice(0, 3),
-                  imports: chunkInfo.imports?.slice(0, 3),
-                  dynamicImports: chunkInfo.dynamicImports?.slice(0, 3),
+                  moduleIds: chunkInfo.moduleIds.slice(0, 3),
                 },
                 null,
                 2,
@@ -133,10 +130,15 @@ const config = defineConfig(({ mode }) => {
           splitBehavior: ({ routeId }) => {
             if (routeId.startsWith('/admin')) {
               // Admin routes: split component into separate chunk
-              const result = [
-                ['component'],
-                ['pendingComponent', 'errorComponent'],
-              ]
+              const result: Array<
+                Array<
+                  | 'component'
+                  | 'loader'
+                  | 'errorComponent'
+                  | 'notFoundComponent'
+                  | 'pendingComponent'
+                >
+              > = [['component'], ['pendingComponent', 'errorComponent']]
               console.log(
                 `[TANSTACK SPLIT] Route ${routeId} -> split groups:`,
                 JSON.stringify(result, null, 2),

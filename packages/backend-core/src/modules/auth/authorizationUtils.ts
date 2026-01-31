@@ -33,18 +33,40 @@ export function getUserGroups(
   user: UserWithGroups | null | undefined,
 ): Array<string> {
   if (!user) {
+    console.log('[getUserGroups] No user provided')
     return []
   }
 
+  // Debug: Log all user properties to see what's available
+  console.log('[getUserGroups] === USER OBJECT DEBUG ===')
+  console.log('[getUserGroups] User ID:', user.id)
+  console.log('[getUserGroups] User email:', user.email)
+  console.log(
+    '[getUserGroups] User.env_hopper_groups:',
+    (user as any).env_hopper_groups,
+  )
+  console.log('[getUserGroups] User.groups:', user.groups)
+  console.log('[getUserGroups] User.oktaGroups:', (user as any).oktaGroups)
+  console.log('[getUserGroups] User.roles:', (user as any).roles)
+  console.log('[getUserGroups] All user keys:', Object.keys(user))
+  console.log(
+    '[getUserGroups] Full user object:',
+    JSON.stringify(user, null, 2),
+  )
+
   // Check common locations for group information
+  // Order of preference: custom env_hopper_groups first
   const groups =
+    (user as any).env_hopper_groups || // Custom env_hopper_groups claim (stores natera.env_hopper_ui.groups)
     user.groups || // Standard "groups" claim
-    (user as any).env_hopper_groups || // Custom env_hopper_groups claim
     (user as any).oktaGroups || // Okta-specific
     (user as any).roles || // Some providers use "roles"
     []
 
-  return Array.isArray(groups) ? groups : []
+  const result = Array.isArray(groups) ? groups : []
+  console.log('[getUserGroups] Final groups result:', result)
+
+  return result
 }
 
 /**

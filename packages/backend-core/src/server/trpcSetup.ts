@@ -55,10 +55,18 @@ const isAdminMiddleware = t.middleware(({ ctx, next }) => {
     })
   }
 
-  if (!isAdmin(ctx.user, ctx.adminGroups)) {
+  console.log('[isAdminMiddleware] === ADMIN CHECK DEBUG ===')
+  console.log('[isAdminMiddleware] User:', ctx.user.email)
+  console.log('[isAdminMiddleware] Required admin groups:', ctx.adminGroups)
+  console.log('[isAdminMiddleware] Calling isAdmin()...')
+
+  const hasAdminAccess = isAdmin(ctx.user, ctx.adminGroups)
+  console.log('[isAdminMiddleware] Has admin access:', hasAdminAccess)
+
+  if (!hasAdminAccess) {
     throw new TRPCError({
       code: 'FORBIDDEN',
-      message: 'You must be an admin to access this resource',
+      message: `You must be an admin to access this resource. Required groups: ${ctx.adminGroups.join(', ') || 'env_hopper_ui_super_admins'}`,
     })
   }
 

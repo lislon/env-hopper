@@ -22,6 +22,7 @@ model user {
   emailVerified Boolean   @default(false)
   image         String?
   role          String    @default("user") // 'user' | 'admin'
+  groups        String[]  @default([]) // OAuth provider groups (e.g., from Okta)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   accounts      account[]

@@ -7,16 +7,9 @@ import { isAdmin } from '~/modules/auth/authUtils'
 
 export const Route = createFileRoute('/admin')({
   beforeLoad: async ({ context }) => {
-    // Fetch current user session
-    const sessionResponse = await fetch('/api/auth/session', {
-      credentials: 'include',
-    })
-
-    let user = null
-    if (sessionResponse.ok) {
-      const data = await sessionResponse.json()
-      user = data?.user || null
-    }
+    // Fetch current user session with groups from tRPC (not better-auth's /api/auth/session)
+    const session = await context.trpcClient.auth.getSession.query()
+    const user = session.user
 
     // Check if user is authenticated
     if (!user) {

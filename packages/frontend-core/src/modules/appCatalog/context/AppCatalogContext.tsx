@@ -1,13 +1,18 @@
-import type { AppCategory, AppForCatalog } from '@env-hopper/backend-core'
+import type {
+  AppApprovalMethod,
+  AppForCatalog,
+  GroupingTagDefinition,
+} from '@env-hopper/backend-core'
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { createContext, use, useMemo } from 'react'
-import { ApiQueryMagazineAppCatalog } from '../api/ApiQueryMagazineAppCatalog'
+import { ApiQueryMagazineAppCatalog } from '~/modules/appCatalog'
 
 export interface AppCatalogContextIface {
   apps: Array<AppForCatalog>
   isLoadingApps: boolean
-  categories: Array<AppCategory>
+  tagsDefinitions: Array<GroupingTagDefinition>
+  approvalMethods: Array<AppApprovalMethod>
 }
 
 export const AppCatalogContext = createContext<
@@ -27,9 +32,10 @@ export function AppCatalogProvider({ children }: AppCatalogProviderProps) {
     () => ({
       apps: data?.apps ?? [],
       isLoadingApps,
-      categories: data?.categories ?? [],
+      tagsDefinitions: data?.tagsDefinitions ?? [],
+      approvalMethods: data?.approvalMethods ?? [],
     }),
-    [data?.apps, data?.categories, isLoadingApps],
+    [data?.approvalMethods, data?.apps, data?.tagsDefinitions, isLoadingApps],
   )
 
   return <AppCatalogContext value={contextValue}>{children}</AppCatalogContext>

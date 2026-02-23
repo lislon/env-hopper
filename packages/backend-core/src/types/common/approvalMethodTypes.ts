@@ -52,14 +52,34 @@ export type ApprovalMethodConfig =
 /**
  * Approval Method - stored in DbApprovalMethod
  */
-export interface ApprovalMethod {
-  id: string
-  type: ApprovalMethodType
+// export interface ApprovalMethod {
+//   slug: string
+//   type: ApprovalMethodType
+//   displayName: string
+//   config?: ApprovalMethodConfig
+//   createdAt?: Date
+//   updatedAt?: Date
+// }
+
+export type ApprovalMethod = {
+  slug: string
   displayName: string
-  config?: ApprovalMethodConfig
   createdAt?: Date
   updatedAt?: Date
-}
+} & (
+  | {
+      type: 'service'
+      config: ServiceConfig
+    }
+  | {
+      type: 'personTeam'
+      config: PersonTeamConfig
+    }
+  | {
+      type: 'custom'
+      config: CustomConfig
+    }
+)
 
 // ============================================================================
 // PER-APP APPROVAL DETAILS
@@ -69,8 +89,9 @@ export interface ApprovalMethod {
  * Role that can be requested for an app
  */
 export interface AppRole {
-  name: string
+  displayName: string
   description?: string
+  adminNotes?: string
 }
 
 /**
@@ -91,8 +112,9 @@ export interface ApprovalUrl {
 
 /**
  * Per-app approval details - stored as JSON in DbAppForCatalog
+ * All comment/text-like strings are markdown
  */
-export interface AppApprovalDetails {
+export interface AppAccessRequest {
   approvalMethodId: string // FK to DbApprovalMethod
 
   // Common fields (all types) - markdown text

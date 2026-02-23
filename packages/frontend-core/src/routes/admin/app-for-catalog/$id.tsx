@@ -9,7 +9,7 @@ import { IconPickerField } from '~/components/IconPickerField'
 import type { Screenshot } from '~/modules/appCatalog/ScreenshotManager'
 import { ScreenshotManager } from '~/modules/appCatalog/ScreenshotManager'
 import { ApprovalMethodSelector } from '~/modules/approvalMethod/ApprovalMethodSelector'
-import { ApprovalDetailsFormFields } from '~/modules/approvalMethod/ApprovalDetailsFormFields'
+import { AccessRequestFormFields } from '~/modules/approvalMethod/AccessRequestFormFields'
 import { Button } from '~/ui/button'
 import {
   Card,
@@ -92,7 +92,7 @@ const formSchema = z.object({
   // Approval Method fields
   hasApproval: z.boolean().default(false),
   approvalMethodId: z.string().optional(),
-  approvalDetails: z
+  accessRequest: z
     .object({
       approvalMethodId: z.string().optional(),
       comments: z.string().optional(),
@@ -128,8 +128,8 @@ function RouteComponent() {
 
   const app = loaderData.app
 
-  const approvalDetails = app?.approvalDetails as any
-  const hasApproval = !!approvalDetails
+  const accessRequest = app?.accessRequest as any
+  const hasApproval = !!accessRequest
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema as unknown as never),
@@ -151,8 +151,8 @@ function RouteComponent() {
             2,
           ),
           hasApproval,
-          approvalMethodId: approvalDetails?.approvalMethodId,
-          approvalDetails: hasApproval ? approvalDetails : undefined,
+          approvalMethodId: accessRequest?.approvalMethodId,
+          accessRequest: hasApproval ? accessRequest : undefined,
         }
       : {
           slug: '',
@@ -166,7 +166,7 @@ function RouteComponent() {
           links: '[]',
           hasApproval: false,
           approvalMethodId: undefined,
-          approvalDetails: undefined,
+          accessRequest: undefined,
         },
   })
   const formControl = form.control as unknown as Control<FieldValues>
@@ -236,28 +236,28 @@ function RouteComponent() {
           : undefined
 
       // Process approval details
-      let approvalDetailsPayload: any = undefined
+      let accessRequestPayload: any = undefined
       if (
         formData.hasApproval &&
         formData.approvalMethodId &&
-        formData.approvalDetails
+        formData.accessRequest
       ) {
-        approvalDetailsPayload = {
+        accessRequestPayload = {
           approvalMethodId: formData.approvalMethodId,
-          comments: formData.approvalDetails.comments || undefined,
-          requestPrompt: formData.approvalDetails.requestPrompt || undefined,
+          comments: formData.accessRequest.comments || undefined,
+          requestPrompt: formData.accessRequest.requestPrompt || undefined,
           postApprovalInstructions:
-            formData.approvalDetails.postApprovalInstructions || undefined,
-          roles: formData.approvalDetails.roles?.length
-            ? formData.approvalDetails.roles
+            formData.accessRequest.postApprovalInstructions || undefined,
+          roles: formData.accessRequest.roles?.length
+            ? formData.accessRequest.roles
             : undefined,
-          approvers: formData.approvalDetails.approvers?.length
-            ? formData.approvalDetails.approvers
+          approvers: formData.accessRequest.approvers?.length
+            ? formData.accessRequest.approvers
             : undefined,
-          urls: formData.approvalDetails.urls?.length
-            ? formData.approvalDetails.urls
+          urls: formData.accessRequest.urls?.length
+            ? formData.accessRequest.urls
             : undefined,
-          whoToReachOut: formData.approvalDetails.whoToReachOut || undefined,
+          whoToReachOut: formData.accessRequest.whoToReachOut || undefined,
         }
       }
 
@@ -270,7 +270,7 @@ function RouteComponent() {
         appUrl: formData.appUrl || undefined,
         notes: formData.notes || undefined,
         links: links && links.length > 0 ? links : undefined,
-        approvalDetails: approvalDetailsPayload,
+        accessRequest: accessRequestPayload,
       }
 
       if (isNew) {
@@ -497,7 +497,7 @@ function RouteComponent() {
                             )}
                           />
 
-                          <ApprovalDetailsFormFields
+                          <AccessRequestFormFields
                             control={formControl}
                             approvalMethodId={approvalMethodIdValue}
                           />

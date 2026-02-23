@@ -60,7 +60,7 @@ const columns: Array<ColumnDef<SerializedApprovalMethod>> = [
     ),
   },
   {
-    id: 'config',
+    accessorKey: 'config',
     header: 'Configuration',
     cell: ({ row }) => {
       const config = row.original.config as Record<string, unknown> | null
@@ -133,7 +133,7 @@ function RouteComponent() {
       <CrudList
         data={approvalMethods}
         columns={columns as any}
-        getRowId={(item) => item.id}
+        getRowId={(item) => item.slug}
         title="Approval Methods"
         createButtonLabel="Add Method"
         emptyMessage="No approval methods configured"
@@ -153,7 +153,7 @@ function RouteComponent() {
           await updateMutation.mutateAsync(data)
         }}
         onDelete={async (item) => {
-          await deleteMutation.mutateAsync({ id: item.id })
+          await deleteMutation.mutateAsync({ slug: item.slug })
         }}
       />
     </div>

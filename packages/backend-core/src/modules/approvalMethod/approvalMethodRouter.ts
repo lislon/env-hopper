@@ -2,7 +2,14 @@ import { z } from 'zod'
 import { Prisma } from '@prisma/client'
 import { getDbClient } from '../../db'
 import { adminProcedure, publicProcedure, router } from '../../server/trpcSetup'
-import type { ApprovalMethod, ApprovalMethodConfig } from '../../types/index'
+import type {
+  ApprovalMethod,
+  ApprovalMethodConfig,
+  CustomConfig,
+  PersonTeamConfig,
+  ServiceConfig,
+} from '../../types'
+import { generateSlugFromDisplayName } from './slugUtils'
 
 // Zod schemas
 const ReachOutContactSchema = z.object({
@@ -11,7 +18,7 @@ const ReachOutContactSchema = z.object({
 })
 
 const ServiceConfigSchema = z.object({
-  url: z.string().url().optional(),
+  url: z.url().optional(),
   icon: z.string().optional(),
 })
 
@@ -34,7 +41,7 @@ const CreateApprovalMethodSchema = z.object({
 })
 
 const UpdateApprovalMethodSchema = z.object({
-  id: z.string(),
+  slug: z.string(),
   type: z.enum(['service', 'personTeam', 'custom']).optional(),
   displayName: z.string().min(1).optional(),
   config: ApprovalMethodConfigSchema.optional(),
@@ -45,20 +52,35 @@ const UpdateApprovalMethodSchema = z.object({
  * This ensures tRPC infers proper types for frontend consumers.
  */
 function toApprovalMethod(db: {
-  id: string
+  slug: string
   type: ApprovalMethod['type']
   displayName: string
   config: ApprovalMethodConfig | null
   createdAt: Date
   updatedAt: Date
 }): ApprovalMethod {
-  return {
-    id: db.id,
-    type: db.type,
+  // Handle discriminated union by explicitly narrowing based on type
+  const baseFields = {
+    slug: db.slug,
     displayName: db.displayName,
-    config: db.config ?? undefined,
     createdAt: db.createdAt,
     updatedAt: db.updatedAt,
+  }
+
+  // Provide default empty config if null, as ApprovalMethod discriminated union requires config
+  const config = db.config ?? {}
+
+  switch (db.type) {
+    case 'service':
+      return { ...baseFields, type: 'service', config: config as ServiceConfig }
+    case 'personTeam':
+      return {
+        ...baseFields,
+        type: 'personTeam',
+        config: config as PersonTeamConfig,
+      }
+    case 'custom':
+      return { ...baseFields, type: 'custom', config: config as CustomConfig }
   }
 }
 
@@ -75,11 +97,11 @@ export function createApprovalMethodRouter() {
 
     // Public: get by ID
     getById: publicProcedure
-      .input(z.object({ id: z.string() }))
+      .input(z.object({ slug: z.string() }))
       .query(async ({ input }): Promise<ApprovalMethod | null> => {
         const prisma = getDbClient()
         const result = await prisma.dbApprovalMethod.findUnique({
-          where: { id: input.id },
+          where: { slug: input.slug },
         })
         return result ? toApprovalMethod(result) : null
       }),
@@ -91,6 +113,7 @@ export function createApprovalMethodRouter() {
         const prisma = getDbClient()
         const result = await prisma.dbApprovalMethod.create({
           data: {
+            slug: generateSlugFromDisplayName(input.displayName),
             type: input.type,
             displayName: input.displayName,
             config: input.config ?? Prisma.JsonNull,
@@ -104,9 +127,9 @@ export function createApprovalMethodRouter() {
       .input(UpdateApprovalMethodSchema)
       .mutation(async ({ input }): Promise<ApprovalMethod> => {
         const prisma = getDbClient()
-        const { id, ...updateData } = input
+        const { slug, ...updateData } = input
         const result = await prisma.dbApprovalMethod.update({
-          where: { id },
+          where: { slug },
           data: {
             ...(updateData.type !== undefined && { type: updateData.type }),
             ...(updateData.displayName !== undefined && {
@@ -122,11 +145,11 @@ export function createApprovalMethodRouter() {
 
     // Admin: delete
     delete: adminProcedure
-      .input(z.object({ id: z.string() }))
+      .input(z.object({ slug: z.string() }))
       .mutation(async ({ input }): Promise<ApprovalMethod> => {
         const prisma = getDbClient()
         const result = await prisma.dbApprovalMethod.delete({
-          where: { id: input.id },
+          where: { slug: input.slug },
         })
         return toApprovalMethod(result)
       }),

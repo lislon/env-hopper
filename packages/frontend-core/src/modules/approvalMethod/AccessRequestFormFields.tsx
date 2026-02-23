@@ -15,15 +15,15 @@ import { Input } from '~/ui/input'
 import { Button } from '~/ui/button'
 import { ApiQueryMagazineApprovalMethod } from './api/ApiQueryMagazineApprovalMethod'
 
-interface ApprovalDetailsFormFieldsProps {
+interface AccessRequestFormFieldsProps {
   control: Control<FieldValues>
   approvalMethodId: string | undefined
 }
 
-export function ApprovalDetailsFormFields({
+export function AccessRequestFormFields({
   control,
   approvalMethodId,
-}: ApprovalDetailsFormFieldsProps) {
+}: AccessRequestFormFieldsProps) {
   const { data: method } = useQuery({
     ...ApiQueryMagazineApprovalMethod.getById(approvalMethodId!),
     enabled: !!approvalMethodId,
@@ -61,7 +61,7 @@ export function ApprovalDetailsFormFields({
       {/* Common Fields */}
       <FormField
         control={control}
-        name="approvalDetails.comments"
+        name="accessRequest.comments"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Comments</FormLabel>
@@ -78,7 +78,7 @@ export function ApprovalDetailsFormFields({
 
       <FormField
         control={control}
-        name="approvalDetails.requestPrompt"
+        name="accessRequest.requestPrompt"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Request Prompt</FormLabel>
@@ -99,7 +99,7 @@ export function ApprovalDetailsFormFields({
       {/* Roles List */}
       <FormField
         control={control}
-        name="approvalDetails.roles"
+        name="accessRequest.roles"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Available Roles</FormLabel>
@@ -128,7 +128,7 @@ export function ApprovalDetailsFormFields({
       {/* Approvers List */}
       <FormField
         control={control}
-        name="approvalDetails.approvers"
+        name="accessRequest.approvers"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Approvers</FormLabel>
@@ -164,7 +164,7 @@ export function ApprovalDetailsFormFields({
       {/* URLs List */}
       <FormField
         control={control}
-        name="approvalDetails.urls"
+        name="accessRequest.urls"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Related URLs</FormLabel>
@@ -192,7 +192,7 @@ export function ApprovalDetailsFormFields({
 
       <FormField
         control={control}
-        name="approvalDetails.postApprovalInstructions"
+        name="accessRequest.postApprovalInstructions"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Post-Approval Instructions</FormLabel>
@@ -211,7 +211,7 @@ export function ApprovalDetailsFormFields({
       {method.type === 'personTeam' && (
         <FormField
           control={control}
-          name="approvalDetails.whoToReachOut"
+          name="accessRequest.whoToReachOut"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Who to Reach Out</FormLabel>

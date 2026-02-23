@@ -1,21 +1,23 @@
-import { createHash } from 'node:crypto';
-import sharp from 'sharp';
+import { createHash } from 'node:crypto'
+import type { FormatEnum } from 'sharp'
+import sharp from 'sharp'
+import type { ParseAssetParams, ParseAssetReturn } from './assetRestController'
 
 /**
  * Extract image dimensions from a buffer using sharp
  */
 export async function getImageDimensions(
   buffer: Buffer,
-): Promise<{ width: number | null; height: number | null }> {
+): Promise<{ width?: number; height?: number }> {
   try {
     const metadata = await sharp(buffer).metadata()
     return {
-      width: metadata.width ?? null,
-      height: metadata.height ?? null,
+      width: metadata.width,
+      height: metadata.height,
     }
   } catch (error) {
     console.error('Error extracting image dimensions:', error)
-    return { width: null, height: null }
+    return { width: undefined, height: undefined }
   }
 }
 
@@ -66,7 +68,9 @@ export function generateChecksum(buffer: Buffer): string {
 /**
  * Detect image format from mime type
  */
-export function getImageFormat(mimeType: string): 'png' | 'webp' | 'jpeg' | null {
+export function getImageFormat(
+  mimeType: string,
+): 'png' | 'webp' | 'jpeg' | null {
   if (mimeType.includes('png')) return 'png'
   if (mimeType.includes('webp')) return 'webp'
   if (mimeType.includes('jpeg') || mimeType.includes('jpg')) return 'jpeg'
@@ -78,4 +82,33 @@ export function getImageFormat(mimeType: string): 'png' | 'webp' | 'jpeg' | null
  */
 export function isRasterImage(mimeType: string): boolean {
   return mimeType.startsWith('image/') && !mimeType.includes('svg')
+}
+
+export async function parseAssetMeta(
+  p: ParseAssetParams,
+): Promise<ParseAssetReturn> {
+  // Get image dimensions using our utility
+  const { width, height, format, size } = await sharp(p.buffer).metadata()
+
+  const formatToMime: Partial<Record<keyof FormatEnum, string>> = {
+    jpeg: 'image/jpeg',
+    jpg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    avif: 'image/avif',
+    tiff: 'image/tiff',
+    gif: 'image/gif',
+    heif: 'image/heif',
+    raw: 'application/octet-stream',
+  }
+
+  return {
+    checksum: generateChecksum(p.buffer),
+    width,
+    height,
+    mimeType: format
+      ? (formatToMime[format] ?? `image/${format}`)
+      : 'application/octet-stream',
+    fileSize: size || 0,
+  }
 }

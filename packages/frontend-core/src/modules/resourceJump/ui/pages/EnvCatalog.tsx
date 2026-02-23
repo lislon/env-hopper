@@ -1,19 +1,19 @@
 import type { EnvBaseInfo } from '@env-hopper/backend-core'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
-    flexRender,
-    getCoreRowModel,
-    useReactTable,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
 } from '@tanstack/react-table'
 import { useMemo } from 'react'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '~/ui/table'
 
 type Row = EnvBaseInfo
@@ -24,12 +24,12 @@ export function EnvCatalogPage() {
   const columns = useMemo<Array<ColumnDef<Row>>>(
     () => [
       {
-        id: 'name',
+        slug: 'name',
         header: 'Environment',
         accessorKey: 'displayName',
       },
       {
-        id: 'slug',
+        slug: 'slug',
         header: 'Slug',
         accessorKey: 'slug',
       },

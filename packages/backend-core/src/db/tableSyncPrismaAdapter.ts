@@ -26,6 +26,7 @@ export interface TableSyncParamsPrisma<
   TUniqColumns extends ReadonlyArray<ScalarKeys<TPrismaModelName>>,
   TRelationColumns extends ReadonlyArray<ObjectKeys<TPrismaModelName>>,
 > {
+  id?: ScalarKeys<TPrismaModelName>
   prisma: TPrismaClient
   prismaModelName: TPrismaModelName
   uniqColumns: TUniqColumns
@@ -53,7 +54,7 @@ export function tableSyncPrisma<
   TPrismaModelName extends Prisma.ModelName,
   TUniqColumns extends ReadonlyArray<ScalarKeys<TPrismaModelName>>,
   TRelationColumns extends ReadonlyArray<ObjectKeys<TPrismaModelName>>,
-  TId extends ScalarKeys<TPrismaModelName> & (string | number) = 'id',
+  TId extends ScalarKeys<TPrismaModelName> = ScalarKeys<TPrismaModelName>,
 >(
   params: TableSyncParamsPrisma<
     TPrismaClient,
@@ -71,9 +72,10 @@ export function tableSyncPrisma<
   } = params
   const prismOperations = getPrismaModelOperations(prisma, prismaModelName)
 
-  // @ts-expect-error This is too difficult for me to come up with right types
+  const idColumn = (params.id ?? 'id') as TId
+  // @ts-ignore maybe someday later (never)
   return tableSync<MakeTFromPrismaModel<TPrismaModelName>, TUniqColumns, TId>({
-    id: 'id' as TId,
+    id: idColumn,
     uniqColumns,
     readAll: async () => {
       const findManyArgs = whereGlobal
@@ -118,10 +120,9 @@ export function tableSyncPrisma<
         }
 
         if (upsertOnly !== true) {
-          // @ts-expect-error This is too difficult for me to come up with right types
           await txOps.deleteMany({
             where: {
-              id: {
+              [idColumn]: {
                 in: deleteIds,
               },
             },

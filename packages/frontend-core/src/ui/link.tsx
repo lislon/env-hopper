@@ -29,3 +29,5 @@ const CreatedLinkComponent = createLink(BasicLinkComponent)
 export const Link: LinkComponent<typeof BasicLinkComponent> = (props) => {
   return <CreatedLinkComponent preload={'intent'} {...props} />
 }
+
+export const ExternalLink = BasicLinkComponent

@@ -26,11 +26,7 @@ export function ScreenshotItem({ screenshot, onDelete }: ScreenshotItemProps) {
   }
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="relative group"
-    >
+    <div ref={setNodeRef} style={style} className="relative group">
       <div className="aspect-video rounded-md overflow-hidden border border-border bg-muted">
         <img
           src={screenshot.url}

@@ -1,15 +1,22 @@
-import { AppWindow, ExternalLink } from 'lucide-react'
+import { AppWindow, ExternalLink, X } from 'lucide-react'
 import React from 'react'
 
-import type { AppForCatalog } from '@env-hopper/backend-core'
+import type {
+  AppForCatalog,
+  GroupingTagDefinition,
+} from '@env-hopper/backend-core'
 
 import { cn } from '~/lib/utils'
 import { Badge } from '~/ui/badge'
-import { Card, CardContent } from '~/ui/card'
+import { Button } from '~/ui/button'
+import { ScreenshotGallery } from '../components/ScreenshotGallery'
 
 export interface AppCatalogGridProps {
   apps: Array<AppForCatalog>
+  selectedAppSlug?: string
+  groupingDefinition?: GroupingTagDefinition
   onAppClick?: (app: AppForCatalog) => void
+  onCloseDetails?: () => void
 }
 
 function getIconUrl(iconName: string): string {
@@ -94,42 +101,31 @@ function AppScreenshot({ app }: { app: AppForCatalog }) {
   )
 }
 
-function AppCard({
-  app,
-  onClick,
-}: {
-  app: AppForCatalog
-  onClick?: () => void
-}) {
-  const hasUrl = app.appUrl
+function AppDetails({ app }: { app: AppForCatalog }) {
+  const [isGalleryOpen, setIsGalleryOpen] = React.useState(false)
+  const [galleryInitialIndex, setGalleryInitialIndex] = React.useState(0)
+
+  const handleScreenshotClick = (index: number) => {
+    setGalleryInitialIndex(index)
+    setIsGalleryOpen(true)
+  }
 
   return (
-    <Card
-      className="group hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 flex flex-col h-full cursor-pointer hover:border-primary/50"
-      onClick={onClick}
-    >
-      {/* Screenshot Section */}
-      <div className="w-full shrink-0">
-        <AppScreenshot app={app} />
-      </div>
-
-      <CardContent className="p-6 flex flex-col gap-3 flex-1">
-        {/* Icon and Title Row */}
-        <div className="flex items-start gap-3">
-          <AppIcon app={app} />
-          <div className="flex-1 min-w-0">
-            <div className="font-semibold text-base leading-tight mb-1">
-              {app.displayName || 'Unnamed App'}
-            </div>
-            {hasUrl && (
+    <>
+      <div className="flex h-full flex-col overflow-y-auto p-6">
+        {/* Icon and Title */}
+        <div className="flex items-center gap-4 border-b pb-6">
+          <AppIcon app={app} className="size-16" />
+          <div>
+            <h2 className="text-2xl font-semibold">{app.displayName}</h2>
+            {app.appUrl && (
               <a
                 href={app.appUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1"
-                onClick={(e) => e.stopPropagation()}
+                className="mt-1 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
               >
-                Visit app
+                {app.appUrl.replaceAll(/https?:\/\//g, '')}
                 <ExternalLink className="size-3" />
               </a>
             )}
@@ -138,35 +134,262 @@ function AppCard({
 
         {/* Description */}
         {app.description && (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {app.description}
-          </p>
+          <div className="mt-6">
+            <h3 className="mb-2 text-sm font-medium">Description</h3>
+            <p className="text-sm text-muted-foreground">{app.description}</p>
+          </div>
         )}
 
-        {/* Tags/Teams */}
-        <div className="flex flex-wrap gap-1.5 mt-auto">
-          {app.tags?.slice(0, 3).map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-          {(app.tags?.length || 0) > 3 && (
-            <Badge variant="outline" className="text-xs">
-              +{(app.tags?.length || 0) - 3}
-            </Badge>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        {/* Tags */}
+        {app.tags && app.tags.length > 0 && (
+          <div className="mt-6">
+            <h3 className="mb-2 text-sm font-medium">Tags</h3>
+            <div className="flex flex-wrap gap-2">
+              {app.tags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Teams */}
+        {app.teams && app.teams.length > 0 && (
+          <div className="mt-6">
+            <h3 className="mb-2 text-sm font-medium">Teams</h3>
+            <div className="flex flex-wrap gap-2">
+              {app.teams.map((team) => (
+                <Badge key={team} variant="outline" className="text-xs">
+                  {team}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Screenshots - Clickable preview */}
+        {app.screenshotIds && app.screenshotIds.length > 0 && (
+          <div className="mt-6">
+            <h3 className="mb-2 text-sm font-medium">
+              Screenshots ({app.screenshotIds.length})
+            </h3>
+            <div
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => handleScreenshotClick(0)}
+            >
+              <AppScreenshot app={app} />
+              {app.screenshotIds.length > 1 && (
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Click to view all {app.screenshotIds.length} screenshots
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Screenshot Gallery Dialog */}
+      <ScreenshotGallery
+        app={app}
+        screenshotIds={app.screenshotIds || []}
+        open={isGalleryOpen}
+        onOpenChange={setIsGalleryOpen}
+        initialIndex={galleryInitialIndex}
+        title={`${app.displayName} - Screenshots`}
+      />
+    </>
   )
 }
 
-export function AppCatalogGrid({ apps, onAppClick }: AppCatalogGridProps) {
+interface GroupedApps {
+  groupName: string
+  apps: Array<AppForCatalog>
+}
+
+function groupApps(
+  apps: Array<AppForCatalog>,
+  groupingDef?: GroupingTagDefinition,
+): Array<GroupedApps> {
+  if (!groupingDef) {
+    const sortedApps = [...apps].sort((a, b) =>
+      a.displayName.localeCompare(b.displayName),
+    )
+    return [{ groupName: 'All Apps', apps: sortedApps }]
+  }
+
+  const grouped = new Map<string, Array<AppForCatalog>>()
+  const ungrouped: Array<AppForCatalog> = []
+
+  for (const app of apps) {
+    const matchingTag = app.tags?.find((tag) =>
+      tag.startsWith(`${groupingDef.prefix}:`),
+    )
+
+    if (matchingTag) {
+      const value = matchingTag.split(':')[1]
+      if (value) {
+        const tagValue = groupingDef.values.find((v) => v.value === value)
+        const displayName = tagValue?.displayName || value
+
+        if (!grouped.has(displayName)) {
+          grouped.set(displayName, [])
+        }
+        grouped.get(displayName)!.push(app)
+      } else {
+        ungrouped.push(app)
+      }
+    } else {
+      ungrouped.push(app)
+    }
+  }
+
+  const result: Array<GroupedApps> = []
+  for (const [groupName, appsInGroup] of grouped) {
+    // Sort apps alphabetically within each group
+    const sortedGroupApps = appsInGroup.sort((a, b) =>
+      a.displayName.localeCompare(b.displayName),
+    )
+    result.push({ groupName, apps: sortedGroupApps })
+  }
+
+  if (ungrouped.length > 0) {
+    // Sort ungrouped apps alphabetically
+    const sortedUngrouped = ungrouped.sort((a, b) =>
+      a.displayName.localeCompare(b.displayName),
+    )
+    result.push({ groupName: 'Other', apps: sortedUngrouped })
+  }
+
+  return result
+}
+
+export function AppCatalogGrid({
+  apps,
+  selectedAppSlug,
+  groupingDefinition,
+  onAppClick,
+  onCloseDetails,
+}: AppCatalogGridProps) {
+  const tableRef = React.useRef<HTMLTableElement>(null)
+  const rowRefs = React.useRef<Map<string, HTMLTableRowElement>>(new Map())
+  const lastClickedRef = React.useRef<string | null>(null)
+
+  const selectedApp = selectedAppSlug
+    ? apps.find((a) => a.slug === selectedAppSlug)
+    : null
+
+  const groupedApps = groupApps(apps, groupingDefinition)
+
+  // Auto-scroll when app is selected from URL (not from click)
+  React.useEffect(() => {
+    if (selectedAppSlug && selectedAppSlug !== lastClickedRef.current) {
+      const rowElement = rowRefs.current.get(selectedAppSlug)
+      if (rowElement) {
+        rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }, [selectedAppSlug])
+
+  const handleAppClick = (app: AppForCatalog) => {
+    lastClickedRef.current = app.slug
+    onAppClick?.(app)
+  }
+
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {apps.map((app) => (
-        <AppCard key={app.id} app={app} onClick={() => onAppClick?.(app)} />
-      ))}
+    <div
+      className={cn(
+        'grid gap-4 w-full',
+        selectedApp ? 'grid-cols-[1fr_400px]' : 'grid-cols-1',
+      )}
+    >
+      {/* Left Column - Table */}
+      <div className="overflow-y-auto">
+        <table className="w-full table-fixed" ref={tableRef}>
+          <thead className="sticky top-0 border-b bg-background z-10">
+            <tr>
+              <th className="px-4 py-3 text-left font-medium text-sm">
+                Application
+              </th>
+              <th className="px-4 py-3 text-left font-medium text-sm">
+                Description
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {groupedApps.map((group) => (
+              <React.Fragment key={group.groupName}>
+                {/* Group Header */}
+                <tr className="bg-muted/50">
+                  <td
+                    colSpan={2}
+                    className="px-4 py-6 sticky top-[49px] bg-muted/90 backdrop-blur z-10"
+                  >
+                    <div className="flex items-center justify-center">
+                      <span className="font-bold text-lg tracking-widest uppercase leading-loose text-muted-foreground">
+                        {group.groupName}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+                {/* Group Apps */}
+                {group.apps.map((app) => (
+                  <tr
+                    key={app.id}
+                    ref={(el) => {
+                      if (el && app.slug) {
+                        rowRefs.current.set(app.slug, el)
+                      } else if (app.slug) {
+                        rowRefs.current.delete(app.slug)
+                      }
+                    }}
+                    onClick={() => handleAppClick(app)}
+                    className={cn(
+                      'border-b cursor-pointer transition-colors',
+                      selectedApp?.id === app.id
+                        ? 'bg-blue-100 dark:bg-blue-950 hover:bg-blue-200 dark:hover:bg-blue-900'
+                        : 'hover:bg-muted/30',
+                    )}
+                  >
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-3">
+                        <AppIcon app={app} className="size-6" />
+                        <span className="font-medium">
+                          {app.displayName || 'Unnamed App'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className="text-sm text-muted-foreground line-clamp-2">
+                        {app.description || '—'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Right Column - Sticky Detail Panel */}
+      {selectedApp && (
+        <div className="sticky top-0 max-h-screen overflow-hidden">
+          <div className="h-full overflow-y-auto border-l bg-background relative">
+            {/* Close Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 z-20 size-8 rounded-full bg-background/80 backdrop-blur hover:bg-background"
+              onClick={onCloseDetails}
+            >
+              <X className="size-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+            <AppDetails app={selectedApp} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

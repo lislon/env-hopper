@@ -1,10 +1,9 @@
 import type { PrismaClient as CorePrismaClient } from '@prisma/client'
-import { Prisma } from '@prisma/client'
 
 export interface ApprovalMethodSyncInput {
+  slug: string
   type: 'service' | 'personTeam' | 'custom'
   displayName: string
-  config?: Record<string, unknown>
 }
 
 /**
@@ -22,24 +21,18 @@ export async function syncApprovalMethods(
     methods.map((method) =>
       prisma.dbApprovalMethod.upsert({
         where: {
-          type_displayName: {
-            type: method.type,
-            displayName: method.displayName,
-          },
+          slug: method.slug,
         },
         update: {
-          config: method.config ?? Prisma.JsonNull,
+          displayName: method.displayName,
+          type: method.type,
         },
         create: {
+          slug: method.slug,
           type: method.type,
           displayName: method.displayName,
-          config: method.config ?? Prisma.JsonNull,
         },
       }),
     ),
-  )
-
-  console.log(
-    `✓ Approval methods sync complete! Synced ${methods.length} methods`,
   )
 }

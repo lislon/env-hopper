@@ -119,7 +119,8 @@ export function mapFeatureConfigToBackend(config: FeatureBackendConfig): {
       },
       appCatalog: {
         apps: [],
-        categories: [],
+        tagsDefinitions: [],
+        approvalMethods: [],
       },
       // Minimal empty data for other procedures (not used in tests)
       availabilityMatrix: {

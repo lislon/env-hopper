@@ -66,7 +66,7 @@ export function useResourceJumpHistory() {
       // Add new item
       const id = await db.resourceJumpHistory.add(historyItem)
       setHistory((prev) => [
-        { ...historyItem, id },
+        { ...historyItem, slug: id },
         ...prev.slice(0, DISPLAY_HISTORY_ITEMS - 1),
       ])
 

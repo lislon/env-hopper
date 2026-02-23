@@ -31,7 +31,16 @@ export function tableSync<
       const existingData = await params.readAll()
 
       function toStrKey(item: T) {
-        return params.uniqColumns.map((column) => item[column]).join(':')
+        return params.uniqColumns
+          .map((column) => {
+            if (item[column] === undefined) {
+              throw new Error(
+                `unique column ${String(column)} can't be undefined in entry ${JSON.stringify(item)}`,
+              )
+            }
+            return item[column]
+          })
+          .join(':')
       }
 
       const existingByStrKey = objectify(existingData, (item) => toStrKey(item))
@@ -72,9 +81,16 @@ export function tableSync<
       for (const item of upsertItems) {
         deletedStrKeys.delete(toStrKey(item))
       }
-      const deletedIds = [...deletedStrKeys].map(
-        (strKey) => existingByStrKey[strKey]?.[params.id],
-      )
+      const deletedIds = [...deletedStrKeys].map((strKey) => {
+        const existingByStrKeyElementElement =
+          existingByStrKey[strKey]?.[params.id]
+        if (existingByStrKeyElementElement === undefined) {
+          throw new Error(
+            `The PK column '${params.id}' is not presented in ${JSON.stringify(existingByStrKey[strKey])}`,
+          )
+        }
+        return existingByStrKeyElementElement
+      })
 
       const inserted = await params.writeAll(
         toCreate || [],

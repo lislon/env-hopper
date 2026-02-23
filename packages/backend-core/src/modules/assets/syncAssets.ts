@@ -17,12 +17,12 @@ export interface SyncAssetsConfig {
 
 /**
  * Sync local asset files (icons and screenshots) from directories into the database.
- * 
+ *
  * This function allows consuming applications to sync asset files without directly
  * exposing the Prisma client. It handles:
  * - Icon files: Assigned to apps by matching filename to icon name patterns
  * - Screenshot files: Assigned to apps by matching filename to app ID (format: <app-id>_screenshot_<no>.<ext>)
- * 
+ *
  * @param config Configuration with paths to icon and screenshot directories
  */
 export async function syncAssets(config: SyncAssetsConfig): Promise<{
@@ -43,8 +43,13 @@ export async function syncAssets(config: SyncAssetsConfig): Promise<{
   // Sync screenshots from local/screenshots directory
   if (config.screenshotsDir) {
     console.log(`📷 Syncing screenshots from ${config.screenshotsDir}...`)
-    screenshotsUpserted = await syncScreenshotsFromDirectory(prisma, config.screenshotsDir)
-    console.log(`   ✓ Upserted ${screenshotsUpserted} screenshots and assigned to apps`)
+    screenshotsUpserted = await syncScreenshotsFromDirectory(
+      prisma,
+      config.screenshotsDir,
+    )
+    console.log(
+      `   ✓ Upserted ${screenshotsUpserted} screenshots and assigned to apps`,
+    )
   }
 
   return {
@@ -94,19 +99,20 @@ async function syncIconsFromDirectory(
         let height: number | null = null
         if (!ext.includes('svg')) {
           const { width: w, height: h } = await getImageDimensions(buffer)
-          width = w
-          height = h
+          width = w ?? null
+          height = h ?? null
         }
 
         // Determine MIME type
-        const mimeType = {
-          png: 'image/png',
-          jpg: 'image/jpeg',
-          jpeg: 'image/jpeg',
-          gif: 'image/gif',
-          webp: 'image/webp',
-          svg: 'image/svg+xml',
-        }[ext] || 'application/octet-stream'
+        const mimeType =
+          {
+            png: 'image/png',
+            jpg: 'image/jpeg',
+            jpeg: 'image/jpeg',
+            gif: 'image/gif',
+            webp: 'image/webp',
+            svg: 'image/svg+xml',
+          }[ext] || 'application/octet-stream'
 
         await prisma.dbAsset.create({
           data: {
@@ -146,7 +152,10 @@ async function syncScreenshotsFromDirectory(
     const files = readdirSync(screenshotsDir)
 
     // Group screenshots by app ID
-    const screenshotsByApp = new Map<string, Array<{ path: string; ext: string }>>()
+    const screenshotsByApp = new Map<
+      string,
+      Array<{ path: string; ext: string }>
+    >()
 
     for (const file of files) {
       // Parse filename: <app-id>_screenshot_<no>.<ext>
@@ -197,7 +206,10 @@ async function syncScreenshotsFromDirectory(
               const existingApp = await prisma.dbAppForCatalog.findUnique({
                 where: { slug: appId },
               })
-              if (existingApp && !existingApp.screenshotIds.includes(existing.id)) {
+              if (
+                existingApp &&
+                !existingApp.screenshotIds.includes(existing.id)
+              ) {
                 await prisma.dbAppForCatalog.update({
                   where: { slug: appId },
                   data: {
@@ -212,13 +224,14 @@ async function syncScreenshotsFromDirectory(
             const { width, height } = await getImageDimensions(buffer)
 
             // Determine MIME type
-            const mimeType = {
-              png: 'image/png',
-              jpg: 'image/jpeg',
-              jpeg: 'image/jpeg',
-              gif: 'image/gif',
-              webp: 'image/webp',
-            }[screenshot.ext.toLowerCase()] || 'application/octet-stream'
+            const mimeType =
+              {
+                png: 'image/png',
+                jpg: 'image/jpeg',
+                jpeg: 'image/jpeg',
+                gif: 'image/gif',
+                webp: 'image/webp',
+              }[screenshot.ext.toLowerCase()] || 'application/octet-stream'
 
             // Create screenshot asset
             const asset = await prisma.dbAsset.create({
@@ -229,8 +242,8 @@ async function syncScreenshotsFromDirectory(
                 checksum,
                 mimeType,
                 fileSize: buffer.length,
-                width,
-                height,
+                width: width ?? null,
+                height: height ?? null,
               },
             })
 
@@ -246,7 +259,10 @@ async function syncScreenshotsFromDirectory(
 
             count++
           } catch (error) {
-            console.warn(`  ⚠ Failed to sync screenshot ${screenshot.path}:`, error)
+            console.warn(
+              `  ⚠ Failed to sync screenshot ${screenshot.path}:`,
+              error,
+            )
           }
         }
       } catch (error) {

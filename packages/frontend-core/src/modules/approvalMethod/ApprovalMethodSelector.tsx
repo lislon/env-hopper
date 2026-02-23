@@ -44,12 +44,12 @@ export function ApprovalMethodSelector({
       queryClient.invalidateQueries({
         queryKey: ['approvalMethod'],
       })
-      onChange(newMethod.id)
+      onChange(newMethod.slug)
       setShowQuickAdd(false)
     },
   })
 
-  const selectedMethod = methods.find((m) => m.id === value)
+  const selectedMethod = methods.find((m) => m.slug === value)
 
   const TYPE_LABELS: Record<string, string> = {
     service: 'Service',
@@ -91,17 +91,17 @@ export function ApprovalMethodSelector({
               <CommandGroup>
                 {methods.map((method) => (
                   <CommandItem
-                    key={method.id}
+                    key={method.slug}
                     value={method.displayName}
                     onSelect={() => {
-                      onChange(method.id)
+                      onChange(method.slug)
                       setOpen(false)
                     }}
                   >
                     <Check
                       className={cn(
                         'mr-2 h-4 w-4',
-                        value === method.id ? 'opacity-100' : 'opacity-0',
+                        value === method.slug ? 'opacity-100' : 'opacity-0',
                       )}
                     />
                     <span className="flex items-center gap-2">

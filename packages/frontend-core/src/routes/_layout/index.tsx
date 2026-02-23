@@ -10,67 +10,52 @@ import { HomePage } from '~/modules/resourceJump/ui/pages/HomePage'
 
 const searchSchema = z.object({
   app: z.string().optional(),
+  filterTag: z.string().optional(),
 })
-
-export type RootLayoutLoaderReturn =
-  | {
-      envHopperLoader: {
-        envSlug: string | undefined
-        resourceSlug: string | undefined
-        crossCuttingParams: Array<{ slug: string; stringValue: string }>
-      }
-    }
-  | { appCatalogLoader: Record<string, never> }
 
 export const Route = createFileRoute('/_layout/')({
   component: RouteComponent,
   validateSearch: searchSchema,
-  loader(ctx) {
+  async loader(ctx) {
     const appMode = getAppMode()
     if (appMode === 'hopper') {
-      return resourceJumpRouteLoader({
+      const envHopperLoader = await resourceJumpRouteLoader({
         params: {
           envSlug: undefined,
           appSlug: undefined,
           subValue: undefined,
         },
         context: ctx.context,
-      }).then(
-        (loaderData) =>
-          ({
-            envHopperLoader: loaderData,
-          }) as RootLayoutLoaderReturn,
-      )
+      })
+      return {
+        appMode,
+        envHopperLoader,
+      }
     } else {
-      return appCatalogRouteLoader().then(
-        (loaderData) =>
-          ({
-            appCatalogLoader: loaderData,
-          }) as RootLayoutLoaderReturn,
-      )
+      const appCatalogLoader = await appCatalogRouteLoader()
+      return {
+        appMode,
+        appCatalogLoader,
+      }
     }
   },
 })
 
 function RouteComponent() {
-  const appMode = getAppMode()
-  const loaderData = Route.useLoaderData()
+  const { appMode, envHopperLoader } = Route.useLoaderData()
   const { queryClient, trpcClient } = Route.useRouteContext()
 
   // Show catalog layout by default in catalog mode
-  if (appMode === 'catalog' && 'appCatalogLoader' in loaderData) {
+  if (appMode === 'catalog') {
     return (
       <AppCatalogLayout queryClient={queryClient} trpcClient={trpcClient}>
         <AppCatalogPage />
       </AppCatalogLayout>
     )
-  }
-
-  // Show hopper layout in hopper mode
-  if ('envHopperLoader' in loaderData) {
+  } else {
     return (
       <ResourceJumpLayout
-        loaderData={loaderData.envHopperLoader}
+        loaderData={envHopperLoader}
         queryClient={queryClient}
         trpcClient={trpcClient}
       >
@@ -78,6 +63,4 @@ function RouteComponent() {
       </ResourceJumpLayout>
     )
   }
-
-  return null
 }

@@ -1,13 +1,68 @@
 import { getDbClient } from '../../db/client'
 import type {
+  AppApprovalMethod,
   AppCatalogData,
   AppCategory,
   AppForCatalog,
+  GroupingTagDefinition,
 } from '../../types/common/appCatalogTypes'
+import type {
+  CustomConfig,
+  PersonTeamConfig,
+  ServiceConfig,
+} from '../../types/common/approvalMethodTypes'
+import { omit } from 'radashi'
 
 function capitalize(word: string): string {
   if (!word) return word
   return word.charAt(0).toUpperCase() + word.slice(1)
+}
+
+export async function getGroupingTagDefinitionsFromPrisma(): Promise<
+  Array<GroupingTagDefinition>
+> {
+  const prisma = getDbClient()
+
+  // Fetch all apps
+  const rows = await prisma.dbAppTagDefinition.findMany()
+  return rows.map((row) => omit(row, ['id', 'updatedAt', 'createdAt']))
+}
+
+export async function getApprovalMethodsFromPrisma(): Promise<
+  Array<AppApprovalMethod>
+> {
+  const prisma = getDbClient()
+
+  // Fetch all apps
+  const rows = await prisma.dbApprovalMethod.findMany()
+
+  return rows.map((row) => {
+    // Handle discriminated union by explicitly narrowing based on type
+    const baseFields = {
+      slug: row.slug,
+      displayName: row.displayName,
+    }
+
+    // Provide default empty config if null, as AppApprovalMethod discriminated union requires config
+    const config = row.config ?? {}
+
+    switch (row.type) {
+      case 'service':
+        return {
+          ...baseFields,
+          type: 'service',
+          config: config as ServiceConfig,
+        }
+      case 'personTeam':
+        return {
+          ...baseFields,
+          type: 'personTeam',
+          config: config as PersonTeamConfig,
+        }
+      case 'custom':
+        return { ...baseFields, type: 'custom', config: config as CustomConfig }
+    }
+  })
 }
 
 export async function getAppsFromPrisma(): Promise<Array<AppForCatalog>> {
@@ -17,9 +72,8 @@ export async function getAppsFromPrisma(): Promise<Array<AppForCatalog>> {
   const rows = await prisma.dbAppForCatalog.findMany()
 
   return rows.map((row) => {
-    const access = row.access as unknown as AppForCatalog['access']
-    const approvalDetails =
-      row.approvalDetails as unknown as AppForCatalog['approvalDetails']
+    const accessRequest =
+      row.accessRequest as unknown as AppForCatalog['accessRequest']
     const teams = (row.teams as unknown as Array<string> | null) ?? []
     const tags = (row.tags as unknown as AppForCatalog['tags']) ?? []
     const screenshotIds =
@@ -33,8 +87,7 @@ export async function getAppsFromPrisma(): Promise<Array<AppForCatalog>> {
       slug: row.slug,
       displayName: row.displayName,
       description: row.description,
-      access,
-      approvalDetails,
+      accessRequest,
       teams,
       notes,
       tags,
@@ -68,6 +121,10 @@ export async function getAppCatalogData(
   const apps = getAppsOptional
     ? await getAppsOptional()
     : await getAppsFromPrisma()
-  const categories = deriveCategories(apps)
-  return { apps, categories }
+
+  return {
+    apps,
+    tagsDefinitions: await getGroupingTagDefinitionsFromPrisma(),
+    approvalMethods: await getApprovalMethodsFromPrisma(),
+  }
 }

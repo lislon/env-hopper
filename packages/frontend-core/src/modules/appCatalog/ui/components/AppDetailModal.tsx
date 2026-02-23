@@ -1,12 +1,23 @@
 import type { AppForCatalog } from '@env-hopper/backend-core'
-import { AppWindow, Edit, ExternalLink, X } from 'lucide-react'
-import React, { useEffect } from 'react'
-import { Link } from '@tanstack/react-router'
+import { AppWindowIcon, EditIcon, ExternalLinkIcon, XIcon } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
 import { useUser } from '~/modules/auth/AuthContext'
 import { Badge } from '~/ui/badge'
 import { Button } from '~/ui/button'
 import { ScrollArea } from '~/ui/scroll-area'
 import { Separator } from '~/ui/separator'
+import { useAppCatalogContext } from '~/modules/appCatalog'
+import { ExternalLink, Link } from '~/ui/link'
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '~/ui/table'
+import { ScreenshotGallery } from './ScreenshotGallery'
 
 export interface AppDetailModalProps {
   app: AppForCatalog
@@ -35,15 +46,15 @@ function AppIcon({ app }: { app: AppForCatalog }) {
 
   return (
     <div className="flex items-center justify-center rounded-lg bg-primary/10 text-primary size-16">
-      <AppWindow className="size-8" />
+      <AppWindowIcon className="size-8" />
     </div>
   )
 }
 
-function ScreenshotGallery({ app }: { app: AppForCatalog }) {
-  const [imageErrors, setImageErrors] = React.useState<Set<string>>(
-    () => new Set(),
-  )
+function ScreenshotPreview({ app }: { app: AppForCatalog }) {
+  const [imageErrors, setImageErrors] = useState<Set<string>>(() => new Set())
+  const [galleryOpen, setGalleryOpen] = useState(false)
+  const [initialIndex, setInitialIndex] = useState(0)
 
   const screenshotIds = app.screenshotIds || []
 
@@ -59,97 +70,120 @@ function ScreenshotGallery({ app }: { app: AppForCatalog }) {
     setImageErrors((prev) => new Set([...prev, id]))
   }
 
+  const handleScreenshotClick = (index: number) => {
+    setInitialIndex(index)
+    setGalleryOpen(true)
+  }
+
   return (
-    <div className="space-y-4">
-      {screenshotIds.map((screenshotId, index) => {
-        const screenshotUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'}/api/screenshots/${screenshotId}`
-        const hasError = imageErrors.has(screenshotId)
+    <>
+      <div className="space-y-4">
+        {screenshotIds.map((screenshotId, index) => {
+          const screenshotUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'}/api/screenshots/${screenshotId}`
+          const hasError = imageErrors.has(screenshotId)
 
-        if (hasError) {
-          return null
-        }
+          if (hasError) {
+            return null
+          }
 
-        return (
-          <div
-            key={screenshotId}
-            className="w-full rounded-lg overflow-hidden bg-muted/30"
-          >
-            <img
-              src={screenshotUrl}
-              alt={`${app.displayName} screenshot ${index + 1}`}
-              className="w-full h-auto object-contain max-h-[600px]"
-              onError={() => handleImageError(screenshotId)}
-            />
-          </div>
-        )
-      })}
-    </div>
+          return (
+            <div
+              key={screenshotId}
+              className="w-full rounded-lg overflow-hidden bg-muted/30 cursor-pointer hover:ring-2 hover:ring-primary transition-all"
+              onClick={() => handleScreenshotClick(index)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleScreenshotClick(index)
+                }
+              }}
+            >
+              <img
+                src={screenshotUrl}
+                alt={`${app.displayName} screenshot ${index + 1}`}
+                className="h-auto object-contain max-h-[600px]"
+                onError={() => handleImageError(screenshotId)}
+              />
+            </div>
+          )
+        })}
+      </div>
+
+      <ScreenshotGallery
+        app={app}
+        screenshotIds={screenshotIds}
+        initialIndex={initialIndex}
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
+        title={`${app.displayName} - Screenshots`}
+      />
+    </>
   )
 }
 
 function AccessSection({ app }: { app: AppForCatalog }) {
-  const { access } = app
-
-  if (!access) {
-    return (
-      <div className="space-y-2">
-        <div className="text-sm font-medium">Access Method</div>
-        <div className="text-sm text-muted-foreground">
-          Contact administrator
-        </div>
-      </div>
-    )
+  const { approvalMethods } = useAppCatalogContext()
+  const { accessRequest } = app
+  if (!accessRequest) {
+    return null
   }
 
-  const getAccessLabel = () => {
-    switch (access.type) {
-      case 'self-service':
-        return 'Self-service access'
-      case 'ticketing':
-        return 'Access via ticketing'
-      case 'bot':
-        return 'Bot-based access'
-      case 'email':
-        return 'Email for access'
-      case 'documentation':
-        return 'See documentation'
-      case 'manual':
-        return 'Manual access'
-      default:
-        return 'Access available'
-    }
+  const approvalMethod = approvalMethods.find(
+    (m) => accessRequest.approvalMethodId === m.slug,
+  )
+  if (approvalMethod?.type !== 'service') {
+    return 'not service'
   }
 
   return (
     <div className="space-y-2">
       <div className="text-sm font-medium">Access Method</div>
-      <div className="text-sm text-muted-foreground">{getAccessLabel()}</div>
-      {access.type === 'documentation' &&
-        'url' in access &&
-        typeof access.url === 'string' && (
-          <a
-            href={access.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-          >
-            View documentation
-            <ExternalLink className="size-3" />
-          </a>
-        )}
+      <div className="text-sm text-muted-foreground">
+        <ExternalLink
+          href={approvalMethod.config.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={'inline-flex gap-1'}
+        >
+          {approvalMethod.displayName}
+          <ExternalLinkIcon className="size-3" />
+        </ExternalLink>
+      </div>
+      {accessRequest.roles && (
+        <>
+          <div className="text-sm font-medium">Roles</div>
+          <div className="text-sm text-muted-foreground">
+            <Table>
+              <TableCaption>A list of your recent invoices.</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Role</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Notes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {accessRequest.roles.map((role) => (
+                  <TableRow key={role.displayName}>
+                    <TableCell className="font-medium">
+                      {role.displayName}
+                    </TableCell>
+                    <TableCell>{role.description}</TableCell>
+                    <TableCell>{role.adminNotes}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
+
+      <pre>{JSON.stringify(accessRequest, null, 2)}</pre>
     </div>
   )
 }
-
-// TODO: Phase 4-6 - Implement new ApprovalDetailsSection component
-// function ApproverSection({ approver }: { approver: Approver }) {
-//   return (
-//     <div className="space-y-2">
-//       <div className="text-sm font-medium">Approval Required</div>
-//       <ApproverDisplay approver={approver} />
-//     </div>
-//   )
-// }
 
 export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
   const user = useUser()
@@ -198,7 +232,7 @@ export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
             className="absolute top-6 right-6 z-10 size-10 rounded-full bg-background/80 backdrop-blur hover:bg-background"
             onClick={onClose}
           >
-            <X className="size-5" />
+            <XIcon className="size-5" />
             <span className="sr-only">Close</span>
           </Button>
 
@@ -211,18 +245,13 @@ export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
               className="absolute top-6 right-[4.5rem] z-10"
             >
               <Link to="/admin/app-for-catalog/$id" params={{ id: app.slug }}>
-                <Edit className="size-4 mr-2" />
+                <EditIcon className="size-4 mr-2" />
                 Edit
               </Link>
             </Button>
           )}
 
           <div className="bg-background rounded-lg shadow-2xl border border-border p-8 space-y-8">
-            {/* Screenshots Section */}
-            <ScreenshotGallery app={app} />
-
-            <Separator />
-
             {/* App Details Section */}
             <div className="space-y-6">
               {/* Header with Icon and Title */}
@@ -237,8 +266,8 @@ export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
                     >
-                      Visit application
-                      <ExternalLink className="size-4" />
+                      {app.appUrl.replaceAll(/^https?:\/\//g, '')}
+                      <ExternalLinkIcon className="size-4" />
                     </a>
                   )}
                 </div>
@@ -256,7 +285,7 @@ export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
               <AccessSection app={app} />
 
               {/* Approval Details Section - TODO: Update to use new approval system */}
-              {/* {app.approvalDetails && <ApprovalDetailsSection approvalDetails={app.approvalDetails} />} */}
+              {/* {app.accessRequest && <AccessRequestSection accessRequest={app.accessRequest} />} */}
 
               {/* Tags */}
               {app.tags && app.tags.length > 0 && (
@@ -317,6 +346,8 @@ export function AppDetailModal({ app, isOpen, onClose }: AppDetailModalProps) {
                 </div>
               )}
             </div>
+            <Separator />
+            <ScreenshotPreview app={app} />
           </div>
         </ScrollArea>
       </div>

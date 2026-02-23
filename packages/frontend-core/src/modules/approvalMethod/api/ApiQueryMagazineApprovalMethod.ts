@@ -16,11 +16,11 @@ export class ApiQueryMagazineApprovalMethod {
     })
   }
 
-  static getById(id: string) {
+  static getById(slug: string) {
     return queryOptions({
-      queryKey: ['approvalMethod', 'getById', id] as const,
+      queryKey: ['approvalMethod', 'getById', slug] as const,
       queryFn: (ctx) =>
-        getTrpcFromMeta(ctx).approvalMethod.getById.query({ id }),
+        getTrpcFromMeta(ctx).approvalMethod.getById.query({ slug }),
     })
   }
 

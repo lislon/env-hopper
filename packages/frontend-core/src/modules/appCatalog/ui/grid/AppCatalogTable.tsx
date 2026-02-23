@@ -1,18 +1,18 @@
 import type { AppForCatalog } from '@env-hopper/backend-core'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
-    flexRender,
-    getCoreRowModel,
-    useReactTable,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
 } from '@tanstack/react-table'
 import { useMemo } from 'react'
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '~/ui/table'
 import { getAppUrl } from './appCatalogUtils'
 
@@ -24,17 +24,17 @@ export function AppCatalogTable({ apps }: AppCatalogTableProps) {
   const columns = useMemo<Array<ColumnDef<AppForCatalog>>>(
     () => [
       {
-        id: 'name',
+        slug: 'name',
         header: 'App Name',
         cell: ({ row }) => row.original.displayName,
       },
       {
-        id: 'url',
+        slug: 'url',
         header: 'URL',
         cell: ({ row }) => getAppUrl(row.original),
       },
       {
-        id: 'description',
+        slug: 'description',
         header: 'Description',
         cell: ({ row }) => (
           <div className="max-w-md line-clamp-2">

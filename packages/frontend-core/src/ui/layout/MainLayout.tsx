@@ -9,7 +9,11 @@ export interface MainLayoutProps {
   breadcrumbs?: React.ReactNode
 }
 
-export function MainLayout({ children, headerMiddle, breadcrumbs }: MainLayoutProps) {
+export function MainLayout({
+  children,
+  headerMiddle,
+  breadcrumbs,
+}: MainLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 flex">
@@ -21,7 +25,7 @@ export function MainLayout({ children, headerMiddle, breadcrumbs }: MainLayoutPr
           </div>
         </main>
       </div>
-      <Footer />
+      {import.meta.env.DEV && <Footer />}
     </div>
   )
 }

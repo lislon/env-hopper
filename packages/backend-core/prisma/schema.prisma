@@ -41,20 +41,20 @@ model session {
 }
 
 model account {
-  id                 String  @id
-  userId             String
-  user               user    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accountId          String
-  providerId         String
-  refreshToken       String?
-  accessToken        String?
-  accessTokenExpiresAt DateTime?
+  id                    String    @id
+  userId                String
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  providerId            String
+  refreshToken          String?
+  accessToken           String?
+  accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  idToken            String?
-  scope              String?
-  password           String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  idToken               String?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@unique([providerId, accountId])
 }
@@ -79,7 +79,7 @@ enum ApprovalMethodType {
 }
 
 model DbApprovalMethod {
-  id          String             @id @default(cuid())
+  slug        String             @id
   type        ApprovalMethodType
   displayName String
   /// [ApprovalMethodConfig] - Type-specific configuration
@@ -88,32 +88,42 @@ model DbApprovalMethod {
   updatedAt   DateTime           @updatedAt
 
   @@unique([type, displayName])
-  @@index([type])
 }
 
 model DbAppForCatalog {
-  id              String    @id @default(cuid())
-  slug            String    @unique // URL-friendly identifier for navigation
-  displayName     String
-  description     String
+  id            String   @id @default(cuid())
+  slug          String   @unique // URL-friendly identifier for navigation
+  displayName   String
+  description   String
   /// [AccessMethod]
-  access          Json?
-  teams           String[]  @default([])
-  /// [AppApprovalDetails] - Per-app approval configuration linking to ApprovalMethod
-  approvalDetails Json?
-  notes           String?
-  tags            String[]  @default([])
-  appUrl          String?
+  access        Json?
+  teams         String[] @default([])
+  /// [AppAccessRequest] - Per-app approval configuration linking to ApprovalMethod
+  accessRequest Json?
+  notes         String?
+  tags          String[] @default([])
+  appUrl        String?
   /// [AppLink[]]
-  links           Json?     // Array of {displayName?: string, url: string}
-  iconName        String?   // Optional icon identifier matching DbAsset.name
-  screenshotIds   String[]  @default([]) // Ordered array of DbAsset IDs
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  links         Json? // Array of {displayName?: string, url: string}
+  iconName      String? // Optional icon identifier matching DbAsset.name
+  screenshotIds String[] @default([]) // Ordered array of DbAsset IDs
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([displayName])
   @@index([slug])
   @@index([tags])
+}
+
+model DbAppTagDefinition {
+  id          String   @id @default(cuid())
+  prefix      String   @unique
+  displayName String
+  description String
+  /// [GroupingTagValue[]]
+  values      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum AssetType {
@@ -122,17 +132,17 @@ enum AssetType {
 }
 
 model DbAsset {
-  id              String    @id @default(cuid())
-  name            String    @unique // Name with extension (e.g., "jira.svg", "github.png")
-  assetType       AssetType @default(icon)
-  content         Bytes     // Binary storage for all asset types (SVG, PNG, etc)
-  checksum        String    @unique // SHA-256 of content for deduplication
-  mimeType        String    // e.g., "image/svg+xml", "image/png", "image/jpeg"
-  fileSize        Int       // Size in bytes
-  width           Int?      // Image width in pixels
-  height          Int?      // Image height in pixels
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id        String    @id @default(cuid())
+  name      String    @unique // Name with extension (e.g., "jira.svg", "github.png")
+  assetType AssetType @default(icon)
+  content   Bytes // Binary storage for all asset types (SVG, PNG, etc)
+  checksum  String // SHA-256 of content for deduplication
+  mimeType  String // e.g., "image/svg+xml", "image/png", "image/jpeg"
+  fileSize  Int // Size in bytes
+  width     Int? // Image width in pixels
+  height    Int? // Image height in pixels
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([name])
   @@index([assetType])

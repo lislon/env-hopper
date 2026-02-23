@@ -1,8 +1,38 @@
-import type { Approver } from '@env-hopper/backend-core'
+import type { AppRole } from '@env-hopper/backend-core'
 import { Bot, ExternalLink, Mail, Ticket, User, Users } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '~/ui/card'
 import { Badge } from '~/ui/badge'
 import { Button } from '~/ui/button'
+
+// Legacy approver types - kept for backward compatibility
+type ApproverBase = {
+  comment?: string
+  roles?: Array<AppRole>
+  approvalPolicy?: string
+  postApprovalInstructions?: string
+  seeMoreUrls?: Array<string>
+}
+
+type BotApprover = ApproverBase & {
+  type: 'bot'
+  url?: string
+  prompt?: string
+}
+
+type TicketApprover = ApproverBase & {
+  type: 'ticket'
+  url?: string
+  requestFormTemplate?: string
+}
+
+type PersonApprover = ApproverBase & {
+  type: 'person'
+  email?: string
+  url?: string
+  description?: string
+}
+
+type Approver = BotApprover | TicketApprover | PersonApprover
 
 interface ApproverDisplayProps {
   approver: Approver
@@ -17,6 +47,8 @@ export function ApproverDisplay({ approver }: ApproverDisplayProps) {
         return <Ticket className="size-5" />
       case 'person':
         return <Users className="size-5" />
+      default:
+        return null
     }
   }
 
@@ -28,6 +60,8 @@ export function ApproverDisplay({ approver }: ApproverDisplayProps) {
         return 'Ticket System'
       case 'person':
         return 'Person/Group Approval'
+      default:
+        return 'Unknown'
     }
   }
 
@@ -55,9 +89,9 @@ export function ApproverDisplay({ approver }: ApproverDisplayProps) {
           <div className="space-y-2">
             <div className="text-sm font-medium">Available Roles</div>
             <div className="flex flex-wrap gap-2">
-              {approver.roles.map((role, idx) => (
+              {approver.roles.map((role: AppRole, idx: number) => (
                 <Badge key={idx} variant="secondary" className="text-xs">
-                  {role.name}
+                  {role.displayName}
                   {role.description && (
                     <span className="ml-1 text-muted-foreground">
                       - {role.description}
@@ -103,7 +137,7 @@ export function ApproverDisplay({ approver }: ApproverDisplayProps) {
           <div className="space-y-2 pt-2 border-t">
             <div className="text-sm font-medium">More Information</div>
             <div className="space-y-1">
-              {approver.seeMoreUrls.map((url, idx) => (
+              {approver.seeMoreUrls.map((url: string, idx: number) => (
                 <a
                   key={idx}
                   href={url}

@@ -17,11 +17,8 @@ declare global {
     // DbApprovalMethod.config - Type-specific configuration
     type ApprovalMethodConfig = import('./types/index').ApprovalMethodConfig
 
-    // DbAppForCatalog.access - Universal access method
-    type AccessMethod = import('./types/index').AccessMethod
-
-    // DbAppForCatalog.approvalDetails - Per-app approval configuration
-    type AppApprovalDetails = import('./types/index').AppApprovalDetails
+    // DbAppForCatalog.accessRequest - Per-app approval configuration
+    type AppAccessRequest = import('./types/index').AppAccessRequest
 
     // DbAppForCatalog.links - Array of links
     interface AppLink {
@@ -29,7 +26,7 @@ declare global {
       url: string
     }
 
-    // AppRole used within approvalDetails
+    // AppRole used within accessRequest
     type AppRole = import('./types/index').AppRole
   }
 }

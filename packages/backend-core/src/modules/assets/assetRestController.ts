@@ -1,15 +1,9 @@
-import type { AssetType } from '@prisma/client'
 import type { Request, Response, Router } from 'express'
 import multer from 'multer'
 import sharp from 'sharp'
 import { getDbClient } from '../../db'
-import {
-  generateChecksum,
-  getImageDimensions,
-  getImageFormat,
-  isRasterImage,
-  resizeImage,
-} from './assetUtils'
+import { getImageFormat, isRasterImage, resizeImage } from './assetUtils'
+import { upsertAsset } from './upsertAsset'
 
 // Configure multer for memory storage
 const upload = multer({
@@ -34,6 +28,20 @@ export interface AssetRestControllerConfig {
   basePath: string
 }
 
+export interface ParseAssetParams {
+  buffer: Buffer
+  originalFilename: string
+  fileSize?: number
+}
+
+export interface ParseAssetReturn {
+  checksum: string
+  fileSize: number
+  mimeType: string
+  width?: number
+  height?: number
+}
+
 /**
  * Registers REST endpoints for universal asset upload and retrieval
  *
@@ -48,6 +56,7 @@ export function registerAssetRestController(
   config: AssetRestControllerConfig,
 ): void {
   const { basePath } = config
+  const prisma = getDbClient()
 
   // Upload endpoint - accepts multipart/form-data
   router.post(
@@ -61,66 +70,22 @@ export function registerAssetRestController(
         }
 
         const name = req.body['name'] as string
-        const assetTypeInput = req.body['assetType']
-        const assetType = (assetTypeInput as AssetType | undefined) ?? 'icon'
+        const assetType = req.body['assetType']
 
         if (!name) {
           res.status(400).json({ error: 'Name is required' })
           return
         }
 
-        const prisma = getDbClient()
-
-        // Compute checksum of the binary for content-based deduplication.
-        const checksum = generateChecksum(req.file.buffer)
-
-        // If an asset with the same checksum already exists, reuse it instead of storing duplicate binary.
-        const existing = await prisma.dbAsset.findUnique({
-          where: { checksum },
-          select: {
-            id: true,
-            name: true,
-            assetType: true,
-            checksum: true,
-            mimeType: true,
-            fileSize: true,
-            width: true,
-            height: true,
-            createdAt: true,
-          },
+        const id = await upsertAsset({
+          prisma,
+          buffer: req.file.buffer,
+          name,
+          originalFilename: req.file.filename,
+          assetType,
         })
 
-        if (existing) {
-          res.status(200).json(existing)
-          return
-        }
-
-        // Get image dimensions using our utility
-        const { width, height } = await getImageDimensions(req.file.buffer)
-
-        const asset = await prisma.dbAsset.create({
-          data: {
-            name,
-            checksum,
-            assetType,
-            content: new Uint8Array(req.file.buffer),
-            mimeType: req.file.mimetype,
-            fileSize: req.file.size,
-            width,
-            height,
-          },
-        })
-
-        res.status(201).json({
-          id: asset.id,
-          name: asset.name,
-          assetType: asset.assetType,
-          mimeType: asset.mimeType,
-          fileSize: asset.fileSize,
-          width: asset.width,
-          height: asset.height,
-          createdAt: asset.createdAt,
-        })
+        res.status(201).json({ id })
       } catch (error) {
         console.error('Error uploading asset:', error)
         res.status(500).json({ error: 'Failed to upload asset' })
@@ -133,7 +98,6 @@ export function registerAssetRestController(
     try {
       const { id } = req.params
 
-      const prisma = getDbClient()
       const asset = await prisma.dbAsset.findUnique({
         where: { id },
         select: {
@@ -197,7 +161,6 @@ export function registerAssetRestController(
       try {
         const { id } = req.params
 
-        const prisma = getDbClient()
         const asset = await prisma.dbAsset.findUnique({
           where: { id },
           select: {
@@ -233,7 +196,6 @@ export function registerAssetRestController(
       try {
         const { name } = req.params
 
-        const prisma = getDbClient()
         const asset = await prisma.dbAsset.findUnique({
           where: { name },
           select: {

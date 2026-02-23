@@ -3,6 +3,7 @@ import type { ObjectKeys, ScalarKeys } from './tableSyncPrismaAdapter'
 
 interface CommonSyncTableInfo<TPrismaModelName extends Prisma.ModelName> {
   prismaModelName: TPrismaModelName
+  id?: ScalarKeys<TPrismaModelName>
   uniqColumns: Array<ScalarKeys<TPrismaModelName>>
   relationColumns?: Array<ObjectKeys<TPrismaModelName>>
 }
@@ -14,6 +15,15 @@ type TableSyncMagazineType = Partial<{
 export const TABLE_SYNC_MAGAZINE = {
   DbAppForCatalog: {
     prismaModelName: 'DbAppForCatalog',
+    uniqColumns: ['slug'],
+  },
+  DbAppTagDefinition: {
+    prismaModelName: 'DbAppTagDefinition',
+    uniqColumns: ['prefix'],
+  },
+  DbApprovalMethod: {
+    id: 'slug',
+    prismaModelName: 'DbApprovalMethod',
     uniqColumns: ['slug'],
   },
 } as const satisfies TableSyncMagazineType

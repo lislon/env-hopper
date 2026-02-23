@@ -38,7 +38,8 @@
     "test:unit:dev": "pnpm run test:unit --watch"
   },
   "dependencies": {
-    "eta": "^3.5.0"
+    "eta": "^3.5.0",
+    "type-fest": "^5.4.4"
   },
   "devDependencies": {
     "@tanstack/vite-config": "catalog:",

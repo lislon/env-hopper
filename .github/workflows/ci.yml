@@ -47,8 +47,8 @@ jobs:
         with:
           version: pnpm run changeset:version
           publish: pnpm run changeset:publish -- --tag alpha
-          commit: 'ci(alpha): version packages'
-          title: 'ci(alpha): version packages'
+          commit: 'chore: version packages (alpha)'
+          title: 'chore: version packages (alpha)'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -59,8 +59,8 @@ jobs:
         with:
           version: pnpm run changeset:version
           publish: pnpm run changeset:publish
-          commit: 'ci: version packages'
-          title: 'ci: version packages'
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

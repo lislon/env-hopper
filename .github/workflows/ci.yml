@@ -41,6 +41,20 @@ jobs:
         run: pnpm run test:ci --parallel=3
 
       # Snapshot publish for alpha branch
+      - name: Create snapshot changeset
+        if: github.ref == 'refs/heads/alpha'
+        run: |
+          cat > .changeset/snapshot-release.md << 'EOF'
+          ---
+          "@env-hopper/backend-core": patch
+          "@env-hopper/frontend-build-vite": patch
+          "@env-hopper/frontend-core": patch
+          "@env-hopper/shared-core": patch
+          "@env-hopper/table-sync": patch
+          ---
+
+          Snapshot release
+          EOF
       - name: Version (snapshot)
         if: github.ref == 'refs/heads/alpha'
         run: pnpm changeset version --snapshot alpha
@@ -49,7 +63,10 @@ jobs:
         run: pnpm run build:all
       - name: Publish (snapshot)
         if: github.ref == 'refs/heads/alpha'
-        run: pnpm changeset publish --tag alpha --no-git-tag
+        run: |
+          npm config list
+          npm whoami || echo "Not logged in (expected for OIDC)"
+          pnpm changeset publish --tag alpha --no-git-tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

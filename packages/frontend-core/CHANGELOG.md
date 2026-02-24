@@ -1,5 +1,11 @@
 # @env-hopper/frontend-core
 
+## 2.0.1-alpha-20260224192214
+
+### Patch Changes
+
+- Snapshot release from alpha branch
+
 ## 2.0.1-alpha-20260224152429
 
 ### Patch Changes

@@ -63,7 +63,7 @@ jobs:
         run: pnpm changeset version --snapshot alpha
       - name: Update lockfile (alpha)
         if: github.ref == 'refs/heads/alpha'
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
       - name: Build packages (alpha)
         if: github.ref == 'refs/heads/alpha'
         run: pnpm run build:all

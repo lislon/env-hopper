@@ -10,16 +10,15 @@ catalog:
   '@prisma/client': ^6.9.0
   '@tailwindcss/vite': ^4.0.5
   '@tanstack/eslint-config': ^0.3.4
-  '@tanstack/publish-config': ^0.2.2
   '@tanstack/query-sync-storage-persister': ^5.80.6
   '@tanstack/react-query': ^5.80.3
   '@tanstack/react-query-devtools': ^5.91.1
   '@tanstack/react-router': ^1.151.6
   '@tanstack/react-router-devtools': ^1.151.6
   '@tanstack/react-virtual': 3.13.13
+  '@tanstack/router-core': ^1.151.6
   '@tanstack/router-devtools': ^1.151.6
   '@tanstack/router-plugin': ^1.151.6
-  '@tanstack/router-core': ^1.151.6
   '@tanstack/vite-config': ^0.4.3
   '@testing-library/jest-dom': 6.6.3
   '@testing-library/react': ^16.2.0

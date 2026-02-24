@@ -22,6 +22,7 @@ env:
 permissions:
   contents: write
   id-token: write
+  pull-requests: write
 
 jobs:
   test-and-publish:
@@ -38,20 +39,31 @@ jobs:
         run: pnpm run prisma:generate
       - name: Run Tests
         run: pnpm run test:ci --parallel=3
-      - name: Publish
-        run: |
-          git config --global user.name 'Igor Golovin'
-          git config --global user.email 'lislon@users.noreply.github.com'
-          npm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
-          pnpm run cipublish
+
+      # Snapshot publish for alpha branch
+      - name: Version (snapshot)
+        if: github.ref == 'refs/heads/alpha'
+        run: pnpm changeset version --snapshot alpha
+      - name: Build
+        if: github.ref == 'refs/heads/alpha'
+        run: pnpm run build:all
+      - name: Publish (snapshot)
+        if: github.ref == 'refs/heads/alpha'
+        run: pnpm changeset publish --tag alpha --no-git-tag
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          TAG: ${{ inputs.tag }}
-    outputs:
-      new-release-published: ${{ steps.get-next-version.outputs.new-release-published }}
-      new-release-version: ${{ steps.get-next-version.outputs.new-release-version }}
-      new-release-git-tag: ${{ steps.get-next-version.outputs.new-release-git-tag }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Stable releases for main branch (using changesets/action)
+      - name: Run Changesets (version or publish)
+        if: github.ref == 'refs/heads/main'
+        uses: changesets/action@v1
+        with:
+          version: pnpm run changeset:version
+          publish: pnpm run changeset:publish
+          commit: 'ci: version packages'
+          title: 'ci: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # push:
   #   needs: test-and-publish

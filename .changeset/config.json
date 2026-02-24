@@ -10,7 +10,7 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [],
+  "ignore": ["@env-hopper/backend-example", "@env-hopper/frontend-example"],
   "snapshot": {
     "useCalculatedVersion": true
   }

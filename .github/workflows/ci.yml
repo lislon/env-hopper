@@ -30,7 +30,7 @@ jobs:
     if: github.repository_owner == 'lislon'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0
       - name: Setup Tools
@@ -40,45 +40,28 @@ jobs:
       - name: Run Tests
         run: pnpm run test:ci --parallel=3
 
-      # Snapshot publish for alpha branch
-      - name: Create snapshot changeset
+      # Alpha releases with @alpha tag (direct publish, no PR)
+      - name: Version packages (alpha)
         if: github.ref == 'refs/heads/alpha'
-        run: |
-          cat > .changeset/snapshot-release.md << 'EOF'
-          ---
-          "@env-hopper/backend-core": patch
-          "@env-hopper/frontend-build-vite": patch
-          "@env-hopper/frontend-core": patch
-          "@env-hopper/shared-core": patch
-          "@env-hopper/table-sync": patch
-          ---
-
-          Snapshot release
-          EOF
-      - name: Version (snapshot)
-        if: github.ref == 'refs/heads/alpha'
-        run: pnpm changeset version --snapshot alpha
-      - name: Build
+        run: pnpm changeset version
+      - name: Build packages (alpha)
         if: github.ref == 'refs/heads/alpha'
         run: pnpm run build:all
-      - name: Publish (snapshot)
+      - name: Publish to @alpha tag
         if: github.ref == 'refs/heads/alpha'
-        run: |
-          npm config list
-          npm whoami || echo "Not logged in (expected for OIDC)"
-          pnpm changeset publish --tag alpha --no-git-tag
+        run: pnpm changeset publish --tag alpha
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Stable releases for main branch (using changesets/action)
-      - name: Run Changesets (version or publish)
+      # Stable releases for main branch
+      - name: Run Changesets (main)
         if: github.ref == 'refs/heads/main'
-        uses: changesets/action@v1
+        uses: changesets/action@v1.5.3
         with:
           version: pnpm run changeset:version
           publish: pnpm run changeset:publish
-          commit: 'ci: version packages'
-          title: 'ci: version packages'
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

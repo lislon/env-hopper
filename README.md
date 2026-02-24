@@ -4,11 +4,7 @@ Env Hopper allow to keep a list of parameterized bookmarks for browser and it ai
 
 # Stage of project
 
-As of 2024-May-27 project is currently in development, not ready to be used on production.
-
-# Screenshot
-
-![Env Hopper Demo](docs/env_hopper.gif)
+As of 2026-Feb project is currently in development, not ready to be used on production.
 
 ## Local development
 
@@ -21,6 +17,7 @@ pnpm run -w dev
 ```
 
 This command will:
+
 - Start the backend server on `http://localhost:4001`
 - Start the frontend dev server on `http://localhost:4000`
 - Watch for changes in both projects (no restart needed)

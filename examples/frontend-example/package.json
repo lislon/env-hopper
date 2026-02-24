@@ -14,8 +14,8 @@
     "test:unit": "vitest"
   },
   "dependencies": {
-    "@env-hopper/frontend-build-vite": "2.0.1-alpha-20260224145405",
-    "@env-hopper/frontend-core": "2.0.1-alpha-20260224145405",
+    "@env-hopper/frontend-build-vite": "2.0.1-alpha-20260224152429",
+    "@env-hopper/frontend-core": "2.0.1-alpha-20260224152429",
     "cross-env": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"

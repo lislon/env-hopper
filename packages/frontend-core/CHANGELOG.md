@@ -1,5 +1,11 @@
 # @env-hopper/frontend-core
 
+## 2.0.1-alpha-20260224152429
+
+### Patch Changes
+
+- Changed readme
+
 ## 2.0.1-alpha-20260224145405
 
 ### Patch Changes

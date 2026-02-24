@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/frontend-example",
-  "version": "0.1.0",
+  "version": "2.0.1",
   "private": true,
   "type": "module",
   "main": "src/index.ts",
@@ -14,8 +14,8 @@
     "test:unit": "vitest"
   },
   "dependencies": {
-    "@env-hopper/frontend-build-vite": "^2.0.1-alpha.6",
-    "@env-hopper/frontend-core": "^2.0.1-alpha.9",
+    "@env-hopper/frontend-build-vite": "^2.0.1",
+    "@env-hopper/frontend-core": "^2.0.1",
     "cross-env": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"

@@ -24,15 +24,13 @@ export function ScreenshotGallery({
   title,
 }: ScreenshotGalleryProps) {
   // Transform screenshot IDs to full URLs
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'
-
   const images: Array<GalleryImage> = useMemo(
     () =>
       screenshotIds.map((id) => ({
-        url: `${baseUrl}/api/screenshots/${id}`,
+        url: `/api/screenshots/${id}`,
         alt: `${app.displayName} screenshot`,
       })),
-    [screenshotIds, app.displayName, baseUrl],
+    [screenshotIds, app.displayName],
   )
 
   // Don't render if no screenshots

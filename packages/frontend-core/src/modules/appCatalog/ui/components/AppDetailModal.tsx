@@ -26,8 +26,7 @@ export interface AppDetailModalProps {
 }
 
 function getIconUrl(iconName: string): string {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'
-  return `${baseUrl}/api/icons/${iconName}`
+  return `/api/icons/${iconName}`
 }
 
 function AppIcon({ app }: { app: AppForCatalog }) {
@@ -79,7 +78,7 @@ function ScreenshotPreview({ app }: { app: AppForCatalog }) {
     <>
       <div className="space-y-4">
         {screenshotIds.map((screenshotId, index) => {
-          const screenshotUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'}/api/screenshots/${screenshotId}`
+          const screenshotUrl = `/api/screenshots/${screenshotId}`
           const hasError = imageErrors.has(screenshotId)
 
           if (hasError) {

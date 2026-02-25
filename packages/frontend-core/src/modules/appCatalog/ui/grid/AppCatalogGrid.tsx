@@ -20,8 +20,7 @@ export interface AppCatalogGridProps {
 }
 
 function getIconUrl(iconName: string): string {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'
-  return `${baseUrl}/api/icons/${iconName}`
+  return `/api/icons/${iconName}`
 }
 
 function AppIcon({
@@ -76,7 +75,7 @@ function AppScreenshot({ app }: { app: AppForCatalog }) {
     )
   }
 
-  const screenshotImageUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4001'}/api/screenshots/${screenshotId}?size=512`
+  const screenshotImageUrl = `/api/screenshots/${screenshotId}?size=512`
 
   return (
     <div className="w-full bg-muted/50 rounded-lg overflow-hidden flex items-center justify-center min-h-64">

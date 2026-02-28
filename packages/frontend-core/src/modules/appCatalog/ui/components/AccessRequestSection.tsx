@@ -1,8 +1,4 @@
-import type {
-  AppAccessRequest,
-  AppApprovalMethod,
-  AppForCatalog,
-} from '@env-hopper/backend-core'
+import type { AppApprovalMethod, AppForCatalog } from '@env-hopper/backend-core'
 import { Bot, Check, Copy, ExternalLink, Settings, Users } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -153,20 +149,16 @@ export function AccessRequestSection({
   approvalMethods,
 }: AccessRequestSectionProps) {
   const { copiedId, copyToClipboard } = useCopyToClipboard()
-
-  // Early return if no access request
-  if (!app.accessRequest) return null
-
-  const accessRequest: AppAccessRequest = app.accessRequest
+  const accessRequest = app.accessRequest
   const approvalMethod = approvalMethods.find(
-    (m) => m.slug === accessRequest.approvalMethodId,
+    (m) => m.slug === accessRequest?.approvalMethodId,
   )
 
   const handleCopyPrompt = useCallback(() => {
-    if (accessRequest.requestPrompt) {
+    if (accessRequest?.requestPrompt) {
       copyToClipboard(accessRequest.requestPrompt, 'prompt')
     }
-  }, [accessRequest.requestPrompt, copyToClipboard])
+  }, [accessRequest?.requestPrompt, copyToClipboard])
 
   const handleCopyApproverEmail = useCallback(
     (email: string, index: number) => {
@@ -174,6 +166,9 @@ export function AccessRequestSection({
     },
     [copyToClipboard],
   )
+
+  // Early return if no access request
+  if (!accessRequest) return null
 
   return (
     <div className="mt-6 space-y-4">

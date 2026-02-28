@@ -45,7 +45,7 @@ export function AppCatalogPage() {
       search: { ...search, app: selectedAppSlug },
       replace: true, // Use replace to avoid polluting history
     })
-  }, [selectedAppSlug, navigate, router.state.location.pathname, search.app])
+  }, [selectedAppSlug, navigate, router.state.location.pathname, search])
 
   // Sync search value state to URL (async side effect)
   useEffect(() => {
@@ -66,7 +66,7 @@ export function AppCatalogPage() {
       },
       replace: true, // Use replace to avoid polluting history
     })
-  }, [searchValue, navigate, router.state.location.pathname, search.q])
+  }, [searchValue, navigate, router.state.location.pathname, search])
 
   const filteredApps = useMemo(() => {
     const normalizedSearchValue = searchValue.trim().toLowerCase()

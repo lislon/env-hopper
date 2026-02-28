@@ -4,11 +4,11 @@ import type { TRPCClient } from '@trpc/client'
 import { HomeIcon } from 'lucide-react'
 import { AppCatalogProvider } from '~/modules/appCatalog/context/AppCatalogContext'
 import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbSeparator,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
 } from '~/ui/breadcrumb'
 import { MainLayout } from '~/ui/layout/MainLayout'
 import { TopLevelProviders } from '~/ui/layout/TopLevelProviders'
@@ -47,7 +47,9 @@ export function AppCatalogLayout({
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <div className="flex flex-1 w-full justify-center">{children}</div>
+          <div className="flex flex-1 w-full justify-center min-h-0">
+            {children}
+          </div>
         </MainLayout>
       </AppCatalogProvider>
     </TopLevelProviders>

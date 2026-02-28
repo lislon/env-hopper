@@ -290,6 +290,8 @@ export async function syncAppCatalog(
 
     if (sreenshotsPath) {
       await syncAssetsFromFileSystem(apps, sreenshotsPath)
+    } else {
+      console.warn('DO not sync screenhots')
     }
 
     return {

@@ -6,6 +6,7 @@ import { AppCatalogPage } from '~/modules/appCatalog/ui/pages/AppCatalogPage'
 
 const searchSchema = z.object({
   app: z.string().optional(),
+  q: z.string().optional(),
 })
 
 export const Route = createFileRoute('/_layout/catalog/apps/')({

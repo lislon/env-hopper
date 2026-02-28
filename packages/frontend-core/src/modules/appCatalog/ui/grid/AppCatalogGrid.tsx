@@ -1,22 +1,42 @@
-import { AppWindow, ExternalLink, X } from 'lucide-react'
-import React from 'react'
-
 import type {
   AppForCatalog,
   GroupingTagDefinition,
 } from '@env-hopper/backend-core'
+import type { ColumnDef } from '@tanstack/react-table'
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table'
+import { AppWindow, ExternalLink } from 'lucide-react'
+import React from 'react'
 
 import { cn } from '~/lib/utils'
+import type {} from '~/types/table'
 import { Badge } from '~/ui/badge'
-import { Button } from '~/ui/button'
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '~/ui/resizable'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '~/ui/table'
+import { AccessRequestSection } from '../components/AccessRequestSection'
 import { ScreenshotGallery } from '../components/ScreenshotGallery'
+import { useAppCatalogContext } from '../../context/AppCatalogContext'
+import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation'
 
 export interface AppCatalogGridProps {
   apps: Array<AppForCatalog>
   selectedAppSlug?: string
   groupingDefinition?: GroupingTagDefinition
   onAppClick?: (app: AppForCatalog) => void
-  onCloseDetails?: () => void
 }
 
 function getIconUrl(iconName: string): string {
@@ -78,24 +98,28 @@ function AppScreenshot({ app }: { app: AppForCatalog }) {
   const screenshotImageUrl = `/api/screenshots/${screenshotId}?size=512`
 
   return (
-    <div className="w-full bg-muted/50 rounded-lg overflow-hidden flex items-center justify-center min-h-64">
-      {!imageError ? (
-        <img
-          src={screenshotImageUrl}
-          alt={`${app.displayName} screenshot`}
-          className="w-full h-64 object-contain"
-          onError={() => {
-            setImageError(true)
-            setIsLoadingImage(false)
-          }}
-          onLoad={() => setIsLoadingImage(false)}
-        />
-      ) : null}
-      {(imageError || isLoadingImage) && (
-        <div className="w-full h-64 bg-muted/30 flex items-center justify-center text-muted-foreground text-sm">
-          {isLoadingImage ? 'Loading screenshot...' : 'No screenshot available'}
-        </div>
-      )}
+    <div className="w-full flex justify-center">
+      <div className="rounded-lg overflow-hidden inline-flex items-center justify-center min-h-64">
+        {!imageError ? (
+          <img
+            src={screenshotImageUrl}
+            alt={`${app.displayName} screenshot`}
+            className="h-64 object-contain"
+            onError={() => {
+              setImageError(true)
+              setIsLoadingImage(false)
+            }}
+            onLoad={() => setIsLoadingImage(false)}
+          />
+        ) : null}
+        {(imageError || isLoadingImage) && (
+          <div className="w-full h-64 bg-muted/30 flex items-center justify-center text-muted-foreground text-sm">
+            {isLoadingImage
+              ? 'Loading screenshot...'
+              : 'No screenshot available'}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -103,6 +127,7 @@ function AppScreenshot({ app }: { app: AppForCatalog }) {
 function AppDetails({ app }: { app: AppForCatalog }) {
   const [isGalleryOpen, setIsGalleryOpen] = React.useState(false)
   const [galleryInitialIndex, setGalleryInitialIndex] = React.useState(0)
+  const { approvalMethods } = useAppCatalogContext()
 
   const handleScreenshotClick = (index: number) => {
     setGalleryInitialIndex(index)
@@ -111,7 +136,7 @@ function AppDetails({ app }: { app: AppForCatalog }) {
 
   return (
     <>
-      <div className="flex h-full flex-col overflow-y-auto p-6">
+      <div className="flex h-full flex-col p-6">
         {/* Icon and Title */}
         <div className="flex items-center gap-4 border-b pb-6">
           <AppIcon app={app} className="size-16" />
@@ -139,6 +164,29 @@ function AppDetails({ app }: { app: AppForCatalog }) {
           </div>
         )}
 
+        {/* Screenshots - Clickable preview */}
+        {app.screenshotIds && app.screenshotIds.length > 0 && (
+          <div className="mt-6">
+            <h3 className="mb-2 text-sm font-medium">
+              Screenshots ({app.screenshotIds.length})
+            </h3>
+            <div
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => handleScreenshotClick(0)}
+            >
+              <AppScreenshot app={app} />
+              {app.screenshotIds.length > 1 && (
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Click to view all {app.screenshotIds.length} screenshots
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Access Request Section */}
+        <AccessRequestSection app={app} approvalMethods={approvalMethods} />
+
         {/* Tags */}
         {app.tags && app.tags.length > 0 && (
           <div className="mt-6">
@@ -163,26 +211,6 @@ function AppDetails({ app }: { app: AppForCatalog }) {
                   {team}
                 </Badge>
               ))}
-            </div>
-          </div>
-        )}
-
-        {/* Screenshots - Clickable preview */}
-        {app.screenshotIds && app.screenshotIds.length > 0 && (
-          <div className="mt-6">
-            <h3 className="mb-2 text-sm font-medium">
-              Screenshots ({app.screenshotIds.length})
-            </h3>
-            <div
-              className="cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => handleScreenshotClick(0)}
-            >
-              <AppScreenshot app={app} />
-              {app.screenshotIds.length > 1 && (
-                <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Click to view all {app.screenshotIds.length} screenshots
-                </p>
-              )}
             </div>
           </div>
         )}
@@ -268,127 +296,192 @@ export function AppCatalogGrid({
   selectedAppSlug,
   groupingDefinition,
   onAppClick,
-  onCloseDetails,
 }: AppCatalogGridProps) {
-  const tableRef = React.useRef<HTMLTableElement>(null)
-  const rowRefs = React.useRef<Map<string, HTMLTableRowElement>>(new Map())
-  const lastClickedRef = React.useRef<string | null>(null)
-
   const selectedApp = selectedAppSlug
     ? apps.find((a) => a.slug === selectedAppSlug)
     : null
 
   const groupedApps = groupApps(apps, groupingDefinition)
 
-  // Auto-scroll when app is selected from URL (not from click)
+  // Flatten grouped apps to get display order for keyboard navigation
+  const appsInDisplayOrder = React.useMemo(
+    () => groupedApps.flatMap((group) => group.apps),
+    [groupedApps],
+  )
+
+  // Use keyboard navigation hook with apps in display order
+  const { rowRefs } = useKeyboardNavigation({
+    apps: appsInDisplayOrder,
+    selectedAppSlug,
+    onAppClick,
+  })
+
+  // Define columns
+  const columns = React.useMemo<Array<ColumnDef<AppForCatalog>>>(
+    () => [
+      {
+        id: 'application',
+        header: 'Application',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3">
+            <AppIcon app={row.original} className="size-6" />
+            <span className="font-medium">
+              {row.original.displayName || 'Unnamed App'}
+            </span>
+          </div>
+        ),
+        meta: {
+          className: 'w-[300px]',
+        },
+      },
+      {
+        id: 'description',
+        header: 'Description',
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground line-clamp-2">
+            {row.original.description || '—'}
+          </span>
+        ),
+      },
+    ],
+    [],
+  )
+
+  // Create a single table instance with all apps
+  const table = useReactTable({
+    data: apps,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => row.id,
+  })
+
+  // Auto-scroll to selected app (only on initial load)
+  const hasScrolledRef = React.useRef(false)
   React.useEffect(() => {
-    if (selectedAppSlug && selectedAppSlug !== lastClickedRef.current) {
+    // Only scroll once on initial load if there's a selection
+    if (selectedAppSlug && !hasScrolledRef.current) {
       const rowElement = rowRefs.current.get(selectedAppSlug)
       if (rowElement) {
         rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }
+      hasScrolledRef.current = true
     }
-  }, [selectedAppSlug])
+  }, [selectedAppSlug, rowRefs])
 
   const handleAppClick = (app: AppForCatalog) => {
-    lastClickedRef.current = app.slug
     onAppClick?.(app)
   }
 
   return (
-    <div
-      className={cn(
-        'grid gap-4 w-full',
-        selectedApp ? 'grid-cols-[1fr_400px]' : 'grid-cols-1',
-      )}
-    >
-      {/* Left Column - Table */}
-      <div className="overflow-y-auto">
-        <table className="w-full table-fixed" ref={tableRef}>
-          <thead className="sticky top-0 border-b bg-background z-10">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium text-sm">
-                Application
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-sm">
-                Description
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {groupedApps.map((group) => (
-              <React.Fragment key={group.groupName}>
-                {/* Group Header */}
-                <tr className="bg-muted/50">
-                  <td
-                    colSpan={2}
-                    className="px-4 py-6 sticky top-[49px] bg-muted/90 backdrop-blur z-10"
-                  >
-                    <div className="flex items-center justify-center">
-                      <span className="font-bold text-lg tracking-widest uppercase leading-loose text-muted-foreground">
-                        {group.groupName}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-                {/* Group Apps */}
-                {group.apps.map((app) => (
-                  <tr
-                    key={app.id}
-                    ref={(el) => {
-                      if (el && app.slug) {
-                        rowRefs.current.set(app.slug, el)
-                      } else if (app.slug) {
-                        rowRefs.current.delete(app.slug)
-                      }
-                    }}
-                    onClick={() => handleAppClick(app)}
-                    className={cn(
-                      'border-b cursor-pointer transition-colors',
-                      selectedApp?.id === app.id
-                        ? 'bg-blue-100 dark:bg-blue-950 hover:bg-blue-200 dark:hover:bg-blue-900'
-                        : 'hover:bg-muted/30',
-                    )}
-                  >
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <AppIcon app={app} className="size-6" />
-                        <span className="font-medium">
-                          {app.displayName || 'Unnamed App'}
+    <ResizablePanelGroup orientation="horizontal" className="h-full w-full">
+      {/* Left Panel - Table */}
+      <ResizablePanel defaultSize={60} minSize={30} className="overflow-hidden">
+        <div className="h-full overflow-y-auto pr-2">
+          <Table>
+            <TableHeader className="sticky top-0 border-b bg-background z-10">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className={cn(
+                        'px-4 py-3 text-left font-medium text-sm',
+                        header.column.columnDef.meta?.className,
+                      )}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+
+            <TableBody>
+              {groupedApps.map((group) => (
+                <React.Fragment key={group.groupName}>
+                  {/* Group Header Row */}
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableCell
+                      colSpan={columns.length}
+                      className="px-4 py-6 sticky top-[49px] bg-muted/90 backdrop-blur z-10"
+                    >
+                      <div className="flex items-center justify-center">
+                        <span className="font-bold text-lg tracking-widest uppercase leading-loose text-muted-foreground">
+                          {group.groupName}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="text-sm text-muted-foreground line-clamp-2">
-                        {app.description || '—'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    </TableCell>
+                  </TableRow>
 
-      {/* Right Column - Sticky Detail Panel */}
-      {selectedApp && (
-        <div className="sticky top-0 max-h-screen overflow-hidden">
-          <div className="h-full overflow-y-auto border-l bg-background relative">
-            {/* Close Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-4 right-4 z-20 size-8 rounded-full bg-background/80 backdrop-blur hover:bg-background"
-              onClick={onCloseDetails}
-            >
-              <X className="size-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-            <AppDetails app={selectedApp} />
-          </div>
+                  {/* Group Apps */}
+                  {group.apps.map((app) => {
+                    const row = table
+                      .getRowModel()
+                      .rows.find((r) => r.id === app.id)
+                    if (!row) return null
+
+                    return (
+                      <TableRow
+                        key={row.id}
+                        ref={(el) => {
+                          if (el && row.original.slug) {
+                            rowRefs.current.set(row.original.slug, el)
+                          } else if (row.original.slug) {
+                            rowRefs.current.delete(row.original.slug)
+                          }
+                        }}
+                        onClick={() => handleAppClick(row.original)}
+                        className={cn(
+                          'border-b cursor-pointer transition-colors',
+                          selectedApp?.id === row.original.id
+                            ? 'bg-blue-100 dark:bg-blue-950 hover:bg-blue-200 dark:hover:bg-blue-900'
+                            : 'hover:bg-muted/30',
+                        )}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className={cn(
+                              'px-4 py-4',
+                              cell.column.columnDef.meta?.className,
+                            )}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    )
+                  })}
+                </React.Fragment>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-      )}
-    </div>
+      </ResizablePanel>
+
+      {/* Resizable Handle */}
+      <ResizableHandle withHandle />
+
+      {/* Right Panel - Details */}
+      <ResizablePanel defaultSize={40} minSize={25} className="overflow-hidden">
+        <div className="h-full overflow-y-auto border-l bg-background pl-4">
+          {selectedApp ? (
+            <AppDetails app={selectedApp} />
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              Select an app to view details
+            </div>
+          )}
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   )
 }

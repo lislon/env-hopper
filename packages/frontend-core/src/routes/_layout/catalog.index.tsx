@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { catalogRouteLoader } from '~/modules/appCatalog/catalogRouteLoader'
 import { routeLoader } from '~/modules/resourceJump/routeLoader'
 import { ResourceJumpLayout } from '~/modules/resourceJump/ui/layout/ResourceJumpLayout'
-import { AppCatalogPage } from '~/modules/resourceJump/ui/pages/AppCatalog'
+import { AppCatalogPage } from '~/modules/appCatalog/ui/pages/AppCatalogPage'
 
 export const Route = createFileRoute('/_layout/catalog/')({
   component: RouteComponent,

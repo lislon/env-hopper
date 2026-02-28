@@ -1,5 +1,11 @@
 # @env-hopper/frontend-build-vite
 
+## 2.0.1-alpha-20260228191003
+
+### Patch Changes
+
+- Snapshot release from alpha branch
+
 ## 2.0.1-alpha-20260224192214
 
 ### Patch Changes

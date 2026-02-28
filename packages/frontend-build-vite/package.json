@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/frontend-build-vite",
-  "version": "2.0.1-alpha-20260224192214",
+  "version": "2.0.1-alpha-20260228191003",
   "description": "Vite build config for Env Hopper frontend",
   "homepage": "https://github.com/lislon/env-hopper",
   "repository": {

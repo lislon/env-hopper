@@ -1,5 +1,11 @@
 # @env-hopper/table-sync
 
+## 2.0.1-alpha-20260301025624
+
+### Patch Changes
+
+- Snapshot release from alpha branch
+
 ## 2.0.1-alpha-20260228191003
 
 ### Patch Changes

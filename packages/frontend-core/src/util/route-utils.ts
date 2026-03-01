@@ -23,14 +23,6 @@ export function getEhToOptions({ appId, envId }: EhUrlParams) {
         envSlug: escapeEnvId(envId),
       },
     })
-  } else if (appId) {
-    return linkOptions({
-      from: '/',
-      to: '/app/$appSlug',
-      params: {
-        appSlug: escapeAppId(appId),
-      },
-    })
   } else if (envId) {
     return linkOptions({
       from: '/',

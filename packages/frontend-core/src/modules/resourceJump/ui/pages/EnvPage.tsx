@@ -4,8 +4,8 @@ import { counting } from 'radashi'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import type {
-    ResourceJumpHistoryItem,
-    ResourceJumpUI,
+  ResourceJumpHistoryItem,
+  ResourceJumpUI,
 } from '~/modules/resourceJump/types'
 import { ResourceJumpButton } from '~/modules/resourceJump/ui/ResourceJumpButton'
 import type { FlagshipResourceJumpUi } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
@@ -111,13 +111,10 @@ function LinkToFlagship({
   env?: EnvBaseInfo
   children: React.ReactNode
 }) {
-  if (!env) {
-    return (
-      <Link to={'/app/$appSlug'} params={{ appSlug: flagship.slug }}>
-        {children}
-      </Link>
-    )
-  } else if (flagship.resourceJumps[0] !== undefined) {
+  if (!env && flagship.resourceJumps[0] !== undefined) {
+    // No env selected, but we have apps - just render children without link
+    return <>{children}</>
+  } else if (env && flagship.resourceJumps[0] !== undefined) {
     return (
       <Link
         to={'/env/$envSlug/app/$appSlug'}

@@ -1,6 +1,5 @@
 import Dexie from 'dexie'
 import type {
-  AppCatalogData,
   BootstrapConfigData,
   ResourceJumpsData,
   ResourceJumpsExtendedData,
@@ -13,19 +12,17 @@ export class EhDb extends Dexie {
   bootstrap!: Table<BootstrapConfigData>
   resourceJumps!: Table<ResourceJumpsData>
   resourceJumpsExtended!: Table<ResourceJumpsExtendedData>
-  appCatalog!: Table<AppCatalogData>
   environmentHistory!: Table<EnvironmentHistoryItem>
   resourceJumpHistory!: Table<ResourceJumpHistoryItem>
 
   constructor() {
     super('envhopper')
     // Bump version when adding new tables to ensure Dexie upgrades schema
-    this.version(15)
+    this.version(16)
       .stores({
         bootstrap: '',
         resourceJumps: '',
         resourceJumpsExtended: '',
-        appCatalog: '',
         environmentHistory: '++id, timestamp',
         resourceJumpHistory: '++id, timestamp',
       })
@@ -59,7 +56,6 @@ export enum dbCacheDbKeys {
   Bootstrap = 'bootstrap',
   ResourceJumps = 'resourceJumps',
   ResourceJumpsExtended = 'resourceJumpsExtended',
-  AppCatalog = 'appCatalog',
   EnvironmentHistory = 'environmentHistory',
   ResourceJumpHistory = 'resourceJumpHistory',
 }

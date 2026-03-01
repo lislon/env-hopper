@@ -12,21 +12,7 @@ type TableSyncMagazineType = Partial<{
   [key in Prisma.ModelName]: CommonSyncTableInfo<key>
 }>
 
-export const TABLE_SYNC_MAGAZINE = {
-  DbAppForCatalog: {
-    prismaModelName: 'DbAppForCatalog',
-    uniqColumns: ['slug'],
-  },
-  DbAppTagDefinition: {
-    prismaModelName: 'DbAppTagDefinition',
-    uniqColumns: ['prefix'],
-  },
-  DbApprovalMethod: {
-    id: 'slug',
-    prismaModelName: 'DbApprovalMethod',
-    uniqColumns: ['slug'],
-  },
-} as const satisfies TableSyncMagazineType
+export const TABLE_SYNC_MAGAZINE = {} as const satisfies TableSyncMagazineType
 
 export type TableSyncMagazine = typeof TABLE_SYNC_MAGAZINE
 export type TableSyncMagazineModelNameKey = keyof TableSyncMagazine

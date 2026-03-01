@@ -52,4 +52,4 @@ Thumbs.db
 vite.config.*.timestamp*
 tsconfig.tsbuildinfo
 .claude/settings.local.json
-
+.firecrawl

@@ -1,10 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import {
-  CheckSquare,
   ChevronLeft,
   ChevronRight,
   ImageIcon,
-  LayoutDashboard,
   MessageSquare,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -34,16 +32,6 @@ const navItems: Array<NavItem> = [
     name: 'Icons',
     path: '/admin/icons',
     icon: ImageIcon,
-  },
-  {
-    name: 'App For Catalog',
-    path: '/admin/app-for-catalog',
-    icon: LayoutDashboard,
-  },
-  {
-    name: 'Approval Methods',
-    path: '/admin/approval-methods',
-    icon: CheckSquare,
   },
 ]
 

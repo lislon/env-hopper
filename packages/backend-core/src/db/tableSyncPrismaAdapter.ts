@@ -13,11 +13,9 @@ export type ScalarFilter<TPrismaModelName extends Prisma.ModelName> = Partial<
 >
 
 export type GetOperationFns<TModel extends Prisma.ModelName> = {
-  [TOperation in keyof Prisma.TypeMap['model']['DbAppForCatalog']['operations']]: (
-    args: Prisma.TypeMap['model'][TModel]['operations'][TOperation]['args'],
-  ) => Promise<
-    Prisma.TypeMap['model'][TModel]['operations'][TOperation]['result']
-  >
+  [TOperation in keyof Prisma.TypeMap['model'][TModel]['operations']]: (
+    args: any,
+  ) => Promise<any>
 }
 
 export interface TableSyncParamsPrisma<
@@ -112,7 +110,6 @@ export function tableSyncPrisma<
             },
           )
 
-          // @ts-expect-error This is too difficult for me to come up with right types
           await txOps.update({
             data: { ...dataScalar, ...dataRelations },
             where: { ...uniqKeyWhere },
@@ -180,7 +177,6 @@ export function tableSyncPrisma<
         const results: Array<MakeTFromPrismaModel<TPrismaModelName>> = []
 
         if (relationColumnList.length === 0) {
-          // @ts-expect-error This is too difficult for me to come up with right types
           const batchResult = await txOps.createManyAndReturn({
             data: createDataMapped,
           })
@@ -188,7 +184,6 @@ export function tableSyncPrisma<
           results.push(...batchResult)
         } else {
           for (const dataMappedElement of createDataMapped) {
-            // @ts-expect-error too difficult for me
             const newVar = await txOps.create({
               data: dataMappedElement,
             })

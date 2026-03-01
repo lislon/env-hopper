@@ -15,7 +15,6 @@ export type { EhStaticControllerContract } from './server/ehStaticControllerCont
 
 // backend-only
 
-export type { AppForCatalog } from './types/common/appCatalogTypes'
 export * from './types/index'
 
 // Auth
@@ -53,58 +52,18 @@ export {
   type DatabaseClient,
 } from './modules/admin/chat/createDatabaseTools'
 
-// Icon management
-export {
-  registerIconRestController,
-  type IconRestControllerConfig,
-} from './modules/icons/iconRestController'
-
-export {
-  getAssetByName,
-  upsertIcon,
-  upsertIcons,
-  type UpsertIconInput,
-} from './modules/icons/iconService'
-
-// Asset management (universal for icons, screenshots, etc.)
-export {
-  registerAssetRestController,
-  type AssetRestControllerConfig,
-} from './modules/assets/assetRestController'
-
-export {
-  registerScreenshotRestController,
-  type ScreenshotRestControllerConfig,
-} from './modules/assets/screenshotRestController'
-
-export { createScreenshotRouter } from './modules/assets/screenshotRouter'
-
-export { syncAssets, type SyncAssetsConfig } from './modules/assets/syncAssets'
-
-// App Catalog Admin
-export { createAppCatalogAdminRouter } from './modules/appCatalogAdmin/appCatalogAdminRouter'
-
-// Approval Methods
-export { createApprovalMethodRouter } from './modules/approvalMethod/approvalMethodRouter'
-export {
-  syncApprovalMethods,
-  type ApprovalMethodSyncInput,
-} from './modules/approvalMethod/syncApprovalMethods'
-
 // Database utilities
 export {
   connectDb,
   disconnectDb,
   getDbClient,
   setDbClient,
-  syncAppCatalog,
   TABLE_SYNC_MAGAZINE,
   tableSyncPrisma,
   type MakeTFromPrismaModel,
   type ObjectKeys,
   type ScalarFilter,
   type ScalarKeys,
-  type SyncAppCatalogResult,
   type TableSyncMagazine,
   type TableSyncMagazineModelNameKey,
   type TableSyncParamsPrisma,

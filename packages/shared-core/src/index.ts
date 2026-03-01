@@ -5,5 +5,4 @@ export {
 } from './defaultWithOverridesAndTemplate'
 export type { DefaultWithOverridesAndTemplate } from './defaultWithOverridesAndTemplate'
 export { ehFormatUrl } from './ehFormatUrl'
-export type { EhMode } from './env'
 export * from './nullToUndefined'

@@ -1,10 +1,8 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { LogOut, Settings } from 'lucide-react'
 import type React from 'react'
-import AppCatalogLogo from '~/assets/app-catalog.svg?react'
 import EnvHopperLogo from '~/assets/env-hopper-logo.svg?react'
 import { ThemeSwitcher } from '~/components/ThemeSwitcher'
-import { getAppMode } from '~/lib/getAppMode'
 import {
   useAuth,
   useAuthActions,
@@ -53,7 +51,6 @@ export function Header({ middle }: HeaderProps) {
   const { logout } = useAuthActions()
   const navigate = useNavigate()
   const { open: openLoginModal } = useAuthModal()
-  const appMode = getAppMode()
 
   const handleLogout = async () => {
     try {
@@ -73,30 +70,23 @@ export function Header({ middle }: HeaderProps) {
     openLoginModal(currentUrl)
   }
 
-  const isCatalogMode = appMode === 'catalog'
-  const Logo = isCatalogMode ? AppCatalogLogo : EnvHopperLogo
-  const appTitle = isCatalogMode ? 'App Catalog' : 'Env‑Hopper'
-
   return (
     <div className="flex items-center mb-4 justify-between gap-2">
       <div className="flex items-center gap-4">
         <Link to="/">
           <div className="flex items-center gap-2">
-            <Logo className="h-16 w-16" />
+            <EnvHopperLogo className="h-16 w-16" />
             <span className="text-lg font-bold hidden md:block">
-              {appTitle}
+              Env‑Hopper
             </span>
           </div>
         </Link>
 
-        {!isCatalogMode && (
-          <div className="hidden md:flex items-center gap-1">
-            <HeaderNavLink to="/catalog/apps" label="Apps" />
-            <HeaderNavLink to="/envs" label="Envs" />
-            <HeaderNavLink to="/dashboard" label="Hopper" />
-            {isAuthenticated && <HeaderNavLink to="/admin" label="Admin" />}
-          </div>
-        )}
+        <div className="hidden md:flex items-center gap-1">
+          <HeaderNavLink to="/envs" label="Envs" />
+          <HeaderNavLink to="/dashboard" label="Hopper" />
+          {isAuthenticated && <HeaderNavLink to="/admin" label="Admin" />}
+        </div>
       </div>
       {middle && <div className="sm:min-w-75">{middle}</div>}
       <div className="flex items-center gap-3">

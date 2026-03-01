@@ -16,6 +16,3 @@ export {
   type TableSyncMagazine,
   type TableSyncMagazineModelNameKey,
 } from './tableSyncMagazine'
-
-// App catalog sync
-export { syncAppCatalog, type SyncAppCatalogResult } from './syncAppCatalog'

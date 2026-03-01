@@ -1,4 +1,3 @@
-import type { AppForCatalog } from '../common/appCatalogTypes'
 import type {
   AvailabilityMatrixData,
   BootstrapConfigData,
@@ -13,5 +12,4 @@ export interface EhBackendCompanySpecificBackend {
   getNameMigrations: (params: RenameRuleParams) => Promise<RenameRule | false>
   getResourceJumps: () => Promise<ResourceJumpsData>
   getResourceJumpsExtended: () => Promise<ResourceJumpsExtendedData>
-  getApps?: () => Promise<Array<AppForCatalog>>
 }

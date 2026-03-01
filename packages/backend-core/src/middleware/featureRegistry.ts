@@ -5,19 +5,7 @@ import type {
   EhMiddlewareOptions,
   MiddlewareContext,
 } from './types'
-import { registerIconRestController } from '../modules/icons/iconRestController'
-import { registerAssetRestController } from '../modules/assets/assetRestController'
-import { registerScreenshotRestController } from '../modules/assets/screenshotRestController'
 import { createAdminChatHandler } from '../modules/admin/chat/createAdminChatHandler'
-import { getAssetByName } from '../modules/icons/iconService'
-import {
-  exportAsset,
-  exportCatalog,
-  importAsset,
-  importCatalog,
-  listAssets,
-} from '../modules/appCatalogAdmin/catalogBackupController'
-import multer from 'multer'
 import { createMockSessionResponse } from '../modules/auth/devMockUserUtils'
 
 interface FeatureRegistration {
@@ -82,37 +70,6 @@ const FEATURES: Array<FeatureRegistration> = [
       }
     },
   },
-  {
-    name: 'legacyIconEndpoint',
-    defaultEnabled: false,
-    register: (router) => {
-      // Legacy endpoint at /static/icon/:icon for backwards compatibility
-      router.get('/static/icon/:icon', async (req, res) => {
-        const { icon } = req.params
-
-        if (!icon || !/^[a-z0-9-]+$/i.test(icon)) {
-          res.status(400).send('Invalid icon name')
-          return
-        }
-
-        try {
-          const dbIcon = await getAssetByName(icon)
-
-          if (!dbIcon) {
-            res.status(404).send('Icon not found')
-            return
-          }
-
-          res.setHeader('Content-Type', dbIcon.mimeType)
-          res.setHeader('Cache-Control', 'public, max-age=86400')
-          res.send(dbIcon.content)
-        } catch (error) {
-          console.error('Error fetching icon:', error)
-          res.status(404).send('Icon not found')
-        }
-      })
-    },
-  },
 ]
 
 /**
@@ -124,37 +81,6 @@ export function registerFeatures(
     EhMiddlewareOptions,
   context: MiddlewareContext,
 ): void {
-  const basePath = options.basePath
-
-  // Always-on features (required for core functionality)
-
-  // Icons
-  registerIconRestController(router, {
-    basePath: `${basePath}/icons`,
-  })
-
-  // Assets
-  registerAssetRestController(router, {
-    basePath: `${basePath}/assets`,
-  })
-
-  // Screenshots
-  registerScreenshotRestController(router, {
-    basePath: `${basePath}/screenshots`,
-  })
-
-  // Catalog backup/restore
-  const upload = multer({ storage: multer.memoryStorage() })
-  router.get(`${basePath}/catalog/backup/export`, exportCatalog)
-  router.post(`${basePath}/catalog/backup/import`, importCatalog)
-  router.get(`${basePath}/catalog/backup/assets`, listAssets)
-  router.get(`${basePath}/catalog/backup/assets/:name`, exportAsset)
-  router.post(
-    `${basePath}/catalog/backup/assets`,
-    upload.single('file'),
-    importAsset,
-  )
-
   // Optional toggleable features
   const toggles = options.features || {}
 

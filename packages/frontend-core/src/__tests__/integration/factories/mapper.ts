@@ -117,11 +117,6 @@ export function mapFeatureConfigToBackend(config: FeatureBackendConfig): {
       resourceJumpsExtended: {
         envs: [],
       },
-      appCatalog: {
-        apps: [],
-        tagsDefinitions: [],
-        approvalMethods: [],
-      },
       // Minimal empty data for other procedures (not used in tests)
       availabilityMatrix: {
         envSlugs: [],

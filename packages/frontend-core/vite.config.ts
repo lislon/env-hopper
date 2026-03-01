@@ -15,15 +15,8 @@ const config = defineConfig(({ mode }) => {
   const tsconfigPath =
     mode === 'lenient' ? './tsconfig-lenient.json' : './tsconfig.json'
 
-  // Determine app mode and copy appropriate favicon
-  const appMode = process.env.VITE_EH_MODE || 'catalog'
-  const faviconSource =
-    appMode === 'hopper'
-      ? 'public/favicon-env-hopper.ico'
-      : 'public/favicon-app-catalog.ico'
-
-  // Copy favicon during config to ensure it's available for the build
-  const favIconPath = path.resolve(__dirname, faviconSource)
+  // Copy env-hopper favicon during build
+  const favIconPath = path.resolve(__dirname, 'public/favicon-env-hopper.ico')
   const faviconDestPath = path.resolve(__dirname, 'public/favicon.ico')
 
   // Hook to handle favicon copy during build

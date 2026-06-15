@@ -38,7 +38,7 @@ export function History({ className }: RecentJumpsProps) {
               </tr>
             </thead>
             <tbody>
-              {recentJumps.slice(0, 10).map((jump) => (
+              {recentJumps.slice(0, 50).map((jump) => (
                 <tr
                   key={`${jump.app}-${jump.env}-${jump.substitution || ''}`}
                   className="hover"

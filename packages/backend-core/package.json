@@ -27,7 +27,8 @@
   "files": [
     "dist",
     "src",
-    "prisma"
+    "prisma",
+    "prisma.config.ts"
   ],
   "scripts": {
     "build": "tsdown",
@@ -44,7 +45,6 @@
     "@env-hopper/shared-core": "workspace:*",
     "@env-hopper/table-sync": "workspace:*",
     "@kubernetes/client-node": "^1.2.0",
-    "@prisma/client": "6.19.1",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "ai": "^6.0.37",
@@ -70,13 +70,19 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/multer": "catalog:",
     "@types/node": "catalog:",
+    "@types/pg": "catalog:",
     "esbuild": "catalog:",
-    "prisma": "^6.8.2",
+    "prisma": "catalog:",
     "prisma-json-types-generator": "catalog:",
     "tsdown": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vite-plugin-dts": "^4.5.4"
+  },
+  "peerDependencies": {
+    "@prisma/adapter-pg": "catalog:",
+    "@prisma/client": "catalog:",
+    "pg": "catalog:"
   },
   "engines": {
     "node": ">=16"

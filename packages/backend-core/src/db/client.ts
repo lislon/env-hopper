@@ -1,6 +1,9 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../generated/prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import pg from 'pg'
 
 let prismaClient: PrismaClient | null = null
+let pool: pg.Pool | null = null
 
 /**
  * Gets the internal Prisma client instance.
@@ -8,7 +11,19 @@ let prismaClient: PrismaClient | null = null
  */
 export function getDbClient(): PrismaClient {
   if (!prismaClient) {
-    prismaClient = new PrismaClient()
+    const databaseUrl = process.env.EH_CORE_DATABASE_URL
+    if (!databaseUrl) {
+      throw new Error(
+        'PrismaClient not initialized. You must call createEhMiddleware() before using database functions, ' +
+          'or set EH_CORE_DATABASE_URL environment variable for standalone usage.',
+      )
+    }
+
+    // Prisma 7 with adapter: Create pg pool and wrap with adapter
+    pool = new pg.Pool({ connectionString: databaseUrl })
+    const adapter = new PrismaPg(pool)
+
+    prismaClient = new PrismaClient({ adapter })
   }
   return prismaClient
 }
@@ -38,5 +53,9 @@ export async function disconnectDb(): Promise<void> {
   if (prismaClient) {
     await prismaClient.$disconnect()
     prismaClient = null
+  }
+  if (pool) {
+    await pool.end()
+    pool = null
   }
 }

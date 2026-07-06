@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client'
+import type { Prisma } from '../generated/prisma/client'
 import type { ObjectKeys, ScalarKeys } from './tableSyncPrismaAdapter'
 
 interface CommonSyncTableInfo<TPrismaModelName extends Prisma.ModelName> {

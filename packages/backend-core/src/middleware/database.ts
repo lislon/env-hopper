@@ -1,4 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../generated/prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import pg from 'pg'
 import type { EhDatabaseConfig } from './types'
 import { setDbClient } from '../db/client'
 
@@ -20,6 +22,7 @@ function formatConnectionUrl(config: EhDatabaseConfig): string {
  */
 export class EhDatabaseManager {
   private client: PrismaClient | null = null
+  private pool: pg.Pool | null = null
   private config: EhDatabaseConfig
 
   constructor(config: EhDatabaseConfig) {
@@ -34,8 +37,12 @@ export class EhDatabaseManager {
     if (!this.client) {
       const datasourceUrl = formatConnectionUrl(this.config)
 
+      // Prisma 7 with adapter: Create pg pool and wrap with adapter
+      this.pool = new pg.Pool({ connectionString: datasourceUrl })
+      const adapter = new PrismaPg(this.pool)
+
       this.client = new PrismaClient({
-        datasourceUrl,
+        adapter,
         log:
           process.env.NODE_ENV === 'development'
             ? ['warn', 'error']
@@ -57,6 +64,10 @@ export class EhDatabaseManager {
     if (this.client) {
       await this.client.$disconnect()
       this.client = null
+    }
+    if (this.pool) {
+      await this.pool.end()
+      this.pool = null
     }
   }
 }

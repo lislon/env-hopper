@@ -5,7 +5,6 @@ import {
   DEFAULT_ADMIN_SYSTEM_PROMPT,
   createDatabaseTools,
   createEhMiddleware,
-  getAssetByName,
   staticControllerContract,
 } from '@env-hopper/backend-core'
 import type { Express, Request, Response } from 'express'
@@ -133,39 +132,12 @@ const eh = await createEhMiddleware({
   },
 
   features: {
-    legacyIconEndpoint: true, // Enable /static/icon/:icon
+    legacyIconEndpoint: false, // Disabled - app-catalog was moved out
   },
 
   hooks: {
     onRoutesRegistered: (router) => {
-      // Legacy icon endpoint at /icon/:icon (for backwards compatibility)
-      router.get(
-        `/${staticControllerContract.methods.getIcon.url}`,
-        async (req: Request<{ icon: string }>, res: Response) => {
-          const { icon } = req.params
-
-          if (!icon || !/^[a-z0-9-]+$/i.test(icon)) {
-            res.status(400).send('Invalid icon name')
-            return
-          }
-
-          try {
-            const dbIcon = await getAssetByName(icon)
-
-            if (!dbIcon) {
-              res.status(404).send('Icon not found')
-              return
-            }
-
-            res.setHeader('Content-Type', dbIcon.mimeType)
-            res.setHeader('Cache-Control', 'public, max-age=86400')
-            res.send(dbIcon.content)
-          } catch (error) {
-            console.error('Error fetching icon:', error)
-            res.status(404).send('Icon not found')
-          }
-        },
-      )
+      // Legacy icon endpoint removed - app-catalog functionality moved to separate project
 
       // Backwards compatibility: mount tRPC at /trpc (in addition to /api/trpc)
       // This allows existing frontends to work without changes

@@ -53,3 +53,7 @@ vite.config.*.timestamp*
 tsconfig.tsbuildinfo
 .claude/settings.local.json
 .firecrawl
+
+# Local SQLite dev databases
+*.db
+*.db-journal

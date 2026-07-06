@@ -3,11 +3,11 @@
 
 datasource db {
   provider = "postgresql"
-  url      = env("EH_CORE_DATABASE_URL")
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 generator json {

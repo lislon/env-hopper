@@ -10,7 +10,8 @@ export default defineConfig({
   minify: false,
   external: [
     '@prisma/client',
-    '@prisma/client/runtime/library',
+    '@prisma/client/runtime/client',
+    '@prisma/adapter-pg',
   ],
   publint: {
     strict: true,

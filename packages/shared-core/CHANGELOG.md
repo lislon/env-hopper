@@ -1,5 +1,11 @@
 # @env-hopper/shared-core
 
+## 2.0.1-alpha-20260706164459
+
+### Patch Changes
+
+- Snapshot release from alpha branch
+
 ## 2.0.1-alpha-20260301025624
 
 ### Patch Changes

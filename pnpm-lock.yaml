@@ -347,7 +347,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/backend-core
       '@env-hopper/shared-core':
-        specifier: 2.0.1-alpha-20260301025624
+        specifier: 2.0.1-alpha-20260706164459
         version: link:../../packages/shared-core
       '@prisma/client':
         specifier: 'catalog:'
@@ -417,10 +417,10 @@ importers:
   examples/frontend-example:
     dependencies:
       '@env-hopper/frontend-build-vite':
-        specifier: 2.0.1-alpha-20260301025624
+        specifier: 2.0.1-alpha-20260706164459
         version: link:../../packages/frontend-build-vite
       '@env-hopper/frontend-core':
-        specifier: 2.0.1-alpha-20260301025624
+        specifier: 2.0.1-alpha-20260706164459
         version: link:../../packages/frontend-core
       cross-env:
         specifier: 'catalog:'
@@ -14982,7 +14982,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 2.0.0
-      vitest: 3.2.2(@types/debug@4.1.12)(@types/node@25.0.3)(@vitest/ui@3.2.2)(jiti@2.6.1)(jsdom@25.0.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.3)(typescript@5.9.3))(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
+      vitest: 3.2.2(@types/debug@4.1.12)(@types/node@24.10.4)(@vitest/ui@3.2.2)(jiti@2.6.1)(jsdom@25.0.1)(lightningcss@1.30.2)(msw@2.12.4(@types/node@24.10.4)(typescript@5.9.3))(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2)
 
   '@vitest/utils@3.2.2':
     dependencies:

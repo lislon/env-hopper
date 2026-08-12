@@ -1,0 +1,97 @@
+#!/bin/sh
+
+# Skip in CI
+if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
+  echo "⏭️  Skipping pre-push checks in CI/CD"
+  exit 0
+fi
+
+# --- OSS content scan (only on pushes to GitHub) ---
+REMOTE_URL="${2:-}"
+case "$REMOTE_URL" in
+  *github.com*)
+    RANGES=""
+    while IFS=' ' read -r _lr local_sha _rr remote_sha; do
+      [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
+      if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+        RANGES="$RANGES $local_sha"
+      else
+        RANGES="$RANGES $remote_sha..$local_sha"
+      fi
+    done
+    DIFF=""
+    for range in $RANGES; do
+      DIFF="$DIFF$(git diff "$range" -- \
+        ':!*.lock' ':!*.png' ':!*.jpg' ':!*.gif' ':!*.webp' ':!*.svg' \
+        ':!dist/' ':!node_modules/' ':!*.snap' \
+        2>/dev/null | head -c 8000)"
+    done
+    if [ -n "$DIFF" ]; then
+      MODEL="${ANTHROPIC_SMALL_FAST_MODEL:-us.anthropic.claude-haiku-4-5-20251001-v1:0}"
+      PROMPT='You are a code reviewer for an open-source project with no company affiliation.
+
+Review this git diff and answer ONE question: does the diff contain any company-specific or organisation-specific content that should NOT appear in an open-source repo?
+
+Company-specific content includes (but is not limited to):
+- Internal company names, product names, or portal names that are not widely known public products
+- Internal domain names or URLs (private hostnames, internal staging domains)
+- Employee email addresses or internal usernames
+- Internal ticket/project references (e.g. internal issue tracker paths, internal repo paths)
+- Internal environment slugs (e.g. multi-segment slugs whose prefix is an unrecognized internal namespace)
+- Internal AWS account names or IDs that reveal company structure
+- Any opaque identifier a random developer would not recognise from the public internet
+
+Do NOT flag:
+- Well-known public SaaS products (GitHub, Slack, Google, AWS generic services)
+- Generic technical terms used in a generic context
+- Example domain names ending in .example.com
+- Common fictional placeholder names (e.g. TaskFlow, TeamChat, Support Portal)
+
+Reply with EXACTLY one of:
+  CLEAN — no company-specific content detected
+  BLOCKED: <short one-line reason> — company-specific content found
+
+Diff to review:
+'"$DIFF"
+      RESULT=$(printf '%s' "$PROMPT" | claude -p --model "$MODEL" 2>/dev/null || echo "SCAN_ERROR")
+      case "$RESULT" in
+        BLOCKED:*)
+          REASON="${RESULT#BLOCKED: }"
+          printf '\n╔══════════════════════════════════════════════════════════════╗\n'
+          printf '║  OSS PRE-PUSH SCAN: COMPANY-SPECIFIC CONTENT DETECTED       ║\n'
+          printf '╠══════════════════════════════════════════════════════════════╣\n'
+          printf '║  %-60s ║\n' "$REASON"
+          printf '╠══════════════════════════════════════════════════════════════╣\n'
+          printf '║  Review the diff and remove company-specific content.        ║\n'
+          printf '║  To bypass (emergencies): git push --no-verify               ║\n'
+          printf '╚══════════════════════════════════════════════════════════════╝\n\n'
+          exit 1
+          ;;
+        SCAN_ERROR*)
+          echo "⚠  OSS pre-push scan skipped (model unreachable) — review manually" >&2
+          ;;
+      esac
+    fi
+    ;;
+esac
+
+# Run tests before pushing
+echo ""
+echo "🚀 Running pre-push tests (mirrors CI pipeline)..."
+echo ""
+
+pnpm run test:ci --parallel=3
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Pre-push tests failed!"
+  echo "Please fix the errors before pushing."
+  echo ""
+  echo "💡 To skip this hook (not recommended): git push --no-verify"
+  exit 1
+fi
+
+echo ""
+echo "✅ All pre-push tests passed!"
+echo ""
+exit 0

@@ -53,7 +53,7 @@ Reply with EXACTLY one of:
 
 Diff to review:
 '"$DIFF"
-      RESULT=$(printf '%s' "$PROMPT" | claude -p --model "$MODEL" 2>/dev/null || echo "SCAN_ERROR")
+      RESULT=$(printf '%s' "$PROMPT" | timeout 30 claude -p --model "$MODEL" 2>/dev/null || echo "SCAN_ERROR")
       case "$RESULT" in
         BLOCKED:*)
           REASON="${RESULT#BLOCKED: }"

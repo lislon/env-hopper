@@ -26,7 +26,7 @@ jobs:
           node-version: 22
           cache: 'npm'
       - run: npm ci
-      - uses: nrwl/nx-set-shas@v4
+      - uses: nrwl/nx-set-shas@v5
       - name: get next release version
         id: get-next-version
         run: npx semantic-release --dry-run

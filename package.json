@@ -98,7 +98,7 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitejs/plugin-react": "^5.0.0",
-    "@vitest/ui": "^2.1.4",
+    "@vitest/ui": "^5.0.0",
     "autoprefixer": "10.4.20",
     "eslint": "~9.20.0",
     "eslint-config-prettier": "^9.0.0",

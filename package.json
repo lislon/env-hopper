@@ -112,7 +112,7 @@
     "jest-environment-node": "^29.4.1",
     "jest-transformer-svg": "^2.0.2",
     "jsdom": "~27.0.0",
-    "nx": "20.3.4",
+    "nx": "22.7.2",
     "postcss": "8.5.23",
     "prettier": "^3.0.0",
     "prisma": "^6.0.0",

@@ -20,6 +20,13 @@
         "default": "./dist/esm/index.js"
       }
     },
+    "./internal": {
+      "my-custom-condition": "./src/internal.ts",
+      "import": {
+        "types": "./dist/esm/internal.d.ts",
+        "default": "./dist/esm/internal.js"
+      }
+    },
     "./public": {
       "my-custom-condition": "./public",
       "default": "./dist/public"

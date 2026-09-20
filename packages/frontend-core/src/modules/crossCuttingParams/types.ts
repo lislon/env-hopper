@@ -9,6 +9,8 @@ export interface CrossCuttingParamDef {
   displayName: string
   /** The value survives an environment switch. Defaults to false. */
   isSharedAcrossEnvs?: boolean
+  /** The browser may suggest the user's earlier values. Defaults to false. */
+  isBrowserAutocomplete?: boolean
 }
 
 export interface CrossCuttingParamValue {

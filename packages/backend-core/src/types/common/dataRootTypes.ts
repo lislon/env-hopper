@@ -59,6 +59,12 @@ export interface LateResolvableParam extends SlugAndDisplayable {
    * same thing everywhere; a session id does not. (By default: false)
    */
   isSharedAcrossEnvs?: boolean
+  /**
+   * Let the browser suggest the user's earlier values for this param. Worth it
+   * for an id someone retypes; wrong for anything sensitive or single-use,
+   * since the browser then stores it. (By default: false)
+   */
+  isBrowserAutocomplete?: boolean
 }
 
 export interface ResourceJump extends SlugAndDisplayable {

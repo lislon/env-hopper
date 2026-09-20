@@ -7,7 +7,8 @@ export interface CrossCuttingLoaderParam {
 export interface CrossCuttingParamDef {
   slug: string
   displayName: string
-  //   scope: 'global' | 'environment';
+  /** The value survives an environment switch. Defaults to false. */
+  isSharedAcrossEnvs?: boolean
 }
 
 export interface CrossCuttingParamValue {

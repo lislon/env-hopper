@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
+import { appSlugFromJumpSlug } from '~/util/route-utils'
 import type { EhTemplateSelection } from './ehTemplate'
 import { resolveEhTemplate } from './ehTemplate'
 
@@ -22,9 +23,12 @@ export function useEhTemplate(): (template: string) => string | undefined {
   const selection = useMemo<EhTemplateSelection>(
     () => ({
       app: currentResourceJump && {
-        slug: currentResourceJump.slug,
+        // A jump slug flattens app and page into one segment, so it is neither
+        // the app's own slug nor a key into a collection keyed by app.
+        slug: appSlugFromJumpSlug(currentResourceJump.slug),
         displayName: currentResourceJump.displayName,
-        meta: bootstrap.apps[currentResourceJump.slug]?.meta,
+        meta: bootstrap.apps[appSlugFromJumpSlug(currentResourceJump.slug)]
+          ?.meta,
       },
       env: currentEnv && {
         slug: currentEnv.slug,

@@ -23,8 +23,9 @@ import { useEnvironmentContext } from '~/modules/environment/context/Environment
 import { useResourceJumpHistory } from '~/modules/resourceJump/context/useResouceJumpHistory'
 import { getFlashipResource } from '~/modules/resourceJump/utils/helpers'
 import { mapToResouceJumpUis } from '~/modules/resourceJump/utils/mapToResouceJumpUis'
+import { buildEhTemplateParams } from '~/modules/uiSettings/ehTemplate'
 import type { EhUrlParams } from '~/types/ehTypes'
-import { getEhToOptions } from '~/util/route-utils'
+import { appSlugFromJumpSlug, getEhToOptions } from '~/util/route-utils'
 import { ApiQueryMagazineResourceJump } from '../api/ApiQueryMagazineResourceJump'
 import type {
   ResourceJumpHistoryItem,
@@ -151,7 +152,7 @@ export function ResourceJumpProvider({
   }, [currentResourceJumpSlug, resourceJumps])
 
   const { setCrossCuttingParamsDefs } = useCrossCuttingParamsContext()
-  const { contexts } = useBootstrapConfig()
+  const { contexts, apps } = useBootstrapConfig()
   useEffect(() => {
     setCrossCuttingParamsDefs(
       mergeContextFlags(apiData?.lateResolvableParams || [], contexts),
@@ -313,14 +314,21 @@ export function ResourceJumpProvider({
       jumpResourceSlug: JumpResourceSlug | undefined,
       envSlug: EnvSlug | undefined,
     ) => {
+      // The jump slug carries the app and the page in one segment, so the app's
+      // environment-independent placeholders are found by cutting the page off.
+      const app = jumpResourceSlug
+        ? apps[appSlugFromJumpSlug(jumpResourceSlug)]
+        : undefined
+
       return buildJumpUrl(
         jumpResourceSlug,
         envSlug,
         apiData,
         mapValues(crossCuttingParams, (v) => v.stringValue),
+        app ? buildEhTemplateParams({ app }) : undefined,
       )
     },
-    [apiData, crossCuttingParams],
+    [apiData, apps, crossCuttingParams],
   )
 
   const currentFlagship = useMemo(() => {

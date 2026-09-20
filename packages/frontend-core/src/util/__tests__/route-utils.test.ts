@@ -1,5 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { getEhToOptions } from '~/util/route-utils'
+import { appSlugFromJumpSlug, getEhToOptions } from '~/util/route-utils'
+
+describe('appSlugFromJumpSlug', () => {
+  it('leaves a grouped app alone, since a group slug carries no page', () => {
+    expect(appSlugFromJumpSlug('orders')).toBe('orders')
+  })
+
+  it('drops the page from a child page of a grouped app', () => {
+    expect(appSlugFromJumpSlug('orders@shipments')).toBe('orders')
+  })
+
+  it('drops the page from a single-page app whose page is not named home', () => {
+    // The regression this guards: such an app is deliberately not grouped, so
+    // its slug is the jump's own — and the jump slug keeps the page suffix.
+    // Keyed by the raw slug, its `{{app.meta.*}}` placeholders never resolved.
+    expect(appSlugFromJumpSlug('reports@dashboard')).toBe('reports')
+  })
+})
 
 describe('getEhToOptions', () => {
   it('carries a sub value so a shared link keeps what the page is about', () => {

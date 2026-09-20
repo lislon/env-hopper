@@ -33,23 +33,36 @@ export function resolveTemplate(
   return value
 }
 
-// Helper function to escape regex special characters
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
+const PLACEHOLDER_RE = /\{\{([^{}]*)\}\}/g
+const DEFAULT_OPERATOR = '??'
 
-// Template substitution helper
+/**
+ * Template substitution helper.
+ *
+ * `{{key}}` is replaced by `params[key]`, or left verbatim when the key is
+ * missing — callers rely on that to detect an unresolvable template.
+ * `{{key ?? fallback}}` substitutes `fallback` instead when the key is missing;
+ * an empty right side (`{{key ?? }}`) means "drop it", i.e. substitute ''.
+ * Whitespace around the key and the operator is ignored.
+ */
 export function substituteTemplate(
   template: string,
   params: Record<string, string>,
 ): string {
-  let result = template
-  Object.entries(params).forEach(([key, value]) => {
-    // Use global regex to replace all occurrences of {{key}} pattern
-    const regex = new RegExp(`\\{\\{${escapeRegex(key)}\\}\\}`, 'g')
-    result = result.replace(regex, value)
+  return template.replace(PLACEHOLDER_RE, (placeholder, expression: string) => {
+    const operatorAt = expression.indexOf(DEFAULT_OPERATOR)
+    const key = (
+      operatorAt === -1 ? expression : expression.slice(0, operatorAt)
+    ).trim()
+
+    const value = params[key]
+    if (value !== undefined) {
+      return value
+    }
+    return operatorAt === -1
+      ? placeholder
+      : expression.slice(operatorAt + DEFAULT_OPERATOR.length).trim()
   })
-  return result
 }
 
 // Wrapper function that merges env params with resource params

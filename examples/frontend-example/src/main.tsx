@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import '@env-hopper/frontend-core/src/index.css'
 import './index.css'
 import { App, appPropsFactory } from '@env-hopper/frontend-core'
+import { uiSettings } from './uiSettings'
 
 // Render the app
 
@@ -13,7 +14,7 @@ if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <App {...props} />
+      <App {...props} uiSettings={uiSettings} />
     </StrictMode>,
   )
 }

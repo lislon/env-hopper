@@ -33,6 +33,60 @@ describe('DefaultWithOverridesAndTemplate', () => {
 
       expect(result).toBe('https://example.com')
     })
+
+    it('should prefer the value over the default when the key is present', () => {
+      const template = 'https://example.com/?q={{query ?? all}}'
+      const params = { query: 'open' }
+
+      const result = substituteTemplate(template, params)
+
+      expect(result).toBe('https://example.com/?q=open')
+    })
+
+    it('should use the default when the key is missing', () => {
+      const template = 'https://example.com/?q={{query ?? all}}'
+      const params = {}
+
+      const result = substituteTemplate(template, params)
+
+      expect(result).toBe('https://example.com/?q=all')
+    })
+
+    it('should substitute an empty default when the key is missing', () => {
+      const template = 'https://example.com/?q={{query ?? }}'
+      const params = {}
+
+      const result = substituteTemplate(template, params)
+
+      expect(result).toBe('https://example.com/?q=')
+    })
+
+    it('should tolerate any whitespace around the default operator', () => {
+      const template = '{{a??1}}|{{  b  ??  2  }}|{{c\t??\t3}}'
+      const params = {}
+
+      const result = substituteTemplate(template, params)
+
+      expect(result).toBe('1|2|3')
+    })
+
+    it('should not reinterpret a value that itself contains the operator', () => {
+      const template = 'https://example.com/?q={{query}}&r={{missing ?? x}}'
+      const params = { query: 'a ?? b' }
+
+      const result = substituteTemplate(template, params)
+
+      expect(result).toBe('https://example.com/?q=a ?? b&r=x')
+    })
+
+    it('should substitute values containing regex replacement patterns verbatim', () => {
+      const template = 'https://example.com/{{path}}'
+      const params = { path: '$&$1' }
+
+      const result = substituteTemplate(template, params)
+
+      expect(result).toBe('https://example.com/$&$1')
+    })
   })
 
   describe('resolveTemplate', () => {

@@ -110,7 +110,9 @@ export const uiSettings: EhUiSettings = {
       id: 'logs',
       icon: <LogsIcon />,
       title: 'Logs for {{app.displayName}}',
-      url: 'https://logs.{{subdomain}}.example.com/?service={{app.slug}}',
+      // `{{env.meta.region}}` comes from the environment's own meta, which the
+      // backend serves in the bootstrap config.
+      url: 'https://logs.{{subdomain}}.example.com/?service={{app.slug}}&region={{env.meta.region ?? unknown}}',
     },
     {
       id: 'source',

@@ -7,11 +7,11 @@ import { renderApp } from './helpers/renderWithProviders'
 /**
  * The url vocabulary is frozen: people have these links bookmarked and pasted
  * into tickets, so every shape the app has ever minted has to keep resolving.
- * Two of them name an app without naming an environment, which is legal — the
- * environment is simply left unselected.
+ * Three of them leave a part out — an app with no environment, and an
+ * environment and a value with no app — which is legal.
  *
  * These drive the real route tree on purpose. A missing route is invisible to a
- * unit test on the url builder, which is how this gap survived: the path fell
+ * unit test on the url builder, which is how these gaps survived: the path fell
  * through to the root `notFoundComponent`, which renders the header outside the
  * providers and throws `useAuth must be used within AuthProvider` — an error
  * that points at auth and means "no route".
@@ -21,7 +21,7 @@ import { renderApp } from './helpers/renderWithProviders'
  * assertions carry the weight instead: they name the matched route id, the
  * loader output, and the absence of the error page.
  */
-describe('legacy links with no environment', () => {
+describe('frozen legacy link shapes', () => {
   const server = setupServer()
 
   beforeAll(() => server.listen())
@@ -119,6 +119,45 @@ describe('legacy links with no environment', () => {
         { slug: 'orderId', stringValue: '123' },
       ])
 
+      expect(text).not.toContain('Ooops!')
+    },
+  )
+
+  test('an environment and a value with no app resolves to the environment route', async () => {
+    const { routeId, loaderData, text, ui } = await open('/env/dev/sub/123')
+
+    expect(routeId).toBe('/_layout/env/$envSlug/sub/$subValue/')
+    expect(ui.getCurrentPath()).toBe('/env/dev/sub/123')
+    expect(loaderData?.envSlug).toBe('dev')
+    expect(loaderData?.subValue).toBe('123')
+    expect(loaderData?.resourceSlug).toBeUndefined()
+
+    // The value cannot be named yet, and this is the contract, not a defect:
+    // `routeLoaderMapper` reads the parameter's slug off the jump's own
+    // `lateResolvableParamSlugs`, so with no app in the url there is no
+    // parameter to attach it to. The value is held on the loader and the app
+    // puts it back in the url once an app is chosen, which is the case the rows
+    // above cover.
+    expect(loaderData?.crossCuttingParams).toEqual([])
+
+    // The environment is selected: the breadcrumb names it.
+    expect(text).toContain('Dev')
+    expect(text).not.toContain('Ooops!')
+  })
+
+  // This shape has no app segment, so the `@` quirk has nothing to act on here.
+  // What does apply is the escaping of the value itself, which is the part a
+  // bookmark is most likely to carry something awkward in.
+  test.each([
+    ['a separator', '/env/dev/sub/a%2Fb%20c', 'a/b c'],
+    ['an at sign', '/env/dev/sub/ORD%404821', 'ORD@4821'],
+  ])(
+    'a value containing %s survives decoding',
+    async (_name, link, decoded) => {
+      const { routeId, loaderData, text } = await open(link)
+
+      expect(routeId).toBe('/_layout/env/$envSlug/sub/$subValue/')
+      expect(loaderData?.subValue).toBe(decoded)
       expect(text).not.toContain('Ooops!')
     },
   )

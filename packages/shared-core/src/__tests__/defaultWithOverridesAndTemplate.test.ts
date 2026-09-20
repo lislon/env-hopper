@@ -70,6 +70,9 @@ describe('DefaultWithOverridesAndTemplate', () => {
       expect(result).toBe('1|2|3')
     })
 
+    // Still true, but the guarantee is narrower than it was: a substituted value
+    // IS scanned for `{{...}}` now. What it is never scanned for is expression
+    // syntax outside a placeholder, which is what this case covers.
     it('should not reinterpret a value that itself contains the operator', () => {
       const template = 'https://example.com/?q={{query}}&r={{missing ?? x}}'
       const params = { query: 'a ?? b' }
@@ -86,6 +89,76 @@ describe('DefaultWithOverridesAndTemplate', () => {
       const result = substituteTemplate(template, params)
 
       expect(result).toBe('https://example.com/$&$1')
+    })
+
+    it('should treat the right side of the operator as a key when one exists', () => {
+      const template = '{{env.meta.baseUrl ?? app.meta.baseUrl}}'
+      const params = { 'app.meta.baseUrl': 'https://example.com' }
+
+      const result = substituteTemplate(template, params)
+
+      expect(result).toBe('https://example.com')
+    })
+
+    it('should fall through to the literal when no segment names a key', () => {
+      const template = '{{env.meta.x ?? app.meta.x ?? https://example.com}}'
+
+      const result = substituteTemplate(template, {})
+
+      expect(result).toBe('https://example.com')
+    })
+
+    it('should take the first hit in a chain, left to right', () => {
+      const template = '{{a ?? b ?? c ?? fallback}}'
+      const params = { b: 'from-b', c: 'from-c' }
+
+      const result = substituteTemplate(template, params)
+
+      expect(result).toBe('from-b')
+    })
+
+    it('should resolve placeholders inside a substituted value', () => {
+      const template = '{{app.meta.urlPattern}}'
+      const params = {
+        'app.meta.urlPattern': 'https://host-{{subdomain}}.{{domain}}',
+        subdomain: 'dev',
+        domain: 'example.com',
+      }
+
+      const result = substituteTemplate(template, params)
+
+      expect(result).toBe('https://host-dev.example.com')
+    })
+
+    it('should stop after the pass cap rather than follow a longer chain', () => {
+      const template = '{{one}}'
+      const params = { one: '{{two}}', two: '{{three}}', three: 'end' }
+
+      const result = substituteTemplate(template, params)
+
+      // MAX_TEMPLATE_PASSES is 2: the template and the value it yields.
+      expect(result).toBe('{{three}}')
+    })
+
+    it('should terminate on a self-referential key', () => {
+      const template = 'https://example.com/{{loop}}'
+      const params = { loop: 'a{{loop}}' }
+
+      const result = substituteTemplate(template, params)
+
+      // One expansion per pass, then the token is left alone — no recursion.
+      expect(result).toBe('https://example.com/aa{{loop}}')
+    })
+
+    it('should not scan a value listed as a literal key', () => {
+      const template = 'https://example.com/?q={{typed}}'
+      const params = { typed: '{{secret}}', secret: 'leaked' }
+
+      const result = substituteTemplate(template, params, {
+        literalKeys: new Set(['typed']),
+      })
+
+      expect(result).toBe('https://example.com/?q={{secret}}')
     })
   })
 
@@ -201,6 +274,86 @@ describe('DefaultWithOverridesAndTemplate', () => {
       const result = substituteTemplateWithEnvParams(template, 'dev', envParams)
 
       expect(result).toBe('https://dev.example.com/api')
+    })
+
+    it('should resolve an app-level pattern against env params', () => {
+      const template = '{{app.meta.urlPattern}}/health'
+      const envParams = { subdomain: 'dev', domain: 'example.com' }
+      const appParams = {
+        'app.meta.urlPattern': 'https://{{subdomain}}.{{domain}}',
+      }
+
+      const result = substituteTemplateWithEnvParams(
+        template,
+        'dev',
+        envParams,
+        undefined,
+        undefined,
+        appParams,
+      )
+
+      expect(result).toBe('https://dev.example.com/health')
+    })
+
+    it('should rank app params below every other source', () => {
+      const template = '{{who}}'
+
+      expect(
+        substituteTemplateWithEnvParams(
+          template,
+          'dev',
+          undefined,
+          undefined,
+          undefined,
+          { who: 'app' },
+        ),
+      ).toBe('app')
+      expect(
+        substituteTemplateWithEnvParams(
+          template,
+          'dev',
+          { who: 'env' },
+          undefined,
+          undefined,
+          { who: 'app' },
+        ),
+      ).toBe('env')
+      expect(
+        substituteTemplateWithEnvParams(
+          template,
+          'dev',
+          { who: 'env' },
+          { dev: { who: 'jump' } },
+          undefined,
+          { who: 'app' },
+        ),
+      ).toBe('jump')
+      expect(
+        substituteTemplateWithEnvParams(
+          template,
+          'dev',
+          { who: 'env' },
+          { dev: { who: 'jump' } },
+          { who: 'late' },
+          { who: 'app' },
+        ),
+      ).toBe('late')
+    })
+
+    it('should never interpret a user-supplied value as template syntax', () => {
+      const template = 'https://example.com/?q={{namespace}}'
+      const envParams = { evil: 'pwned' }
+      const userValues = { namespace: '{{evil}}' }
+
+      const result = substituteTemplateWithEnvParams(
+        template,
+        'dev',
+        envParams,
+        undefined,
+        userValues,
+      )
+
+      expect(result).toBe('https://example.com/?q={{evil}}')
     })
   })
 })

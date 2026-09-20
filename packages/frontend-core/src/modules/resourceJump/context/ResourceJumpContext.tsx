@@ -23,6 +23,7 @@ import { useEnvironmentContext } from '~/modules/environment/context/Environment
 import { useResourceJumpHistory } from '~/modules/resourceJump/context/useResouceJumpHistory'
 import { getFlashipResource } from '~/modules/resourceJump/utils/helpers'
 import { mapToResouceJumpUis } from '~/modules/resourceJump/utils/mapToResouceJumpUis'
+import { buildEhTemplateParams } from '~/modules/uiSettings/ehTemplate'
 import type { EhUrlParams } from '~/types/ehTypes'
 import { getEhToOptions } from '~/util/route-utils'
 import { ApiQueryMagazineResourceJump } from '../api/ApiQueryMagazineResourceJump'
@@ -151,7 +152,7 @@ export function ResourceJumpProvider({
   }, [currentResourceJumpSlug, resourceJumps])
 
   const { setCrossCuttingParamsDefs } = useCrossCuttingParamsContext()
-  const { contexts } = useBootstrapConfig()
+  const { contexts, apps } = useBootstrapConfig()
   useEffect(() => {
     setCrossCuttingParamsDefs(
       mergeContextFlags(apiData?.lateResolvableParams || [], contexts),
@@ -313,14 +314,21 @@ export function ResourceJumpProvider({
       jumpResourceSlug: JumpResourceSlug | undefined,
       envSlug: EnvSlug | undefined,
     ) => {
+      // A jump belongs to its flagship, whose slug is the app's slug, so the
+      // app's environment-independent placeholders can join the resolution.
+      const appSlug = resourceJumps.find((rj) => rj.slug === jumpResourceSlug)
+        ?.flagship.slug
+      const app = appSlug ? apps[appSlug] : undefined
+
       return buildJumpUrl(
         jumpResourceSlug,
         envSlug,
         apiData,
         mapValues(crossCuttingParams, (v) => v.stringValue),
+        app ? buildEhTemplateParams({ app }) : undefined,
       )
     },
-    [apiData, crossCuttingParams],
+    [apiData, apps, crossCuttingParams, resourceJumps],
   )
 
   const currentFlagship = useMemo(() => {

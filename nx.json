@@ -33,8 +33,6 @@
     },
     "compile": {
       "cache": true,
-      // `tsc --build` also builds referenced projects, so a dependency's
-      // generated Prisma client has to exist before this runs.
       "dependsOn": ["prisma:generate", "^prisma:generate"],
       "inputs": ["default", "^production"],
       "outputs": ["{projectRoot}/dist-ts"]

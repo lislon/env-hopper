@@ -11,6 +11,7 @@
     "dev": "vite",
     "start": "node dist/index.js",
     "test:eslint": "eslint ./src",
+    "test:types": "tsc --build",
     "test:unit": "vitest"
   },
   "dependencies": {

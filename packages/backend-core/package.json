@@ -38,6 +38,7 @@
     "dev": "tsx watch src/index.ts",
     "prisma:generate": "prisma generate",
     "test:eslint": "eslint ./src",
+    "test:types": "tsc --build",
     "test:unit": "vitest",
     "test:unit:dev": "pnpm run test:unit --watch"
   },

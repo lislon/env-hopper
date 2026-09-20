@@ -4,10 +4,14 @@
     "jsx": "react-jsx",
     "esModuleInterop": false,
     "outDir": "./dist-ts",
-    "rootDir": "."
-    // "paths": {
-    //   "~/*": ["./@env-hopper/frontend-core/src22222222222/*"]
-    // }
+    "rootDir": ".",
+    // `customConditions` resolves @env-hopper/frontend-core to its TypeScript
+    // source, so this program also contains the core's files -- and those use
+    // the core's own `~/*` alias, which has to be mapped here too or every one
+    // of them is an unresolved module.
+    "paths": {
+      "~/*": ["../../packages/frontend-core/src/*"]
+    }
   },
   "include": ["src", "*.config.ts", "*.config.js", "package.json"]
 }

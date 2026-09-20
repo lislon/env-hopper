@@ -34,6 +34,7 @@
     "compile": "tsc --build",
     "dev": "tsx watch src/index.ts",
     "test:eslint": "eslint ./src",
+    "test:types": "tsc --build",
     "test:unit": "echo \"skipped\"",
     "test:unit:dev": "echo \"skipped\""
   },

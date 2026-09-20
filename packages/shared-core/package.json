@@ -34,6 +34,7 @@
     "compile": "tsc --build",
     "dev": "tsx watch src/index.ts",
     "test:eslint": "eslint ./src",
+    "test:types": "tsc --build",
     "test:unit": "vitest",
     "test:unit:dev": "pnpm run test:unit --watch"
   },

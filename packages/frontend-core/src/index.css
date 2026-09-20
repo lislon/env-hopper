@@ -66,7 +66,9 @@
     --tracking-normal: 0em;
     --spacing: 0.25rem;
     --hopper: oklch(0.7488 0.149 130.38);
-    --animation-btn: 0.25s;
+    /* Read by JumpMainButton and ResourceJumpButton as
+     * `active:hover:scale-(--btn-focus-scale)`. Keep it here: those render
+     * outside `.eh-legacy`, so the skin's own copy does not reach them. */
     --btn-focus-scale: 0.95;
     --eh-app-foreground: var(--foreground);
     --eh-app-border: #26ff67;
@@ -134,7 +136,7 @@
 
     --highlight: var(--color-amber-900);
     --hopper: oklch(0.7488 0.149 130.38);
-    --animation-btn: 0.25s;
+    /* See the note on this token in the :root block above. */
     --btn-focus-scale: 0.95;
   }
 }
@@ -198,8 +200,6 @@
   --color-eh-app-border: var(--eh-app-border);
   --color-eh-context-foreground: var(--eh-context-foreground);
   --color-eh-context-border: var(--eh-context-border);
-
-  --animate-button-pop: button-pop var(--animation-btn, 0.25s) ease-out;
 }
 
 @layer base {
@@ -212,17 +212,3 @@
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
-
-@keyframes button-pop {
-  0% {
-    transform: scale(var(--btn-focus-scale, 0.98));
-  }
-
-  40% {
-    transform: scale(1.02);
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}

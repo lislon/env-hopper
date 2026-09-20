@@ -158,6 +158,20 @@ for (const u of [
   assert.ok(new RegExp(`\\.${u} \\{`).test(css), `${u} is not emitted`)
 }
 
+/*
+ * --- the one previous-app token that outlived the previous app ---
+ *
+ * JumpMainButton and ResourceJumpButton read `--btn-focus-scale` through
+ * `active:hover:scale-(--btn-focus-scale)`, and they render outside the scope, so
+ * the skin's own copy cannot serve them. The duplicate keyframes and
+ * `--animation-btn` next to it in ./index.css were dead and are gone; this one
+ * must stay reachable at the document root.
+ */
+assert.ok(
+  /:root[^{]*\{[^}]*--btn-focus-scale:/.test(css.replace(scopeBlock, '')),
+  '--btn-focus-scale is no longer declared outside the scope; the two jump buttons lose their press scale',
+)
+
 /* --- no token clash with the current stack: this is why daisyUI 4 was chosen --- */
 
 assert.equal(

@@ -16,8 +16,17 @@
         inside the legacy scope
       </button>
       <a class="tab tab-active tab-bordered">tab</a>
-      <ul class="menu menu-horizontal menu-xs eh-quick-bar">
+      <!--
+        The quick bar carries no `menu` class, matching the previous app's markup.
+        It must not: `.menu { display: flex }` comes after it in the cascade and
+        would override its own `inline-flex`.
+      -->
+      <ul class="eh-quick-bar p-0 relative overflow-hidden flex-wrap">
         <li><a class="menu-title">item</a></li>
+        <li><a>plain</a></li>
+      </ul>
+      <ul class="menu menu-horizontal menu-xs">
+        <li><a>a real menu, so those classes still compile</a></li>
       </ul>
       <div
         class="card alert badge input select toggle checkbox navbar prose"

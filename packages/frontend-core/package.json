@@ -48,6 +48,7 @@
     "test": "pnpm run test:unit",
     "test:eslint": "eslint ./src",
     "test:legacy-skin": "node scripts/legacy-skin/check.mjs",
+    "test:legacy-skin:browser": "node scripts/legacy-skin/browser-check.mjs",
     "test:unit": "pnpm run test:legacy-skin",
     "test:unit:dev": "echo 'Tests disabled'",
     "typecheck:watch": "tsc --build --watch"

@@ -76,7 +76,18 @@ export const bootstrapConfigData: BootstrapConfigData = {
       displayName: 'Production',
     },
   },
-  contexts: [],
+  // Behavioural flags per parameter, joined onto a jump's late-resolvable
+  // params by slug. `env` has no matching param on purpose: it is the
+  // environment selector, not something a user types.
+  contexts: [
+    {
+      slug: 'kafkaTopic',
+      displayName: 'Kafka Topic',
+      isSharedAcrossEnvs: true,
+    },
+    { slug: 'postId', displayName: 'Post ID', isSharedAcrossEnvs: false },
+    { slug: 'env', displayName: 'Environment', isSharedAcrossEnvs: true },
+  ],
   appsMeta: {
     tags: {
       descriptions: [],

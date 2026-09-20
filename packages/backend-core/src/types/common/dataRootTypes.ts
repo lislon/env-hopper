@@ -54,6 +54,17 @@ export interface EnvBaseInfo extends SlugAndDisplayable {
 export interface LateResolvableParam extends SlugAndDisplayable {
   slug: string
   displayName: string
+  /**
+   * The value stays when the user switches environment. An order id means the
+   * same thing everywhere; a session id does not. (By default: false)
+   */
+  isSharedAcrossEnvs?: boolean
+  /**
+   * Let the browser suggest the user's earlier values for this param. Worth it
+   * for an id someone retypes; wrong for anything sensitive or single-use,
+   * since the browser then stores it. (By default: false)
+   */
+  isBrowserAutocomplete?: boolean
 }
 
 export interface ResourceJump extends SlugAndDisplayable {

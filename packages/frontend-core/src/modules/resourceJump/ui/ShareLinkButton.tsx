@@ -1,24 +1,25 @@
 import { useRouter } from '@tanstack/react-router'
 import { Share2Icon } from 'lucide-react'
 import { use } from 'react'
+import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
 import {
-    EnvironmentContext,
-    useEnvironmentContext,
+  EnvironmentContext,
+  useEnvironmentContext,
 } from '~/modules/environment/context/EnvironmentContext'
 import {
-    ResourceJumpContext,
-    useResourceJumpContext,
+  ResourceJumpContext,
+  useResourceJumpContext,
 } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { Button } from '~/ui/button'
 import { Card, CardContent } from '~/ui/card'
 import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '~/ui/dialog'
 import { Input } from '~/ui/input'
 import { Label } from '~/ui/label'
@@ -50,13 +51,21 @@ export function ShareLinkButton() {
 function ShareDialogEnv() {
   const { currentEnv } = useEnvironmentContext()
   const { currentResourceJump } = useResourceJumpContext()
+  const { crossCuttingParams } = useCrossCuttingParamsContext()
   const router = useRouter()
+
+  // A shared link is useless without the value the page is about.
+  const firstParamSlug = currentResourceJump?.lateResolvableParamSlugs?.[0]
+  const subValue = firstParamSlug
+    ? crossCuttingParams[firstParamSlug]?.stringValue || undefined
+    : undefined
 
   const fullUrl = new URL(
     router.buildLocation(
       getEhToOptions({
         appId: currentResourceJump?.slug,
         envId: currentEnv?.slug,
+        subValue,
       }),
     ).href,
     window.location.origin,
@@ -100,6 +109,7 @@ function ShareDialogEnv() {
                 {...getEhToOptions({
                   appId: currentResourceJump?.slug,
                   envId: currentEnv?.slug,
+                  subValue,
                 })}
               >
                 {currentEnv?.displayName} (Env-Hopper)

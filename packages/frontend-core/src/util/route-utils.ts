@@ -13,8 +13,18 @@ export function escapeEnvId(envId: string) {
   return encodeURIComponent(envId)
 }
 
-export function getEhToOptions({ appId, envId }: EhUrlParams) {
-  if (appId && envId) {
+export function getEhToOptions({ appId, envId, subValue }: EhUrlParams) {
+  if (appId && envId && subValue !== undefined) {
+    return linkOptions({
+      from: '/',
+      to: '/env/$envSlug/app/$appSlug/sub/$subValue',
+      params: {
+        appSlug: escapeAppId(appId),
+        envSlug: escapeEnvId(envId),
+        subValue: escapeSubValue(subValue),
+      },
+    })
+  } else if (appId && envId) {
     return linkOptions({
       from: '/',
       to: '/env/$envSlug/app/$appSlug',

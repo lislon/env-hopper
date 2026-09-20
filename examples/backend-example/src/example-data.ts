@@ -89,6 +89,12 @@ export const resourceJumpsData: ResourceJumpsData = {
     {
       slug: 'productId',
       displayName: 'Product ID',
+      // A product means the same thing in every environment, so the value is
+      // worth carrying when the user switches. A pod or session id would not be.
+      isSharedAcrossEnvs: true,
+      // Someone retypes the same handful of product ids all day, so let the
+      // browser suggest them.
+      isBrowserAutocomplete: true,
     },
     {
       slug: 'postId',

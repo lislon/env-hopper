@@ -50,6 +50,24 @@ describe('getEhToOptions', () => {
     )
   })
 
+  it('keeps the app when no environment is chosen yet', () => {
+    // Falling through to `/` here dropped the selection and stripped the app out
+    // of the link the share button offers.
+    expect(getEhToOptions({ appId: 'orders' })).toMatchObject({
+      to: '/app/$appSlug',
+      params: { appSlug: 'orders' },
+    })
+  })
+
+  it('keeps the sub value when no environment is chosen yet', () => {
+    expect(
+      getEhToOptions({ appId: 'orders', subValue: 'ORD-4821' }),
+    ).toMatchObject({
+      to: '/app/$appSlug/sub/$subValue',
+      params: { appSlug: 'orders', subValue: 'ORD-4821' },
+    })
+  })
+
   it('keeps the env-only and root shapes', () => {
     expect(getEhToOptions({ envId: 'staging' })).toMatchObject({
       to: '/env/$envSlug',

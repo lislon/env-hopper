@@ -1,5 +1,8 @@
 /* @import url(./modules/resourceJump/ui/JumpMainButton.css); */
 @import 'tailwindcss';
+/* The previous UI's look, scoped to `.eh-legacy`. See ./legacy-skin.css. */
+@import './legacy-theme.css';
+@import './legacy-skin.css';
 /* Other module imports this css, and we need to tell tailwind to scan our tsx files */
 @source ".";
 

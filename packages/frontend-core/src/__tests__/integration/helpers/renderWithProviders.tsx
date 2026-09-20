@@ -136,7 +136,7 @@ export async function renderApp(options: RenderAppOptions): Promise<
         }
 
         // Also check query states as backup
-        const bootstrapState = queryClient.getQueryState(['config'])
+        const bootstrapState = queryClient.getQueryState(['bootstrapConfig'])
         const resourceJumpsState = queryClient.getQueryState(['resourceJumps'])
 
         const bootstrapLoaded =

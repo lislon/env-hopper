@@ -62,10 +62,14 @@ export const bootstrapConfigData: BootstrapConfigData = {
     staging: {
       slug: 'staging',
       displayName: 'Staging',
+      // `meta` is free-form per deployment and is what `{{env.meta.*}}`
+      // templates resolve against.
+      meta: { region: 'eu-west', tier: 'preprod' },
     },
     uat: {
       slug: 'uat',
       displayName: 'User Acceptance Testing',
+      meta: { region: 'us-east', tier: 'preprod' },
     },
     prod: {
       slug: 'prod',

@@ -6,6 +6,19 @@ const BootstrapConfigContext = createContext<BootstrapConfigData | undefined>(
   undefined,
 )
 
+/**
+ * What consumers see before the config has loaded. Keeping the context a valid
+ * object means `undefined` still means "no provider", so the hook below can
+ * keep telling those two cases apart.
+ */
+const EMPTY_BOOTSTRAP_CONFIG: BootstrapConfigData = {
+  apps: {},
+  envs: {},
+  appsMeta: { tags: { descriptions: [] } },
+  contexts: [],
+  defaults: { envSlug: '', resourceJumpSlug: '' },
+}
+
 interface BootstrapConfigProviderProps {
   children: ReactNode
   bootstrapConfig: BootstrapConfigData | undefined
@@ -16,7 +29,7 @@ export function BootstrapConfigProvider({
   bootstrapConfig,
 }: BootstrapConfigProviderProps) {
   return (
-    <BootstrapConfigContext value={bootstrapConfig}>
+    <BootstrapConfigContext value={bootstrapConfig ?? EMPTY_BOOTSTRAP_CONFIG}>
       {children}
     </BootstrapConfigContext>
   )

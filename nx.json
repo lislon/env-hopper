@@ -32,7 +32,7 @@
     },
     "compile": {
       "cache": true,
-      "dependsOn": ["prisma:generate"],
+      "dependsOn": ["prisma:generate", "^prisma:generate"],
       "inputs": ["default", "^production"],
       "outputs": ["{projectRoot}/dist-ts"]
     },

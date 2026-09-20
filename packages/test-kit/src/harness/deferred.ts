@@ -1,4 +1,5 @@
 export interface Deferred {
+  /** Hold a reply until `resolve()` — for observing the loading state. */
   defer: <T>(value: T) => Promise<T>
   resolve: () => void
   reject: (error: Error) => void

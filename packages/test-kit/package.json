@@ -1,0 +1,95 @@
+{
+  "name": "@env-hopper/test-kit",
+  "version": "2.0.1-alpha-20260812145859",
+  "description": "Integration test harness for Env Hopper: mock backend, mock network and page objects",
+  "homepage": "https://github.com/lislon/env-hopper",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lislon/env-hopper.git",
+    "directory": "packages/test-kit"
+  },
+  "license": "MIT",
+  "author": "Igor Golovin",
+  "sideEffects": [
+    "./src/setup/*",
+    "./dist/esm/setup/*",
+    "./src/cucumber/*",
+    "./dist/esm/cucumber/*"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "my-custom-condition": "./src/index.ts",
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./setup": {
+      "my-custom-condition": "./src/setup/testSetup.ts",
+      "import": {
+        "types": "./dist/esm/setup/testSetup.d.ts",
+        "default": "./dist/esm/setup/testSetup.js"
+      }
+    },
+    "./cucumber": {
+      "my-custom-condition": "./src/cucumber/steps.ts",
+      "import": {
+        "types": "./dist/esm/cucumber/steps.d.ts",
+        "default": "./dist/esm/cucumber/steps.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "clean": "premove ./dist ./coverage ./dist-ts",
+    "compile": "tsc --build",
+    "test": "pnpm run test:unit",
+    "test:eslint": "eslint ./src ./tests",
+    "test:unit": "vitest --run",
+    "test:unit:dev": "vitest"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@testing-library/user-event": "^14.6.1",
+    "@trpc/client": "catalog:",
+    "fake-indexeddb": "^6.2.4",
+    "msw": "^2.12.14",
+    "msw-trpc": "^2.0.1",
+    "quickpickle": "^1.11.2"
+  },
+  "devDependencies": {
+    "@env-hopper/backend-core": "workspace:*",
+    "@env-hopper/frontend-core": "workspace:*",
+    "@tanstack/vite-config": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "jsdom": "^25.0.1",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-svgr": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@env-hopper/backend-core": "workspace:^",
+    "@env-hopper/frontend-core": "workspace:^",
+    "jsdom": ">=25",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

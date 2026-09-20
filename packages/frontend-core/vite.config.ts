@@ -96,7 +96,8 @@ const config = defineConfig(({ mode }) => {
       watch: false,
       environment: 'jsdom',
       typecheck: { enabled: true },
-      setupFiles: ['./src/__tests__/integration/setup/testSetup.ts'],
+      // The jsdom/msw setup moved to @env-hopper/test-kit along with the
+      // integration scenarios; what is left here is pure-logic unit tests.
       include: ['./src/__tests__/**/*.test.{ts,tsx}'],
     },
     plugins: [
@@ -167,7 +168,7 @@ const config = defineConfig(({ mode }) => {
     return mergeConfig(
       tanstackViteConfig({
         tsconfigPath,
-        entry: './src/index.tsx',
+        entry: ['./src/index.tsx', './src/internal.ts'],
         srcDir: './src',
         cjs: false,
       }),

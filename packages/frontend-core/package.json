@@ -20,6 +20,13 @@
         "default": "./dist/esm/index.js"
       }
     },
+    "./internal": {
+      "my-custom-condition": "./src/internal.ts",
+      "import": {
+        "types": "./dist/esm/internal.d.ts",
+        "default": "./dist/esm/internal.js"
+      }
+    },
     "./public": {
       "my-custom-condition": "./public",
       "default": "./dist/public"
@@ -47,8 +54,8 @@
     "dev:watch": "vite build --mode lenient --watch",
     "test": "pnpm run test:unit",
     "test:eslint": "eslint ./src",
-    "test:unit": "echo 'Tests disabled'",
-    "test:unit:dev": "echo 'Tests disabled'",
+    "test:unit": "vitest --run",
+    "test:unit:dev": "vitest",
     "typecheck:watch": "tsc --build --watch"
   },
   "dependencies": {

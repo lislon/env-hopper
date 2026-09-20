@@ -5,14 +5,11 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [viteReact()],
   resolve: {
+    // Resolve the sibling core packages from source: `test:unit` only depends
+    // on `compile`, which does not build their `dist/esm` entry points.
+    conditions: ['my-custom-condition'],
     alias: {
       '~': path.resolve(__dirname, './src'),
-      // Tests run against sibling sources: `test:unit` only depends on
-      // `compile`, so the packages' `dist/esm` entry points are not built.
-      '@env-hopper/shared-core': path.resolve(
-        __dirname,
-        '../shared-core/src/index.ts',
-      ),
     },
   },
   test: {

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import type { ResourceJumpsData } from '@env-hopper/backend-core'
+import type { EhAppIndexed, ResourceJumpsData } from '@env-hopper/backend-core'
 import { buildJumpUrl } from '~/modules/resourceJump/utils/buildJumpUrl'
+import { buildEhTemplateParams } from '~/modules/uiSettings/ehTemplate'
+import { appSlugFromJumpSlug } from '~/util/route-utils'
 
 const resourceJumpsData: ResourceJumpsData = {
   lateResolvableParams: [{ slug: 'namespace', displayName: 'Namespace' }],
@@ -93,5 +95,85 @@ describe('buildJumpUrl', () => {
     })
 
     expect(url).toBe('https://dev.example.com/pods?ns={{subdomain}}')
+  })
+})
+
+/**
+ * A jump slug is not interchangeable with an app slug, so these drive the app
+ * lookup the way a caller must: derive the app key from the jump slug. Covers
+ * both shapes — a grouped app, whose slug carries no page, and a single-page app
+ * whose one page is not named `home`, whose slug does.
+ */
+describe('buildJumpUrl with app metadata', () => {
+  const apps: Record<string, EhAppIndexed> = {
+    orders: {
+      slug: 'orders',
+      displayName: 'Orders',
+      meta: { urlPattern: 'https://{{subdomain}}.example.com/orders' },
+    },
+    reports: {
+      slug: 'reports',
+      displayName: 'Reports',
+      meta: { urlPattern: 'https://{{subdomain}}.example.com/reports' },
+    },
+  }
+
+  const jumpsData: ResourceJumpsData = {
+    lateResolvableParams: [],
+    resourceJumps: [
+      {
+        slug: 'orders@shipments',
+        displayName: 'Orders :: Shipments',
+        urlTemplate: { default: '{{app.meta.urlPattern}}/shipments' },
+      },
+      {
+        slug: 'reports@dashboard',
+        displayName: 'Reports',
+        urlTemplate: { default: '{{app.meta.urlPattern}}/dashboard' },
+      },
+    ],
+    envs: [
+      {
+        slug: 'dev',
+        displayName: 'Dev',
+        templateParams: { subdomain: 'dev' },
+      },
+    ],
+    groups: [
+      {
+        slug: 'orders',
+        displayName: 'Orders',
+        resourceSlugs: ['orders@shipments'],
+      },
+    ],
+  }
+
+  function jumpUrlFor(jumpSlug: string) {
+    const app = apps[appSlugFromJumpSlug(jumpSlug)]
+    return buildJumpUrl(
+      jumpSlug,
+      'dev',
+      jumpsData,
+      undefined,
+      app ? buildEhTemplateParams({ app }) : undefined,
+    )
+  }
+
+  it('resolves app meta for a child page of a grouped app', () => {
+    expect(jumpUrlFor('orders@shipments')).toBe(
+      'https://dev.example.com/orders/shipments',
+    )
+  })
+
+  it('resolves app meta for an ungrouped app whose page is not named home', () => {
+    expect(jumpUrlFor('reports@dashboard')).toBe(
+      'https://dev.example.com/reports/dashboard',
+    )
+  })
+
+  it('would miss if the raw jump slug were used as the app key', () => {
+    // The defect this pins: keyed by the jump slug, the lookup finds nothing and
+    // the placeholder is left unresolved rather than failing loudly.
+    expect(apps['reports@dashboard']).toBeUndefined()
   })
 })

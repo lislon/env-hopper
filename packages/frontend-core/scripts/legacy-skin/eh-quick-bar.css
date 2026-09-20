@@ -1,11 +1,13 @@
 /*
- * The previous UI's only hand-written stylesheet, verbatim, kept as an input to
- * generate.mjs rather than transcribed into current syntax. Its `@apply`s
- * reference daisyUI 4 component classes, so letting the old toolchain expand them
- * is exact where retyping them would not be.
+ * The previous UI's only hand-written stylesheet, byte-for-byte, kept as an input
+ * to generate.mjs rather than transcribed into current syntax. Its `@apply`s
+ * reference component classes from the old library, so letting the old toolchain
+ * expand them is exact where retyping them would not be.
  *
  * The previous build imported this ahead of `@tailwind base`, so it sat before
  * every component and utility in the cascade; generate.mjs keeps that order.
+ *
+ * Excluded from formatting (see .prettierignore) so it stays as it shipped.
  */
 .eh-quick-bar {
   @apply menu-horizontal menu-xs;
@@ -16,14 +18,16 @@
 }
 
 :where(
-  .eh-quick-bar li:not(.menu-title, .disabled) > *:not(ul, details, .menu-title)
-),
+    .eh-quick-bar
+      li:not(.menu-title, .disabled)
+      > *:not(ul, details, .menu-title)
+  ),
 :where(
-  .eh-quick-bar
-    li:not(.menu-title, .disabled)
-    > details
-    > summary:not(.menu-title)
-) {
+    .eh-quick-bar
+      li:not(.menu-title, .disabled)
+      > details
+      > summary:not(.menu-title)
+  ) {
   &:not(summary, .active, .btn).focus,
   &:not(summary, .active, .btn):focus,
   &:is(summary):not(.active, .btn):focus-visible {

@@ -6,16 +6,30 @@
  * palette on a `:root` selector that could never match, and nothing complained.
  */
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 
-import { compile } from './compile.mjs'
+import { compile, pkgRoot } from './compile.mjs'
 
 const { css } = compile()
+/*
+ * A few things have to be true of the vendored file itself, not just of the
+ * compiled sheet: ./index.css carries dead remnants of the previous app — its own
+ * `@keyframes button-pop`, `--animation-btn` and `--btn-focus-scale` — which would
+ * satisfy a whole-sheet assertion even if the skin had lost them entirely.
+ */
+const skin = readFileSync(path.join(pkgRoot, 'src/legacy-skin.css'), 'utf8')
 const count = (re) => (css.match(re) ?? []).length
 
 /** The text inside the `.eh-legacy { ... }` wrapper, brace-matched. */
 const scopeBlock = (() => {
-  const open = css.indexOf('{', css.indexOf('.eh-legacy {'))
-  assert.notEqual(open, -1, 'the .eh-legacy wrapper is missing entirely')
+  const at = css.indexOf('.eh-legacy {')
+  assert.notEqual(
+    at,
+    -1,
+    'the .eh-legacy wrapper is missing entirely — the skin is not scoped at all',
+  )
+  const open = css.indexOf('{', at)
   let depth = 0
   let i = open
   for (; i < css.length; i++) {
@@ -27,7 +41,14 @@ const scopeBlock = (() => {
 
 /* --- the animation daisyUI 5 could not reproduce, which is why this is vendored --- */
 
-assert.ok(/@keyframes button-pop \{/.test(css), 'the button-pop keyframes are gone')
+assert.ok(
+  /@keyframes button-pop\s*\{/.test(skin),
+  'the skin no longer carries the button-pop keyframes',
+)
+assert.ok(
+  /@keyframes button-pop\s*\{/.test(css),
+  'the button-pop keyframes did not survive compilation',
+)
 assert.ok(
   /@media \(prefers-reduced-motion: no-preference\) \{[^@]*animation: button-pop var\(--animation-btn/.test(
     css,
@@ -41,6 +62,11 @@ assert.ok(
 
 /* --- the four geometry and timing tokens daisyUI 5 dropped --- */
 
+/*
+ * Asserted against the scope block, not the whole sheet: ./index.css happens to
+ * declare --animation-btn and --btn-focus-scale at :root as leftovers from the
+ * previous app, so a whole-sheet check passes even when the skin has lost them.
+ */
 for (const token of [
   '--animation-btn',
   '--btn-focus-scale',
@@ -48,8 +74,8 @@ for (const token of [
   '--tab-radius',
 ]) {
   assert.ok(
-    new RegExp(`${token}:`).test(css),
-    `${token} is not declared — the previous UI's feel depends on it`,
+    new RegExp(`${token}:`).test(scopeBlock),
+    `${token} is not declared inside the scope — the previous UI's feel depends on it`,
   )
 }
 

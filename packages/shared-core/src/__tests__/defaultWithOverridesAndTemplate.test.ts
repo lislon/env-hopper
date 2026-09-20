@@ -169,6 +169,31 @@ describe('DefaultWithOverridesAndTemplate', () => {
       expect(result).toBe('https://custom-dev.example.com/override-path')
     })
 
+    it('should apply defaults to a jump url template', () => {
+      const template =
+        'https://{{subdomain}}.example.com/pods?ns={{env.meta.k8sNs ?? --all-namespaces}}&q={{filter ?? }}'
+      const envParams = { subdomain: 'dev' }
+
+      const result = substituteTemplateWithEnvParams(template, 'dev', envParams)
+
+      expect(result).toBe('https://dev.example.com/pods?ns=--all-namespaces&q=')
+    })
+
+    it('should let a late param value win over a default', () => {
+      const template = 'https://example.com/?ns={{env.meta.k8sNs ?? all}}'
+      const additionalParams = { 'env.meta.k8sNs': 'team-a' }
+
+      const result = substituteTemplateWithEnvParams(
+        template,
+        'dev',
+        undefined,
+        undefined,
+        additionalParams,
+      )
+
+      expect(result).toBe('https://example.com/?ns=team-a')
+    })
+
     it('should handle regex special characters in parameter keys', () => {
       const template = 'https://{{subdomain}}.example.com/{{path.with.dots}}'
       const envParams = { subdomain: 'dev', 'path.with.dots': 'api' }

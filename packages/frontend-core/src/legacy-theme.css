@@ -95,7 +95,15 @@
   --radius-box: 1rem;
   --radius-field: 0.5rem;
   --radius-selector: 1.9rem;
-  /* daisyUI 4 `--border-btn`. */
+  /*
+   * daisyUI 4 `--border-btn`.
+   *
+   * Unavoidable name clash: to daisyUI 5 `--border` is a WIDTH, to shadcn it is
+   * a COLOUR (`@theme inline { --color-border: var(--border) }` in ./index.css).
+   * daisyUI declares it for this subtree whatever we do, so inside `.eh-legacy`
+   * the width wins and shadcn's `border-border` cannot work — see the rule after
+   * this block, which restores a default border colour for the subtree.
+   */
   --border: 1px;
   /*
    * daisyUI 5 additions with no daisyUI 4 equivalent. `depth` and `noise` add a
@@ -148,6 +156,23 @@
   --color-base-200: oklch(23.2607% 0.013807 253.100686);
   --color-base-300: oklch(21.1484% 0.01165 254.087949);
   --color-base-content: oklch(74.6477% 0.0216 264.435971);
+}
+
+/*
+ * Default border colour for the legacy subtree.
+ *
+ * ./index.css has `* { @apply border-border }`, i.e. `border-color: var(--border)`
+ * — and inside `.eh-legacy` that variable is daisyUI's 1px width, so the
+ * declaration is invalid and every un-styled border falls back to `currentColor`,
+ * which is text-coloured and very visibly wrong. Tailwind 3's preflight gave the
+ * legacy app `#e5e7eb` here (its `borderColor.DEFAULT`, never customised), so
+ * that exact value is restored. Unlayered, so it outranks the `@layer base` rule.
+ */
+.eh-legacy,
+.eh-legacy *,
+.eh-legacy ::before,
+.eh-legacy ::after {
+  border-color: #e5e7eb;
 }
 
 /*

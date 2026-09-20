@@ -153,7 +153,9 @@ const config = defineConfig(({ mode }) => {
             dest: 'public',
           },
           {
-            src: 'src/index.css',
+            // index.css `@import`s its siblings, so they all have to land in
+            // dist next to it — consumers compile dist/index.css themselves.
+            src: 'src/*.css',
             dest: '.',
           },
         ],

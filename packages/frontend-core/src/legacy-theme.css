@@ -1,0 +1,256 @@
+/*
+ * Legacy visual layer — daisyUI, scoped to `.eh-legacy`.
+ *
+ * The previous UI was Tailwind 3.4 + daisyUI 4.12 with the *stock* `light` and
+ * `dark` themes (no theme customisation at all) plus 42 lines of hand-written
+ * CSS. The look therefore is daisyUI, not a stylesheet, so this file
+ * reproduces daisyUI's visual language on Tailwind 4 instead of copying rules.
+ *
+ * Two style systems have to coexist: this layer and the shadcn tokens declared
+ * in ./index.css. The isolation is done in two places:
+ *
+ *   1. `root` + `prefix` below keep every daisyUI component class out of
+ *      un-scoped subtrees: the classes are `d-*`, and the theme custom
+ *      properties they read only exist under `.eh-legacy`.
+ *   2. daisyUI registers `primary`, `secondary` and `accent` as Tailwind theme
+ *      colors, which collide by name with shadcn's. The `.eh-legacy` blocks
+ *      below therefore re-point shadcn's `--primary`/`--secondary`/`--accent`
+ *      at the legacy palette, so `bg-primary` is legacy-coloured inside the
+ *      subtree and shadcn-coloured outside it, whichever registration wins.
+ *
+ * Everything here is plain CSS on purpose. This stylesheet ships verbatim in
+ * the published package (vite only *copies* src/index.css to dist/index.css;
+ * the consumer compiles it), and utility classes written inside library TSX are
+ * not compiled for consumers.
+ */
+
+/*
+ * `root` and `prefix` do NOT scope everything: daisyUI's `base` items are
+ * emitted at `:root` regardless, and two of them genuinely escape.
+ *
+ *   - `scrollbar` sets `scrollbar-color` on `:root` unconditionally, restyling
+ *     the whole page's scrollbars. daisyUI 4 never touched the scrollbar, so
+ *     dropping it is both the isolation fix and the faithful choice.
+ *   - `rootcolor` paints `:root` (and *any* `[data-theme]` element) with
+ *     `--color-base-100` / `--color-base-content`. Page-level colour is the host
+ *     app's job here, so the `.eh-legacy` rule below paints the legacy subtree
+ *     instead.
+ *
+ * `rootscrollgutter`, `rootscrolllock` and `svg` are kept: they only declare
+ * custom properties at `:root` (inert until a daisyUI modal/drawer sets them),
+ * and removing them would silently break scroll-lock for any modal ported later.
+ */
+@plugin "daisyui" {
+  themes: light --default;
+  root: '.eh-legacy';
+  prefix: 'd-';
+  exclude: scrollbar, rootcolor;
+  logs: false;
+}
+
+/*
+ * daisyUI 4's stock `light` theme, re-declared for the `.eh-legacy` subtree.
+ *
+ * Values are exact: they were produced by running daisyUI 4.12.23's own
+ * `convertColorFormat()` over its `light` theme, which is how the legacy build
+ * derived them (including the auto-generated `*-content` contrast colours and
+ * the darkened `base-200`/`base-300`). They differ from daisyUI 5's `light`
+ * theme — e.g. primary is oklch(49.12% 0.3096 275.75) here vs
+ * oklch(45% 0.24 277.023) in daisyUI 5 — which is why re-declaring is needed.
+ *
+ * Tailwind 4 allows `@theme` only at the top level, so a subtree theme has to
+ * be a plain rule re-declaring the custom properties. That is what this is.
+ */
+.eh-legacy {
+  color-scheme: light;
+
+  /* Replaces daisyUI's excluded `rootcolor`, scoped to the subtree. */
+  background-color: var(--color-base-100);
+  color: var(--color-base-content);
+
+  --color-primary: oklch(49.12% 0.3096 275.75);
+  --color-primary-content: oklch(89.824% 0.06192 275.75);
+  --color-secondary: oklch(69.71% 0.329 342.55);
+  --color-secondary-content: oklch(98.71% 0.0106 342.55);
+  --color-accent: oklch(76.76% 0.184 183.61);
+  --color-accent-content: oklch(15.352% 0.0368 183.61);
+  --color-neutral: oklch(32.1785% 0.02476 255.701631);
+  --color-neutral-content: oklch(89.4994% 0.011585 252.096226);
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(96.1151% 0 0);
+  --color-base-300: oklch(92.4169% 0.00108 197.139304);
+  --color-base-content: oklch(27.8078% 0.029596 256.847956);
+  --color-info: oklch(72.06% 0.191 231.6);
+  --color-success: oklch(64.8% 0.15 160);
+  --color-warning: oklch(84.71% 0.199 83.87);
+  --color-error: oklch(71.76% 0.221 22.18);
+
+  /* daisyUI 4 left these black rather than tinting them like daisyUI 5 does. */
+  --color-info-content: oklch(0% 0 0);
+  --color-success-content: oklch(0% 0 0);
+  --color-warning-content: oklch(0% 0 0);
+  --color-error-content: oklch(0% 0 0);
+
+  /* daisyUI 4 `--rounded-box` / `--rounded-btn` / `--rounded-badge`. */
+  --radius-box: 1rem;
+  --radius-field: 0.5rem;
+  --radius-selector: 1.9rem;
+  /* daisyUI 4 `--border-btn`. */
+  --border: 1px;
+  /*
+   * daisyUI 5 additions with no daisyUI 4 equivalent. `depth` and `noise` add a
+   * shading daisyUI 4 never had, so both are off; the two sizes keep daisyUI 5's
+   * defaults because daisyUI 4 hard-coded control sizes per size class.
+   */
+  --depth: 0;
+  --noise: 0;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  /*
+   * daisyUI 4 tokens that daisyUI 5 dropped. Kept because the legacy components
+   * that read them still have to be ported; nothing in daisyUI 5 consumes these.
+   */
+  --animation-btn: 0.25s;
+  --animation-input: 0.2s;
+  --btn-focus-scale: 0.95;
+  --tab-border: 1px;
+  --tab-radius: 0.5rem;
+
+  /* See note 2 in the file header. */
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-primary-content);
+  --secondary: var(--color-secondary);
+  --secondary-foreground: var(--color-secondary-content);
+  --accent: var(--color-accent);
+  --accent-foreground: var(--color-accent-content);
+}
+
+/*
+ * daisyUI 4's stock `dark` theme. The modern app switches themes with a `.dark`
+ * class on an ancestor (`@custom-variant dark` in ./index.css), not with
+ * daisyUI's `data-theme`, so the dark palette hangs off `.dark` and outranks the
+ * block above on specificity rather than on source order.
+ */
+.dark .eh-legacy,
+.eh-legacy.dark {
+  color-scheme: dark;
+
+  --color-primary: oklch(65.69% 0.196 275.75);
+  --color-primary-content: oklch(13.138% 0.0392 275.75);
+  --color-secondary: oklch(74.8% 0.26 342.55);
+  --color-secondary-content: oklch(14.96% 0.052 342.55);
+  --color-accent: oklch(74.51% 0.167 183.61);
+  --color-accent-content: oklch(14.902% 0.0334 183.61);
+  --color-neutral: oklch(31.3815% 0.021108 254.139183);
+  --color-neutral-content: oklch(74.6477% 0.0216 264.435971);
+  --color-base-100: oklch(25.3267% 0.015896 252.417578);
+  --color-base-200: oklch(23.2607% 0.013807 253.100686);
+  --color-base-300: oklch(21.1484% 0.01165 254.087949);
+  --color-base-content: oklch(74.6477% 0.0216 264.435971);
+}
+
+/*
+ * The whole of the legacy app's hand-written CSS, ported.
+ *
+ * Source: apps/frontend/src/app/ui/QuickBar/eh-quick-bar.css (37 lines) plus
+ * apps/frontend/src/styles.css (5 lines, only `@import` + `@tailwind`
+ * directives, nothing to port).
+ *
+ * Changes made, and only these:
+ *   - `@apply menu-horizontal menu-xs` is inlined as daisyUI 4's own
+ *     declarations for those two classes, so the bar does not drift with
+ *     daisyUI 5's menu.
+ *   - the remaining `@apply`s are expanded to the declarations Tailwind 3
+ *     emitted (`outline-none` was `outline: 2px solid transparent` there, not
+ *     `outline-style: none`).
+ *   - daisyUI class names referenced in selectors gain the `d-` prefix;
+ *     `.active` / `.disabled` / `.focus` are the app's own and do not.
+ *   - one `@media (hover: hover)` block that re-declared identical values was
+ *     dropped.
+ *
+ * Selectors are left unscoped and at their original specificity on purpose:
+ * `.eh-quick-bar` exists only in the legacy UI, and wrapping these in
+ * `.eh-legacy` would raise every specificity and break the `:where()` overrides
+ * the original relies on.
+ */
+
+/* daisyUI 4 `menu-horizontal`. */
+.eh-quick-bar {
+  display: inline-flex;
+  flex-direction: row;
+}
+
+/* daisyUI 4 `menu-xs`. */
+.eh-quick-bar :where(li:not(.d-menu-title) > *:not(ul, details, .d-menu-title)),
+.eh-quick-bar
+  :where(li:not(.d-menu-title) > details > summary:not(.d-menu-title)) {
+  border-radius: 0.25rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.eh-quick-bar .d-menu-title {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+:where(.eh-quick-bar li) {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+:where(
+  .eh-quick-bar
+    li:not(.d-menu-title, .disabled)
+    > *:not(ul, details, .d-menu-title)
+),
+:where(
+  .eh-quick-bar
+    li:not(.d-menu-title, .disabled)
+    > details
+    > summary:not(.d-menu-title)
+) {
+  &:not(summary, .active, .d-btn).focus,
+  &:not(summary, .active, .d-btn):focus,
+  &:is(summary):not(.active, .d-btn):focus-visible {
+    background-color: color-mix(
+      in oklab,
+      var(--color-base-content) 10%,
+      transparent
+    );
+    color: var(--color-base-content);
+    cursor: pointer;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+
+  @media (hover: hover) {
+    &:not(.active, .d-btn):hover {
+      background-color: color-mix(
+        in oklab,
+        var(--color-base-content) 10%,
+        transparent
+      );
+      cursor: pointer;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+    }
+  }
+}
+
+.eh-quick-bar li > *:not(ul, .d-menu-title, details, .d-btn):active,
+.eh-quick-bar li > *:not(ul, .d-menu-title, details, .d-btn).active,
+.eh-quick-bar li > details > summary:active {
+  background-color: var(--color-neutral-content);
+  color: var(--color-neutral);
+}

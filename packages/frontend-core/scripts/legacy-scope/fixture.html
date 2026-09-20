@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  Not shipped and not rendered. This is the class list check-legacy-scope.mjs
+  feeds to Tailwind so the compiler emits the rules it then asserts on. Both an
+  unprefixed daisyUI class and a prefixed one are present on purpose: the
+  unprefixed one must produce nothing.
+-->
+<html>
+  <body>
+    <div class="eh-legacy">
+      <button class="d-btn d-btn-primary">prefixed daisyUI button</button>
+      <ul class="d-menu d-menu-horizontal eh-quick-bar">
+        <li><a class="d-menu-title">item</a></li>
+      </ul>
+    </div>
+    <button class="btn btn-primary">unprefixed, must not be styled</button>
+    <button class="bg-primary text-primary-foreground">
+      shadcn token user
+    </button>
+  </body>
+</html>

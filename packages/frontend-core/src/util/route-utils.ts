@@ -50,6 +50,26 @@ export function getEhToOptions({ appId, envId, subValue }: EhUrlParams) {
         envSlug: escapeEnvId(envId),
       },
     })
+  } else if (appId && subValue !== undefined) {
+    return linkOptions({
+      from: '/',
+      to: '/app/$appSlug/sub/$subValue',
+      params: {
+        appSlug: escapeAppId(appId),
+        subValue: escapeSubValue(subValue),
+      },
+    })
+  } else if (appId) {
+    // An app chosen before an environment keeps its own url. Without these two
+    // branches the selection falls through to `/` and is silently dropped, and
+    // the link the share button offers loses the app.
+    return linkOptions({
+      from: '/',
+      to: '/app/$appSlug',
+      params: {
+        appSlug: escapeAppId(appId),
+      },
+    })
   } else if (envId) {
     return linkOptions({
       from: '/',

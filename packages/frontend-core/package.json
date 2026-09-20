@@ -54,8 +54,8 @@
     "dev:watch": "vite build --mode lenient --watch",
     "test": "pnpm run test:unit",
     "test:eslint": "eslint ./src",
-    "test:unit": "echo 'Tests disabled'",
-    "test:unit:dev": "echo 'Tests disabled'",
+    "test:unit": "vitest --run",
+    "test:unit:dev": "vitest",
     "typecheck:watch": "tsc --build --watch"
   },
   "dependencies": {

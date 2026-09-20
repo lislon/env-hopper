@@ -16,7 +16,9 @@ import {
   useRef,
   useState,
 } from 'react'
+import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { useCrossCuttingParamsContext } from '~/modules/crossCuttingParams/CrossCuttingParamsContext'
+import { mergeContextFlags } from '~/modules/crossCuttingParams/utils/mergeContextFlags'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpHistory } from '~/modules/resourceJump/context/useResouceJumpHistory'
 import { getFlashipResource } from '~/modules/resourceJump/utils/helpers'
@@ -149,9 +151,12 @@ export function ResourceJumpProvider({
   }, [currentResourceJumpSlug, resourceJumps])
 
   const { setCrossCuttingParamsDefs } = useCrossCuttingParamsContext()
+  const { contexts } = useBootstrapConfig()
   useEffect(() => {
-    setCrossCuttingParamsDefs(apiData?.lateResolvableParams || [])
-  }, [apiData, setCrossCuttingParamsDefs])
+    setCrossCuttingParamsDefs(
+      mergeContextFlags(apiData?.lateResolvableParams || [], contexts),
+    )
+  }, [apiData, contexts, setCrossCuttingParamsDefs])
 
   // Derive current late resolvable params for the selected resource
   const currentLateResolvableParams = useMemo(() => {

@@ -3,11 +3,21 @@ import { tokenize } from '~/modules/fuzzyMatchLogic/tokenize'
 
 describe('tokenize', () => {
   /**
-   * Divergences from the implementation this was ported from, kept as `it.fails`
-   * so they are recorded rather than either deleted or quietly re-recorded. Each
-   * asserts what the original produced; each therefore starts passing — and so
-   * fails, loudly — the moment the port is brought back in line, which is the
-   * signal to promote it to a plain `it`.
+   * Divergences from the implementation this was ported from
+   * (`apps/frontend/src/app/lib/autoComplete/tokenize.ts` in the v1 tree), kept as
+   * `it.fails` so they are recorded rather than either deleted or quietly
+   * re-recorded. Each asserts what the original produced; each therefore starts
+   * passing — and so fails, loudly — the moment the port is brought back in line,
+   * which is the signal to promote it to a plain `it`.
+   *
+   * The original's full contract, for reference; the port agrees only on the
+   * third and fourth, i.e. only when '#' already happens to land last:
+   *
+   *   '# 12foo'     -> ['#', '12', 'foo']
+   *   'abc # 12foo' -> ['abc', '#', '12', 'foo']
+   *   '12foo #'     -> ['12', 'foo', '#']      (port agrees)
+   *   '#12foo'      -> ['12', 'foo']
+   *   '12-FOO'      -> ['12', 'foo']           (port agrees)
    *
    * A standalone '#' is searchable on purpose: a page title that takes a
    * substitution parameter is suffixed with ' #' by convention, and that is how

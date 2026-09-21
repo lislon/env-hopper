@@ -42,7 +42,9 @@ const config = defineConfig(({ command, mode }) => {
 
   const myConfig: ViteUserConfig = {
     server: {
-      port: 3999,
+      // Overridable so two checkouts can serve at once; same knob shape as
+      // EH_API_PORT below.
+      port: Number(process.env.EH_WEB_PORT ?? 3999),
       strictPort: true,
       // Same-origin `/api/*` (the session probe) would otherwise fall through
       // to the SPA and answer html where the client expects json.

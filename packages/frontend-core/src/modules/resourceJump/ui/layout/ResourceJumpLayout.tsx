@@ -11,6 +11,7 @@ import { CommandPalette } from '~/modules/resourceJump/ui/cmdk/CommandPalette'
 import { QuickSearchProvider } from '~/modules/resourceJump/ui/cmdk/QuickSearchContext'
 import { CenterColumn } from '~/modules/resourceJump/ui/layout/CenterColumn'
 import { ResourceJumpBreadcrubms } from '~/modules/resourceJump/ui/ResourceJumpBreadcrumbs'
+import { AppLinksPanel } from '~/modules/uiSettings/AppLinksPanel'
 import ContextDebug from '~/ui/components/contextDebug'
 import { LegacyPage } from '~/legacy/LegacyPage'
 import { MainLayout } from '~/ui/layout/MainLayout'
@@ -104,6 +105,7 @@ export function ResourceJumpLayout({
                   </div> */}
                   <div className="flex flex-col gap-4 flex-1 items-center">
                     <CenterColumn>{children}</CenterColumn>
+                    <AppLinksPanel />
                   </div>
                   {/* <div className="flex flex-col gap-4 w-fit">
                     <RightColumn />

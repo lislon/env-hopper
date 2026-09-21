@@ -2,6 +2,7 @@ import type { QueryFunctionContext } from '@tanstack/react-query'
 import type { EhRouterContext } from '~/types/types'
 import type { ResourceJumpLoaderReturn } from './types'
 import { resourceJumpsFetcher } from '~/api/unsorted/resourceJumpsFetcher'
+import { routeLoaderMapper } from '~/modules/crossCuttingParams/utils/routeLoaderMapper'
 
 export interface RouteLoaderCtx {
   params: {
@@ -31,20 +32,23 @@ export async function routeLoader({
   }
 
   // Call the query function to pre-populate cache
-  await queryFn(ctx)
+  const resourceJumpsData = await queryFn(ctx)
+
+  const resourceSlug = params.appSlug
+    ? decodeURIComponent(params.appSlug)
+    : undefined
+  const subValue = params.subValue
+    ? decodeURIComponent(params.subValue)
+    : undefined
 
   return {
     envSlug: params.envSlug,
-    resourceSlug: params.appSlug
-      ? decodeURIComponent(params.appSlug)
-      : undefined,
-    crossCuttingParams: params.subValue
-      ? [
-          {
-            slug: 'sub-legacy',
-            stringValue: params.subValue,
-          },
-        ]
-      : [],
+    resourceSlug,
+    subValue,
+    crossCuttingParams: routeLoaderMapper(
+      subValue,
+      resourceSlug,
+      resourceJumpsData,
+    ),
   }
 }

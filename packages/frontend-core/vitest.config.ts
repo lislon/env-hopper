@@ -5,6 +5,9 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [viteReact()],
   resolve: {
+    // Resolve the sibling core packages from source: `test:unit` only depends
+    // on `compile`, which does not build their `dist/esm` entry points.
+    conditions: ['my-custom-condition'],
     alias: {
       '~': path.resolve(__dirname, './src'),
       // Sibling cores from source. The workspace links them by the
@@ -20,11 +23,13 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    // No setupFiles: the jsdom/msw/IndexedDB setup moved to @env-hopper/test-kit
-    // along with the integration scenarios that needed it. What is left here is
-    // pure-logic unit tests, which need none of it — pointing this back at a
-    // shared setup file would make this package depend on its own test kit.
-    include: ['./src/__tests__/**/*.test.{ts,tsx}'],
+    // Only jest-dom's matchers. The jsdom/msw/IndexedDB setup moved to
+    // @env-hopper/test-kit along with the integration scenarios that needed it;
+    // what is left here is unit tests, which need none of it.
+    setupFiles: ['./src/__tests__/setupTests.tsx'],
+    // Tests live both in the top-level `__tests__` tree and next to the module
+    // they cover, so the glob has to reach both.
+    include: ['./src/**/__tests__/**/*.test.{ts,tsx}'],
     globals: true,
     testTimeout: 30000, // Increase timeout for integration tests
   },

@@ -28,7 +28,8 @@
       "inputs": [
         "{projectRoot}/prisma/schema.prisma",
         "{workspaceRoot}/package.json"
-      ]
+      ],
+      "outputs": ["{projectRoot}/src/generated"]
     },
     "compile": {
       "cache": true,

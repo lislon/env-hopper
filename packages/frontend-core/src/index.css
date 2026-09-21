@@ -212,3 +212,31 @@
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * The previous UI's theme *colour* utilities. ./legacy-skin.css froze the
+ * component classes (`.menu`, `.btn`, `.input`) and it does declare the theme
+ * tokens `--b2`/`--bc`, but the colour utilities themselves came from a plugin
+ * that registered them with Tailwind, so nothing emits them now and they
+ * silently resolve to `transparent`: measured `bg-base-200` as
+ * `rgba(0, 0, 0, 0)` with no matching rule in any stylesheet.
+ *
+ * That left the autocomplete dropdown with no background at all, so the page
+ * behind it read straight through the open suggestion list.
+ *
+ * Written as plain rules rather than `@utility`/`@apply`: these are used from
+ * .tsx that ships as published source, which Tailwind's scanner does not
+ * compile at the consumer.
+ */
+.eh-legacy .bg-base-200 {
+  background-color: var(--fallback-b2, oklch(var(--b2) / 1));
+}
+
+.eh-legacy .text-base-content,
+.eh-legacy .hover\:text-base-content:hover {
+  color: var(--fallback-bc, oklch(var(--bc) / 1));
+}
+
+.eh-legacy .hover\:bg-base-content\/10:hover {
+  background-color: var(--fallback-bc, oklch(var(--bc) / 0.1));
+}

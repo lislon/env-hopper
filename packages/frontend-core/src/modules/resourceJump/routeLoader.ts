@@ -47,7 +47,8 @@ export async function routeLoader({
     subValue,
     crossCuttingParams: routeLoaderMapper(
       subValue,
-      resourceJumpsData?.resourceJumps.find((rj) => rj.slug === resourceSlug),
+      resourceSlug,
+      resourceJumpsData,
     ),
   }
 }

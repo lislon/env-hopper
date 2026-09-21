@@ -33,30 +33,57 @@ const resourceJumpsData: ResourceJumpsData = {
       templateParams: { subdomain: 'staging' },
     },
   ],
+  // `order-list` is the group's first page and takes no param of its own, so it
+  // is the case where the value has to fall back to a sibling's param.
+  groups: [
+    {
+      slug: 'orders',
+      displayName: 'Orders',
+      resourceSlugs: ['order-list', 'order-detail'],
+    },
+  ],
 }
 
-function findJump(slug: string) {
-  return resourceJumpsData.resourceJumps.find((rj) => rj.slug === slug)
-}
+// Without groups the value can only be named by the jump the url points at.
+const ungrouped: ResourceJumpsData = { ...resourceJumpsData, groups: [] }
 
 describe('routeLoaderMapper', () => {
   it("maps a legacy sub value onto the jump's first late-resolvable param", () => {
-    const result = routeLoaderMapper('ORD-4821', findJump('order-detail'))
+    const result = routeLoaderMapper(
+      'ORD-4821',
+      'order-detail',
+      resourceJumpsData,
+    )
 
     expect(result).toEqual([{ slug: 'orderId', stringValue: 'ORD-4821' }])
   })
 
-  it('maps nothing when the jump takes no late-resolvable param', () => {
-    expect(routeLoaderMapper('ORD-4821', findJump('order-list'))).toEqual([])
+  // The page the url names offers the group's parameter field, so a link that
+  // lands on it has to prefill that field rather than drop the value.
+  it("falls back to the group's first late-resolvable param", () => {
+    expect(
+      routeLoaderMapper('ORD-4821', 'order-list', resourceJumpsData),
+    ).toEqual([{ slug: 'orderId', stringValue: 'ORD-4821' }])
+  })
+
+  it('maps nothing when neither the jump nor its group takes a param', () => {
+    expect(routeLoaderMapper('ORD-4821', 'order-list', ungrouped)).toEqual([])
   })
 
   it('maps nothing without a sub value or a known jump', () => {
-    expect(routeLoaderMapper(undefined, findJump('order-detail'))).toEqual([])
-    expect(routeLoaderMapper('ORD-4821', undefined)).toEqual([])
+    expect(
+      routeLoaderMapper(undefined, 'order-detail', resourceJumpsData),
+    ).toEqual([])
+    expect(routeLoaderMapper('ORD-4821', undefined, resourceJumpsData)).toEqual(
+      [],
+    )
+    expect(
+      routeLoaderMapper('ORD-4821', 'no-such-jump', resourceJumpsData),
+    ).toEqual([])
   })
 
   it('keeps an empty sub value, which is a value the user can have shared', () => {
-    expect(routeLoaderMapper('', findJump('order-detail'))).toEqual([
+    expect(routeLoaderMapper('', 'order-detail', resourceJumpsData)).toEqual([
       { slug: 'orderId', stringValue: '' },
     ])
   })
@@ -68,7 +95,8 @@ describe('a legacy /env/<env>/app/<app>/sub/<value> link', () => {
   it('resolves to a fully substituted target url', () => {
     const crossCuttingParams = routeLoaderMapper(
       'ORD-4821',
-      findJump('order-detail'),
+      'order-detail',
+      resourceJumpsData,
     )
 
     const url = buildJumpUrl(

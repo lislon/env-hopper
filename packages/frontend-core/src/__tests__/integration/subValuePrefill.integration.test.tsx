@@ -59,11 +59,11 @@ describe('a legacy sub value prefills the parameter it belongs to', () => {
   test('when the url names a page that does not take the parameter itself', async () => {
     const { paramField, jumpHrefs } = await open('/env/dev/app/app1/sub/123')
 
-    expect(paramField()).not.toBeNull()
-    expect(paramField()?.value).toBe('123')
     expect(jumpHrefs()).toContain(
       'http://localhost:4000/env/dev/app/app1/order/123',
     )
+    expect(paramField()).not.toBeNull()
+    expect(paramField()?.value).toBe('123')
   })
 
   // The control: the url names the page that takes the parameter. This shape has

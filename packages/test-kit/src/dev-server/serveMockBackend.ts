@@ -9,7 +9,7 @@
  *   EH_FIXTURE_DIR   directory holding `bootstrap.json` + `resourceJumps.json`,
  *                    as written by `scripts/capture-fixture.mjs`. Unset, the
  *                    sample fixture is served instead.
- *   EH_MOCK_PORT     defaults to 4000, where the dev frontend looks for tRPC.
+ *   EH_API_PORT     defaults to 4000, where the dev frontend looks for tRPC.
  */
 import { readFileSync } from 'node:fs'
 import { createServer } from 'node:http'
@@ -18,7 +18,7 @@ import process from 'node:process'
 import { BackendMagazine } from '../mock-backend/magazines'
 import type { BackendData } from '../mock-backend/createBackend'
 
-const PORT = Number(process.env.EH_MOCK_PORT ?? 4000)
+const PORT = Number(process.env.EH_API_PORT ?? 4000)
 
 const CORS = {
   'access-control-allow-origin': '*',

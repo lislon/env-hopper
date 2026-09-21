@@ -48,7 +48,7 @@ const config = defineConfig(({ command, mode }) => {
       // to the SPA and answer html where the client expects json.
       proxy: {
         '/api': {
-          target: `http://localhost:${process.env.EH_MOCK_PORT ?? 4000}`,
+          target: `http://localhost:${process.env.EH_API_PORT ?? 4000}`,
           changeOrigin: true,
         },
       },

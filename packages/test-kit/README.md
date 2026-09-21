@@ -77,47 +77,65 @@ Name the environments and the apps; the mapper expands them into every backend
 shape the frontend reads. A `2-pager` also gets a second page whose url needs a
 value typed in, which is how the late-resolvable parameter path gets covered.
 
-## Running the app locally against the mock backend
+## Running the app locally
 
-Anything about appearance needs a real browser, and a real browser needs a real
-server: msw answers fetches inside the test process, so the browser's own never
-reach it. `src/dev-server/serveMockBackend.ts` puts the same `BackendData` on a
-port, which makes the whole app runnable with no database, config server or
-workflow engine involved:
+Anything about appearance needs a real browser, which rules out the harness:
+jsdom cannot see styling, and msw answers fetches inside the test process, so a
+browser's own never reach it either. Two ways to get the real UI in front of you
+at `localhost`, neither of which needs a deploy.
+
+### Against a real backend
+
+The best data is the data a backend actually produces. Start a downstream
+backend locally, then point the frontend at it through the dev server's proxy:
+
+```sh
+EH_API_PORT=4002 VITE_EH_API_URL=/api/trpc pnpm run dev:x
+```
+
+A relative `VITE_EH_API_URL` keeps the request same-origin, so the proxy
+forwards it — which means a backend sending no CORS headers, normal for one that
+expects to sit behind its own static server, works unchanged.
+
+### Against the mock backend
+
+`src/dev-server/serveMockBackend.ts` puts the same `BackendData` the msw handlers
+serve on a port instead, so nothing needs a database or a backend at all:
 
 ```sh
 pnpm run dev:local     # from the repository root
 ```
 
-That starts the mock backend on `:4000` and the frontend dev server on
-`:3999`. Editing a component is a page reload, not a deploy.
+That starts the mock backend on `:4000` and the frontend dev server on `:3999`.
+Either way, editing a component is a page reload, not a deploy.
 
-### With a realistic catalog
+### Replaying a captured catalog
 
 The sample fixture is three apps, which is enough for a scenario and not enough
-to see a layout hold up. Point the loop at a catalog captured from a running
-deployment instead:
+to see a layout hold up. `capture-fixture.mjs` records the two payloads from any
+running backend — a local one is the obvious choice — and the mock backend
+replays them, so the loop keeps working offline:
 
 ```sh
-EH_ORIGIN=https://<your-deployment> EH_FIXTURE_DIR=~/eh-fixture \
+EH_ORIGIN=http://localhost:4002 EH_FIXTURE_DIR=~/eh-fixture \
   node packages/test-kit/scripts/capture-fixture.mjs
 
 EH_FIXTURE_DIR=~/eh-fixture pnpm run dev:local
 ```
 
-`capture-fixture.mjs` replaces every secret-looking value with `REDACTED` in the
-same pass as the download — the raw response is never written to disk — and
-prints how many keys it redacted. Run it once; after that the loop is offline.
+The capture replaces every secret-looking value with `REDACTED` in the same pass
+as the download — the raw response is never written to disk — and prints how
+many keys it redacted. The key stays, so a credentials panel still renders.
 
 Keep `EH_FIXTURE_DIR` **outside this repository**. A real catalog names that
-deployment's own hosts and environments, and this repository is public. Unset,
+backend's own hosts and environments, and this repository is public. Unset,
 `dev:local` serves the sample fixture, so the default costs nothing.
 
 | variable          | default                      | what it does                             |
 | ----------------- | ---------------------------- | ---------------------------------------- |
 | `EH_FIXTURE_DIR`  | unset                        | directory with the two captured payloads |
-| `EH_MOCK_PORT`    | `4000`                       | where the mock backend listens           |
-| `VITE_EH_API_URL` | `http://localhost:4000/trpc` | where the frontend looks for it          |
+| `EH_API_PORT`     | `4000`                       | port the dev server proxies `/api` to    |
+| `VITE_EH_API_URL` | `http://localhost:4000/trpc` | where the frontend looks for tRPC        |
 
 ## What it does not cover
 

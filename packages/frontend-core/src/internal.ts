@@ -11,3 +11,6 @@ export type { AppProps } from './App'
 export { EhDb, dbCacheDbKeys } from './userDb/EhDb'
 export { createEhRouter } from './util/createEhRouter'
 export { createQueryClient } from './api/infra/createQueryClient'
+// What a route's loader hands the page — the shape a scenario asserts on when it
+// checks that a link's parts arrived.
+export type { ResourceJumpLoaderReturn } from './modules/resourceJump/types'

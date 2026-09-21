@@ -1,8 +1,19 @@
 import { linkOptions } from '@tanstack/react-router'
 import type { EhUrlParams } from '~/types/ehTypes'
 
+/**
+ * The url spelling of an app id: a trailing `/home` page is dropped, and any
+ * other `/` becomes `@`.
+ *
+ * Deliberately does NOT percent-encode. Every caller hands the result to the
+ * router as a path param, and the router encodes path params itself — with `@`
+ * on its allow-list (`pathParamsAllowedCharacters`), because `@` is part of the
+ * frozen url vocabulary. Encoding here as well turns an app id's `@` into `%40`
+ * and then the router's own pass turns the `%` into `%25`, so a link to
+ * `orders@shipments` navigated to `orders%2540shipments` and resolved nothing.
+ */
 export function escapeAppId(appId: string) {
-  return encodeURIComponent(appId.replace(/\/home$/, '').replace('/', '@'))
+  return appId.replace(/\/home$/, '').replace('/', '@')
 }
 
 /**

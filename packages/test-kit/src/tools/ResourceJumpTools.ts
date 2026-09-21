@@ -14,14 +14,16 @@ export interface JumpTarget {
  * Deliberately no `data-testid` dependencies: the two the previous harness used
  * (`quick-jump-section`, `jump-main-button`) sat on components nothing renders,
  * so every scenario built on them had been failing silently. These go through
- * roles and semantics instead — a jump link is the one `target="_blank"` anchor
- * on the page, because a jump is by definition the link that leaves the app.
+ * roles and semantics instead — a jump link is a `target="_blank"` anchor in the
+ * page's content, because a jump is by definition the link that leaves the app.
  */
 export function createResourceJumpUi(user: UserEvent) {
   const jumpAnchors = () =>
     Array.from(
       document.querySelectorAll<HTMLAnchorElement>('a[target="_blank"]'),
-    )
+      // The chrome leaves the app too — the footer's source link is the one that
+      // bit: it counted as a third jump the moment the footer started rendering.
+    ).filter((a) => !a.closest('header, footer'))
 
   const readJumpTargets = (): Array<JumpTarget> =>
     jumpAnchors().map((a) => ({

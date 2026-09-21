@@ -1,7 +1,7 @@
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { createBackend, renderApp } from '../src/index'
-import type { ResourceJumpLoaderReturn } from '~/modules/resourceJump/types'
+import type { ResourceJumpLoaderReturn } from '@env-hopper/frontend-core/internal'
 
 /**
  * The url vocabulary is frozen: people have these links bookmarked and pasted
@@ -52,6 +52,15 @@ describe('frozen legacy link shapes', () => {
       routeId: lastMatch?.routeId as string | undefined,
       loaderData: lastMatch?.loaderData as ResourceJumpLoaderReturn | undefined,
       text: rendered.container.textContent,
+      // The form holds a selection in a combobox, so it is in an input's value
+      // and not in the page's text. Env first, application second — the order
+      // the form asks for them in.
+      selection: () =>
+        Array.from(
+          rendered.container.querySelectorAll<HTMLInputElement>(
+            'label:has(h4) input.input-bordered',
+          ),
+        ).map((input) => input.value),
     }
   }
 
@@ -123,7 +132,8 @@ describe('frozen legacy link shapes', () => {
   )
 
   test('an environment and a value with no app resolves to the environment route', async () => {
-    const { routeId, loaderData, text, ui } = await open('/env/dev/sub/123')
+    const { routeId, loaderData, text, ui, selection } =
+      await open('/env/dev/sub/123')
 
     expect(routeId).toBe('/_layout/env/$envSlug/sub/$subValue/')
     expect(ui.getCurrentPath()).toBe('/env/dev/sub/123')
@@ -139,8 +149,9 @@ describe('frozen legacy link shapes', () => {
     // above cover.
     expect(loaderData?.crossCuttingParams).toEqual([])
 
-    // The environment is selected: the breadcrumb names it.
-    expect(text).toContain('Dev')
+    // The environment is selected: its field holds it, and no application is
+    // chosen, which is the whole point of this shape.
+    expect(selection()).toEqual(['dev', ''])
     expect(text).not.toContain('Ooops!')
   })
 

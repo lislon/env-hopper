@@ -26,7 +26,6 @@ import {
   formatAppTitle,
   getJumpUrl,
   getJumpUrlEvenNotComplete,
-  unescapeAppId,
 } from '../lib/utils'
 import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter'
 import type { SourceItem } from '../ui/AutoComplete/common'
@@ -159,11 +158,17 @@ function getPreselectedBasedOnParams({
     ;[env] = getByIdRelaxed(doGetEnvById, lastUsedEnv, config.envs)
   }
 
+  // INTENTIONAL DIFF: the url's app id is looked up as it stands. The previous
+  // version reversed the `@` back into a `/` first, because its app ids were
+  // `<app>/<page>` and only the url spelled that `@`. The current data keys an
+  // app by the jump slug, which carries the `@` itself, so undoing it here
+  // missed every multi-page app — and a miss makes the form "fix" the url, which
+  // dropped the app.
   if (urlParams.appId !== undefined) {
     let strictMatch
     ;[app, strictMatch] = getByIdRelaxed<EhApp>(
       doGetAppById,
-      unescapeAppId(urlParams.appId),
+      urlParams.appId,
       config.apps,
     )
     if (!strictMatch) {
@@ -330,20 +335,20 @@ export function MainFormContextProvider({
 
   const value: EhMainFormContextProps = {
     setEnv: useCallback<EhMainFormContextProps['setEnv']>(
-      (env) => {
-        setEnv(env)
+      (nextEnv) => {
+        setEnv(nextEnv)
         setApp(doGetAppById(app?.id, listApps))
-        setLastUsedEnv(env?.id)
+        setLastUsedEnv(nextEnv?.id)
       },
       [app, listApps, setLastUsedEnv],
     ),
     env,
     setApp: useCallback<EhMainFormContextProps['setApp']>(
-      (app) => {
-        setApp(doGetAppById(app?.id, listApps))
-        setLastUsedApp(app?.id)
+      (nextApp) => {
+        setApp(doGetAppById(nextApp?.id, listApps))
+        setLastUsedApp(nextApp?.id)
         const substitutionBasedOnAppAndLastUsed =
-          getSubstitutionBasedOnAppAndLastUsed(app, listEnvs, lastUsedSubs)
+          getSubstitutionBasedOnAppAndLastUsed(nextApp, listEnvs, lastUsedSubs)
         setSubstitution(substitutionBasedOnAppAndLastUsed)
       },
       [lastUsedSubs, listApps, listEnvs, setLastUsedApp],
@@ -352,20 +357,20 @@ export function MainFormContextProvider({
     substitutionType,
     substitution,
     setSubstitution: useCallback<EhMainFormContextProps['setSubstitution']>(
-      (substitution) => {
-        setSubstitution(substitution)
-        if (substitution?.name) {
+      (nextSubstitution) => {
+        setSubstitution(nextSubstitution)
+        if (nextSubstitution?.name) {
           setLastUsedSubs((prev) => {
-            if (substitution.value === '') {
+            if (nextSubstitution.value === '') {
               if (!prev) {
                 return undefined
               }
-              const { [substitution.name]: _dropped, ...rest } = prev
+              const { [nextSubstitution.name]: _dropped, ...rest } = prev
               return rest
             }
             return {
               ...prev,
-              [substitution.name]: substitution.value,
+              [nextSubstitution.name]: nextSubstitution.value,
             }
           })
         }

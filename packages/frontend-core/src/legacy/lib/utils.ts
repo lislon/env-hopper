@@ -4,7 +4,6 @@ import {
 } from '@env-hopper/shared-core'
 import type {
   EhApp,
-  EhAppId,
   EhEnv,
   EhSubstitutionId,
   EhSubstitutionValue,
@@ -111,18 +110,6 @@ export function formatAppTitle(app: EhApp | undefined) {
     return ''
   }
   return [app.abbr, app.appTitle, app.pageTitle].filter(Boolean).join(' :: ')
-}
-
-/**
- * Reverses the `/` → `@` rewrite the link builder applies.
- *
- * INTENTIONAL DIFF: the previous version also appended `/home` to any id with
- * no `/` in it, mirroring a page-per-app data model the current backend does not
- * have — its slugs never carry `/home`, so re-adding it would fail every lookup.
- * The `@` half of the quirk is kept, because links in the wild use it.
- */
-export function unescapeAppId(appIdFromUrl: string): EhAppId {
-  return appIdFromUrl.replace('@', '/')
 }
 
 export interface SensitiveDataCtx {

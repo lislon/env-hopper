@@ -17,6 +17,28 @@ import type { EhAutoCompleteFilter } from '../../ui/AutoComplete/EhAutoComplete'
  * find/autocomplete wave's job, and divergences belong in ITS fixtures — do not
  * tune scores here.
  */
+/**
+ * Favourite beats recent beats everything else, which is what the previous
+ * matcher's first two sort tiers did (`['notFavorite', 'notRecent']`).
+ *
+ * The section headers only appear while the input is empty — once someone types,
+ * every row shown comes from the 'all' section and the list is flat — so
+ * without this a favourite is indistinguishable from any other match exactly
+ * when the list is long enough for that to matter.
+ *
+ * Expressed through the matcher's existing frequency tier rather than a second
+ * sort: it breaks ties at the same point, after match rank.
+ */
+function rankBoost(item: SourceItem): number {
+  if (item.favorite) {
+    return 2
+  }
+  if (item.recent) {
+    return 1
+  }
+  return 0
+}
+
 export function makeAutoCompleteFilter(
   items: Array<SourceItem>,
 ): EhAutoCompleteFilter {
@@ -26,7 +48,13 @@ export function makeAutoCompleteFilter(
   const byId = new Map(items.map((item) => [item.id, item]))
 
   return (searchPattern) =>
-    fuzzySearch(searchPattern, { index })
+    fuzzySearch(searchPattern, {
+      index,
+      freqGetter: (slug) => {
+        const item = byId.get(slug)
+        return item ? rankBoost(item) : 0
+      },
+    })
       .map((result) => byId.get(result.entry.slug))
       .filter((item): item is SourceItem => item !== undefined)
 }

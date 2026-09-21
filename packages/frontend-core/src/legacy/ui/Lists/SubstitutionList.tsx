@@ -1,22 +1,19 @@
-'use client';
-import React, { useEffect, useRef } from 'react';
-import { EhEnv, EhSubstitutionType } from '@env-hopper/types';
-import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
-import { useMainAppFormContext } from '../../context/MainFormContextProvider';
+import React, { useEffect, useRef } from 'react'
+import { EhEnv, EhSubstitutionType } from '../../types'
+import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper'
+import { useMainAppFormContext } from '../../context/MainFormContextProvider'
 
 function getAutoCompleteAttr(
   substitutionType: EhSubstitutionType,
   env: EhEnv | undefined,
 ) {
   if (!substitutionType.isBrowserAutocomplete) {
-    return 'off';
+    return 'off'
   }
   if (!substitutionType.isSharedAcrossEnvs) {
-    return env === undefined
-      ? 'off'
-      : `env-${env.id} eh-${substitutionType.id}`;
+    return env === undefined ? 'off' : `env-${env.id} eh-${substitutionType.id}`
   }
-  return `eh-${substitutionType.id}`;
+  return `eh-${substitutionType.id}`
 }
 
 function getAutoCompleteName(
@@ -24,18 +21,18 @@ function getAutoCompleteName(
   env: EhEnv | undefined,
 ) {
   if (!substitutionType.isBrowserAutocomplete) {
-    return 'context';
+    return 'context'
   }
   if (!substitutionType.isSharedAcrossEnvs) {
     return env === undefined
       ? 'context'
-      : `context-env-${env.id}-eh-${substitutionType.id}`;
+      : `context-env-${env.id}-eh-${substitutionType.id}`
   }
-  return `context-eh-${substitutionType.id}`;
+  return `context-eh-${substitutionType.id}`
 }
 
 export interface SubstitutionListProps {
-  className?: string;
+  className?: string
 }
 
 export function SubstitutionList(props: SubstitutionListProps) {
@@ -46,16 +43,16 @@ export function SubstitutionList(props: SubstitutionListProps) {
     env,
     tryJump,
     focusControllerSub,
-  } = useMainAppFormContext();
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  } = useMainAppFormContext()
+  const inputRef = useRef<HTMLInputElement | null>(null)
 
-  const autoFocusOn = useAutoFocusHelper();
+  const autoFocusOn = useAutoFocusHelper()
 
   useEffect(() => {
     focusControllerSub?.setupFocusFn(() => {
-      inputRef.current?.focus();
-    });
-  }, []);
+      inputRef.current?.focus()
+    })
+  }, [])
 
   return (
     substitutionType && (
@@ -71,7 +68,7 @@ export function SubstitutionList(props: SubstitutionListProps) {
             ref={inputRef}
             type="text"
             onFocus={() => {
-              inputRef.current?.select();
+              inputRef.current?.select()
             }}
             autoFocus={autoFocusOn === 'substitutions'}
             placeholder={`Enter ${substitutionType?.title}`}
@@ -87,12 +84,12 @@ export function SubstitutionList(props: SubstitutionListProps) {
             }
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                tryJump();
+                tryJump()
               }
             }}
           />
         </label>
       </div>
     )
-  );
+  )
 }

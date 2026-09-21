@@ -1,12 +1,12 @@
-import { getJumpUrl } from '../../lib/utils';
-import { JumpALink } from './JumpALink';
-import { EhApp, EhEnv } from '@env-hopper/types';
-import { EhSubstitutionValue } from '../../types';
+import { getJumpUrl } from '../../lib/utils'
+import { JumpALink } from './JumpALink'
+import { EhApp, EhEnv } from '../../types'
+import { EhSubstitutionValue } from '../../types'
 
 export interface JumpMiniButtonProps {
-  env: EhEnv | undefined;
-  app: EhApp | undefined;
-  substitution: EhSubstitutionValue | undefined;
+  env: EhEnv | undefined
+  app: EhApp | undefined
+  substitution: EhSubstitutionValue | undefined
 }
 
 export function JumpMiniButton({
@@ -15,9 +15,9 @@ export function JumpMiniButton({
   substitution,
 }: JumpMiniButtonProps) {
   if (env === undefined || app === undefined) {
-    return undefined;
+    return undefined
   }
-  const url = getJumpUrl({ app, env, substitution });
+  const url = getJumpUrl({ app, env, substitution })
   if (url !== undefined) {
     return (
       <div className="relative">
@@ -30,7 +30,7 @@ export function JumpMiniButton({
           <div className="text-center">JUMP</div>
         </JumpALink>
       </div>
-    );
+    )
   }
-  return null;
+  return null
 }

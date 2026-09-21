@@ -1,22 +1,22 @@
-import { formatAppTitle, getJumpUrl } from '../../lib/utils';
-import { JumpALink } from './JumpALink';
-import { MainJumpButtonNotReady } from './MainJumpButtonNotReady';
-import cn from 'classnames';
-import { useState } from 'react';
-import { useMainAppFormContext } from '../../context/MainFormContextProvider';
+import { formatAppTitle, getJumpUrl } from '../../lib/utils'
+import { JumpALink } from './JumpALink'
+import { MainJumpButtonNotReady } from './MainJumpButtonNotReady'
+import cn from 'classnames'
+import { useState } from 'react'
+import { useMainAppFormContext } from '../../context/MainFormContextProvider'
 
-export const JUMP_MAIN_BTN_ID = 'jump-main-button';
+export const JUMP_MAIN_BTN_ID = 'jump-main-button'
 
 export interface JumpMainButtonProps {
-  className?: string;
+  className?: string
 }
 
 export function JumpMainButton({ className }: JumpMainButtonProps) {
-  const { app, env, substitution } = useMainAppFormContext();
+  const { app, env, substitution } = useMainAppFormContext()
 
-  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const [isHovered, setIsHovered] = useState<boolean>(false)
 
-  const url = getJumpUrl({ app, env, substitution });
+  const url = getJumpUrl({ app, env, substitution })
   return (
     <div className={cn('relative flex justify-center', className)}>
       {url !== undefined ? (
@@ -65,5 +65,5 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
         </div>
       )}
     </div>
-  );
+  )
 }

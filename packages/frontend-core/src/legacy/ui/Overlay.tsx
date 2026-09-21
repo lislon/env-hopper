@@ -1,6 +1,6 @@
 export interface OverlayProps {
-  children?: React.ReactNode;
-  onClose?: () => void;
+  children?: React.ReactNode
+  onClose?: () => void
 }
 
 export function Overlay({ children, onClose }: OverlayProps) {
@@ -11,5 +11,5 @@ export function Overlay({ children, onClose }: OverlayProps) {
     >
       {children}
     </div>
-  );
+  )
 }

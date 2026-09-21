@@ -1,18 +1,18 @@
-import React from 'react';
-import { EnvList } from './Lists/EnvList';
-import { AppList } from './Lists/AppList';
-import { SubstitutionList } from './Lists/SubstitutionList';
-import { EnvQuickBar } from './QuickBar/EnvQuickBar';
-import { AppQuickBar } from './QuickBar/AppQuickBar';
-import { JumpMainButton } from './JumpButton/JumpMainButton';
-import { AppLoginPassWidgetsPanel } from './Widget/AppLoginPassWidgetsPanel';
-import { History } from './History';
-import { ErrorBoundary } from 'react-error-boundary';
-import { MainFormContextProvider } from '../context/MainFormContextProvider';
-import { EhEnvAppSubSelectedState } from '../types';
+import React from 'react'
+import { EnvList } from './Lists/EnvList'
+import { AppList } from './Lists/AppList'
+import { SubstitutionList } from './Lists/SubstitutionList'
+import { EnvQuickBar } from './QuickBar/EnvQuickBar'
+import { AppQuickBar } from './QuickBar/AppQuickBar'
+import { JumpMainButton } from './JumpButton/JumpMainButton'
+import { AppLoginPassWidgetsPanel } from './Widget/AppLoginPassWidgetsPanel'
+import { History } from './History'
+import { ErrorBoundary } from 'react-error-boundary'
+import { MainFormContextProvider } from '../context/MainFormContextProvider'
+import { EhEnvAppSubSelectedState } from '../types'
 
 export interface MainFormProps {
-  envAppSubState: EhEnvAppSubSelectedState;
+  envAppSubState: EhEnvAppSubSelectedState
 }
 export function MainForm({ envAppSubState }: MainFormProps) {
   return (
@@ -33,5 +33,5 @@ export function MainForm({ envAppSubState }: MainFormProps) {
         </div>
       </div>
     </MainFormContextProvider>
-  );
+  )
 }

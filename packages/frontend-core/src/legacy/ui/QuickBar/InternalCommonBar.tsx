@@ -1,33 +1,33 @@
-import React from 'react';
+import React from 'react'
 
-import StarOutlineIcon from '../../../assets/favorite-star.svg?react';
-import RecentIcon from '../../../assets/recent.svg?react';
-import cn from 'classnames';
-import { ComboBoxType, FavoriteOrRecent } from '../../types';
+import StarOutlineIcon from '../../assets/favorite-star.svg?react'
+import RecentIcon from '../../assets/recent.svg?react'
+import cn from 'classnames'
+import { ComboBoxType, FavoriteOrRecent } from '../../types'
 
 export interface QuickBarSharedProps {
-  className?: string;
+  className?: string
 }
 
 export type BarElement<ID extends string | number> = {
-  id: ID;
-  title: string;
-};
+  id: ID
+  title: string
+}
 
 export interface InternalCommonBarProps<ID extends string | number> {
-  activeId: ID | undefined;
-  list: BarElement<ID>[];
-  onClick: (id: ID) => void;
-  comboboxType: ComboBoxType;
-  favoriteOrRecent: FavoriteOrRecent;
+  activeId: ID | undefined
+  list: BarElement<ID>[]
+  onClick: (id: ID) => void
+  comboboxType: ComboBoxType
+  favoriteOrRecent: FavoriteOrRecent
 }
 
 function BarHeaderWithIcon({
   favoriteOrRecent,
   comboboxType,
 }: {
-  comboboxType: ComboBoxType;
-  favoriteOrRecent: FavoriteOrRecent;
+  comboboxType: ComboBoxType
+  favoriteOrRecent: FavoriteOrRecent
 }) {
   return (
     <div
@@ -49,7 +49,7 @@ function BarHeaderWithIcon({
         />
       )}
     </div>
-  );
+  )
 }
 
 export function InternalCommonBar<ID extends string | number>({
@@ -60,7 +60,7 @@ export function InternalCommonBar<ID extends string | number>({
   favoriteOrRecent,
 }: InternalCommonBarProps<ID>) {
   if (list.length === 0) {
-    return null;
+    return null
   }
   return (
     <div
@@ -73,14 +73,14 @@ export function InternalCommonBar<ID extends string | number>({
       />
       <ul className="eh-quick-bar p-0 relative overflow-hidden flex-wrap">
         {list.map((element) => {
-          const isActive = element.id === activeId;
+          const isActive = element.id === activeId
           return (
             <li
               key={element.id}
               onClick={(e) => {
                 if (e.detail > 0) {
                   // when user do enter 2x times in opened selected input, button being called. Not sure how to fix it.
-                  onClick(element.id);
+                  onClick(element.id)
                 }
               }}
             >
@@ -93,9 +93,9 @@ export function InternalCommonBar<ID extends string | number>({
                 {element.title}
               </button>
             </li>
-          );
+          )
         })}
       </ul>
     </div>
-  );
+  )
 }

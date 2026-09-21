@@ -1,20 +1,18 @@
-'use client';
-import React, { useMemo } from 'react';
-import { EhAutoComplete } from '../AutoComplete/EhAutoComplete';
-import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter';
-import { EhApp, EhAppId, EhEnv } from '@env-hopper/types';
-import { SourceItem } from '../AutoComplete/common';
-import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
-import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
-import { HomeFavoriteButton } from '../HomeFavoriteButton';
-import { findSubstitutionIdByUrl, formatAppTitle } from '../../lib/utils';
-import cn from 'classnames';
+import React, { useMemo } from 'react'
+import { EhAutoComplete } from '../AutoComplete/EhAutoComplete'
+import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter'
+import { EhApp, EhAppId, EhEnv } from '../../types'
+import { SourceItem } from '../AutoComplete/common'
+import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper'
+import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants'
+import { HomeFavoriteButton } from '../HomeFavoriteButton'
+import { findSubstitutionIdByUrl, formatAppTitle } from '../../lib/utils'
+import cn from 'classnames'
 import {
   AUTOCOMPLETE_ATTENTION_CLASSNAME,
   mapToSectionedItems,
-} from './commonList';
-import { first } from 'lodash';
-import { useMainAppFormContext } from '../../context/MainFormContextProvider';
+} from './commonList'
+import { useMainAppFormContext } from '../../context/MainFormContextProvider'
 
 function mapToAutoCompleteItemApp(
   app: EhApp,
@@ -28,12 +26,12 @@ function mapToAutoCompleteItemApp(
     favorite: favorites.has(app.id),
     recent: recents.has(app.id),
     substitutionId: findSubstitutionIdByUrl({ app, env }),
-  };
+  }
 }
 
 export interface AppListProps {
-  onOpenChange?: (isOpen: boolean) => void;
-  className?: string;
+  onOpenChange?: (isOpen: boolean) => void
+  className?: string
 }
 
 export function AppList({ onOpenChange, className }: AppListProps) {
@@ -50,39 +48,39 @@ export function AppList({ onOpenChange, className }: AppListProps) {
     highlightAutoComplete,
     substitutionType,
     substitution,
-  } = useMainAppFormContext();
+  } = useMainAppFormContext()
 
-  const autoFocusOn = useAutoFocusHelper();
+  const autoFocusOn = useAutoFocusHelper()
 
-  const firstEnv = first(listEnvs);
+  const firstEnv = listEnvs[0]
 
   const items = useMemo(() => {
-    const favSet = new Set(listFavoriteApps);
+    const favSet = new Set(listFavoriteApps)
     const recentSet = new Set(
       recentJumps
         .slice(0, MAX_RECENTLY_USED_ITEMS_COMBO)
         .map((jump) => jump.app || '')
         .filter(Boolean),
-    );
+    )
     return listApps.map((app) =>
       mapToAutoCompleteItemApp(app, favSet, recentSet, firstEnv),
-    );
-  }, [listApps, listFavoriteApps, recentJumps, firstEnv]);
+    )
+  }, [listApps, listFavoriteApps, recentJumps, firstEnv])
 
   const autoCompleteFilter = useMemo(
     () => makeAutoCompleteFilter(items),
     [items],
-  );
+  )
 
-  const isFavorite = listFavoriteApps.includes(app?.id || '');
+  const isFavorite = listFavoriteApps.includes(app?.id || '')
 
-  const hasSubstitutionValue = !!substitution?.value;
+  const hasSubstitutionValue = !!substitution?.value
   const allSectionedItems = useMemo(() => {
     return mapToSectionedItems(
       items,
       hasSubstitutionValue ? substitutionType?.id : undefined,
-    );
-  }, [items, substitutionType, hasSubstitutionValue]);
+    )
+  }, [items, substitutionType, hasSubstitutionValue])
 
   return (
     <EhAutoComplete
@@ -100,8 +98,8 @@ export function AppList({ onOpenChange, className }: AppListProps) {
       selectedItem={items.find((i) => i.id === app?.id) || null}
       onPrimaryAction={tryJump}
       onSelectedItemChange={(appId) => {
-        const appById = getAppById(appId);
-        setApp(appById);
+        const appById = getAppById(appId)
+        setApp(appById)
       }}
       onFavoriteToggle={(app, isOn) => toggleFavoriteApp(app.id, isOn)}
       autoFocus={autoFocusOn === 'applications'}
@@ -121,5 +119,5 @@ export function AppList({ onOpenChange, className }: AppListProps) {
           AUTOCOMPLETE_ATTENTION_CLASSNAME,
       )}
     />
-  );
+  )
 }

@@ -1,19 +1,19 @@
-import React, { useMemo } from 'react';
-import { EhAppId } from '@env-hopper/types';
+import React, { useMemo } from 'react'
+import { EhAppId } from '../../types'
 import {
   BarElement,
   InternalCommonBar,
   QuickBarSharedProps,
-} from './InternalCommonBar';
-import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
-import { uniq } from 'lodash';
-import cn from 'classnames';
-import { formatAppTitleShort } from '../../lib/format/FormatAppTitleShort';
-import { useMainAppFormContext } from '../../context/MainFormContextProvider';
+} from './InternalCommonBar'
+import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants'
+import { unique } from 'radashi'
+import cn from 'classnames'
+import { formatAppTitleShort } from '../../lib/format/FormatAppTitleShort'
+import { useMainAppFormContext } from '../../context/MainFormContextProvider'
 
 export function AppQuickBar(props: QuickBarSharedProps) {
   const { listFavoriteApps, setApp, getAppById, app, recentJumps } =
-    useMainAppFormContext();
+    useMainAppFormContext()
 
   const favorites = useMemo<BarElement<string>[]>(() => {
     return listFavoriteApps
@@ -22,11 +22,11 @@ export function AppQuickBar(props: QuickBarSharedProps) {
       .map((app) => ({
         id: app.id,
         title: formatAppTitleShort(app),
-      }));
-  }, [listFavoriteApps, getAppById]);
+      }))
+  }, [listFavoriteApps, getAppById])
 
   const recent = useMemo<BarElement<string>[]>(() => {
-    return uniq(
+    return unique(
       recentJumps.map((recent) => recent.app).filter((id) => id !== undefined),
     )
       .slice(0, MAX_RECENTLY_USED_ITEMS_COMBO)
@@ -34,14 +34,14 @@ export function AppQuickBar(props: QuickBarSharedProps) {
         return {
           id: id,
           title: formatAppTitleShort(getAppById(id)),
-        };
-      });
-  }, [recentJumps, getAppById]);
+        }
+      })
+  }, [recentJumps, getAppById])
 
   const onClick = (appId: EhAppId) => {
-    const appById = getAppById(appId);
-    setApp(appById);
-  };
+    const appById = getAppById(appId)
+    setApp(appById)
+  }
 
   return (
     <div className={cn(props.className, 'flex flex-col gap-2')}>
@@ -60,5 +60,5 @@ export function AppQuickBar(props: QuickBarSharedProps) {
         favoriteOrRecent={'favorite'}
       />
     </div>
-  );
+  )
 }

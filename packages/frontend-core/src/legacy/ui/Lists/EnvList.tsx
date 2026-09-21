@@ -1,23 +1,21 @@
-'use client';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   EhAutoComplete,
   EhAutoCompleteFilter,
-} from '../AutoComplete/EhAutoComplete';
-import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter';
-import { EhEnv, EhEnvId } from '@env-hopper/types';
-import { SourceItem } from '../AutoComplete/common';
-import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper';
-import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants';
-import { HomeFavoriteButton } from '../HomeFavoriteButton';
-import { tokenize } from '../../lib/autoComplete/tokenize';
-import { shuffle, sortBy } from 'lodash';
-import cn from 'classnames';
+} from '../AutoComplete/EhAutoComplete'
+import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter'
+import { EhEnv, EhEnvId } from '../../types'
+import { SourceItem } from '../AutoComplete/common'
+import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper'
+import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants'
+import { HomeFavoriteButton } from '../HomeFavoriteButton'
+import { tokenize } from '~/modules/fuzzyMatchLogic/tokenize'
+import cn from 'classnames'
 import {
   AUTOCOMPLETE_ATTENTION_CLASSNAME,
   mapToSectionedItems,
-} from './commonList';
-import { useMainAppFormContext } from '../../context/MainFormContextProvider';
+} from './commonList'
+import { useMainAppFormContext } from '../../context/MainFormContextProvider'
 
 function mapToAutoCompleteItem(
   env: EhEnv,
@@ -29,47 +27,57 @@ function mapToAutoCompleteItem(
     title: env.id,
     favorite: favorites.has(env.id),
     recent: recents.has(env.id),
-  };
+  }
 }
 
 export interface EnvListProps {
-  onOpenChange?: (isOpen: boolean) => void;
-  className?: string;
+  onOpenChange?: (isOpen: boolean) => void
+  className?: string
 }
 
+/**
+ * INTENTIONAL DIFF — fixes a known defect rather than reproducing it.
+ *
+ * The candidate list used to be shuffled, so the hint in the environment field
+ * named a different environment on nearly every render and could not be relied
+ * on, screenshotted or tested. Candidates are now taken longest-first, which is
+ * deterministic and was already the order the shuffle threw away.
+ */
 function findGoodExample(
   envIds: EhEnvId[],
   autoCompleteFilter: EhAutoCompleteFilter,
   items: SourceItem[],
 ): string | undefined {
-  function getSearch(tokens: string[]) {
+  function getSearch(tokens: Array<string | undefined>) {
     if (tokens.length >= 2) {
-      return tokens[0] + tokens[tokens.length - 1];
+      return (tokens[0] ?? '') + (tokens[tokens.length - 1] ?? '')
     }
-    return tokens[0];
+    return tokens[0] ?? ''
   }
 
-  const envsLongestFirst = sortBy(envIds, (s) => -s.length);
-  const candidates = shuffle(
-    envsLongestFirst.map((env) => ({ env, tokens: tokenize(env) })),
-  );
+  const candidates = [...envIds]
+    .sort((a, b) => b.length - a.length)
+    .map((env) => ({ env, tokens: tokenize(env) }))
   const found = candidates.find(({ tokens }) => {
-    return autoCompleteFilter(getSearch(tokens), items)?.length === 1;
-  });
+    return autoCompleteFilter(getSearch(tokens), items)?.length === 1
+  })
   if (found) {
-    const [firstToken, ...restTokens] = found.tokens;
-    const lastToken = restTokens.slice(-1)[0];
-    let firstShortestToken = firstToken;
+    const [firstToken, ...restTokens] = found.tokens
+    if (firstToken === undefined) {
+      return undefined
+    }
+    const lastToken = restTokens.slice(-1)[0]
+    let firstShortestToken = firstToken
     for (let i = 3; i < firstToken.length; i++) {
-      const search = getSearch([firstToken.slice(0, i), lastToken]);
+      const search = getSearch([firstToken.slice(0, i), lastToken])
       if (autoCompleteFilter(search, items)?.length === 1) {
-        firstShortestToken = firstToken.slice(0, i);
-        break;
+        firstShortestToken = firstToken.slice(0, i)
+        break
       }
     }
-    return getSearch([firstShortestToken, lastToken]);
+    return getSearch([firstShortestToken, lastToken])
   } else {
-    return undefined;
+    return undefined
   }
 }
 
@@ -84,29 +92,29 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
     recentJumps,
     tryJump,
     highlightAutoComplete,
-  } = useMainAppFormContext();
+  } = useMainAppFormContext()
 
   const items = useMemo(() => {
-    const favSet = new Set(listFavoriteEnvs);
+    const favSet = new Set(listFavoriteEnvs)
     const recentSet = new Set(
       recentJumps
         .slice(0, MAX_RECENTLY_USED_ITEMS_COMBO)
         .map((jump) => jump.env || '')
         .filter(Boolean),
-    );
-    return listEnvs.map((env) => mapToAutoCompleteItem(env, favSet, recentSet));
-  }, [listEnvs, listFavoriteEnvs, recentJumps]);
+    )
+    return listEnvs.map((env) => mapToAutoCompleteItem(env, favSet, recentSet))
+  }, [listEnvs, listFavoriteEnvs, recentJumps])
 
-  const autoFocusOn = useAutoFocusHelper();
+  const autoFocusOn = useAutoFocusHelper()
 
   const autoCompleteFilter = useMemo(
     () => makeAutoCompleteFilter(items),
     [items],
-  );
-  const isFavorite = listFavoriteEnvs.includes(env?.id || '');
-  const selectedItem = items.find((i) => i.id === env?.id) || null;
+  )
+  const isFavorite = listFavoriteEnvs.includes(env?.id || '')
+  const selectedItem = items.find((i) => i.id === env?.id) || null
 
-  const [placeHolder, setPlaceHolder] = useState('');
+  const [placeHolder, setPlaceHolder] = useState('')
 
   useEffect(() => {
     if (listEnvs.length > 0 && placeHolder === '') {
@@ -114,25 +122,25 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
         recentJumps.map((s) => s.env).filter((env) => env !== undefined),
         autoCompleteFilter,
         items,
-      );
+      )
       const example =
         exampleFromRecents ||
         findGoodExample(
           listEnvs?.map((s) => s.id),
           autoCompleteFilter,
           items,
-        );
+        )
       setPlaceHolder(
         example
           ? `Type or select environment, for example: ${example}`
           : 'Type or select environment',
-      );
+      )
     }
-  }, [recentJumps, listEnvs, autoCompleteFilter]);
+  }, [recentJumps, listEnvs, autoCompleteFilter])
 
   const allSectionedItems = useMemo(() => {
-    return mapToSectionedItems(items, undefined);
-  }, [items]);
+    return mapToSectionedItems(items, undefined)
+  }, [items])
 
   return (
     <EhAutoComplete
@@ -144,7 +152,7 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
       onOpenChange={onOpenChange}
       selectedItem={selectedItem}
       onSelectedItemChange={(envId) => {
-        setEnv(getEnvById(envId));
+        setEnv(getEnvById(envId))
       }}
       onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
       onPrimaryAction={tryJump}
@@ -165,5 +173,5 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
           AUTOCOMPLETE_ATTENTION_CLASSNAME,
       )}
     />
-  );
+  )
 }

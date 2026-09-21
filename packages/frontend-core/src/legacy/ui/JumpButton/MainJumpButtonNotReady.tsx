@@ -1,16 +1,16 @@
-import { getJumpUrlEvenNotComplete } from '../../lib/utils';
-import { ComboBoxType } from '../../types';
-import React, { useEffect, useMemo } from 'react';
-import cn from 'classnames';
-import { debounce } from 'lodash';
-import { useMainAppFormContext } from '../../context/MainFormContextProvider';
+import { getJumpUrlEvenNotComplete } from '../../lib/utils'
+import { ComboBoxType } from '../../types'
+import React, { useEffect, useMemo } from 'react'
+import cn from 'classnames'
+import { debounce } from 'radashi'
+import { useMainAppFormContext } from '../../context/MainFormContextProvider'
 
 function AttentionWord({
   word,
   highlightAutoComplete,
 }: {
-  word: string;
-  highlightAutoComplete: ComboBoxType | undefined;
+  word: string
+  highlightAutoComplete: ComboBoxType | undefined
 }) {
   return (
     <span
@@ -22,11 +22,11 @@ function AttentionWord({
     >
       {word}
     </span>
-  );
+  )
 }
 
 export interface MainJumpButtonNotReadyProps {
-  isHovered?: boolean;
+  isHovered?: boolean
 }
 
 export function MainJumpButtonNotReady({
@@ -39,15 +39,15 @@ export function MainJumpButtonNotReady({
     substitutionType,
     setHighlightAutoComplete,
     highlightAutoComplete,
-  } = useMainAppFormContext();
+  } = useMainAppFormContext()
 
-  let sub: React.ReactNode | null = null;
+  let sub: React.ReactNode | null = null
 
   if (env !== undefined && app !== undefined) {
-    const url = getJumpUrlEvenNotComplete({ app, env, substitution });
+    const url = getJumpUrlEvenNotComplete({ app, env, substitution })
 
-    const start = url.indexOf('{{');
-    const end = url.indexOf('}}');
+    const start = url.indexOf('{{')
+    const end = url.indexOf('}}')
 
     if (start !== -1 && end !== -1) {
       sub = (
@@ -60,39 +60,38 @@ export function MainJumpButtonNotReady({
           {'\n'}
           {'\n'}Select {substitutionType?.title}
         </pre>
-      );
+      )
     } else {
-      sub = `Select ${substitutionType?.title}`;
+      sub = `Select ${substitutionType?.title}`
     }
   }
 
-  let notSelected: ComboBoxType;
+  let notSelected: ComboBoxType
   if (env === undefined) {
-    notSelected = 'environments';
+    notSelected = 'environments'
   } else if (app === undefined) {
-    notSelected = 'applications';
+    notSelected = 'applications'
   } else {
-    notSelected = 'substitutions';
+    notSelected = 'substitutions'
   }
 
   const setAttentionOnDebounced = useMemo<
     (b: ComboBoxType | undefined) => void
   >(
     () =>
-      debounce<(b: ComboBoxType | undefined) => void>(
-        (x) => setHighlightAutoComplete(x),
-        300,
+      debounce<[ComboBoxType | undefined]>({ delay: 300 }, (x) =>
+        setHighlightAutoComplete(x),
       ),
     [setHighlightAutoComplete],
-  );
+  )
 
   useEffect(() => {
     if (isHovered) {
-      setAttentionOnDebounced(notSelected);
+      setAttentionOnDebounced(notSelected)
     } else {
-      setAttentionOnDebounced(undefined);
+      setAttentionOnDebounced(undefined)
     }
-  }, [isHovered, notSelected, setAttentionOnDebounced]);
+  }, [isHovered, notSelected, setAttentionOnDebounced])
 
   return (
     <div className="text-center p-5" data-testid={'jump-main-button-text'}>
@@ -116,5 +115,5 @@ export function MainJumpButtonNotReady({
       )}
       {notSelected === 'substitutions' && sub}
     </div>
-  );
+  )
 }

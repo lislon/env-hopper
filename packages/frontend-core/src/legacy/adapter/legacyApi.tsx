@@ -17,13 +17,11 @@ import { LOCAL_STORAGE_KEY_VERSION } from '../lib/local-storage-constants'
 import { useQueryBootstrapConfig } from '~/api/data/useQueryBootstrapConfig'
 import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/api/ApiQueryMagazineResourceJump'
 import { mapToFlagshipResourceJumps } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
-import type { BootstrapConfigData, ResourceJumpsData } from '@env-hopper/backend-core'
 import type {
-  EhApp,
-  EhClientConfig,
-  EhEnv,
-  EhSubstitutionType,
-} from '../types'
+  BootstrapConfigData,
+  ResourceJumpsData,
+} from '@env-hopper/backend-core'
+import type { EhApp, EhClientConfig, EhEnv, EhSubstitutionType } from '../types'
 
 /** What the shell used to read off `GET /api/config`. */
 export interface LegacyConfig extends EhClientConfig {
@@ -73,13 +71,12 @@ function mapToLegacyConfig(
   }))
 
   const contextBySlug = new Map(bootstrap.contexts.map((c) => [c.slug, c]))
-  const substitutions: Array<EhSubstitutionType> = jumps.lateResolvableParams.map(
-    (param) => ({
+  const substitutions: Array<EhSubstitutionType> =
+    jumps.lateResolvableParams.map((param) => ({
       id: param.slug,
       title: param.displayName,
       isSharedAcrossEnvs: contextBySlug.get(param.slug)?.isSharedAcrossEnvs,
-    }),
-  )
+    }))
 
   return { apps, envs, substitutions }
 }

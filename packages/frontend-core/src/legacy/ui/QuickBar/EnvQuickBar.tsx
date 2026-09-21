@@ -1,30 +1,30 @@
-import React, { useMemo } from 'react';
-import { EhEnvId } from '@env-hopper/types';
+import React, { useMemo } from 'react'
+import { EhEnvId } from '../../types'
 import {
   BarElement,
   InternalCommonBar,
   QuickBarSharedProps,
-} from './InternalCommonBar';
-import { MAX_RECENT_ENVS_IN_QUICK_ACCESS } from '../../lib/constants';
-import { uniq } from 'lodash';
-import cn from 'classnames';
-import { useMainAppFormContext } from '../../context/MainFormContextProvider';
+} from './InternalCommonBar'
+import { MAX_RECENT_ENVS_IN_QUICK_ACCESS } from '../../lib/constants'
+import { unique } from 'radashi'
+import cn from 'classnames'
+import { useMainAppFormContext } from '../../context/MainFormContextProvider'
 
 export function EnvQuickBar(props: QuickBarSharedProps) {
   const { listFavoriteEnvs, recentJumps, setEnv, getEnvById, env } =
-    useMainAppFormContext();
+    useMainAppFormContext()
 
   const favorites = useMemo<BarElement<string>[]>(() => {
     return listFavoriteEnvs.map((envId) => {
       return {
         id: envId,
         title: envId,
-      };
-    });
-  }, [listFavoriteEnvs]);
+      }
+    })
+  }, [listFavoriteEnvs])
 
   const recent = useMemo<BarElement<string>[]>(() => {
-    return uniq(
+    return unique(
       recentJumps.map((recent) => recent.env).filter((id) => id !== undefined),
     )
       .slice(0, MAX_RECENT_ENVS_IN_QUICK_ACCESS)
@@ -32,14 +32,14 @@ export function EnvQuickBar(props: QuickBarSharedProps) {
         return {
           id: envId,
           title: envId,
-        };
-      });
-  }, [recentJumps]);
+        }
+      })
+  }, [recentJumps])
 
   const onClick = (envId: EhEnvId) => {
-    const newEnv = getEnvById(envId);
-    setEnv(newEnv);
-  };
+    const newEnv = getEnvById(envId)
+    setEnv(newEnv)
+  }
 
   return (
     <div className={cn(props.className, 'flex flex-col gap-2')}>
@@ -58,5 +58,5 @@ export function EnvQuickBar(props: QuickBarSharedProps) {
         favoriteOrRecent={'favorite'}
       />
     </div>
-  );
+  )
 }

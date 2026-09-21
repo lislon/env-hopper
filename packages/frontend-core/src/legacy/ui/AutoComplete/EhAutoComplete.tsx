@@ -1,62 +1,62 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useCombobox } from 'downshift';
-import { SourceItem } from './common';
-import { SectionedItem } from './section-splitting';
-import { ItemsSections } from './ItemsSections';
-import { keyBy, uniq } from 'lodash';
-import cn from 'classnames';
+import React, { useEffect, useMemo, useState } from 'react'
+import { useCombobox } from 'downshift'
+import { SourceItem } from './common'
+import { SectionedItem } from './section-splitting'
+import { ItemsSections } from './ItemsSections'
+import { objectify, unique } from 'radashi'
+import cn from 'classnames'
 
 export type EhAutoCompleteFilter = (
   searchPattern: string,
   items: SourceItem[],
-) => SourceItem[];
+) => SourceItem[]
 
-export type OnSelectedItemChange = (itemId: string | undefined) => void;
+export type OnSelectedItemChange = (itemId: string | undefined) => void
 
 export interface EhAutoCompleteProps {
-  className?: string;
-  inputClassName?: string;
-  itemsAll: SourceItem[];
-  placeholder?: string;
-  label?: string;
-  filter: EhAutoCompleteFilter;
-  onSelectedItemChange: OnSelectedItemChange;
-  selectedItem: SourceItem | null;
-  onClick?: (id: string) => void;
-  onFavoriteToggle?: (item: SourceItem, isOn: boolean) => void;
-  onOpenChange?: (isOpen: boolean) => void;
-  onPrimaryAction?: () => void;
-  autoFocus?: boolean;
-  favoriteButton?: React.ReactNode;
+  className?: string
+  inputClassName?: string
+  itemsAll: SourceItem[]
+  placeholder?: string
+  label?: string
+  filter: EhAutoCompleteFilter
+  onSelectedItemChange: OnSelectedItemChange
+  selectedItem: SourceItem | null
+  onClick?: (id: string) => void
+  onFavoriteToggle?: (item: SourceItem, isOn: boolean) => void
+  onOpenChange?: (isOpen: boolean) => void
+  onPrimaryAction?: () => void
+  autoFocus?: boolean
+  favoriteButton?: React.ReactNode
   // getEhUrl: (id: string) => ToOptions;
-  id?: string;
-  allSectionedItems: SectionedItem[];
-  tmpSameSubstitutionTitle?: string;
+  id?: string
+  allSectionedItems: SectionedItem[]
+  tmpSameSubstitutionTitle?: string
 }
 
 export function EhAutoComplete(props: EhAutoCompleteProps) {
-  const initialItemsWithSections = props.allSectionedItems;
+  const initialItemsWithSections = props.allSectionedItems
   const sectionItemById = useMemo(() => {
-    return keyBy(
+    return objectify(
       initialItemsWithSections.filter((i) => i.section === 'all'),
-      'id',
-    );
-  }, [initialItemsWithSections]);
+      (i) => i.id,
+    )
+  }, [initialItemsWithSections])
 
   const [displayedItems, setDisplayedItems] = useState(
     () => initialItemsWithSections,
-  );
+  )
 
   const selectedItemWithSection = useMemo(() => {
-    const needle = props.selectedItem;
+    const needle = props.selectedItem
     return (
       needle &&
       (initialItemsWithSections.find((v) => {
-        return v.id === needle.id;
+        return v.id === needle.id
       }) ||
         null)
-    );
-  }, [initialItemsWithSections, props.selectedItem]);
+    )
+  }, [initialItemsWithSections, props.selectedItem])
 
   const {
     isOpen,
@@ -70,16 +70,20 @@ export function EhAutoComplete(props: EhAutoCompleteProps) {
     inputValue,
   } = useCombobox<SectionedItem>({
     onInputValueChange({ inputValue, isOpen }) {
-      const userUsesFilter = inputValue !== '';
+      const userUsesFilter = inputValue !== ''
       if (isOpen) {
         if (userUsesFilter) {
-          const matchedIds = uniq(
+          const matchedIds = unique(
             props.filter(inputValue, props.itemsAll).map((i) => i.id),
-          );
-          setDisplayedItems(matchedIds.map((id) => sectionItemById[id]));
+          )
+          setDisplayedItems(
+            matchedIds
+              .map((id) => sectionItemById[id])
+              .filter((i) => i !== undefined),
+          )
         } else {
           // show all
-          setDisplayedItems(initialItemsWithSections);
+          setDisplayedItems(initialItemsWithSections)
         }
       }
       // if (inputValue === '') {
@@ -87,25 +91,25 @@ export function EhAutoComplete(props: EhAutoCompleteProps) {
       // }
     },
     onSelectedItemChange({ selectedItem }) {
-      props.onSelectedItemChange(selectedItem?.id || undefined);
+      props.onSelectedItemChange(selectedItem?.id || undefined)
     },
     selectedItem: selectedItemWithSection,
     items: displayedItems,
     itemToString(item) {
-      return item ? item.title : '';
+      return item ? item.title : ''
     },
-  });
+  })
 
-  const inputRef = React.createRef<HTMLInputElement>();
-  const onOpenChange = props.onOpenChange;
+  const inputRef = React.createRef<HTMLInputElement>()
+  const onOpenChange = props.onOpenChange
 
   useEffect(() => {
-    onOpenChange?.(isOpen);
-  }, [isOpen, onOpenChange]);
+    onOpenChange?.(isOpen)
+  }, [isOpen, onOpenChange])
 
   function preselectAndShowAllOptions() {
-    inputRef.current?.select();
-    setDisplayedItems(initialItemsWithSections);
+    inputRef.current?.select()
+    setDisplayedItems(initialItemsWithSections)
   }
 
   const inputProps = getInputProps({
@@ -115,12 +119,12 @@ export function EhAutoComplete(props: EhAutoCompleteProps) {
     onClick: preselectAndShowAllOptions,
     onBlur: () => {
       if (inputValue === '') {
-        props.onSelectedItemChange(undefined);
+        props.onSelectedItemChange(undefined)
       }
     },
     onKeyDown: (event) => {
       if (event.ctrlKey && event.key === 'Enter') {
-        props.onPrimaryAction?.();
+        props.onPrimaryAction?.()
       } else if (
         event.key === 'Enter' &&
         isOpen &&
@@ -128,13 +132,13 @@ export function EhAutoComplete(props: EhAutoCompleteProps) {
         highlightedIndex === -1
       ) {
         // user has input, and it shows several results, but there is not a single line selected. On enter, we want to pick a first result.
-        selectItem(displayedItems[0]);
-        props.onSelectedItemChange(displayedItems[0].id);
+        selectItem(displayedItems[0])
+        props.onSelectedItemChange(displayedItems[0].id)
       } else if (event.key === 'Enter' && !isOpen) {
-        props.onPrimaryAction?.();
+        props.onPrimaryAction?.()
       }
     },
-  });
+  })
 
   return (
     <div className={cn('relative', props.className)}>
@@ -188,5 +192,5 @@ export function EhAutoComplete(props: EhAutoCompleteProps) {
         </ul>
       </div>
     </div>
-  );
+  )
 }

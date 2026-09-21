@@ -1,9 +1,9 @@
-import React from 'react';
+import React from 'react'
 
 export interface SectionProps {
-  children: React.ReactNode;
-  title: string;
-  testId?: string;
+  children: React.ReactNode
+  title: string
+  testId?: string
 }
 
 export function Section({ children, title, testId }: SectionProps) {
@@ -14,5 +14,5 @@ export function Section({ children, title, testId }: SectionProps) {
       </li>
       {children}
     </>
-  );
+  )
 }

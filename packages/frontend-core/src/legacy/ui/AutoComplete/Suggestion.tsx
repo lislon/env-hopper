@@ -1,16 +1,16 @@
-import React from 'react';
-import cn from 'classnames';
-import { SourceItem } from './common';
-import { UseComboboxPropGetters } from 'downshift';
-import { EhAutoCompleteProps } from './EhAutoComplete';
+import React from 'react'
+import cn from 'classnames'
+import { SourceItem } from './common'
+import { UseComboboxPropGetters } from 'downshift'
+import { EhAutoCompleteProps } from './EhAutoComplete'
 
 export interface SuggestionProps {
-  index: number;
-  item: SourceItem;
-  highlightedIndex: number;
-  selectedItem: SourceItem | null;
-  getItemProps: UseComboboxPropGetters<SourceItem>['getItemProps'];
-  autoCompleteProps: EhAutoCompleteProps;
+  index: number
+  item: SourceItem
+  highlightedIndex: number
+  selectedItem: SourceItem | null
+  getItemProps: UseComboboxPropGetters<SourceItem>['getItemProps']
+  autoCompleteProps: EhAutoCompleteProps
 }
 
 export function Suggestion({
@@ -31,5 +31,5 @@ export function Suggestion({
         {item.title}
       </button>
     </li>
-  );
+  )
 }

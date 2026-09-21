@@ -1,19 +1,19 @@
-import { ReactNode } from 'react';
-import { getJumpUrl } from '../../lib/utils';
-import { EhApp, EhEnv } from '@env-hopper/types';
-import { EhSubstitutionValue } from '../../types';
-import { useMainAppFormContext } from '../../context/MainFormContextProvider';
+import { ReactNode } from 'react'
+import { getJumpUrl } from '../../lib/utils'
+import { EhApp, EhEnv } from '../../types'
+import { EhSubstitutionValue } from '../../types'
+import { useMainAppFormContext } from '../../context/MainFormContextProvider'
 
 export interface JumpUrlParams {
-  children: ReactNode;
-  app?: EhApp;
-  env?: EhEnv;
-  id?: string;
-  substitution?: EhSubstitutionValue;
-  className?: string;
-  isMain?: boolean;
-  prefetch?: boolean;
-  testId?: string;
+  children: ReactNode
+  app?: EhApp
+  env?: EhEnv
+  id?: string
+  substitution?: EhSubstitutionValue
+  className?: string
+  isMain?: boolean
+  prefetch?: boolean
+  testId?: string
 }
 
 export function JumpALink({
@@ -26,22 +26,22 @@ export function JumpALink({
   isMain,
   testId,
 }: JumpUrlParams) {
-  const { recordJump } = useMainAppFormContext();
+  const { recordJump } = useMainAppFormContext()
 
   const onClick = () => {
     if (!app || !env) {
-      return;
+      return
     }
     recordJump({
       app: app,
       env: env,
       substitution,
-    });
-  };
+    })
+  }
 
-  const jumpUrl = getJumpUrl({ app, env, substitution });
+  const jumpUrl = getJumpUrl({ app, env, substitution })
   if (!jumpUrl) {
-    return undefined;
+    return undefined
   }
   return (
     <a
@@ -57,5 +57,5 @@ export function JumpALink({
     >
       {children}
     </a>
-  );
+  )
 }

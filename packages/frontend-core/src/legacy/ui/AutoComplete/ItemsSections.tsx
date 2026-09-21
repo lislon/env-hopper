@@ -1,39 +1,39 @@
-import { SectionedItem } from './section-splitting';
-import { UseComboboxPropGetters } from 'downshift';
-import { SAME_SECTION_MIN_ITEMS, SourceItem } from './common';
-import { Suggestion } from './Suggestion';
-import React from 'react';
-import { EhAutoCompleteProps } from './EhAutoComplete';
-import { Section } from '../Section';
+import { SectionedItem } from './section-splitting'
+import { UseComboboxPropGetters } from 'downshift'
+import { SAME_SECTION_MIN_ITEMS, SourceItem } from './common'
+import { Suggestion } from './Suggestion'
+import React from 'react'
+import { EhAutoCompleteProps } from './EhAutoComplete'
+import { Section } from '../Section'
 
 export interface ItemsSectionProps {
-  items: SectionedItem[];
-  highlightedIndex: number;
-  selectedItem: SectionedItem | null;
-  getItemProps: UseComboboxPropGetters<SourceItem>['getItemProps'];
-  autoCompleteProps: EhAutoCompleteProps;
-  tmpSameSubstitutionTitle?: string;
+  items: SectionedItem[]
+  highlightedIndex: number
+  selectedItem: SectionedItem | null
+  getItemProps: UseComboboxPropGetters<SourceItem>['getItemProps']
+  autoCompleteProps: EhAutoCompleteProps
+  tmpSameSubstitutionTitle?: string
 }
 
 export function ItemsSections({ items, ...rest }: ItemsSectionProps) {
-  const itemsWithIndex = items.map((item, index) => ({ ...item, index }));
+  const itemsWithIndex = items.map((item, index) => ({ ...item, index }))
 
   const recentSection = itemsWithIndex.filter(
     (item) => item.section === 'recent',
-  );
+  )
   const favSection = itemsWithIndex.filter(
     (item) => item.section === 'favorite',
-  );
+  )
   const sameSubSection = itemsWithIndex.filter(
     (item) => item.section === 'same_substitution',
-  );
+  )
 
-  const allSection = itemsWithIndex.filter((item) => item.section === 'all');
+  const allSection = itemsWithIndex.filter((item) => item.section === 'all')
 
   const shouldSplitAutocompleteBySections =
     recentSection.length > 0 ||
     favSection.length > 0 ||
-    sameSubSection.length > 0;
+    sameSubSection.length > 0
 
   return shouldSplitAutocompleteBySections ? (
     <SplitBySections
@@ -45,18 +45,18 @@ export function ItemsSections({ items, ...rest }: ItemsSectionProps) {
     />
   ) : (
     <SingleSection allSection={allSection} {...rest} />
-  );
+  )
 }
 
 export interface ItemWithSectionAndIndex extends SectionedItem {
-  index: number;
+  index: number
 }
 
 export interface SplitBySectionsProps extends Omit<ItemsSectionProps, 'items'> {
-  recentSection: ItemWithSectionAndIndex[];
-  favSection: ItemWithSectionAndIndex[];
-  sameSubSection: ItemWithSectionAndIndex[];
-  allSection: ItemWithSectionAndIndex[];
+  recentSection: ItemWithSectionAndIndex[]
+  favSection: ItemWithSectionAndIndex[]
+  sameSubSection: ItemWithSectionAndIndex[]
+  allSection: ItemWithSectionAndIndex[]
 }
 
 export function SplitBySections({
@@ -122,11 +122,11 @@ export function SplitBySections({
         </Section>
       )}
     </>
-  );
+  )
 }
 
 export interface SingleSectionProp extends Omit<ItemsSectionProps, 'items'> {
-  allSection: ItemWithSectionAndIndex[];
+  allSection: ItemWithSectionAndIndex[]
 }
 
 export function SingleSection({ allSection, ...rest }: SingleSectionProp) {
@@ -136,5 +136,5 @@ export function SingleSection({ allSection, ...rest }: SingleSectionProp) {
         <Suggestion key={item.index} index={item.index} item={item} {...rest} />
       ))}
     </>
-  );
+  )
 }

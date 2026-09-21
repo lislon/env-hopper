@@ -1,20 +1,20 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react'
 
 export interface CopyButtonProps {
-  value: string;
+  value: string
 }
 
 export function CopyButton({ value }: CopyButtonProps) {
-  const [copied, setCopied] = useState(false);
-  const defaultIconRef = useRef(null);
-  const successIconRef = useRef(null);
+  const [copied, setCopied] = useState(false)
+  const defaultIconRef = useRef(null)
+  const successIconRef = useRef(null)
 
   async function onClick() {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
+    await navigator.clipboard.writeText(value)
+    setCopied(true)
     setTimeout(() => {
-      setCopied(false);
-    }, 2000);
+      setCopied(false)
+    }, 2000)
   }
 
   return (
@@ -57,5 +57,5 @@ export function CopyButton({ value }: CopyButtonProps) {
         </svg>
       </span>
     </button>
-  );
+  )
 }

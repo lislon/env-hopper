@@ -1,22 +1,22 @@
-import { useState } from 'react';
-import { ComboBoxType } from '../types';
-import { useMainAppFormContext } from '../context/MainFormContextProvider';
+import { useState } from 'react'
+import { ComboBoxType } from '../types'
+import { useMainAppFormContext } from '../context/MainFormContextProvider'
 
 export function useAutoFocusHelper(): ComboBoxType {
-  const { env, app, substitution, substitutionType } = useMainAppFormContext();
+  const { env, app, substitution, substitutionType } = useMainAppFormContext()
 
   const [ret] = useState<ComboBoxType>(() => {
     if (env === undefined) {
-      return 'environments';
+      return 'environments'
     }
     if (app === undefined) {
-      return 'applications';
+      return 'applications'
     }
     if (substitutionType !== undefined && substitution === undefined) {
-      return 'substitutions';
+      return 'substitutions'
     }
-    return 'environments';
-  });
+    return 'environments'
+  })
 
-  return ret;
+  return ret
 }

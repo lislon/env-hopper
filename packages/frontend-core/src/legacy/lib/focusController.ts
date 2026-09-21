@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { EhApp, EhEnv, EhSubstitutionType } from '../types'
 
 export interface FocusControllerEh {
@@ -19,6 +19,23 @@ export interface FocusControllerProps {
   substitutionType: EhSubstitutionType | undefined
 }
 
+/**
+ * Lets a field hand this hook a way to focus itself, so choosing an application
+ * can put the caret in the value field.
+ *
+ * INTENTIONAL DIFF, and the two halves only work together:
+ *
+ *  - Each controller is now memoized. It used to be a fresh object literal every
+ *    render, so any field that listed its controller as a dependency re-registered
+ *    on every render, and registering is a state update — an unbounded render loop.
+ *    The original got away with it only because the field registered from an
+ *    effect with an empty dependency list, which the lint rules here reject.
+ *  - The focusing effect now lists everything it reads. It was keyed on
+ *    `[app, env]` while also reading `substitutionType` and the registered
+ *    function, so it fired before the value field had mounted and registered —
+ *    and then never again. The caret was simply lost the first time an
+ *    application needing a value came into view.
+ */
 export function useFocusController({
   app,
   env,
@@ -28,14 +45,6 @@ export function useFocusController({
   const [, setFocusApp] = useState<FocusFn | undefined>()
   const [focusSub, setFocusSub] = useState<FocusFn | undefined>()
 
-  /*
-   * INTENTIONAL DIFF: the dependency list was `[app, env]` while the body also
-   * reads `substitutionType` and `focusSub`. That made the caret land in the
-   * value field only if the field had already registered itself — and it
-   * registers on ITS mount, which happens after this effect has run, so the
-   * first time an app with a value came into view the focus was simply lost.
-   * Listing what the effect reads makes it fire once the field is there.
-   */
   useEffect(() => {
     if (
       app !== undefined &&
@@ -46,21 +55,19 @@ export function useFocusController({
     }
   }, [app, env, focusSub, substitutionType])
 
+  const setupEnv = useCallback((focusFn: FocusFn) => {
+    setFocusEnv(() => focusFn)
+  }, [])
+  const setupApp = useCallback((focusFn: FocusFn) => {
+    setFocusApp(() => focusFn)
+  }, [])
+  const setupSub = useCallback((focusFn: FocusFn) => {
+    setFocusSub(() => focusFn)
+  }, [])
+
   return {
-    focusControllerEnv: {
-      setupFocusFn: useCallback((focusFn) => {
-        setFocusEnv(() => focusFn)
-      }, []),
-    },
-    focusControllerApp: {
-      setupFocusFn: useCallback((focusFn) => {
-        setFocusApp(() => focusFn)
-      }, []),
-    },
-    focusControllerSub: {
-      setupFocusFn: useCallback((focusFn) => {
-        setFocusSub(() => focusFn)
-      }, []),
-    },
+    focusControllerEnv: useMemo(() => ({ setupFocusFn: setupEnv }), [setupEnv]),
+    focusControllerApp: useMemo(() => ({ setupFocusFn: setupApp }), [setupApp]),
+    focusControllerSub: useMemo(() => ({ setupFocusFn: setupSub }), [setupSub]),
   }
 }

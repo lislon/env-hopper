@@ -111,10 +111,18 @@ describe('app shell', () => {
       expect(app.getByTitle('Switch to light theme')).toBeInTheDocument()
     })
 
+    /**
+     * The stored value is a BARE string, not JSON. The theme library that also
+     * owns this key assigns it straight onto `<html>`'s class list, so a
+     * JSON-encoded value put a quoted token there — matching nothing — and
+     * overwrote the real `dark` class. The theme then looked right until the
+     * next load and silently reverted. Asserting the raw form here is what
+     * keeps the two writers agreeing.
+     */
     test('the choice is remembered for the next visit', async () => {
       const first = await renderApp({ server })
       await first.user.click(first.getByTitle('Switch to dark theme'))
-      expect(localStorage.getItem('theme')).toBe(JSON.stringify('dark'))
+      expect(localStorage.getItem('theme')).toBe('dark')
 
       const second = await renderApp({ server })
 

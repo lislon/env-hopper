@@ -67,6 +67,8 @@ export type OverrideBackendNetworkFn = (
 export interface MockBackend {
   bootstrap: BootstrapConfigData
   resourceJumps: ResourceJumpsData
+  /** Every procedure's answer, for consumers that serve them over real HTTP. */
+  data: BackendData
   setupNetwork: (server: SetupServer) => void
   overrideBackendNetwork: (fn: OverrideBackendNetworkFn) => void
 }
@@ -122,6 +124,26 @@ export function createBackend(fixture: Fixture): MockBackend {
     groups,
   }
 
+  const backendData: BackendData = {
+    bootstrap,
+    resourceJumps: resourceJumpsData,
+    resourceJumpsExtended: { envs: [] },
+    // Procedures no scenario drives yet: answered, but with nothing in them.
+    availabilityMatrix: {
+      envSlugs: [],
+      resourceJumpSlugs: [],
+      availabilityVariants: [],
+      matrix: [],
+    },
+    tryFindRenameRule: false,
+    resourceJumpBySlugAndEnv: {
+      resourceJumps: [],
+      envs: [],
+      lateResolvableParams: [],
+    },
+    authConfig: { adminGroups: ['env_hopper_ui_super_admins'] },
+  }
+
   let overrideBackendNetworkFn: OverrideBackendNetworkFn | null = null
 
   const setupNetwork = (server: SetupServer) => {
@@ -135,26 +157,6 @@ export function createBackend(fixture: Fixture): MockBackend {
         }),
       ],
     })
-
-    const backendData: BackendData = {
-      bootstrap,
-      resourceJumps: resourceJumpsData,
-      resourceJumpsExtended: { envs: [] },
-      // Procedures no scenario drives yet: answered, but with nothing in them.
-      availabilityMatrix: {
-        envSlugs: [],
-        resourceJumpSlugs: [],
-        availabilityVariants: [],
-        matrix: [],
-      },
-      tryFindRenameRule: false,
-      resourceJumpBySlugAndEnv: {
-        resourceJumps: [],
-        envs: [],
-        lateResolvableParams: [],
-      },
-      authConfig: { adminGroups: ['env_hopper_ui_super_admins'] },
-    }
 
     // Signed out. Registered even when a scenario overrides the tRPC layer,
     // because the app probes for a session on every mount and an unanswered
@@ -177,6 +179,7 @@ export function createBackend(fixture: Fixture): MockBackend {
   return {
     bootstrap,
     resourceJumps: resourceJumpsData,
+    data: backendData,
     setupNetwork,
     overrideBackendNetwork: (fn) => {
       overrideBackendNetworkFn = fn

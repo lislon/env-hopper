@@ -16,7 +16,8 @@ import './index.css'
 const trpcClient = createTRPCClient<TRPCRouter>({
   links: [
     httpBatchLink({
-      url: 'http://localhost:4000/trpc',
+      // Overridable so a second dev stack can run beside the first.
+      url: import.meta.env.VITE_EH_API_URL ?? 'http://localhost:4000/trpc',
     }),
   ],
 })

@@ -40,6 +40,7 @@ const backend = () =>
           username: 'booking_ro',
           password: 'pw-db',
         },
+        meta: { git: 'https://git.example.test/booking' },
       },
       { slug: 'parts-inventory', resourceJumps: '1-pager' },
     ],
@@ -50,10 +51,37 @@ const backend = () =>
           'env.meta.k8sCtx': 'dev-cluster',
           'env.meta.k8sNs': 'booking-dev',
           'env.meta.dbHost': 'dev-1',
+          'env.meta.dashPath': 'dev',
         },
       },
       { slug: 'staging' },
+      {
+        slug: 'prod',
+        templateParams: { 'env.meta.dashPath': 'prod' },
+        envType: 'prod',
+        appOverride: {
+          meta: { git: 'https://git.example.test/booking-release' },
+          unavailable: ['credentials', 'dataSources'],
+        },
+      },
     ],
+    customization: {
+      appLinkTypes: [
+        {
+          typeId: 'dashboard',
+          iconId: 'dash',
+          title: '{{env.id}} dashboard',
+          urlDecoded: 'https://dash.example.test/{{env.meta.dashPath}}',
+        },
+        {
+          typeId: 'source',
+          iconId: 'git',
+          title: 'Source Code',
+          urlDecoded: '{{app.meta.git}}',
+        },
+      ],
+      icons: [{ iconId: 'git', svg: '<svg />' }],
+    },
   })
 
 function comboBox(app: AppHandle, label: string): HTMLInputElement {
@@ -84,6 +112,16 @@ const panelFields = (app: AppHandle) =>
       '[data-testid="widgets-panel"] label.input input',
     ),
   ).map((e) => `${e.type}|${e.value}`)
+
+/** The per-app link list as `[title, href]` pairs, top to bottom. */
+const appLinks = (app: AppHandle) =>
+  Array.from(
+    app.container.querySelectorAll<HTMLAnchorElement>(
+      '[data-testid="app-links"] a',
+    ),
+  ).map(
+    (a) => [a.textContent.trim(), a.getAttribute('href')] as [string, string],
+  )
 
 const panelTabs = (app: AppHandle) =>
   Array.from(
@@ -239,21 +277,74 @@ describe('the widgets beside the form', () => {
     )
   })
 
-  /**
-   * The per-app links list is a container with nothing in it until app metadata
-   * reaches the payload. Asserted so that filling it in is a visible change here
-   * rather than a silent one.
+  /*
+   * The per-app link list. The whole of its "which links apply here" logic is
+   * that a url still holding a placeholder is dropped, so these assert the list
+   * BY NAME in both directions — what renders and what must not. A test that
+   * only counts what rendered cannot tell a correct list from a missing one,
+   * which is how this panel shipped empty.
    */
-  test('renders the per-app links list, still empty', async () => {
+  test('renders a link per app link type whose url fully resolves', async () => {
     const app = await renderApp({ server, backend: backend() })
 
     await choose(app, 'Environment', 'dev')
     await choose(app, 'Application', 'Service Booking')
 
-    const links = app.container.querySelector(
-      '[data-testid="app-links-placeholder"]',
-    )
-    expect(links).toBeInTheDocument()
-    expect(links?.children).toHaveLength(0)
+    expect(appLinks(app)).toEqual([
+      ['dev dashboard', 'https://dash.example.test/dev'],
+      ['Source Code', 'https://git.example.test/booking'],
+    ])
+  })
+
+  test('drops a link whose url names something the environment lacks', async () => {
+    const app = await renderApp({ server, backend: backend() })
+
+    // `staging` carries no `env.meta.dashPath`, so only the app-level link is
+    // left. Named rather than counted: the point is WHICH one went.
+    await choose(app, 'Environment', 'staging')
+    await choose(app, 'Application', 'Service Booking')
+
+    expect(appLinks(app).map(([title]) => title)).toEqual(['Source Code'])
+  })
+
+  test('drops a link whose url names something the app lacks', async () => {
+    const app = await renderApp({ server, backend: backend() })
+
+    await choose(app, 'Environment', 'dev')
+    await choose(app, 'Application', 'Parts Inventory')
+
+    // Parts Inventory has no `app.meta.git`, so its Source Code link goes while
+    // the environment-only dashboard link stays.
+    expect(appLinks(app).map(([title]) => title)).toEqual(['dev dashboard'])
+  })
+
+  test('hides the widgets an environment declares it has not got', async () => {
+    const app = await renderApp({ server, backend: backend() })
+
+    await choose(app, 'Environment', 'prod')
+    await choose(app, 'Application', 'Service Booking')
+
+    /*
+     * `prod` declares both facilities unavailable, so neither widget renders —
+     * as distinct from rendering the database one with `{{env.meta.dbHost}}`
+     * still in the url, which is what happens when the override does not reach
+     * the client. The kubernetes widget stays: it is not one of the two, and its
+     * own unresolved context is the previous UI's behaviour.
+     */
+    expect(panelFields(app)).not.toContain('text|booking-eu@example.test')
+    expect(panelFields(app).some((f) => f.includes('jdbc:'))).toBe(false)
+    expect(panelTabs(app)).toEqual(['pods', 'deployments', 'ns'])
+  })
+
+  test('uses the app meta an environment restates, not the app default', async () => {
+    const app = await renderApp({ server, backend: backend() })
+
+    await choose(app, 'Environment', 'prod')
+    await choose(app, 'Application', 'Service Booking')
+
+    expect(appLinks(app)).toContainEqual([
+      'Source Code',
+      'https://git.example.test/booking-release',
+    ])
   })
 })

@@ -1,6 +1,7 @@
 import type { DefaultWithOverridesAndTemplate } from '@env-hopper/shared-core'
 import type { EhAppsMeta, EhContextIndexed } from '../backend/api.js'
 import type { EhAppIndexed } from './app/appTypes.js'
+import type { EhCustomizationData } from './customizationTypes.js'
 import type { EhEnvIndexed } from './env/envTypes.js'
 
 export type JumpResourceSlug = string
@@ -15,6 +16,18 @@ export interface BootstrapConfigData {
     envSlug: EnvSlug
     resourceJumpSlug: JumpResourceSlug
   }
+  /** Absent for a deployment that customizes nothing. */
+  customization?: EhCustomizationData
+  /**
+   * The running server's own version, shown in the header and reported with
+   * client errors.
+   *
+   * It comes from the server rather than from a frontend build define on
+   * purpose: a browser holding a cached bundle would otherwise report the
+   * version it was built with, which is exactly the case where knowing the
+   * deployed version matters.
+   */
+  appVersion?: string
 }
 
 export interface AvailabilityMatrixData {

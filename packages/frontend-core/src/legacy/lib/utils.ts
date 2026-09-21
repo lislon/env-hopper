@@ -49,6 +49,31 @@ export function hasUnresolvedSubstitution(str: string) {
 export type EhAppForInterpolate = Pick<EhApp, 'meta'>
 
 /**
+ * The selected app as it is on the selected environment.
+ *
+ * Both halves matter and neither is reachable from the url template. `meta` is
+ * restated key by key, which is how an environment that is addressed by a fixed
+ * host rather than by a pattern still produces resolvable credentials and links.
+ * `widgets` can be set to `null` for a facility the environment does not have,
+ * which removes the widget rather than letting it render a half-substituted
+ * pattern.
+ */
+export function getAppWithEnvOverrides<T extends EhApp | undefined>(
+  appOrig: T,
+  env: EhEnv | undefined,
+): T {
+  const override = env?.appOverride
+  if (!appOrig || !override) {
+    return appOrig
+  }
+  return {
+    ...appOrig,
+    meta: { ...appOrig.meta, ...override.meta },
+    widgets: { ...appOrig.widgets, ...override.widgets },
+  }
+}
+
+/**
  * Where a single `{{...}}` placeholder gets its value.
  *
  * INTENTIONAL DIFF: the previous UI only ever looked in `env.meta[key]` and

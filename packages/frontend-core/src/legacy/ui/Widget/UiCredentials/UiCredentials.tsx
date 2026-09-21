@@ -19,7 +19,7 @@ export interface UiCredentialsProps {
 }
 
 function isMultiPass(
-  ui: EhAppWidgetUiCredsOne | EhAppWidgetUiCredsMany | undefined,
+  ui: EhAppWidgetUiCredsOne | EhAppWidgetUiCredsMany | null | undefined,
 ): ui is EhAppWidgetUiCredsMany {
   return Array.isArray(ui)
 }

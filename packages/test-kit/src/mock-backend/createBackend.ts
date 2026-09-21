@@ -3,7 +3,11 @@ import { createTRPCMsw, httpLink } from 'msw-trpc'
 import type {
   BootstrapConfigData,
   EhBackendAppInput,
+  EhCustomizationData,
+  EhEnvAppOverride,
   EhEnvIndexed,
+  EhEnvType,
+  EhMetaDictionary,
   ResourceJump,
   ResourceJumpGroup,
   ResourceJumpsData,
@@ -47,6 +51,9 @@ export interface FixtureEnv {
    * them, so `env.meta.k8sCtx` rather than `k8sCtx`.
    */
   templateParams?: Record<string, string>
+  envType?: EhEnvType
+  /** How every app differs here: restated meta, and facilities it lacks. */
+  appOverride?: EhEnvAppOverride
 }
 
 /** A username and password pair the app's own UI takes. */
@@ -70,6 +77,8 @@ export interface FixtureApp {
   /** More than one pair renders as a tab strip. */
   credentials?: Array<FixtureCredential>
   db?: FixtureDb
+  /** The app's own template values, named by `{{app.meta.*}}`. */
+  meta?: EhMetaDictionary
 }
 
 /**
@@ -80,6 +89,8 @@ export interface FixtureApp {
 export interface Fixture {
   apps: Array<FixtureApp>
   envs: Array<FixtureEnv>
+  /** What the deployment fills in: the link list, its icons, footer markup. */
+  customization?: EhCustomizationData
 }
 
 export type OverrideBackendNetworkFn = (
@@ -126,10 +137,22 @@ export function createEnv(
 /** Expand a fixture into the full set of backend responses. */
 export function createBackend(fixture: Fixture): MockBackend {
   const bootstrapEnvs = Object.fromEntries(
-    fixture.envs.map((e) => [e.slug, createEnv(e.slug)]),
+    fixture.envs.map((e) => [
+      e.slug,
+      createEnv(e.slug, {
+        ...(e.envType && { envType: e.envType }),
+        ...(e.appOverride && { appOverride: e.appOverride }),
+      }),
+    ]),
   )
   const bootstrapApps = Object.fromEntries(
-    fixture.apps.map((a) => [a.slug, createApp(a.slug, appWidgetData(a))]),
+    fixture.apps.map((a) => [
+      a.slug,
+      createApp(a.slug, {
+        ...appWidgetData(a),
+        ...(a.meta && { meta: a.meta }),
+      }),
+    ]),
   )
 
   // resourceJumps carries its own, flatter env shape.
@@ -151,6 +174,7 @@ export function createBackend(fixture: Fixture): MockBackend {
       envSlug: fixture.envs[0]?.slug || '',
       resourceJumpSlug: resourceJumps[0]?.slug || '',
     },
+    ...(fixture.customization && { customization: fixture.customization }),
   }
 
   const resourceJumpsData: ResourceJumpsData = {

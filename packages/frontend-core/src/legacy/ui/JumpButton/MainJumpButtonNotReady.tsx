@@ -75,9 +75,9 @@ export function MainJumpButtonNotReady({
     notSelected = 'substitutions'
   }
 
-  const setAttentionOnDebounced = useMemo<
-    (b: ComboBoxType | undefined) => void
-  >(
+  // Not annotated as a plain function type: the effect below needs `cancel`,
+  // which only the debounced wrapper's own type carries.
+  const setAttentionOnDebounced = useMemo(
     () =>
       debounce<[ComboBoxType | undefined]>({ delay: 300 }, (x) =>
         setHighlightAutoComplete(x),
@@ -85,12 +85,16 @@ export function MainJumpButtonNotReady({
     [setHighlightAutoComplete],
   )
 
+  /*
+   * The pending call is cancelled on unmount. Without that, a hover 300 ms
+   * before the component goes away sets state on a gone component — harmless in
+   * a browser, but under a test runner it lands after the environment is torn
+   * down and surfaces as an unhandled `window is not defined`, which can mask a
+   * real failure in whichever test happens to be running.
+   */
   useEffect(() => {
-    if (isHovered) {
-      setAttentionOnDebounced(notSelected)
-    } else {
-      setAttentionOnDebounced(undefined)
-    }
+    setAttentionOnDebounced(isHovered ? notSelected : undefined)
+    return () => setAttentionOnDebounced.cancel()
   }, [isHovered, notSelected, setAttentionOnDebounced])
 
   return (

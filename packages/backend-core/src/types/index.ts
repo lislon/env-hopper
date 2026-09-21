@@ -2,6 +2,7 @@
 export * from './common/sharedTypes.js'
 export * from './common/resourceTypes.js'
 export * from './common/dataRootTypes.js'
+export * from './common/customizationTypes.js'
 export * from './common/env/envTypes.js'
 export * from './common/app/appTypes.js'
 export * from './common/app/ui/appUiTypes.js'

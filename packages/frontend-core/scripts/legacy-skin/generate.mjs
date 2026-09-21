@@ -51,15 +51,31 @@ run('npm', ['install', '--no-audit', '--no-fund', ...DEPS])
  * the custom grid templates and the one custom colour all live in
  * src/legacy-theme.css instead, so variants like `md:` keep working on them.
  *
- * `content` points at daisyUI's own compiled CSS, which mentions every class it
- * ships, so the whole component set is generated once and this never has to run
- * again when the port starts using another component. `prose` is listed because
- * the previous UI used it.
+ * `content` has two halves and needs both.
+ *
+ * daisyUI's own compiled CSS mentions the classes of every COMPONENT it ships,
+ * which is what generates the component set in one go. It does not mention the
+ * UTILITIES a caller writes — `bg-primary`, `tooltip-left` and the rest are
+ * Tailwind utilities over daisyUI's theme, emitted only when something in
+ * `content` names them. Relying on the first half alone silently dropped every
+ * tooltip rule and six colour utilities: the skin looked complete, and the
+ * classes the ported markup actually carries did nothing.
+ *
+ * So the ported source tree is scanned too. That is what keeps the skin tracking
+ * the port instead of a hand-kept list, and it means adding a class to a ported
+ * component and re-running this is enough.
+ *
+ * `prose` is listed separately because the previous UI applied it from a
+ * stylesheet rather than from markup, so no scan would find it.
  */
 writeFileSync(
   path.join(work, 'tailwind.config.js'),
   `module.exports = {
-  content: ['./node_modules/daisyui/dist/styled.css', './classes.txt'],
+  content: [
+    './node_modules/daisyui/dist/styled.css',
+    './classes.txt',
+    ${JSON.stringify(path.resolve(here, '../../src/legacy/**/*.{ts,tsx}'))},
+  ],
   darkMode: 'selector',
   daisyui: {
     themes: [

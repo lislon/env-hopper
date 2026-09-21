@@ -24,6 +24,7 @@ import {
   cutDomain,
   findSubstitutionIdByUrl,
   formatAppTitle,
+  getAppWithEnvOverrides,
   getJumpUrl,
   getJumpUrlEvenNotComplete,
 } from '../lib/utils'
@@ -231,16 +232,17 @@ export function MainFormContextProvider({
     () => initialEnvAppSubBased.env,
   )
   /*
-   * INTENTIONAL DIFF: the app used to be re-derived through
-   * `getAppWithEnvOverrides` on every environment change, merging an
-   * `env.appOverride` block over the selected app. The current data model puts
-   * per-environment differences inside the url template itself and the resolver
-   * applies them at jump time, so there is nothing left to merge here and the
-   * selected app is the selected app. Same urls, one fewer copy of the app
-   * object to keep in step.
+   * The selected app is stored already merged with the environment's override,
+   * as it was originally, so every consumer reads one object. Both setters below
+   * re-derive it from the catalogue rather than from this state, because merging
+   * a second override over an already-merged app would keep the first one's
+   * values.
    */
-  const [app, setApp] = useState<EhApp | undefined>(
-    () => initialEnvAppSubBased.app,
+  const [app, setApp] = useState<EhApp | undefined>(() =>
+    getAppWithEnvOverrides(
+      initialEnvAppSubBased.app,
+      initialEnvAppSubBased.env,
+    ),
   )
   const [substitution, setSubstitution] = useState<
     EhSubstitutionValue | undefined
@@ -337,7 +339,7 @@ export function MainFormContextProvider({
     setEnv: useCallback<EhMainFormContextProps['setEnv']>(
       (nextEnv) => {
         setEnv(nextEnv)
-        setApp(doGetAppById(app?.id, listApps))
+        setApp(getAppWithEnvOverrides(doGetAppById(app?.id, listApps), nextEnv))
         setLastUsedEnv(nextEnv?.id)
       },
       [app, listApps, setLastUsedEnv],
@@ -345,13 +347,13 @@ export function MainFormContextProvider({
     env,
     setApp: useCallback<EhMainFormContextProps['setApp']>(
       (nextApp) => {
-        setApp(doGetAppById(nextApp?.id, listApps))
+        setApp(getAppWithEnvOverrides(doGetAppById(nextApp?.id, listApps), env))
         setLastUsedApp(nextApp?.id)
         const substitutionBasedOnAppAndLastUsed =
           getSubstitutionBasedOnAppAndLastUsed(nextApp, listEnvs, lastUsedSubs)
         setSubstitution(substitutionBasedOnAppAndLastUsed)
       },
-      [lastUsedSubs, listApps, listEnvs, setLastUsedApp],
+      [env, lastUsedSubs, listApps, listEnvs, setLastUsedApp],
     ),
     app,
     substitutionType,

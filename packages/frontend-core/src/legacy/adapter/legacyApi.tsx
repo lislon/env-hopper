@@ -22,10 +22,14 @@ import type {
   BootstrapConfigData,
   EhBackendAppInput,
   EhBackendDataSourceInputDb,
+  EhCustomizationData,
+  EhEnvAppOverride,
+  EhMetaDictionary,
   ResourceJumpsData,
 } from '@env-hopper/backend-core'
 import type {
   EhApp,
+  EhAppOverride,
   EhAppWidgets,
   EhClientConfig,
   EhEnv,
@@ -80,6 +84,50 @@ function mapToLegacyWidgets(
   }
 }
 
+/**
+ * The app's template variables, flattened to the shape the widget interpolator
+ * reads.
+ *
+ * `{{app.meta.x}}` substitutes one string, so only string entries can be used:
+ * the current dictionary also allows `null` and a nested object, and neither has
+ * a placeholder syntax that could name it. Dropping them here is what keeps
+ * every consumer working with a plain `Record<string, string>`.
+ */
+function mapToLegacyMeta(
+  meta: EhMetaDictionary | undefined,
+): Record<string, string> | undefined {
+  if (!meta) {
+    return undefined
+  }
+  const entries = Object.entries(meta).filter(
+    (entry): entry is [string, string] => typeof entry[1] === 'string',
+  )
+  return entries.length ? Object.fromEntries(entries) : undefined
+}
+
+/**
+ * An environment's app override, in the shape the widgets merge.
+ *
+ * `unavailable` becomes an explicit `null` per widget, which is what the merge
+ * reads: a key that is present and null removes the app's own value, whereas an
+ * absent key leaves it alone.
+ */
+function mapToLegacyAppOverride(
+  override: EhEnvAppOverride | undefined,
+): EhAppOverride | undefined {
+  if (!override) {
+    return undefined
+  }
+  const unavailable = new Set(override.unavailable)
+  return {
+    meta: mapToLegacyMeta(override.meta),
+    widgets: {
+      ...(unavailable.has('credentials') ? { ui: null } : {}),
+      ...(unavailable.has('dataSources') ? { db: null } : {}),
+    },
+  }
+}
+
 /** What the shell used to read off `GET /api/config`. */
 export interface LegacyConfig extends EhClientConfig {
   appVersion: string
@@ -95,12 +143,14 @@ export interface LegacyConfig extends EhClientConfig {
  *    previous data carried. `widgets` is joined on from the bootstrap app the
  *    jump belongs to. `abbr` is on the wire but deliberately not mapped yet:
  *    it feeds the title format every list and quick bar renders, so it is a
- *    change to make on its own. `meta` has no source — no app carries one — so
- *    an `{{app.meta.*}}` placeholder in a widget value stays unresolved and is
- *    shown to the user as it stands.
+ *    change to make on its own. `meta` is mapped from the bootstrap app, which
+ *    is what lets an `{{app.meta.*}}` placeholder in a widget value resolve;
+ *    before the backend shipped that field the placeholder was shown raw.
  *  - `envs` ← the environments the resource-jump payload lists, with the current
- *    `templateParams` standing in for the previous `meta`. `envType` has no
- *    source, so sensitive-value masking is currently always off.
+ *    `templateParams` standing in for the previous `meta`. Two fields are joined
+ *    on from the bootstrap entry for the same slug, because only that payload
+ *    has them: `envType`, which gates sensitive-value masking, and
+ *    `appOverride`, which restates the app's values for this environment.
  *  - `substitutions` ← the late-resolvable parameters, which are exactly the
  *    placeholder names a url template can leave behind. Per-parameter behaviour
  *    flags are joined on from the bootstrap contexts when a slug matches.
@@ -123,14 +173,26 @@ export function mapToLegacyConfig(
       pageTitle:
         flagship?.displayName === rj.displayName ? undefined : rj.displayName,
       widgets: mapToLegacyWidgets(bootstrapApp),
+      // Carries the app-level template variables a widget value references —
+      // `{{app.meta.*}}`. The values are themselves templates naming env-level
+      // values, so resolving one is a multi-level walk, which is why the
+      // resolver's depth cap matters here.
+      meta: mapToLegacyMeta(bootstrapApp?.meta),
     }
   })
 
-  const envs: Array<EhEnv> = jumps.envs.map((env) => ({
-    id: env.slug,
-    meta: env.templateParams,
-    templateParams: env.templateParams,
-  }))
+  const envs: Array<EhEnv> = jumps.envs.map((env) => {
+    // The resource-jump payload carries the environment's own parameters; its
+    // kind and its app override are on the bootstrap entry for the same slug.
+    const indexed = bootstrap.envs[env.slug]
+    return {
+      id: env.slug,
+      meta: env.templateParams,
+      templateParams: env.templateParams,
+      envType: indexed?.envType,
+      appOverride: mapToLegacyAppOverride(indexed?.appOverride),
+    }
+  })
 
   const contextBySlug = new Map(bootstrap.contexts.map((c) => [c.slug, c]))
   const substitutions: Array<EhSubstitutionType> =
@@ -146,10 +208,10 @@ export function mapToLegacyConfig(
 /**
  * Stands in for `useQuery(ApiQueryMagazine.getConfig())`.
  *
- * `appVersion` was a field on the old config payload; `BootstrapConfigData` has
- * no such field, so it comes off the build-time define instead. Everything else
- * the shell used it for is presence: `data === undefined` is what put the old
- * layout into its loading and error branches — and that now also waits for the
+ * `appVersion` comes off the bootstrap payload, as it came off the old config
+ * payload — the server's version, not the bundle's. Everything else the shell
+ * used this for is presence: `data === undefined` is what put the old layout
+ * into its loading and error branches — and that now also waits for the
  * resource-jump payload, because the form is unusable without it.
  */
 export function useLegacyConfig() {
@@ -163,7 +225,7 @@ export function useLegacyConfig() {
     () =>
       bootstrap && jumps
         ? {
-            appVersion: import.meta.env.VITE_APP_VERSION ?? '',
+            appVersion: bootstrap.appVersion ?? '',
             ...mapToLegacyConfig(bootstrap, jumps),
           }
         : undefined,
@@ -221,32 +283,28 @@ export function useEhServerSync(): EhServerSyncContextValue {
   }
 }
 
-/** What the shell used to read off `GET /api/customization`. */
-export interface LegacyCustomization {
-  /** Raw HTML rendered into the footer by the downstream app. */
+/**
+ * What the shell used to read off `GET /api/customization`.
+ *
+ * `footerHtml` is required here and optional on the wire, so every consumer can
+ * render it without a guard.
+ */
+export interface LegacyCustomization extends EhCustomizationData {
   footerHtml: string
-  /**
-   * Raw JS injected once into `<body>`, with `{{APP_VERSION}}` substituted. Open
-   * source supplies none, so nothing is injected unless a downstream app sets it.
-   */
-  analyticsScript?: string
-  /**
-   * Extra about-dialog slides, raw HTML, appended after the three this package
-   * owns. The downstream app used these to document its own conventions.
-   */
-  slidesHtml?: Array<string>
 }
 
 const EMPTY_CUSTOMIZATION: LegacyCustomization = { footerHtml: '' }
 
-const LegacyCustomizationContext =
-  createContext<LegacyCustomization>(EMPTY_CUSTOMIZATION)
+const LegacyCustomizationContext = createContext<
+  LegacyCustomization | undefined
+>(undefined)
 
 /**
- * The seam that replaces `GET /api/customization`. Open source supplies nothing,
- * so the footer renders only what this package owns; a downstream app wraps the
- * tree and fills it in. The full settings API (slots, app links, templates) is
- * a separate piece of work — this carries only what the shell reads.
+ * Overrides what the backend serves as `bootstrap.customization`.
+ *
+ * Nothing has to wrap the tree: the backend is the normal source. This exists
+ * for a downstream app that wants to change the presentation without a backend
+ * change — and for tests, which is the only caller today.
  */
 export function LegacyCustomizationProvider({
   children,
@@ -256,13 +314,30 @@ export function LegacyCustomizationProvider({
   customization?: LegacyCustomization
 }) {
   return (
-    <LegacyCustomizationContext value={customization ?? EMPTY_CUSTOMIZATION}>
+    <LegacyCustomizationContext value={customization}>
       {children}
     </LegacyCustomizationContext>
   )
 }
 
-/** Stands in for `useSuspenseQuery(ApiQueryMagazine.getCustomization())`. */
+/**
+ * Stands in for `useSuspenseQuery(ApiQueryMagazine.getCustomization())`.
+ *
+ * Not suspending is the one behavioural difference. The previous UI blocked the
+ * whole page on this payload; it now arrives with `bootstrap`, which the shell
+ * already waits for, so the first render either has it or the deployment has
+ * none. A consumer that renders a list gets an empty list for one frame instead
+ * of a suspense boundary.
+ */
 export function useLegacyCustomization(): LegacyCustomization {
-  return use(LegacyCustomizationContext)
+  const override = use(LegacyCustomizationContext)
+  const { data } = useQueryBootstrapConfig()
+
+  return useMemo(() => {
+    if (override) {
+      return override
+    }
+    const served = data?.customization
+    return served ? { footerHtml: '', ...served } : EMPTY_CUSTOMIZATION
+  }, [override, data?.customization])
 }

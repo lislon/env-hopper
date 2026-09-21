@@ -14,11 +14,12 @@ import type { DefaultWithOverridesAndTemplate } from '@env-hopper/shared-core'
  *  - `EhApp.url` (a bare string carrying `{{...}}` placeholders) is replaced by
  *    `urlTemplate`, the current per-environment template object. `lib/utils`
  *    resolves it, so every caller is unchanged.
- *  - `EhEnv.appOverride` is dropped: the same "this environment is different"
- *    need is served by `urlTemplate.overrides`, which the resolver already
- *    honours, so no component has to merge anything by hand.
- *  - `EhEnv.envType` is kept but never populated, so the sensitive-data masking
- *    it gated is currently always off. Restoring it needs a backend field.
+ *  - `EhEnv.appOverride` is kept. `urlTemplate.overrides` covers the jump url
+ *    only; the override also restates the app's own `meta` and can declare that
+ *    an app facility does not exist here, and both are visible in the widgets
+ *    and the link list rather than in the url.
+ *  - `EhEnv.envType` is kept and read off the bootstrap environment entry, so
+ *    the sensitive-data masking it gates works as it did.
  */
 export type EhEnvId = string
 export type EhAppId = string
@@ -36,10 +37,16 @@ export interface EhApp {
   widgets?: EhAppWidgets
 }
 
-/** What the credential widgets beside the form read. */
+/**
+ * What the credential widgets beside the form read.
+ *
+ * `null` means "this environment has none", as distinct from `undefined`, "the
+ * app never had one". Both hide the widget; the difference matters only when an
+ * environment override is merged over an app that does have one.
+ */
 export interface EhAppWidgets {
-  ui?: EhAppWidgetUiCredsOne | EhAppWidgetUiCredsMany
-  db?: EhAppWidgetDbCreds
+  ui?: EhAppWidgetUiCredsOne | EhAppWidgetUiCredsMany | null
+  db?: EhAppWidgetDbCreds | null
 }
 
 /** A hint to the user about which username and password the app UI takes. */
@@ -58,11 +65,18 @@ export interface EhAppWidgetDbCreds {
   password: string
 }
 
+/** How every app differs on this environment. */
+export interface EhAppOverride {
+  meta?: EhMetaDictionary
+  widgets?: EhAppWidgets
+}
+
 export interface EhEnv {
   id: EhEnvId
   meta?: EhMetaDictionary
   /** The current backend's name for what the previous one called `meta`. */
   templateParams?: EhMetaDictionary
+  appOverride?: EhAppOverride
   envType?: 'prod' | string
 }
 

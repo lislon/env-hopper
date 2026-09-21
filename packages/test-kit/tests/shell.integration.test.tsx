@@ -64,11 +64,16 @@ describe('app shell', () => {
     expect(scope).toContainElement(app.getByTitle('Source code'))
   })
 
-  test('the version chip reads "versions" until a version is known', async () => {
+  /*
+   * A dev build says `Local` rather than the previous UI's `versions`, which was
+   * a label nobody could act on. `versions` is still what a deployed build shows
+   * with no version known; tests run as a dev build, so this is the `Local` side.
+   */
+  test('the version chip reads "Local" until a version is known', async () => {
     const app = await renderApp({ server })
 
     const release = app.getByTitle('View release on GitHub')
-    expect(release).toHaveTextContent('versions')
+    expect(release).toHaveTextContent('Local')
     expect(release).toHaveAttribute(
       'href',
       'https://github.com/lislon/env-hopper/releases/',

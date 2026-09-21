@@ -41,7 +41,15 @@ export function Header({ className }: HeaderProps) {
             title={'View release on GitHub'}
             href={`https://github.com/lislon/env-hopper/releases/${installedAppVersion?.includes('.') ? `tag/v${installedAppVersion}` : ''}`}
           >
-            {installedAppVersion ? `v${installedAppVersion}` : 'versions'}
+            {/* `versions` is what the previous UI showed with no version known.
+                In prod a version is always known, so that fallback only ever
+                appeared locally, where it read as a broken label rather than as
+                "there is no release to point at". */}
+            {installedAppVersion
+              ? `v${installedAppVersion}`
+              : import.meta.env.DEV
+                ? 'Local'
+                : 'versions'}
           </a>
         </div>
       </div>

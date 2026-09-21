@@ -45,7 +45,7 @@ export interface LegacyConfig extends EhClientConfig {
  *    placeholder names a url template can leave behind. Per-parameter behaviour
  *    flags are joined on from the bootstrap contexts when a slug matches.
  */
-function mapToLegacyConfig(
+export function mapToLegacyConfig(
   bootstrap: BootstrapConfigData,
   jumps: ResourceJumpsData,
 ): EhClientConfig {

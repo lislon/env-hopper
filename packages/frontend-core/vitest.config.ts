@@ -7,6 +7,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '~': path.resolve(__dirname, './src'),
+      // Sibling cores from source. The workspace links them by the
+      // `my-custom-condition` export, which vite's own resolver does not apply, so
+      // without this a test that imports one fails with "Failed to resolve entry"
+      // unless that package happens to have been built first. Tests should not
+      // depend on build order.
+      '@env-hopper/shared-core': path.resolve(
+        __dirname,
+        '../shared-core/src/index.ts',
+      ),
     },
   },
   test: {

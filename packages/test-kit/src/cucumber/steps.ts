@@ -18,6 +18,7 @@ import { waitFor } from '@testing-library/react'
 import { setupServer } from 'msw/node'
 import { Given, Then, When } from 'quickpickle'
 import { expect } from 'vitest'
+import { setUiSkin } from '@env-hopper/frontend-core'
 import { renderApp } from '../harness/renderApp'
 import { createBackend } from '../mock-backend/createBackend'
 import { magazine } from '../mock-backend/magazines'
@@ -73,6 +74,18 @@ async function open(name: string, initialLink?: string) {
       `Unknown catalog "${name}". Registered: [${[...catalogs.keys()].join(', ')}]`,
     )
   }
+  /*
+   * These scenarios are the REPLACEMENT UI's contract, so they say so out loud
+   * rather than riding the default.
+   *
+   * Two of their Thens are affordances only that UI has: a breadcrumb trail, and
+   * a jump link offered with an unfilled placeholder still in its url. The ported
+   * UI has no trail at all, and deliberately withholds the link and asks for the
+   * value instead — so on the default skin those steps fail for a reason that is
+   * a decision, not a regression. The ported UI's own version of this contract
+   * lives in tests/jumpSpine.integration.test.tsx.
+   */
+  setUiSkin('modern')
   current = await renderApp({
     server: ensureServer(),
     backend: createBackend(fixture),

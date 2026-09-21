@@ -6,8 +6,17 @@
  * well as prose.
  */
 import { setupServer } from 'msw/node'
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from 'vitest'
 import { dbCacheDbKeys } from '@env-hopper/frontend-core/internal'
+import { setUiSkin } from '@env-hopper/frontend-core'
 import { renderApp } from '../src/index'
 
 describe('harness', () => {
@@ -16,6 +25,13 @@ describe('harness', () => {
   beforeAll(() => server.listen())
   afterEach(() => server.resetHandlers())
   afterAll(() => server.close())
+
+  /*
+   * These read the replacement UI's page objects — one of them the breadcrumb
+   * trail, which the ported UI has no equivalent for — so they name that UI
+   * rather than riding whichever skin is currently the default.
+   */
+  beforeEach(() => setUiSkin('modern'))
 
   test('a deep link resolves the env into the jump url', async () => {
     const { ui } = await renderApp({

@@ -38,13 +38,15 @@ const envInput = (app: AppHandle) =>
 /** The two comboboxes are told apart by the heading inside their own label. */
 function comboBox(app: AppHandle, label: string): HTMLInputElement {
   const heading = Array.from(app.container.querySelectorAll('h4')).find(
-    (h) => h.textContent?.trim() === label,
+    (h) => h.textContent.trim() === label,
   )
-  const input = heading?.closest('label')?.querySelector('input')
+  const input = heading
+    ?.closest('label')
+    ?.querySelector<HTMLInputElement>('input')
   if (!input) {
     throw new Error(`no ${label} field on the page`)
   }
-  return input as HTMLInputElement
+  return input
 }
 
 /** Types into a combobox and takes the first suggestion, as Enter does. */

@@ -77,7 +77,48 @@ Name the environments and the apps; the mapper expands them into every backend
 shape the frontend reads. A `2-pager` also gets a second page whose url needs a
 value typed in, which is how the late-resolvable parameter path gets covered.
 
+## Running the app locally against the mock backend
+
+Anything about appearance needs a real browser, and a real browser needs a real
+server: msw answers fetches inside the test process, so the browser's own never
+reach it. `src/dev-server/serveMockBackend.ts` puts the same `BackendData` on a
+port, which makes the whole app runnable with no database, config server or
+workflow engine involved:
+
+```sh
+pnpm run dev:local     # from the repository root
+```
+
+That starts the mock backend on `:4000` and the frontend dev server on
+`:3999`. Editing a component is a page reload, not a deploy.
+
+### With a realistic catalog
+
+The sample fixture is three apps, which is enough for a scenario and not enough
+to see a layout hold up. Point the loop at a catalog captured from a running
+deployment instead:
+
+```sh
+EH_ORIGIN=https://<your-deployment> EH_FIXTURE_DIR=~/eh-fixture \
+  node packages/test-kit/scripts/capture-fixture.mjs
+
+EH_FIXTURE_DIR=~/eh-fixture pnpm run dev:local
+```
+
+`capture-fixture.mjs` replaces every secret-looking value with `REDACTED` in the
+same pass as the download — the raw response is never written to disk — and
+prints how many keys it redacted. Run it once; after that the loop is offline.
+
+Keep `EH_FIXTURE_DIR` **outside this repository**. A real catalog names that
+deployment's own hosts and environments, and this repository is public. Unset,
+`dev:local` serves the sample fixture, so the default costs nothing.
+
+| variable          | default                      | what it does                             |
+| ----------------- | ---------------------------- | ---------------------------------------- |
+| `EH_FIXTURE_DIR`  | unset                        | directory with the two captured payloads |
+| `EH_MOCK_PORT`    | `4000`                       | where the mock backend listens           |
+| `VITE_EH_API_URL` | `http://localhost:4000/trpc` | where the frontend looks for it          |
+
 ## What it does not cover
 
-jsdom has no layout engine and no CSS, so nothing here can see styling. Anything
-about appearance needs a real browser.
+jsdom has no layout engine and no CSS, so nothing here can see styling.

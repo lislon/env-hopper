@@ -96,10 +96,26 @@ export function EhContextProvider({ children }: EhContextProviderProps) {
    * the current procedures into the same payload; `MainLayout` already holds the
    * loading and error branches, so by the time this renders the data is there.
    *
-   * STUB: recording a jump used to also POST to a stats endpoint. That endpoint
-   * belongs to the fringe wave; the local history below is unaffected, so the
-   * quick bars and the recent section work — only the server-side counter is
-   * missing.
+   * NOT PORTED, FOR WANT OF A SERVER: recording a jump used to also fire a
+   * `POST /api/stats/jump` mutation carrying `{envId, appId, sub, date}` plus a
+   * user-id and app-version header, which the previous backend wrote to a
+   * `stats_jump` table and read back through a matching GET. The current router
+   * exposes no equivalent — and no mutation of any kind — so there is nothing for a
+   * client call to reach. Shipping the client half anyway would post into the SPA's
+   * history fallback, which answers 200 with HTML and so fails silently.
+   *
+   * What the core needs before this can be a two-line change here:
+   *   - a `stats` router with a `jump` mutation (the only new endpoint in this
+   *     migration) taking that same input, and a matching method on the
+   *     company-specific backend interface so a deployment decides where it lands;
+   *   - the user id: the previous client sent a per-browser uuid header, and the
+   *     uuid is still minted below into local storage, so only the transport is
+   *     missing;
+   *   - the app version, which does not exist anywhere yet (see the note on
+   *     `ui/Error/DefaultErrorPage`).
+   *
+   * Nothing user-facing depends on it: the local history below is what feeds the
+   * quick bars and the recent section. Only the server-side counter is missing.
    */
   const { data } = useLegacyConfig()
   const config: EhClientConfig = data ?? EMPTY_CONFIG

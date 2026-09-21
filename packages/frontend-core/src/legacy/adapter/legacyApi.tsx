@@ -163,6 +163,16 @@ export function useEhServerSync(): EhServerSyncContextValue {
 export interface LegacyCustomization {
   /** Raw HTML rendered into the footer by the downstream app. */
   footerHtml: string
+  /**
+   * Raw JS injected once into `<body>`, with `{{APP_VERSION}}` substituted. Open
+   * source supplies none, so nothing is injected unless a downstream app sets it.
+   */
+  analyticsScript?: string
+  /**
+   * Extra about-dialog slides, raw HTML, appended after the three this package
+   * owns. The downstream app used these to document its own conventions.
+   */
+  slidesHtml?: Array<string>
 }
 
 const EMPTY_CUSTOMIZATION: LegacyCustomization = { footerHtml: '' }

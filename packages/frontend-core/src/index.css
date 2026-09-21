@@ -250,3 +250,18 @@
 .eh-legacy .stroke-base-content\/30:not(:hover) {
   stroke: var(--fallback-bc, oklch(var(--bc) / 0.3));
 }
+
+/*
+ * The about dialog's example "Jump" chip. Two different failures in one pair:
+ * `text-primary-content` matches nothing at all, while `bg-primary` DOES get
+ * emitted — but against the current theme's `--color-primary`, not the skin's
+ * `--p`, so the chip came out in the wrong brand colour on a correct-looking
+ * page. Both are pinned to the skin's own tokens here.
+ */
+.eh-legacy .bg-primary {
+  background-color: var(--fallback-p, oklch(var(--p) / 1));
+}
+
+.eh-legacy .text-primary-content {
+  color: var(--fallback-pc, oklch(var(--pc) / 1));
+}

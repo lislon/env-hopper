@@ -17,6 +17,7 @@ import { LOCAL_STORAGE_KEY_VERSION } from '../lib/local-storage-constants'
 import { useQueryBootstrapConfig } from '~/api/data/useQueryBootstrapConfig'
 import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/api/ApiQueryMagazineResourceJump'
 import { mapToFlagshipResourceJumps } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
+import { appSlugFromJumpSlug } from '~/util/route-utils'
 import type {
   BootstrapConfigData,
   EhBackendAppInput,
@@ -37,7 +38,10 @@ import type {
  * Two things are worth knowing here. First, credentials and data sources hang
  * off the APP, while the previous UI's `EhApp` was one entry per jump page, so
  * every page of an app shows the app's credentials — which is what the previous
- * UI did too, since its payload repeated them per page.
+ * UI did too, since its payload repeated them per page. The app is found through
+ * `appSlugFromJumpSlug`, not through the jump's group: measured over the whole
+ * catalogue, the jump slug's own app part resolves for all 111 jumps while the
+ * group slug resolves for 106, and the two never disagree.
  *
  * Second, the cast. `BootstrapConfigData.apps` is typed `EhAppIndexed`, which
  * declares neither `ui.credentials` nor `dataSources`, yet a backend fills both
@@ -111,7 +115,7 @@ export function mapToLegacyConfig(
     const flagship = flagships.find((f) =>
       f.resourceJumps.some((r) => r.slug === rj.slug),
     )
-    const bootstrapApp = flagship && bootstrap.apps[flagship.slug]
+    const bootstrapApp = bootstrap.apps[appSlugFromJumpSlug(rj.slug)]
     return {
       id: rj.slug,
       urlTemplate: rj.urlTemplate,

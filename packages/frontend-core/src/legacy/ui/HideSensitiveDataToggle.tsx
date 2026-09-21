@@ -16,8 +16,15 @@ export interface HideSensitiveDataToggleProps {
  * — and which the current payload does not carry.
  *
  * INTENTIONAL DIFF: a `<button>` with `aria-pressed`, where the original had a
- * `<div onClick>`. Same classes, same look; it is now reachable by keyboard and
- * announces which state it is in.
+ * `<div onClick>`. Same look; it is now reachable by keyboard and announces
+ * which state it is in.
+ *
+ * The hover highlight is `hover:bg-base-content/10`, not the original's
+ * `hover:bg-base-content hover:bg-opacity-10` pair. Measured on the live DOM,
+ * the pair computed to `rgba(0, 0, 0, 0)`: the current Tailwind has no
+ * `bg-opacity-*` utility at all, and the theme colour utilities are not emitted
+ * here (see the note beside the plain rules in `index.css`). The slash form is
+ * the one `index.css` already carries a rule for, so this needs no new CSS.
  */
 export function HideSensitiveDataToggle({
   className,
@@ -32,7 +39,7 @@ export function HideSensitiveDataToggle({
         isHideSensitiveInfo ? 'Show sensitive values' : 'Hide sensitive values'
       }
       className={cn(
-        'hover:bg-base-content hover:bg-opacity-10 p-1 rounded-md cursor-pointer',
+        'hover:bg-base-content/10 p-1 rounded-md cursor-pointer',
         className,
       )}
       onClick={() => setHideSensitiveInfo(!isHideSensitiveInfo)}

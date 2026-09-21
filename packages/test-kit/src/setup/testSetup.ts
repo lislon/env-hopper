@@ -22,6 +22,38 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+// jsdom 25 implements `<dialog>` as an element but not its methods — there is no
+// top layer to put one in. Any component that opens a dialog therefore throws
+// "showModal is not a function" and is caught by an error boundary, which looks
+// like a broken component rather than a missing test API. Toggling `open` is the
+// observable part and the only part a test can assert on.
+if (typeof HTMLDialogElement !== 'undefined') {
+  // `Partial` because the DOM types declare these as always present, which is
+  // exactly the assumption being corrected.
+  const dialog: Partial<HTMLDialogElement> = HTMLDialogElement.prototype
+  const openIt = function openIt(this: HTMLDialogElement) {
+    this.open = true
+  }
+  if (typeof dialog.showModal !== 'function') {
+    dialog.showModal = openIt
+  }
+  if (typeof dialog.show !== 'function') {
+    dialog.show = openIt
+  }
+  if (typeof dialog.close !== 'function') {
+    dialog.close = function close(
+      this: HTMLDialogElement,
+      returnValue?: string,
+    ) {
+      this.open = false
+      if (returnValue !== undefined) {
+        this.returnValue = returnValue
+      }
+      this.dispatchEvent(new Event('close'))
+    }
+  }
+}
+
 // Not implemented in jsdom; the autocomplete lists call them while scrolling
 // the highlighted option into view.
 Element.prototype.scrollIntoView = vi.fn()

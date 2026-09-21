@@ -11,6 +11,7 @@ import {
 } from '@env-hopper/frontend-core/internal'
 import { TRPC_URL } from '../mock-backend/createBackend'
 import { BackendMagazine, DbMagazine } from '../mock-backend/magazines'
+import { createLegacyFormUi } from '../tools/LegacyFormTools'
 import { createResourceJumpUi } from '../tools/ResourceJumpTools'
 import type {
   MockBackend,
@@ -42,6 +43,8 @@ export interface AppHandle extends RenderResult {
   container: HTMLElement
   ui: {
     resourceJump: ReturnType<typeof createResourceJumpUi>
+    /** The shipped UI: the two pickers and the widget panel beside them. */
+    legacyForm: ReturnType<typeof createLegacyFormUi>
     getCurrentPath: () => string
   }
 }
@@ -208,6 +211,7 @@ export async function renderApp(options: RenderAppOptions): Promise<AppHandle> {
     container: result.container,
     ui: {
       resourceJump: createResourceJumpUi(user),
+      legacyForm: createLegacyFormUi(user),
       getCurrentPath: () => router.state.location.pathname,
     },
   }

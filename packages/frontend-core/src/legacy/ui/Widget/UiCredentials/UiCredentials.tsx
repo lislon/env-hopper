@@ -98,6 +98,7 @@ export function UiCredentials({ className }: UiCredentialsProps) {
   return (
     <div
       className={cn('flex tooltip tooltip-left items-start w-full', className)}
+      data-testid="widget-ui-credentials"
       data-tip={
         `Credentials for the app UI` +
         `${tabContent.desc ? `: ${tabContent.desc}` : ''}`

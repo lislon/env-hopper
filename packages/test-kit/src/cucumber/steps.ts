@@ -24,11 +24,13 @@ import { createBackend } from '../mock-backend/createBackend'
 import { magazine } from '../mock-backend/magazines'
 import type { AppHandle } from '../harness/renderApp'
 import type { Fixture } from '../mock-backend/createBackend'
+import type { EhSkin } from '@env-hopper/frontend-core'
 import type { SetupServer } from 'msw/node'
 
 const catalogs = new Map<string, Fixture>([
   ['default', magazine.default()],
   ['car shop', magazine.carShop()],
+  ['vet clinic', magazine.vetClinic()],
 ])
 
 /** Make a fixture available to `Given the "<name>" catalog`. */
@@ -66,26 +68,30 @@ function app(): AppHandle {
 }
 
 const ui = () => app().ui.resourceJump
+const form = () => app().ui.legacyForm
 
-async function open(name: string, initialLink?: string) {
+/**
+ * `skin` is named by the step, never defaulted here.
+ *
+ * The two skins are not two themes over one page — they offer different
+ * affordances, so a scenario is written against one of them. The replacement UI
+ * has a breadcrumb trail and offers a jump link with an unfilled placeholder
+ * still in its url; the shipped UI has no trail and deliberately withholds that
+ * link and asks for the value instead. Neither is a regression against the other,
+ * which is why the step text says which one it means.
+ */
+async function open(
+  name: string,
+  skin: EhSkin,
+  initialLink?: string,
+): Promise<void> {
   const fixture = catalogs.get(name)
   if (!fixture) {
     throw new Error(
       `Unknown catalog "${name}". Registered: [${[...catalogs.keys()].join(', ')}]`,
     )
   }
-  /*
-   * These scenarios are the REPLACEMENT UI's contract, so they say so out loud
-   * rather than riding the default.
-   *
-   * Two of their Thens are affordances only that UI has: a breadcrumb trail, and
-   * a jump link offered with an unfilled placeholder still in its url. The ported
-   * UI has no trail at all, and deliberately withholds the link and asks for the
-   * value instead — so on the default skin those steps fail for a reason that is
-   * a decision, not a regression. The ported UI's own version of this contract
-   * lives in tests/jumpSpine.integration.test.tsx.
-   */
-  setUiSkin('modern')
+  setUiSkin(skin)
   current = await renderApp({
     server: ensureServer(),
     backend: createBackend(fixture),
@@ -94,15 +100,30 @@ async function open(name: string, initialLink?: string) {
 }
 
 Given('the {string} catalog', async (_world, name: string) => {
-  await open(name)
+  await open(name, 'legacy')
 })
 
 Given(
-  'the {string} catalog opened at {string}',
-  async (_world, name: string, link: string) => {
-    await open(name, link)
+  'the {string} catalog on the replacement UI',
+  async (_world, name: string) => {
+    await open(name, 'modern')
   },
 )
+
+Given(
+  'the {string} catalog on the replacement UI opened at {string}',
+  async (_world, name: string, link: string) => {
+    await open(name, 'modern', link)
+  },
+)
+
+When('I pick the {string} environment', async (_world, name: string) => {
+  await form().pickEnvironment(name)
+})
+
+When('I pick the {string} application', async (_world, name: string) => {
+  await form().pickApplication(name)
+})
 
 When(
   'I fill in {string} with {string}',
@@ -157,3 +178,68 @@ Then('the resources listed are {string}', async (_world, names: string) => {
     expect(ui().home.getResourceNames()).toEqual(names.split(' / '))
   })
 })
+
+/* The panel beside the form: shared logins, database connections, links. */
+
+Then('I am shown the login {string}', async (_world, username: string) => {
+  await waitFor(() => {
+    expect(
+      form()
+        .credentials()
+        ?.map((f) => f.value),
+    ).toContain(username)
+  })
+})
+
+Then('its password is hidden until I ask for it', () => {
+  const password = form()
+    .credentials()
+    ?.find((field) => field.isHidden)
+  expect(password, 'no hidden field in the credentials widget').toBeDefined()
+})
+
+Then('I am shown no login at all', async (_world) => {
+  await waitFor(() => {
+    expect(form().credentials()).toBeNull()
+  })
+})
+
+Then('I am shown the database {string}', async (_world, url: string) => {
+  await waitFor(() => {
+    expect(
+      form()
+        .database()
+        ?.map((f) => f.value),
+    ).toContain(url)
+  })
+})
+
+Then('I am shown no database at all', async (_world) => {
+  await waitFor(() => {
+    expect(form().database()).toBeNull()
+  })
+})
+
+Then('the links offered are {string}', async (_world, titles: string) => {
+  const expected = titles === '' ? [] : titles.split(' / ')
+  await waitFor(() => {
+    expect(
+      form()
+        .links()
+        .map((link) => link.title),
+    ).toEqual(expected)
+  })
+})
+
+Then(
+  'the {string} link goes to {string}',
+  async (_world, title: string, url: string) => {
+    await waitFor(() => {
+      expect(
+        form()
+          .links()
+          .find((link) => link.title === title)?.url,
+      ).toBe(url)
+    })
+  },
+)

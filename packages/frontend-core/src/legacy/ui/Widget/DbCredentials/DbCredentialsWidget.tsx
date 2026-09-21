@@ -23,7 +23,7 @@ export function DbCredentialsWidget({ className }: DbCredentialsWidgetProps) {
   }
 
   return (
-    <div className={cn('flex ', className)}>
+    <div className={cn('flex ', className)} data-testid="widget-db-credentials">
       <WidgetLeftBorder>
         <div
           className="w-4 h-4 tooltip tooltip-left"

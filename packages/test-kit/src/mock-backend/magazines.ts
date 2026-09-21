@@ -30,6 +30,91 @@ export const magazine = {
     ],
     envs: [{ slug: 'dev' }, { slug: 'staging' }, { slug: 'prod' }],
   }),
+
+  /**
+   * A fictional veterinary clinic, for the scenarios about what is shown BESIDE
+   * the form — shared logins, database connection details, per-app links.
+   *
+   * It is built around the one asymmetry that matters: `staging` is a throwaway
+   * environment where a shared login and a database url are exactly what someone
+   * needs, and `production` is not. Production therefore says so in the payload
+   * rather than relying on anyone remembering — it declares both facilities
+   * unavailable, and restates the app's meta because it is reached at a fixed
+   * host instead of by the pattern the other environments follow.
+   */
+  vetClinic: (): Fixture => ({
+    apps: [
+      {
+        slug: 'appointments',
+        resourceJumps: '2-pager',
+        credentials: [
+          {
+            slug: 'reception',
+            desc: 'the shared front-desk login',
+            username: 'reception@vet.example',
+            password: 'front-desk',
+          },
+        ],
+        db: {
+          url: 'jdbc:postgresql://db-{{env.meta.dbHost}}:5432/appointments',
+          username: 'appointments_ro',
+          password: 'read-only',
+        },
+        meta: {
+          repo: 'https://git.example.test/vet/appointments',
+          issues: 'VET',
+        },
+      },
+      {
+        // No credentials, no database, no repository: the app that proves an
+        // empty panel is a property of the app and not of the environment.
+        slug: 'x-ray-viewer',
+        resourceJumps: '1-pager',
+      },
+    ],
+    envs: [
+      {
+        slug: 'staging',
+        templateParams: {
+          'env.meta.dbHost': 'staging-1',
+          'env.meta.statusPath': 'staging',
+        },
+        envType: 'stage',
+      },
+      {
+        slug: 'production',
+        templateParams: { 'env.meta.statusPath': 'live' },
+        envType: 'prod',
+        appOverride: {
+          meta: { repo: 'https://git.example.test/vet/appointments-released' },
+          unavailable: ['credentials', 'dataSources'],
+        },
+      },
+    ],
+    customization: {
+      appLinkTypes: [
+        {
+          typeId: 'status',
+          iconId: 'status',
+          title: '{{env.id}} status page',
+          urlDecoded: 'https://status.example.test/{{env.meta.statusPath}}',
+        },
+        {
+          typeId: 'repo',
+          iconId: 'git',
+          title: 'Source Code',
+          urlDecoded: '{{app.meta.repo}}',
+        },
+        {
+          typeId: 'issues',
+          iconId: 'tracker',
+          title: '{{app.meta.issues}} issues',
+          urlDecoded: 'https://tracker.example.test/browse/{{app.meta.issues}}',
+        },
+      ],
+      icons: [{ iconId: 'git', svg: '<svg data-icon="git" />' }],
+    },
+  }),
 }
 
 export const BackendMagazine = {

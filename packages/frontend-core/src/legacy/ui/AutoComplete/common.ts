@@ -1,4 +1,4 @@
-import { EhSubstitutionId } from '../../types'
+import type { EhSubstitutionId } from '../../types'
 
 export interface SourceItem {
   id: string

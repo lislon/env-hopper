@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react'
-import { EhEnv, EhSubstitutionType } from '../../types'
+import { useEffect, useRef } from 'react'
+import type { EhEnv, EhSubstitutionType } from '../../types'
 import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper'
 import { useMainAppFormContext } from '../../context/MainFormContextProvider'
 
@@ -49,17 +49,17 @@ export function SubstitutionList(props: SubstitutionListProps) {
   const autoFocusOn = useAutoFocusHelper()
 
   useEffect(() => {
-    focusControllerSub?.setupFocusFn(() => {
+    focusControllerSub.setupFocusFn(() => {
       inputRef.current?.focus()
     })
-  }, [])
+  }, [focusControllerSub])
 
   return (
     substitutionType && (
       <div className={props.className}>
         <label className="form-control w-full relative p-1">
           <div className="label prose">
-            <h4>{substitutionType?.title}</h4>
+            <h4>{substitutionType.title}</h4>
           </div>
 
           <input
@@ -71,7 +71,7 @@ export function SubstitutionList(props: SubstitutionListProps) {
               inputRef.current?.select()
             }}
             autoFocus={autoFocusOn === 'substitutions'}
-            placeholder={`Enter ${substitutionType?.title}`}
+            placeholder={`Enter ${substitutionType.title}`}
             autoComplete={getAutoCompleteAttr(substitutionType, env)}
             name={getAutoCompleteName(substitutionType, env)}
             className="input input-bordered"
@@ -79,7 +79,7 @@ export function SubstitutionList(props: SubstitutionListProps) {
             onChange={(e) =>
               setSubstitution({
                 value: e.target.value,
-                name: substitutionType?.id,
+                name: substitutionType.id,
               })
             }
             onKeyDown={(e) => {

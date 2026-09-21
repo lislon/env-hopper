@@ -1,25 +1,23 @@
-import {
+import type {
+  ComboBoxType,
   EhApp,
   EhAppId,
   EhClientConfig,
   EhEnv,
+  EhEnvAppSubSelectedState,
   EhEnvId,
   EhLastUsedSubs,
   EhSubstitutionType,
+  EhSubstitutionValue,
 } from '../types'
 import React, {
   createContext,
+  use,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react'
-import {
-  ComboBoxType,
-  EhEnvAppSubSelectedState,
-  EhSubstitutionValue,
-} from '../types'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import {
   cutApp,
@@ -31,9 +29,10 @@ import {
   unescapeAppId,
 } from '../lib/utils'
 import { makeAutoCompleteFilter } from '../lib/autoComplete/autoCompleteFilter'
-import { SourceItem } from '../ui/AutoComplete/common'
+import type { SourceItem } from '../ui/AutoComplete/common'
 import { usePrefetch } from '../hooks/usePrefetch'
-import { FocusControllerEh, useFocusController } from '../lib/focusController'
+import type { FocusControllerEh } from '../lib/focusController'
+import { useFocusController } from '../lib/focusController'
 import { useNavigate } from '@tanstack/react-router'
 import { getEhToOptions } from '~/util/route-utils'
 import {
@@ -41,12 +40,8 @@ import {
   LOCAL_STORAGE_KEY_LAST_USED_ENV,
   LOCAL_STORAGE_KEY_LAST_USED_SUBS,
 } from '../lib/local-storage-constants'
-import {
-  doGetAppById,
-  doGetEnvById,
-  EhContextProps,
-  useEhContext,
-} from './EhContext'
+import type { EhContextProps } from './EhContext'
+import { doGetAppById, doGetEnvById, useEhContext } from './EhContext'
 
 export interface EhMainFormContextProps extends FocusControllerEh {
   setEnv: (env: EhEnv | undefined) => void
@@ -57,7 +52,7 @@ export interface EhMainFormContextProps extends FocusControllerEh {
   substitution: EhSubstitutionValue | undefined
   substitutionType: EhSubstitutionType | undefined
   // recordJump(jump: EhJumpParams): void;
-  tryJump(): void
+  tryJump: () => void
 
   domainPart: string
   appPart: string
@@ -73,7 +68,7 @@ const EhMainFormContext = createContext<EhMainFormContextProps | undefined>(
 export function useMainAppFormContext(): EhMainFormContextProps &
   EhContextProps {
   const ehContext = useEhContext()
-  const mainFormContext = useContext(EhMainFormContext)
+  const mainFormContext = use(EhMainFormContext)
   if (mainFormContext === undefined) {
     throw new Error('EhMainFormContext is not provided')
   }
@@ -81,9 +76,9 @@ export function useMainAppFormContext(): EhMainFormContextProps &
 }
 
 function getByIdRelaxed<T extends { id: string }>(
-  primarySearch: (id: string | undefined, ehEnvs: T[]) => T | undefined,
+  primarySearch: (id: string | undefined, ehEnvs: Array<T>) => T | undefined,
   id: string | undefined,
-  options: T[],
+  options: Array<T>,
 ): [T | undefined, boolean] {
   if (id !== undefined) {
     const exactMatchResult = primarySearch(id, options)
@@ -91,10 +86,14 @@ function getByIdRelaxed<T extends { id: string }>(
       return [exactMatchResult, true]
     }
 
-    const items: SourceItem[] = options.map((e) => ({ title: e.id, id: e.id }))
+    const items: Array<SourceItem> = options.map((e) => ({
+      title: e.id,
+      id: e.id,
+    }))
     const found = makeAutoCompleteFilter(items)(id.toLowerCase(), items)
-    if (found.length === 1) {
-      return [primarySearch(found[0].id, options), false]
+    const onlyMatch = found.length === 1 ? found[0] : undefined
+    if (onlyMatch !== undefined) {
+      return [primarySearch(onlyMatch.id, options), false]
     }
   }
   return [undefined, false]
@@ -117,12 +116,12 @@ export interface PreselectedBasedOnParamsReturn {
 
 function getSubstitutionBasedOnAppAndLastUsed(
   app: EhApp | undefined,
-  listEnvs: EhEnv[],
+  listEnvs: Array<EhEnv>,
   lastUsedSubs: EhLastUsedSubs | undefined,
 ): EhSubstitutionValue | undefined {
   const subId = findSubstitutionIdByUrl({
     app,
-    env: listEnvs?.[0],
+    env: listEnvs[0],
   })
   if (subId && lastUsedSubs?.[subId] !== undefined) {
     return {
@@ -256,20 +255,20 @@ export function MainFormContextProvider({
     if (initialEnvAppSubBased.urlWasFixed) {
       void fixUrlBasedOnSelection(
         {
-          envId: initialEnvAppSubBased?.env?.id,
+          envId: initialEnvAppSubBased.env?.id,
           appId: initialEnvAppSubBased.app?.id,
           subValue: initialEnvAppSubBased.substitution?.value,
         },
         true,
       )
     }
-  }, [initialEnvAppSubBased])
+  }, [fixUrlBasedOnSelection, initialEnvAppSubBased])
 
   useEffect(() => {
     if (urlParams.envId !== env?.id || urlParams.appId !== app?.id) {
       void fixUrlBasedOnSelection({ envId: env?.id, appId: app?.id }, true)
     }
-  }, [app, env, urlParams])
+  }, [app, env, fixUrlBasedOnSelection, urlParams])
 
   useEffect(() => {
     if (app && env) {
@@ -295,14 +294,13 @@ export function MainFormContextProvider({
     () =>
       findSubstitutionIdByUrl({
         app,
-        env: listEnvs?.[0],
+        env: listEnvs[0],
       }),
     [app, listEnvs],
   )
 
   const substitutionType = useMemo(
-    () =>
-      config.substitutions.find((s) => s.id === substitutionName || undefined),
+    () => config.substitutions.find((s) => s.id === substitutionName),
     [config.substitutions, substitutionName],
   )
 
@@ -337,7 +335,7 @@ export function MainFormContextProvider({
         setApp(doGetAppById(app?.id, listApps))
         setLastUsedEnv(env?.id)
       },
-      [setEnv, setLastUsedEnv, setApp, app],
+      [app, listApps, setLastUsedEnv],
     ),
     env,
     setApp: useCallback<EhMainFormContextProps['setApp']>(
@@ -348,7 +346,7 @@ export function MainFormContextProvider({
           getSubstitutionBasedOnAppAndLastUsed(app, listEnvs, lastUsedSubs)
         setSubstitution(substitutionBasedOnAppAndLastUsed)
       },
-      [setApp, setLastUsedApp, lastUsedSubs, listEnvs, env],
+      [lastUsedSubs, listApps, listEnvs, setLastUsedApp],
     ),
     app,
     substitutionType,
@@ -372,7 +370,7 @@ export function MainFormContextProvider({
           })
         }
       },
-      [],
+      [setLastUsedSubs],
     ),
     highlightAutoComplete,
     setHighlightAutoComplete: useCallback<
@@ -391,7 +389,7 @@ export function MainFormContextProvider({
         substitution,
       })
       window.open(jumpUrl, '_blank')?.focus()
-    }, [getJumpUrl, recordJump, app, env, substitution]),
+    }, [app, env, recordJump, substitution]),
     domainPart,
     appPart,
     focusControllerEnv,
@@ -399,9 +397,5 @@ export function MainFormContextProvider({
     focusControllerSub,
   }
 
-  return (
-    <EhMainFormContext.Provider value={value}>
-      {children}
-    </EhMainFormContext.Provider>
-  )
+  return <EhMainFormContext value={value}>{children}</EhMainFormContext>
 }

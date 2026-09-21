@@ -1,7 +1,6 @@
 import { getJumpUrl } from '../../lib/utils'
 import { JumpALink } from './JumpALink'
-import { EhApp, EhEnv } from '../../types'
-import { EhSubstitutionValue } from '../../types'
+import type { EhApp, EhEnv, EhSubstitutionValue } from '../../types'
 
 export interface JumpMiniButtonProps {
   env: EhEnv | undefined

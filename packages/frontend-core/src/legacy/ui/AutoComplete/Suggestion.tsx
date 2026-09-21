@@ -1,8 +1,7 @@
-import React from 'react'
 import cn from 'classnames'
-import { SourceItem } from './common'
-import { UseComboboxPropGetters } from 'downshift'
-import { EhAutoCompleteProps } from './EhAutoComplete'
+import type { SourceItem } from './common'
+import type { UseComboboxPropGetters } from 'downshift'
+import type { EhAutoCompleteProps } from './EhAutoComplete'
 
 export interface SuggestionProps {
   index: number
@@ -25,7 +24,7 @@ export function Suggestion({
       <button
         className={cn('w-full inline-block', {
           focus: highlightedIndex === index,
-          active: selectedItem?.id === item?.id,
+          active: selectedItem?.id === item.id,
         })}
       >
         {item.title}

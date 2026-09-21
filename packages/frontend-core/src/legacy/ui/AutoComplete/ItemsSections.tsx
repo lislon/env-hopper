@@ -1,13 +1,13 @@
-import { SectionedItem } from './section-splitting'
-import { UseComboboxPropGetters } from 'downshift'
-import { SAME_SECTION_MIN_ITEMS, SourceItem } from './common'
+import type { SectionedItem } from './section-splitting'
+import type { UseComboboxPropGetters } from 'downshift'
+import type { SourceItem } from './common'
+import { SAME_SECTION_MIN_ITEMS } from './common'
 import { Suggestion } from './Suggestion'
-import React from 'react'
-import { EhAutoCompleteProps } from './EhAutoComplete'
+import type { EhAutoCompleteProps } from './EhAutoComplete'
 import { Section } from '../Section'
 
 export interface ItemsSectionProps {
-  items: SectionedItem[]
+  items: Array<SectionedItem>
   highlightedIndex: number
   selectedItem: SectionedItem | null
   getItemProps: UseComboboxPropGetters<SourceItem>['getItemProps']
@@ -53,10 +53,10 @@ export interface ItemWithSectionAndIndex extends SectionedItem {
 }
 
 export interface SplitBySectionsProps extends Omit<ItemsSectionProps, 'items'> {
-  recentSection: ItemWithSectionAndIndex[]
-  favSection: ItemWithSectionAndIndex[]
-  sameSubSection: ItemWithSectionAndIndex[]
-  allSection: ItemWithSectionAndIndex[]
+  recentSection: Array<ItemWithSectionAndIndex>
+  favSection: Array<ItemWithSectionAndIndex>
+  sameSubSection: Array<ItemWithSectionAndIndex>
+  allSection: Array<ItemWithSectionAndIndex>
 }
 
 export function SplitBySections({
@@ -126,7 +126,7 @@ export function SplitBySections({
 }
 
 export interface SingleSectionProp extends Omit<ItemsSectionProps, 'items'> {
-  allSection: ItemWithSectionAndIndex[]
+  allSection: Array<ItemWithSectionAndIndex>
 }
 
 export function SingleSection({ allSection, ...rest }: SingleSectionProp) {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ComboBoxType } from '../types'
+import type { ComboBoxType } from '../types'
 import { useMainAppFormContext } from '../context/MainFormContextProvider'
 
 export function useAutoFocusHelper(): ComboBoxType {

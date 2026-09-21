@@ -1,5 +1,5 @@
 import { getJumpUrlEvenNotComplete } from '../../lib/utils'
-import { ComboBoxType } from '../../types'
+import type { ComboBoxType } from '../../types'
 import React, { useEffect, useMemo } from 'react'
 import cn from 'classnames'
 import { debounce } from 'radashi'

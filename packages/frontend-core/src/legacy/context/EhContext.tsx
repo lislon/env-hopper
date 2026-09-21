@@ -1,13 +1,15 @@
-import {
+import type {
   EhApp,
   EhAppId,
   EhClientConfig,
   EhEnv,
   EhEnvId,
+  EhJumpHistory,
+  EhJumpParams,
   EhSubstitutionType,
+  EhSubstitutionValue,
 } from '../types'
-import React, { createContext, useCallback, useContext } from 'react'
-import { EhJumpHistory, EhJumpParams, EhSubstitutionValue } from '../types'
+import React, { createContext, use, useCallback } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import {
   findSubstitutionIdByUrl,
@@ -17,38 +19,38 @@ import {
 import { MAX_HISTORY_JUMPS } from '../lib/constants'
 import { useLegacyConfig } from '../adapter/legacyApi'
 import {
+  LOCAL_STORAGE_HIDE_SENSITIVE_INFO,
   LOCAL_STORAGE_KEY_FAVORITE_APPS,
   LOCAL_STORAGE_KEY_FAVORITE_ENVS,
   LOCAL_STORAGE_KEY_RECENT_JUMPS,
   LOCAL_STORAGE_KEY_USER_ID,
-  LOCAL_STORAGE_HIDE_SENSITIVE_INFO,
 } from '../lib/local-storage-constants'
 
 export interface EhContextProps {
-  listEnvs: EhEnv[]
-  listApps: EhApp[]
-  listSubstitutions: EhSubstitutionType[]
-  listFavoriteEnvs: EhEnvId[]
-  listFavoriteApps: EhAppId[]
+  listEnvs: Array<EhEnv>
+  listApps: Array<EhApp>
+  listSubstitutions: Array<EhSubstitutionType>
+  listFavoriteEnvs: Array<EhEnvId>
+  listFavoriteApps: Array<EhAppId>
   toggleFavoriteEnv: (envId: EhEnvId, isOn: boolean) => void
   toggleFavoriteApp: (appId: EhAppId, isOn: boolean) => void
 
-  getAppById(id: EhAppId | undefined): EhApp | undefined
-  getEnvById(id: EhEnvId | undefined): EhEnv | undefined
+  getAppById: (id: EhAppId | undefined) => EhApp | undefined
+  getEnvById: (id: EhEnvId | undefined) => EhEnv | undefined
 
-  getSubstitutionValueById(
+  getSubstitutionValueById: (
     envId: EhEnvId | undefined,
     appId: EhAppId | undefined,
     substitution: string | undefined,
-  ): EhSubstitutionValue | undefined
+  ) => EhSubstitutionValue | undefined
 
-  recordJump(jump: EhJumpParams): void
+  recordJump: (jump: EhJumpParams) => void
 
   // add params?
   // tryJump(): void;
 
   // most recent in the beginning
-  recentJumps: EhJumpHistory[]
+  recentJumps: Array<EhJumpHistory>
   isHideSensitiveInfo: boolean
   setHideSensitiveInfo: (yesOrNo: boolean) => void
   config: EhClientConfig
@@ -58,18 +60,18 @@ export interface EhContextProps {
 const EhContext = createContext<EhContextProps | undefined>(undefined)
 
 export function useEhContext(): EhContextProps {
-  const ctx = useContext(EhContext)
+  const ctx = use(EhContext)
   if (ctx === undefined) {
     throw new Error('EhContext is not provided')
   }
   return ctx
 }
 
-export function doGetAppById(id: string | undefined, ehApps: EhApp[]) {
+export function doGetAppById(id: string | undefined, ehApps: Array<EhApp>) {
   return ehApps.find((app) => app.id === id) || undefined
 }
 
-export function doGetEnvById(id: string | undefined, ehEnvs: EhEnv[]) {
+export function doGetEnvById(id: string | undefined, ehEnvs: Array<EhEnv>) {
   return ehEnvs.find((env) => env.id === id) || undefined
 }
 
@@ -106,15 +108,15 @@ export function EhContextProvider({ children }: EhContextProviderProps) {
     crypto.randomUUID(),
   )
 
-  const [recentJumps, setRecentJumps] = useLocalStorage<EhJumpHistory[]>(
+  const [recentJumps, setRecentJumps] = useLocalStorage<Array<EhJumpHistory>>(
     LOCAL_STORAGE_KEY_RECENT_JUMPS,
     [],
   )
-  const [listFavoriteEnvs, setFavoriteEnvIds] = useLocalStorage<EhEnvId[]>(
+  const [listFavoriteEnvs, setFavoriteEnvIds] = useLocalStorage<Array<EhEnvId>>(
     LOCAL_STORAGE_KEY_FAVORITE_ENVS,
     [],
   )
-  const [listFavoriteApps, setFavoriteAppIds] = useLocalStorage<EhAppId[]>(
+  const [listFavoriteApps, setFavoriteAppIds] = useLocalStorage<Array<EhAppId>>(
     LOCAL_STORAGE_KEY_FAVORITE_APPS,
     [],
   )
@@ -128,17 +130,22 @@ export function EhContextProvider({ children }: EhContextProviderProps) {
   const listApps = config.apps
 
   const getAppById = useCallback(
-    (id: EhAppId) => {
+    (id: EhAppId | undefined) => {
       return doGetAppById(id, listApps)
     },
     [listApps],
   )
 
+  /*
+   * INTENTIONAL DIFF: this memo was keyed on `listApps`, so an environment
+   * lookup kept returning results from the first payload it ever saw. Same
+   * copy-paste in `toggleFavoriteEnv` and `getSubstitutionValueById` below.
+   */
   const getEnvById = useCallback(
-    (id: EhEnvId) => {
+    (id: EhEnvId | undefined) => {
       return doGetEnvById(id, listEnvs)
     },
-    [listApps],
+    [listEnvs],
   )
 
   const recordJump = useCallback<EhContextProps['recordJump']>(
@@ -188,7 +195,7 @@ export function EhContextProvider({ children }: EhContextProviderProps) {
           return [...(isOn ? [envId] : []), ...old.filter((id) => id !== envId)]
         })
       },
-      [setFavoriteAppIds],
+      [setFavoriteEnvIds],
     ),
     toggleFavoriteApp: useCallback<EhContextProps['toggleFavoriteApp']>(
       (appId, isOn) => {
@@ -214,7 +221,7 @@ export function EhContextProvider({ children }: EhContextProviderProps) {
         }
         return undefined
       },
-      [findSubstitutionIdByUrl],
+      [listApps, listEnvs],
     ),
     recentJumps,
     isHideSensitiveInfo,
@@ -222,5 +229,5 @@ export function EhContextProvider({ children }: EhContextProviderProps) {
     config,
   }
 
-  return <EhContext.Provider value={value}>{children}</EhContext.Provider>
+  return <EhContext value={value}>{children}</EhContext>
 }

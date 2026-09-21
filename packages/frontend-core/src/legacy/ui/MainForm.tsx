@@ -1,4 +1,3 @@
-import React from 'react'
 import { EnvList } from './Lists/EnvList'
 import { AppList } from './Lists/AppList'
 import { SubstitutionList } from './Lists/SubstitutionList'
@@ -9,7 +8,7 @@ import { AppLoginPassWidgetsPanel } from './Widget/AppLoginPassWidgetsPanel'
 import { History } from './History'
 import { ErrorBoundary } from 'react-error-boundary'
 import { MainFormContextProvider } from '../context/MainFormContextProvider'
-import { EhEnvAppSubSelectedState } from '../types'
+import type { EhEnvAppSubSelectedState } from '../types'
 
 export interface MainFormProps {
   envAppSubState: EhEnvAppSubSelectedState
@@ -29,7 +28,7 @@ export function MainForm({ envAppSubState }: MainFormProps) {
             <AppLoginPassWidgetsPanel className={'grid-in-ui-widget'} />
           </ErrorBoundary>
           <History className={'grid-in-history mt-4 w-full'} />
-          {/*<AppProfileWidgetPanel className={'grid-in-a-widgets'} />*/}
+          {/* <AppProfileWidgetPanel className={'grid-in-a-widgets'} />*/}
         </div>
       </div>
     </MainFormContextProvider>

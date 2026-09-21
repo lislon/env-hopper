@@ -10,7 +10,7 @@
  *
  * Add a mapping here rather than reaching into `~/modules/*` from a ported file.
  */
-import React, { createContext, useContext, useEffect, useMemo } from 'react'
+import React, { createContext, use, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { LOCAL_STORAGE_KEY_VERSION } from '../lib/local-storage-constants'
@@ -108,13 +108,18 @@ export function useLegacyConfig() {
     [bootstrap, jumps],
   )
 
-  return {
-    ...query,
-    error: query.error ?? jumpsQuery.error,
-    isError: query.isError || jumpsQuery.isError,
-    isLoading: query.isLoading || jumpsQuery.isLoading,
-    data,
-  }
+  /*
+   * The status fields stay the bootstrap query's own, untouched. React Query
+   * types them as a discriminated union — `isError: true` is what proves `error`
+   * is not null — and merging in a second query's fields collapses that union,
+   * which turns the layout's `error.message` into a type error.
+   *
+   * The cost is narrow and deliberate: a resource-jump failure with a healthy
+   * bootstrap shows the layout's "no data available, please refresh" branch
+   * rather than the message branch. Both tell the user the same thing, and
+   * neither renders the form against half a payload.
+   */
+  return { ...query, data }
 }
 
 export interface EhServerSyncContextValue {
@@ -179,15 +184,13 @@ export function LegacyCustomizationProvider({
   customization?: LegacyCustomization
 }) {
   return (
-    <LegacyCustomizationContext.Provider
-      value={customization ?? EMPTY_CUSTOMIZATION}
-    >
+    <LegacyCustomizationContext value={customization ?? EMPTY_CUSTOMIZATION}>
       {children}
-    </LegacyCustomizationContext.Provider>
+    </LegacyCustomizationContext>
   )
 }
 
 /** Stands in for `useSuspenseQuery(ApiQueryMagazine.getCustomization())`. */
 export function useLegacyCustomization(): LegacyCustomization {
-  return useContext(LegacyCustomizationContext)
+  return use(LegacyCustomizationContext)
 }

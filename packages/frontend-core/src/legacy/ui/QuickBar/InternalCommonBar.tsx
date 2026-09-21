@@ -1,23 +1,21 @@
-import React from 'react'
-
 import StarOutlineIcon from '../../assets/favorite-star.svg?react'
 import RecentIcon from '../../assets/recent.svg?react'
 import cn from 'classnames'
-import { ComboBoxType, FavoriteOrRecent } from '../../types'
+import type { ComboBoxType, FavoriteOrRecent } from '../../types'
 
 export interface QuickBarSharedProps {
   className?: string
 }
 
-export type BarElement<ID extends string | number> = {
-  id: ID
+export type BarElement<TId extends string | number> = {
+  id: TId
   title: string
 }
 
-export interface InternalCommonBarProps<ID extends string | number> {
-  activeId: ID | undefined
-  list: BarElement<ID>[]
-  onClick: (id: ID) => void
+export interface InternalCommonBarProps<TId extends string | number> {
+  activeId: TId | undefined
+  list: Array<BarElement<TId>>
+  onClick: (id: TId) => void
   comboboxType: ComboBoxType
   favoriteOrRecent: FavoriteOrRecent
 }
@@ -52,13 +50,13 @@ function BarHeaderWithIcon({
   )
 }
 
-export function InternalCommonBar<ID extends string | number>({
+export function InternalCommonBar<TId extends string | number>({
   activeId,
   onClick,
   list,
   comboboxType,
   favoriteOrRecent,
-}: InternalCommonBarProps<ID>) {
+}: InternalCommonBarProps<TId>) {
   if (list.length === 0) {
     return null
   }

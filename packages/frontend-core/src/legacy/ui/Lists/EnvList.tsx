@@ -1,11 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import {
-  EhAutoComplete,
-  EhAutoCompleteFilter,
-} from '../AutoComplete/EhAutoComplete'
+import { useEffect, useMemo, useState } from 'react'
+import type { EhAutoCompleteFilter } from '../AutoComplete/EhAutoComplete'
+import { EhAutoComplete } from '../AutoComplete/EhAutoComplete'
 import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter'
-import { EhEnv, EhEnvId } from '../../types'
-import { SourceItem } from '../AutoComplete/common'
+import type { EhEnv, EhEnvId } from '../../types'
+import type { SourceItem } from '../AutoComplete/common'
 import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper'
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants'
 import { HomeFavoriteButton } from '../HomeFavoriteButton'
@@ -44,9 +42,9 @@ export interface EnvListProps {
  * deterministic and was already the order the shuffle threw away.
  */
 function findGoodExample(
-  envIds: EhEnvId[],
+  envIds: Array<EhEnvId>,
   autoCompleteFilter: EhAutoCompleteFilter,
-  items: SourceItem[],
+  items: Array<SourceItem>,
 ): string | undefined {
   function getSearch(tokens: Array<string | undefined>) {
     if (tokens.length >= 2) {
@@ -59,7 +57,7 @@ function findGoodExample(
     .sort((a, b) => b.length - a.length)
     .map((env) => ({ env, tokens: tokenize(env) }))
   const found = candidates.find(({ tokens }) => {
-    return autoCompleteFilter(getSearch(tokens), items)?.length === 1
+    return autoCompleteFilter(getSearch(tokens), items).length === 1
   })
   if (found) {
     const [firstToken, ...restTokens] = found.tokens
@@ -70,7 +68,7 @@ function findGoodExample(
     let firstShortestToken = firstToken
     for (let i = 3; i < firstToken.length; i++) {
       const search = getSearch([firstToken.slice(0, i), lastToken])
-      if (autoCompleteFilter(search, items)?.length === 1) {
+      if (autoCompleteFilter(search, items).length === 1) {
         firstShortestToken = firstToken.slice(0, i)
         break
       }
@@ -126,7 +124,7 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
       const example =
         exampleFromRecents ||
         findGoodExample(
-          listEnvs?.map((s) => s.id),
+          listEnvs.map((s) => s.id),
           autoCompleteFilter,
           items,
         )
@@ -136,7 +134,7 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
           : 'Type or select environment',
       )
     }
-  }, [recentJumps, listEnvs, autoCompleteFilter])
+  }, [autoCompleteFilter, items, listEnvs, placeHolder, recentJumps])
 
   const allSectionedItems = useMemo(() => {
     return mapToSectionedItems(items, undefined)

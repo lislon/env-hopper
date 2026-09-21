@@ -1,7 +1,6 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { getJumpUrl } from '../../lib/utils'
-import { EhApp, EhEnv } from '../../types'
-import { EhSubstitutionValue } from '../../types'
+import type { EhApp, EhEnv, EhSubstitutionValue } from '../../types'
 import { useMainAppFormContext } from '../../context/MainFormContextProvider'
 
 export interface JumpUrlParams {

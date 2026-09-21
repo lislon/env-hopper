@@ -1,4 +1,4 @@
-import { EhApp } from '../../types'
+import type { EhApp } from '../../types'
 
 export function formatAppTitleShort(app: EhApp | undefined) {
   if (app === undefined) {

@@ -99,7 +99,7 @@ export function getJumpUrl({ app, env, substitution }: JumpDataParams) {
 }
 
 export function cutDomain(fullUrl: string) {
-  return fullUrl.split('/')[2]
+  return fullUrl.split('/')[2] ?? ''
 }
 
 export function cutApp(fullUrl: string) {

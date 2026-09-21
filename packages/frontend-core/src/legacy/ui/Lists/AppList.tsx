@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 import { EhAutoComplete } from '../AutoComplete/EhAutoComplete'
 import { makeAutoCompleteFilter } from '../../lib/autoComplete/autoCompleteFilter'
-import { EhApp, EhAppId, EhEnv } from '../../types'
-import { SourceItem } from '../AutoComplete/common'
+import type { EhApp, EhAppId, EhEnv } from '../../types'
+import type { SourceItem } from '../AutoComplete/common'
 import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper'
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants'
 import { HomeFavoriteButton } from '../HomeFavoriteButton'
@@ -87,7 +87,7 @@ export function AppList({ onOpenChange, className }: AppListProps) {
       allSectionedItems={allSectionedItems}
       tmpSameSubstitutionTitle={
         substitutionType?.title
-          ? `${substitutionType?.title}: ${substitution?.value}`
+          ? `${substitutionType.title}: ${substitution?.value}`
           : undefined
       }
       itemsAll={items}

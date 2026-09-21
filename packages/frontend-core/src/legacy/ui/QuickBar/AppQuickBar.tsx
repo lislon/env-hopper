@@ -1,10 +1,7 @@
-import React, { useMemo } from 'react'
-import { EhAppId } from '../../types'
-import {
-  BarElement,
-  InternalCommonBar,
-  QuickBarSharedProps,
-} from './InternalCommonBar'
+import { useMemo } from 'react'
+import type { EhAppId } from '../../types'
+import type { BarElement, QuickBarSharedProps } from './InternalCommonBar'
+import { InternalCommonBar } from './InternalCommonBar'
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants'
 import { unique } from 'radashi'
 import cn from 'classnames'
@@ -15,7 +12,7 @@ export function AppQuickBar(props: QuickBarSharedProps) {
   const { listFavoriteApps, setApp, getAppById, app, recentJumps } =
     useMainAppFormContext()
 
-  const favorites = useMemo<BarElement<string>[]>(() => {
+  const favorites = useMemo<Array<BarElement<string>>>(() => {
     return listFavoriteApps
       .map((appId) => getAppById(appId))
       .filter((app) => app !== undefined)
@@ -25,7 +22,7 @@ export function AppQuickBar(props: QuickBarSharedProps) {
       }))
   }, [listFavoriteApps, getAppById])
 
-  const recent = useMemo<BarElement<string>[]>(() => {
+  const recent = useMemo<Array<BarElement<string>>>(() => {
     return unique(
       recentJumps.map((recent) => recent.app).filter((id) => id !== undefined),
     )

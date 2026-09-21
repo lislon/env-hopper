@@ -1,5 +1,5 @@
-import { SourceItem } from './common'
-import { EhSubstitutionId } from '../../types'
+import type { SourceItem } from './common'
+import type { EhSubstitutionId } from '../../types'
 
 export type ItemSection = 'favorite' | 'recent' | 'all' | 'same_substitution'
 
@@ -19,9 +19,9 @@ const SECTION_ORDER: Record<ItemSection, number> = {
 }
 
 export function flatmapToItemsWithSections(
-  item: SourceItem[],
+  item: Array<SourceItem>,
   activeSubId: EhSubstitutionId | undefined,
-): SectionedItem[] {
+): Array<SectionedItem> {
   return item
     .flatMap((i) => spreadItemOnSections(i, activeSubId))
     .sort((a, b) => SECTION_ORDER[a.section] - SECTION_ORDER[b.section])
@@ -33,13 +33,13 @@ export function flatmapToItemsWithSections(
 export function spreadItemOnSections(
   item: SourceItem | null,
   activeSubId: EhSubstitutionId | undefined,
-): SectionedItem[] {
+): Array<SectionedItem> {
   if (item === null) {
     return []
   }
 
   // TODO: Do not copy
-  const result: SectionedItem[] = [{ ...item, section: 'all' }]
+  const result: Array<SectionedItem> = [{ ...item, section: 'all' }]
 
   if (item.favorite) {
     result.push({ ...item, section: 'favorite' })

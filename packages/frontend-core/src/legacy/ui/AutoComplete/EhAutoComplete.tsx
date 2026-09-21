@@ -1,22 +1,22 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useCombobox } from 'downshift'
-import { SourceItem } from './common'
-import { SectionedItem } from './section-splitting'
+import type { SourceItem } from './common'
+import type { SectionedItem } from './section-splitting'
 import { ItemsSections } from './ItemsSections'
 import { objectify, unique } from 'radashi'
 import cn from 'classnames'
 
 export type EhAutoCompleteFilter = (
   searchPattern: string,
-  items: SourceItem[],
-) => SourceItem[]
+  items: Array<SourceItem>,
+) => Array<SourceItem>
 
 export type OnSelectedItemChange = (itemId: string | undefined) => void
 
 export interface EhAutoCompleteProps {
   className?: string
   inputClassName?: string
-  itemsAll: SourceItem[]
+  itemsAll: Array<SourceItem>
   placeholder?: string
   label?: string
   filter: EhAutoCompleteFilter
@@ -30,7 +30,7 @@ export interface EhAutoCompleteProps {
   favoriteButton?: React.ReactNode
   // getEhUrl: (id: string) => ToOptions;
   id?: string
-  allSectionedItems: SectionedItem[]
+  allSectionedItems: Array<SectionedItem>
   tmpSameSubstitutionTitle?: string
 }
 
@@ -100,7 +100,7 @@ export function EhAutoComplete(props: EhAutoCompleteProps) {
     },
   })
 
-  const inputRef = React.createRef<HTMLInputElement>()
+  const inputRef = useRef<HTMLInputElement>(null)
   const onOpenChange = props.onOpenChange
 
   useEffect(() => {
@@ -111,6 +111,8 @@ export function EhAutoComplete(props: EhAutoCompleteProps) {
     inputRef.current?.select()
     setDisplayedItems(initialItemsWithSections)
   }
+
+  const firstDisplayedItem = displayedItems[0]
 
   const inputProps = getInputProps({
     ref: inputRef,
@@ -128,12 +130,12 @@ export function EhAutoComplete(props: EhAutoCompleteProps) {
       } else if (
         event.key === 'Enter' &&
         isOpen &&
-        displayedItems.length > 0 &&
+        firstDisplayedItem !== undefined &&
         highlightedIndex === -1
       ) {
         // user has input, and it shows several results, but there is not a single line selected. On enter, we want to pick a first result.
-        selectItem(displayedItems[0])
-        props.onSelectedItemChange(displayedItems[0].id)
+        selectItem(firstDisplayedItem)
+        props.onSelectedItemChange(firstDisplayedItem.id)
       } else if (event.key === 'Enter' && !isOpen) {
         props.onPrimaryAction?.()
       }

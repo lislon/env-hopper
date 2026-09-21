@@ -1,5 +1,5 @@
 'use client'
-import React, { createContext, useContext, useLayoutEffect } from 'react'
+import React, { createContext, use, useLayoutEffect } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 
 export type EhTheme = 'dark' | 'light'
@@ -14,7 +14,7 @@ export interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 export function useTheme() {
-  const ctx = useContext(ThemeContext)
+  const ctx = use(ThemeContext)
   if (ctx === null) {
     throw new Error('useTheme must be used within a ThemeContextProvider')
   }
@@ -83,8 +83,8 @@ export function ThemeContextProvider({
   }, [userPreference])
 
   return (
-    <ThemeContext.Provider value={{ userPreference, setUserPreference }}>
+    <ThemeContext value={{ userPreference, setUserPreference }}>
       {children}
-    </ThemeContext.Provider>
+    </ThemeContext>
   )
 }

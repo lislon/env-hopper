@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import tanstackRouter from '@tanstack/router-plugin/vite'
 import { tanstackViteConfig } from '@tanstack/vite-config'
 import viteReact from '@vitejs/plugin-react'
@@ -11,7 +12,7 @@ import packageJson from './package.json'
 
 import type { ViteUserConfig } from 'vitest/config'
 
-const config = defineConfig(({ mode }) => {
+const config = defineConfig(({ command, mode }) => {
   const tsconfigPath =
     mode === 'lenient' ? './tsconfig-lenient.json' : './tsconfig.json'
 
@@ -43,6 +44,14 @@ const config = defineConfig(({ mode }) => {
     server: {
       port: 3999,
       strictPort: true,
+      // Same-origin `/api/*` (the session probe) would otherwise fall through
+      // to the SPA and answer html where the client expects json.
+      proxy: {
+        '/api': {
+          target: `http://localhost:${process.env.EH_MOCK_PORT ?? 4000}`,
+          changeOrigin: true,
+        },
+      },
     },
     build: {
       copyPublicDir: false,
@@ -146,6 +155,14 @@ const config = defineConfig(({ mode }) => {
       }),
       viteReact(),
       svgr(),
+      // Dev only: `index.css` is the dev entry's sheet and needs `@import
+      // 'tailwindcss'` resolved, but the library build ships `src/*.css`
+      // uncompiled for consumers to compile themselves — see viteStaticCopy
+      // below. Compiling it here would change what `dist` contains.
+      ...tailwindcss().map((plugin) => ({
+        ...plugin,
+        apply: 'serve' as const,
+      })),
       // Copy public directory and CSS file to dist during build
       viteStaticCopy({
         targets: [
@@ -167,7 +184,7 @@ const config = defineConfig(({ mode }) => {
 
   // Only merge tanstack config for non-test modes
   if (process.env.NODE_ENV !== 'test') {
-    return mergeConfig(
+    const merged = mergeConfig(
       tanstackViteConfig({
         tsconfigPath,
         entry: ['./src/index.tsx', './src/internal.ts'],
@@ -176,6 +193,15 @@ const config = defineConfig(({ mode }) => {
       }),
       myConfig,
     )
+    if (command === 'serve') {
+      // The library build's `preserve-directives` parses every module as
+      // javascript and so rejects Tailwind's compiled stylesheet. It exists to
+      // keep `'use client'` banners in `dist`, which the dev server has no
+      // stake in.
+      const plugins = merged.plugins as Array<{ name?: string } | undefined>
+      merged.plugins = plugins.filter((p) => p?.name !== 'preserve-directives')
+    }
+    return merged
   }
 
   return myConfig

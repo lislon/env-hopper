@@ -133,9 +133,9 @@ describe('frozen legacy link shapes', () => {
     expect(loaderData?.resourceSlug).toBeUndefined()
 
     // The value cannot be named yet, and this is the contract, not a defect:
-    // `routeLoaderMapper` reads the parameter's slug off the jump's own
-    // `lateResolvableParamSlugs`, so with no app in the url there is no
-    // parameter to attach it to. The value is held on the loader and the app
+    // `routeLoaderMapper` reads the parameter's slug off the jump the url names,
+    // or off that jump's group, so with no app in the url there is nothing to
+    // attach it to. The value is held on the loader and the app
     // puts it back in the url once an app is chosen, which is the case the rows
     // above cover.
     expect(loaderData?.crossCuttingParams).toEqual([])

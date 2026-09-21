@@ -10,8 +10,8 @@ import { EnvPage } from '~/modules/resourceJump/ui/pages/EnvPage'
 // is extra state rather than a different page.
 //
 // The value cannot be named here. `routeLoaderMapper` takes the parameter's slug
-// from the jump's own `lateResolvableParamSlugs`, so with no app there is no
-// parameter to attach it to and `crossCuttingParams` comes back empty. The value
+// from the jump the url names, or from that jump's group, so with no app there is
+// nothing to attach it to and `crossCuttingParams` comes back empty. The value
 // is not lost: the loader still carries `subValue`, and the link the app mints
 // when an app is finally chosen puts it back in the url — at which point the
 // loader has a jump and does name it.

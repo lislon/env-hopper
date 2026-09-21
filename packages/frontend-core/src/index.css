@@ -265,3 +265,15 @@
 .eh-legacy .text-primary-content {
   color: var(--fallback-pc, oklch(var(--pc) / 1));
 }
+
+/*
+* And the kubernetes widget's settings gear, which is `fill-neutral-400
+ * hover:fill-accent`. Measured: `fill-accent` gave `rgb(0, 0, 0)` — the initial
+ * value, i.e. nothing matched, so hovering turned the gear black instead of
+ * accent. No `:not(:hover)` guard is needed in this direction: `fill-neutral-400`
+ * IS emitted by Tailwind, inside `@layer utilities`, and this unlayered rule
+ * outranks it exactly when it should, on hover.
+ */
+.eh-legacy .hover\:fill-accent:hover {
+  fill: var(--fallback-a, oklch(var(--a) / 1));
+}

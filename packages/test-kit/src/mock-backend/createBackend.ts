@@ -2,7 +2,7 @@ import { http } from 'msw'
 import { createTRPCMsw, httpLink } from 'msw-trpc'
 import type {
   BootstrapConfigData,
-  EhAppIndexed,
+  EhBackendAppInput,
   EhEnvIndexed,
   ResourceJump,
   ResourceJumpGroup,
@@ -41,11 +41,35 @@ export type ResourceJumpType = '1-pager' | '2-pager'
 
 export interface FixtureEnv {
   slug: string
+  /**
+   * Extra parameters the environment supplies to url and widget templates, on
+   * top of the `subdomain` every fixture env carries. Keyed as the payload keys
+   * them, so `env.meta.k8sCtx` rather than `k8sCtx`.
+   */
+  templateParams?: Record<string, string>
+}
+
+/** A username and password pair the app's own UI takes. */
+export interface FixtureCredential {
+  slug: string
+  desc?: string
+  username: string
+  password: string
+}
+
+/** The app's database, as the db credentials widget shows it. */
+export interface FixtureDb {
+  url: string
+  username: string
+  password: string
 }
 
 export interface FixtureApp {
   slug: string
   resourceJumps?: ResourceJumpType
+  /** More than one pair renders as a tab strip. */
+  credentials?: Array<FixtureCredential>
+  db?: FixtureDb
 }
 
 /**
@@ -73,11 +97,23 @@ export interface MockBackend {
   overrideBackendNetwork: (fn: OverrideBackendNetworkFn) => void
 }
 
+/**
+ * `EhBackendAppInput` rather than `EhAppIndexed`, because credentials and data
+ * sources are declared on the input type only — the client-facing type omits
+ * them although the controller passes them through verbatim.
+ */
 export function createApp(
   slug: string,
-  overrides?: Partial<EhAppIndexed>,
-): EhAppIndexed {
+  overrides?: Partial<EhBackendAppInput>,
+): EhBackendAppInput {
   return { slug, displayName: toDisplayName(slug), ...overrides }
+}
+
+function appWidgetData(app: FixtureApp): Partial<EhBackendAppInput> {
+  return {
+    ...(app.credentials && { ui: { pages: [], credentials: app.credentials } }),
+    ...(app.db && { dataSources: [{ type: 'db', ...app.db }] }),
+  }
 }
 
 export function createEnv(
@@ -93,14 +129,14 @@ export function createBackend(fixture: Fixture): MockBackend {
     fixture.envs.map((e) => [e.slug, createEnv(e.slug)]),
   )
   const bootstrapApps = Object.fromEntries(
-    fixture.apps.map((a) => [a.slug, createApp(a.slug)]),
+    fixture.apps.map((a) => [a.slug, createApp(a.slug, appWidgetData(a))]),
   )
 
   // resourceJumps carries its own, flatter env shape.
   const resourceJumpEnvs = fixture.envs.map((e) => ({
     slug: e.slug,
     displayName: toDisplayName(e.slug),
-    templateParams: { subdomain: e.slug },
+    templateParams: { subdomain: e.slug, ...e.templateParams },
   }))
 
   const { resourceJumps, groups, lateResolvableParams } =

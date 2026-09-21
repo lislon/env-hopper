@@ -46,6 +46,87 @@ export function hasUnresolvedSubstitution(str: string) {
   return str.includes('{{')
 }
 
+export type EhAppForInterpolate = Pick<EhApp, 'meta'>
+
+/**
+ * Where a single `{{...}}` placeholder gets its value.
+ *
+ * INTENTIONAL DIFF: the previous UI only ever looked in `env.meta[key]` and
+ * `app.meta[key]`, because its payload keyed environment parameters by the bare
+ * key (`k8sCtx`). The current payload keys them by the WHOLE placeholder name
+ * (`env.meta.k8sCtx`) in `templateParams`, which is also what the current url
+ * resolver reads. Both shapes are accepted so the widgets resolve against
+ * whichever a deployment serves, and no widget has to know which.
+ */
+function resolveWidgetPlaceholder(
+  placeholder: string,
+  env: EhEnv | undefined,
+  app: EhAppForInterpolate | undefined,
+): string | undefined {
+  if (placeholder === 'env.id') {
+    return env?.id
+  }
+  const qualified =
+    env?.templateParams?.[placeholder] ?? env?.meta?.[placeholder]
+  if (qualified !== undefined) {
+    return qualified
+  }
+  if (placeholder.startsWith('env.meta.')) {
+    return env?.meta?.[placeholder.slice('env.meta.'.length)]
+  }
+  if (placeholder.startsWith('app.meta.')) {
+    return app?.meta?.[placeholder.slice('app.meta.'.length)]
+  }
+  return undefined
+}
+
+/**
+ * Resolve the `{{...}}` placeholders a widget value carries, leaving anything
+ * unknown in place so the user can see what is missing.
+ *
+ * `{{a ?? fallback}}` supplies a default. Nested placeholders are handled by
+ * looping until nothing changes, capped like the original at ten passes.
+ */
+export function interpolateWidgetStr(
+  str: string,
+  env: EhEnv | undefined,
+  app: EhAppForInterpolate | undefined,
+) {
+  let result = str
+  let hasChanges = true
+
+  for (let pass = 0; hasChanges && pass < 10; pass++) {
+    hasChanges = false
+    let start = result.indexOf('{{')
+
+    for (let iteration = 0; start !== -1 && iteration < 10; iteration++) {
+      const end = result.indexOf('}}', start + 2)
+      if (end === -1) break
+
+      const betweenBraces = result.slice(start + 2, end)
+      const [placeholder, placeholderDefault] =
+        betweenBraces.indexOf('??') >= 0
+          ? betweenBraces.split(/\s*[?][?]\s*/)
+          : [betweenBraces, undefined]
+
+      const replacement =
+        resolveWidgetPlaceholder(placeholder, env, app) ?? placeholderDefault
+
+      if (replacement !== undefined) {
+        result = result.slice(0, start) + replacement + result.slice(end + 2)
+        hasChanges = true
+      } else {
+        // Leave the unresolved placeholder as it stands and look past it.
+        start = end + 2
+      }
+
+      start = result.indexOf('{{', start)
+    }
+  }
+
+  return result
+}
+
 /**
  * INTENTIONAL DIFF — the one place the previous url mechanics are replaced.
  *

@@ -19,9 +19,62 @@ import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/api/ApiQuer
 import { mapToFlagshipResourceJumps } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
 import type {
   BootstrapConfigData,
+  EhBackendAppInput,
+  EhBackendDataSourceInputDb,
   ResourceJumpsData,
 } from '@env-hopper/backend-core'
-import type { EhApp, EhClientConfig, EhEnv, EhSubstitutionType } from '../types'
+import type {
+  EhApp,
+  EhAppWidgets,
+  EhClientConfig,
+  EhEnv,
+  EhSubstitutionType,
+} from '../types'
+
+/**
+ * The credential widgets' data, read off the app the jump belongs to.
+ *
+ * Two things are worth knowing here. First, credentials and data sources hang
+ * off the APP, while the previous UI's `EhApp` was one entry per jump page, so
+ * every page of an app shows the app's credentials — which is what the previous
+ * UI did too, since its payload repeated them per page.
+ *
+ * Second, the cast. `BootstrapConfigData.apps` is typed `EhAppIndexed`, which
+ * declares neither `ui.credentials` nor `dataSources`, yet a backend fills both
+ * in through `EhBackendAppInput` and the controller returns the object it was
+ * given, so the fields are on the wire. Narrowing to the input type here says
+ * that out loud in the one module allowed to know it.
+ * The lasting fix is to declare both on the client-facing type; until then this
+ * is the only place that needs to lie.
+ */
+function mapToLegacyWidgets(
+  app: BootstrapConfigData['apps'][string] | undefined,
+): EhAppWidgets | undefined {
+  const source = app as EhBackendAppInput | undefined
+  const credentials = source?.ui?.credentials
+  const db = source?.dataSources?.find(
+    (ds): ds is EhBackendDataSourceInputDb => ds.type === 'db',
+  )
+
+  const ui = credentials?.map((cred) => ({
+    label: cred.slug,
+    desc: cred.desc,
+    username: cred.username,
+    password: cred.password,
+  }))
+
+  if (!ui?.length && !db) {
+    return undefined
+  }
+  return {
+    ui: ui?.length ? ui : undefined,
+    db: db && {
+      url: db.url,
+      username: db.username,
+      password: db.password,
+    },
+  }
+}
 
 /** What the shell used to read off `GET /api/config`. */
 export interface LegacyConfig extends EhClientConfig {
@@ -35,9 +88,12 @@ export interface LegacyConfig extends EhClientConfig {
  * Where each field comes from, and what is missing:
  *  - `apps` ← one entry per resource jump, titled by the group it belongs to
  *    (`appTitle`) plus its own name (`pageTitle`) — the same two-part title the
- *    previous data carried. `abbr` and `meta` have no source on this branch (the
- *    bootstrap payload keys app metadata separately and carries none yet), so
- *    titles render without an abbreviation and the widget panel has no data.
+ *    previous data carried. `widgets` is joined on from the bootstrap app the
+ *    jump belongs to. `abbr` is on the wire but deliberately not mapped yet:
+ *    it feeds the title format every list and quick bar renders, so it is a
+ *    change to make on its own. `meta` has no source — no app carries one — so
+ *    an `{{app.meta.*}}` placeholder in a widget value stays unresolved and is
+ *    shown to the user as it stands.
  *  - `envs` ← the environments the resource-jump payload lists, with the current
  *    `templateParams` standing in for the previous `meta`. `envType` has no
  *    source, so sensitive-value masking is currently always off.
@@ -55,12 +111,14 @@ export function mapToLegacyConfig(
     const flagship = flagships.find((f) =>
       f.resourceJumps.some((r) => r.slug === rj.slug),
     )
+    const bootstrapApp = flagship && bootstrap.apps[flagship.slug]
     return {
       id: rj.slug,
       urlTemplate: rj.urlTemplate,
       appTitle: flagship?.displayName,
       pageTitle:
         flagship?.displayName === rj.displayName ? undefined : rj.displayName,
+      widgets: mapToLegacyWidgets(bootstrapApp),
     }
   })
 

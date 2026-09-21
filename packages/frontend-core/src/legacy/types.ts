@@ -33,6 +33,29 @@ export interface EhApp {
   appTitle?: string
   pageTitle?: string
   meta?: EhMetaDictionary
+  widgets?: EhAppWidgets
+}
+
+/** What the credential widgets beside the form read. */
+export interface EhAppWidgets {
+  ui?: EhAppWidgetUiCredsOne | EhAppWidgetUiCredsMany
+  db?: EhAppWidgetDbCreds
+}
+
+/** A hint to the user about which username and password the app UI takes. */
+export interface EhAppWidgetUiCredsOne {
+  label?: string
+  desc?: string
+  username: string
+  password: string
+}
+
+export type EhAppWidgetUiCredsMany = Array<EhAppWidgetUiCredsOne>
+
+export interface EhAppWidgetDbCreds {
+  url: string
+  username: string
+  password: string
 }
 
 export interface EhEnv {

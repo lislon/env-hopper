@@ -130,14 +130,41 @@ describe('DefaultWithOverridesAndTemplate', () => {
       expect(result).toBe('https://host-dev.example.com')
     })
 
-    it('should stop after the pass cap rather than follow a longer chain', () => {
-      const template = '{{one}}'
-      const params = { one: '{{two}}', two: '{{three}}', three: 'end' }
+    it('should follow the three-level alias chain a real page url needs', () => {
+      // The chain that forced app-level patterns to be flattened server-side
+      // while the cap was 2: a page url names an app alias, which names another
+      // app pattern, which names env values.
+      const template = '{{app.meta.baseUrl}}/app/home'
+      const params = {
+        'app.meta.baseUrl': '{{app.meta.stageUrl}}',
+        'app.meta.stageUrl':
+          'https://svc-{{env.meta.subdomain}}.{{env.meta.baseDomain}}',
+        'env.meta.subdomain': 'dev-01',
+        'env.meta.baseDomain': 'example.com',
+      }
 
       const result = substituteTemplate(template, params)
 
-      // MAX_TEMPLATE_PASSES is 2: the template and the value it yields.
-      expect(result).toBe('{{three}}')
+      expect(result).toBe('https://svc-dev-01.example.com/app/home')
+    })
+
+    it('should stop after the pass cap rather than follow a longer chain', () => {
+      const template = '{{one}}'
+      const params = {
+        one: '{{two}}',
+        two: '{{three}}',
+        three: '{{four}}',
+        four: '{{five}}',
+        five: '{{six}}',
+        six: 'end',
+      }
+
+      const result = substituteTemplate(template, params)
+
+      // MAX_TEMPLATE_PASSES is 5, counting nesting depth: the template plus four
+      // levels of substituted value. The sixth is left raw so a caller can still
+      // detect an unresolvable template.
+      expect(result).toBe('{{six}}')
     })
 
     it('should terminate on a self-referential key', () => {
@@ -146,8 +173,9 @@ describe('DefaultWithOverridesAndTemplate', () => {
 
       const result = substituteTemplate(template, params)
 
-      // One expansion per pass, then the token is left alone — no recursion.
-      expect(result).toBe('https://example.com/aa{{loop}}')
+      // One expansion per nesting level up to the cap, then the token is left
+      // alone — the depth counter is what stops it, not a cycle check.
+      expect(result).toBe('https://example.com/aaaaa{{loop}}')
     })
 
     it('should not scan a value listed as a literal key', () => {

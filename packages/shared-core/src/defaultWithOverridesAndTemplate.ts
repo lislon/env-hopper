@@ -37,12 +37,23 @@ const PLACEHOLDER_RE = /\{\{([^{}]*)\}\}/g
 const DEFAULT_OPERATOR = '??'
 
 /**
- * How many times a template is scanned for `{{...}}`. Two covers the chain we
- * have — the template names an app-level pattern, which names env-level values.
- * Whatever the last pass substitutes in is inserted verbatim, which is also
- * what stops a self-referential key from looping.
+ * How deep a substituted value may itself be substituted. The counter counts
+ * nesting, not whole-string passes: each value a placeholder resolves to is
+ * scanned at depth+1.
+ *
+ * Two was too few. A real chain runs three deep — a page url names an app-level
+ * alias, which names another app-level pattern, which names env-level values
+ * (`env.meta.subdomain`). At two the env tokens came out raw, which is why
+ * app-level patterns had to be flattened server-side before the client ever saw
+ * them.
+ *
+ * Five leaves room for a longer alias chain without making the bound accidental:
+ * whatever the last level substitutes in is inserted verbatim, which is what
+ * stops a self-referential key from looping. A chain deeper than this
+ * deliberately resolves to a raw `{{...}}` so callers can still detect an
+ * unresolvable template — see the test that pins that.
  */
-export const MAX_TEMPLATE_PASSES = 2
+export const MAX_TEMPLATE_PASSES = 5
 
 export interface SubstituteTemplateOptions {
   /**

@@ -1,8 +1,40 @@
 'use client'
-import React, { createContext, use, useLayoutEffect } from 'react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import React, { createContext, use, useLayoutEffect, useState } from 'react'
 
 export type EhTheme = 'dark' | 'light'
+
+/**
+ * Shared with `next-themes`, which defaults to this exact key and, with
+ * `attribute="class"`, assigns the stored value STRAIGHT ONTO `<html>`'s class
+ * list on every load.
+ *
+ * So the value has to be stored as a bare string. Writing it JSON-encoded — as
+ * the previous UI's storage hook does for everything — made the theme survive a
+ * click and then break on the next load: the other writer set
+ * `class='"dark"'`, a token that matches no selector, while overwriting the
+ * `dark` class this file had added. `data-theme` stayed correct, so the switch
+ * showed the right icon over a page that had silently reverted to light. Every
+ * dark screenshot in the pixel gate was that bug.
+ */
+const THEME_STORAGE_KEY = 'theme'
+
+function readStoredTheme(): EhTheme | undefined {
+  try {
+    // Tolerates a JSON-encoded value left behind by an earlier build.
+    const raw = localStorage.getItem(THEME_STORAGE_KEY)?.replace(/^"|"$/g, '')
+    return raw === 'dark' || raw === 'light' ? raw : undefined
+  } catch {
+    return undefined
+  }
+}
+
+function writeStoredTheme(theme: EhTheme): void {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme)
+  } catch {
+    // Storage can throw outright; the choice just does not persist.
+  }
+}
 
 //  createContext is not supported in Server Components
 
@@ -70,10 +102,13 @@ export function ThemeContextProvider({
 }: {
   children: React.ReactNode
 }) {
-  const [userPreference, setUserPreference] = useLocalStorage<EhTheme>(
-    'theme',
-    getTheme(),
+  const [userPreference, setStoredPreference] = useState<EhTheme>(
+    () => readStoredTheme() ?? getTheme(),
   )
+  const setUserPreference = (theme: EhTheme) => {
+    writeStoredTheme(theme)
+    setStoredPreference(theme)
+  }
   // The original ran this mount-only with `userPreference` read out of a stale
   // closure. `switchTheme` is idempotent and the switch already writes the DOM
   // itself, so declaring the dependency changes no behaviour and drops a lint

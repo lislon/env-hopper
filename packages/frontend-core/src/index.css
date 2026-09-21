@@ -240,3 +240,13 @@
 .eh-legacy .hover\:bg-base-content\/10:hover {
   background-color: var(--fallback-bc, oklch(var(--bc) / 0.1));
 }
+
+/*
+ * Same story for the favourite star's resting outline. `:not(:hover)` because
+ * the star also carries `hover:stroke-yellow-400`, and that one Tailwind *does*
+ * emit — inside `@layer utilities`, which an unlayered rule like this outranks
+ * whatever the specificity. Without the guard the hover stroke never shows.
+ */
+.eh-legacy .stroke-base-content\/30:not(:hover) {
+  stroke: var(--fallback-bc, oklch(var(--bc) / 0.3));
+}

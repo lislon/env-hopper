@@ -37,7 +37,7 @@ function BarHeaderWithIcon({
           fill="none"
           className={cn(
             'w-4 stroke-yellow-400 ',
-            'fill-yellow-400 stoke-yellow-400 opacity-100',
+            'fill-yellow-400 opacity-100',
           )}
         />
       ) : (

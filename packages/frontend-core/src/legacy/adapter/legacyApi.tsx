@@ -256,11 +256,19 @@ export interface EhServerSyncContextValue {
 /**
  * Stands in for the old `EhServerSyncContext`.
  *
- * STUB: `needRefresh` was driven by `virtual:pwa-register/react`. This package
- * does not register a service worker (`registerSW()` is commented out in
- * `appPropsFactory`), so the header's "Update available" button cannot appear
- * yet. Wire this to the real registration when the PWA comes back; the header
- * needs no change when it does.
+ * `needRefresh` is a constant `false`, and that is PARITY, not a gap. It used to
+ * be driven by `virtual:pwa-register/react`, but the plugin only wires
+ * `onNeedRefresh` in its `prompt` branch (`client/build/register.js`: under
+ * `autoUpdate` the `activated` listener reloads the page instead, and the
+ * `waiting` listener that calls `onNeedRefresh` is never registered). Deployments
+ * ship `autoUpdate` — including this one, deliberately, because a waiting worker
+ * would never take over from the previous generation's — so the header's "Update
+ * available, click to reload" button never appeared in production either.
+ *
+ * So do not "restore" this by wiring it to the registration: on an `autoUpdate`
+ * build there is nothing to wire, and the button would only ever be reachable by
+ * switching the whole deployment to `prompt`, which is the thing that strands
+ * users on an old bundle. The page reloads itself instead.
  *
  * `isDegraded` keeps the original meaning: the query errored but a cached
  * payload is still being served, so the app works offline.

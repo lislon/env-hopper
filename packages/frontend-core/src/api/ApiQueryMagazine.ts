@@ -11,7 +11,15 @@ export class ApiQueryMagazine {
       // lands under a key nothing reads and the client stays a fetch behind.
       queryKey,
       queryFn,
-      staleTime: 0,
+      /*
+       * No `staleTime: 0` override. It used to be here, and it meant every
+       * component that mounted and asked for the bootstrap started another
+       * network fetch — measured twice on a cold production load. It bought
+       * nothing: `indexDataFetcher` is already cache-first over IndexedDB and
+       * revalidates in the background, so the instant-paint-then-refresh
+       * behaviour the override was reaching for is what the fetcher does anyway.
+       * The client's default applies instead.
+       */
     })
   }
 }

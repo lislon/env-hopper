@@ -132,7 +132,27 @@ describe('app shell', () => {
       const second = await renderApp({ server })
 
       expect(document.documentElement).toHaveAttribute('data-theme', 'dark')
+      // The class too: the attribute alone looked right while the page was light.
+      expect(document.documentElement.classList.contains('dark')).toBe(true)
       expect(second.getByTitle('Switch to light theme')).toBeInTheDocument()
+    })
+
+    /*
+     * What a returning user of the previous UI actually has stored: that UI
+     * JSON-encoded every value, so the key holds `"dark"` with the quotes. The
+     * theme library copies the stored value onto `<html>`'s class list, and a
+     * quoted token matches nothing, so the page rendered light under a toggle
+     * showing dark — the user's choice kept and silently not applied.
+     */
+    test("a returning user's dark choice from the previous UI still applies", async () => {
+      localStorage.setItem('theme', JSON.stringify('dark'))
+
+      const app = await renderApp({ server })
+
+      expect(document.documentElement.classList.contains('dark')).toBe(true)
+      expect(document.documentElement.className).not.toContain('"')
+      expect(localStorage.getItem('theme')).toBe('dark')
+      expect(app.getByTitle('Switch to light theme')).toBeInTheDocument()
     })
 
     test('switching back returns to light', async () => {

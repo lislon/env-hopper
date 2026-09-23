@@ -72,7 +72,7 @@ describe('app shell', () => {
   test('the version chip reads "Local" until a version is known', async () => {
     const app = await renderApp({ server })
 
-    const release = app.getByTitle('View release on GitHub')
+    const release = app.getByTitle('View release')
     expect(release).toHaveTextContent('Local')
     expect(release).toHaveAttribute(
       'href',
@@ -85,11 +85,25 @@ describe('app shell', () => {
 
     const app = await renderApp({ server })
 
-    const release = app.getByTitle('View release on GitHub')
+    const release = app.getByTitle('View release')
     expect(release).toHaveTextContent('v1.2.3')
     expect(release).toHaveAttribute(
       'href',
       'https://github.com/lislon/env-hopper/releases/tag/v1.2.3',
+    )
+  })
+
+  test('a snapshot version, which has no git tag, links to its npm page', async () => {
+    localStorage.setItem(
+      'version',
+      JSON.stringify('2.0.1-alpha-20260812145859'),
+    )
+
+    const app = await renderApp({ server })
+
+    expect(app.getByTitle('View release')).toHaveAttribute(
+      'href',
+      'https://www.npmjs.com/package/@env-hopper/backend-core/v/2.0.1-alpha-20260812145859',
     )
   })
 

@@ -14,6 +14,18 @@ export interface HeaderProps {
  * typecheck. A plain `<a href>` renders the identical element — `Link` emits an
  * `<a>` with the same href — so this is a types-level change only.
  */
+/**
+ * Where the version label links to. A snapshot build (`2.0.1-alpha-20260812145859`)
+ * is published with no git tag, so GitHub has no release page for it and the
+ * tag link was a 404; npm is the one place that version exists.
+ */
+export function releaseUrl(version: string | undefined): string {
+  if (version && /-[a-z]+-\d{14}$/.test(version)) {
+    return `https://www.npmjs.com/package/@env-hopper/backend-core/v/${version}`
+  }
+  return `https://github.com/lislon/env-hopper/releases/${version?.includes('.') ? `tag/v${version}` : ''}`
+}
+
 export function Header({ className }: HeaderProps) {
   const { error, needRefresh, refresh, isDegraded } = useEhServerSync()
 
@@ -38,8 +50,8 @@ export function Header({ className }: HeaderProps) {
         <div className="text-xs text-gray-500">
           <a
             className={'hover:underline'}
-            title={'View release on GitHub'}
-            href={`https://github.com/lislon/env-hopper/releases/${installedAppVersion?.includes('.') ? `tag/v${installedAppVersion}` : ''}`}
+            title={'View release'}
+            href={releaseUrl(installedAppVersion)}
           >
             {/* `versions` is what the previous UI showed with no version known.
                 In prod a version is always known, so that fallback only ever

@@ -141,9 +141,9 @@ export interface LegacyConfig extends EhClientConfig {
  *  - `apps` ← one entry per resource jump, titled by the group it belongs to
  *    (`appTitle`) plus its own name (`pageTitle`) — the same two-part title the
  *    previous data carried. `widgets` is joined on from the bootstrap app the
- *    jump belongs to. `abbr` is on the wire but deliberately not mapped yet:
- *    it feeds the title format every list and quick bar renders, so it is a
- *    change to make on its own. `meta` is mapped from the bootstrap app, which
+ *    jump belongs to, and so is `abbr`, the group prefix every title carries
+ *    (`FIN :: Billing :: Invoices`); without it every list, quick bar
+ *    and page title lost its first segment. `meta` is mapped from the bootstrap app, which
  *    is what lets an `{{app.meta.*}}` placeholder in a widget value resolve;
  *    before the backend shipped that field the placeholder was shown raw.
  *  - `envs` ← the environments the resource-jump payload lists, with the current
@@ -169,6 +169,7 @@ export function mapToLegacyConfig(
     return {
       id: rj.slug,
       urlTemplate: rj.urlTemplate,
+      abbr: bootstrapApp?.abbr,
       appTitle: flagship?.displayName,
       pageTitle:
         flagship?.displayName === rj.displayName ? undefined : rj.displayName,

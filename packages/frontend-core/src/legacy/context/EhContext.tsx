@@ -9,7 +9,7 @@ import type {
   EhSubstitutionType,
   EhSubstitutionValue,
 } from '../types'
-import React, { createContext, use, useCallback } from 'react'
+import React, { createContext, use, useCallback, useState } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import {
   findSubstitutionIdByUrl,
@@ -17,6 +17,7 @@ import {
   maskSensitiveDataIfNeeded,
 } from '../lib/utils'
 import { MAX_HISTORY_JUMPS } from '../lib/constants'
+import { migrateStoredAppIds } from '../lib/migrateStoredAppIds'
 import { useLegacyConfig } from '../adapter/legacyApi'
 import {
   LOCAL_STORAGE_HIDE_SENSITIVE_INFO,
@@ -91,6 +92,9 @@ const EMPTY_CONFIG: EhClientConfig = {
 }
 
 export function EhContextProvider({ children }: EhContextProviderProps) {
+  // First, before any stored value below is read: a returning user's app ids are
+  // in the previous UI's form. See `migrateStoredAppIds`.
+  useState(() => migrateStoredAppIds())
   /*
    * Was a suspense query straight onto `/api/config`. The adapter hook shapes
    * the current procedures into the same payload; `MainLayout` already holds the

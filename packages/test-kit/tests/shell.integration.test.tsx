@@ -155,6 +155,21 @@ describe('app shell', () => {
       expect(app.getByTitle('Switch to light theme')).toBeInTheDocument()
     })
 
+    /*
+     * The previous UI stored a page of an app as `<app>/<page>`, and `<app>/home`
+     * for the home page; this app's ids drop `/home` and write any other `/` as
+     * `@`. A returning user's favourites were kept but matched nothing, so the
+     * star showed empty and the quick bars were blank.
+     */
+    test("a returning user's favourite app from the previous UI is still a favourite", async () => {
+      localStorage.setItem('favoriteApps', JSON.stringify(['app1/home']))
+
+      const app = await renderApp({ server, initialLink: '/env/dev/app/app1' })
+
+      expect(app.getAllByTitle('Remove from favorites')).toHaveLength(1)
+      expect(localStorage.getItem('favoriteApps')).toBe('["app1"]')
+    })
+
     test('switching back returns to light', async () => {
       const app = await renderApp({ server })
 

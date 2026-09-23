@@ -68,7 +68,7 @@ export const magazine = {
       {
         // No credentials, no database, no repository: the app that proves an
         // empty panel is a property of the app and not of the environment.
-        slug: 'x-ray-viewer',
+        slug: 'treat-shop',
         resourceJumps: '1-pager',
       },
     ],

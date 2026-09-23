@@ -142,7 +142,7 @@ export interface LegacyConfig extends EhClientConfig {
  *    (`appTitle`) plus its own name (`pageTitle`) — the same two-part title the
  *    previous data carried. `widgets` is joined on from the bootstrap app the
  *    jump belongs to, and so is `abbr`, the group prefix every title carries
- *    (`FIN :: Billing :: Invoices`); without it every list, quick bar
+ *    (`GRP :: App :: Page`); without it every list, quick bar
  *    and page title lost its first segment. `meta` is mapped from the bootstrap app, which
  *    is what lets an `{{app.meta.*}}` placeholder in a widget value resolve;
  *    before the backend shipped that field the placeholder was shown raw.

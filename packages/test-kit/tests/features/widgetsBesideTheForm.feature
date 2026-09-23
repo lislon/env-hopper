@@ -47,7 +47,7 @@ Feature: What is shown beside the form for the chosen environment
 
   Scenario: An application with no login of its own shows none on any environment
     When I pick the "staging" environment
-    And I pick the "X Ray Viewer" application
+    And I pick the "Treat Shop" application
     Then I am shown no login at all
     And I am shown no database at all
 
@@ -61,7 +61,7 @@ Feature: What is shown beside the form for the chosen environment
 
   Scenario: A link naming something the application has not got is not offered
     When I pick the "staging" environment
-    And I pick the "X Ray Viewer" application
+    And I pick the "Treat Shop" application
     Then the links offered are "staging status page"
 
   Scenario: Production's own links follow its restated details

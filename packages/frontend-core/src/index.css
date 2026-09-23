@@ -214,6 +214,34 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
+ * Shadows inside the previous UI's skin, at the previous UI's values.
+ *
+ * A utility class the ported markup uses is compiled twice: once into
+ * ./legacy-skin.css by the previous toolchain, and again by this build. Both
+ * match, and this build's copy is in the `utilities` layer, which outranks the
+ * skin's `components` layer by design. Where the two agree that is invisible;
+ * for shadows they do not. This build's `shadow-*` read the theme's `--shadow-*`,
+ * which the theme above redefines to a much fainter shadow, so the skin rendered
+ * the current UI's shadows — measured on the jump card: `0 4px 8px -1px` where the
+ * previous UI drew `0 20px 25px -5px`.
+ *
+ * Redeclaring the variables on the scope element puts back the previous values,
+ * per name, for everything inside it. Per name matters: the two Tailwind versions
+ * renamed the scale, so these are the previous version's value for each class
+ * name, not the current version's defaults.
+ */
+.eh-legacy {
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+/*
  * The previous UI's theme *colour* utilities. ./legacy-skin.css froze the
  * component classes (`.menu`, `.btn`, `.input`) and it does declare the theme
  * tokens `--b2`/`--bc`, but the colour utilities themselves came from a plugin

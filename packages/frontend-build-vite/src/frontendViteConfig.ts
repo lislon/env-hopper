@@ -14,6 +14,11 @@ export function frontendViteConfig(options?: {
     manifest?: Partial<ManifestOptions>
     registerType?: 'autoUpdate' | 'prompt'
     selfDestroying?: boolean
+    /**
+     * `false` when the app registers the service worker itself; otherwise the
+     * plugin adds its own registration script next to the app's.
+     */
+    injectRegister?: false
   }
 }) {
   const plugins: UserConfig['plugins'] = []
@@ -59,6 +64,7 @@ export function frontendViteConfig(options?: {
     VitePWA({
       registerType,
       selfDestroying,
+      injectRegister: options?.pwa?.injectRegister,
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
       },

@@ -21,7 +21,7 @@ import {
   test,
 } from 'vitest'
 import { setUiSkin } from '@env-hopper/frontend-core'
-import { renderApp } from '../src/index'
+import { createBackend, magazine, renderApp } from '../src/index'
 
 describe('app shell', () => {
   const server = setupServer()
@@ -88,6 +88,30 @@ describe('app shell', () => {
     const release = app.getByTitle('View release')
     expect(release).toHaveTextContent('v1.2.3')
     expect(release).toHaveAttribute(
+      'href',
+      'https://github.com/lislon/env-hopper/releases/tag/v1.2.3',
+    )
+  })
+
+  test('with deployment version details, the version opens them in a dialog', async () => {
+    localStorage.setItem('version', JSON.stringify('1.2.3'))
+    const backend = createBackend({
+      ...magazine.carShop(),
+      customization: {
+        versionHtml: '<a href="https://ci.example.test/1">Build 1</a>',
+      },
+    })
+
+    const app = await renderApp({ server, backend })
+    await app.user.click(app.getByTitle('View release'))
+
+    const dialog = app.getByRole('dialog')
+    expect(dialog).toHaveAttribute('open')
+    expect(app.getByText('Build 1')).toHaveAttribute(
+      'href',
+      'https://ci.example.test/1',
+    )
+    expect(app.getAllByText('v1.2.3').at(-1)).toHaveAttribute(
       'href',
       'https://github.com/lislon/env-hopper/releases/tag/v1.2.3',
     )

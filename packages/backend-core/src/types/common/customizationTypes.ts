@@ -35,6 +35,11 @@ export interface EhIconSvg {
 export interface EhCustomizationData {
   /** Raw HTML for the footer. */
   footerHtml?: string
+  /**
+   * Raw HTML for a dialog the header's version label opens — build links, who to
+   * ask for help. Unset: the label links straight to the release.
+   */
+  versionHtml?: string
   /** Raw JS injected once, with `{{APP_VERSION}}` substituted. */
   analyticsScript?: string
   /** Extra about-dialog slides, raw HTML, appended after the built-in ones. */

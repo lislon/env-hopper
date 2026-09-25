@@ -1,7 +1,9 @@
 import cn from 'classnames'
 import { Link } from '@tanstack/react-router'
-import { useEhServerSync } from '../adapter/legacyApi'
+import { useEhServerSync, useLegacyCustomization } from '../adapter/legacyApi'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useModal } from '../hooks/useModal'
+import { BaseModal } from './Dialog/BaseModal'
 import { LOCAL_STORAGE_KEY_VERSION } from '../lib/local-storage-constants'
 
 export interface HeaderProps {
@@ -33,6 +35,8 @@ export function Header({ className }: HeaderProps) {
     LOCAL_STORAGE_KEY_VERSION,
     undefined,
   )
+  const { versionHtml } = useLegacyCustomization()
+  const [openVersion, versionDialog] = useModal()
 
   return (
     <header className={cn('flex items-center', className)}>
@@ -52,6 +56,14 @@ export function Header({ className }: HeaderProps) {
             className={'hover:underline'}
             title={'View release'}
             href={releaseUrl(installedAppVersion)}
+            onClick={
+              versionHtml
+                ? (event) => {
+                    event.preventDefault()
+                    openVersion()
+                  }
+                : undefined
+            }
           >
             {/* `versions` is what the previous UI showed with no version known.
                 In prod a version is always known, so that fallback only ever
@@ -72,6 +84,23 @@ export function Header({ className }: HeaderProps) {
         >
           degraded
         </div>
+      )}
+      {versionHtml && (
+        <BaseModal {...versionDialog}>
+          <h3 className="font-bold text-lg mb-2">Env hopper</h3>
+          <p>
+            Core{' '}
+            <a
+              className="link"
+              href={releaseUrl(installedAppVersion)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {installedAppVersion ? `v${installedAppVersion}` : 'unknown'}
+            </a>
+          </p>
+          <div dangerouslySetInnerHTML={{ __html: versionHtml }} />
+        </BaseModal>
       )}
       {needRefresh && (
         <button className="btn btn-outline" onClick={refresh}>

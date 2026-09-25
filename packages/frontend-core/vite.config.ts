@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import tanstackRouter from '@tanstack/router-plugin/vite'
 import { tanstackViteConfig } from '@tanstack/vite-config'
 import viteReact from '@vitejs/plugin-react'
@@ -11,7 +12,7 @@ import packageJson from './package.json'
 
 import type { ViteUserConfig } from 'vitest/config'
 
-const config = defineConfig(({ mode }) => {
+const config = defineConfig(({ command, mode }) => {
   const tsconfigPath =
     mode === 'lenient' ? './tsconfig-lenient.json' : './tsconfig.json'
 
@@ -41,8 +42,18 @@ const config = defineConfig(({ mode }) => {
 
   const myConfig: ViteUserConfig = {
     server: {
-      port: 3999,
+      // Overridable so two checkouts can serve at once; same knob shape as
+      // EH_API_PORT below.
+      port: Number(process.env.EH_WEB_PORT ?? 3999),
       strictPort: true,
+      // Same-origin `/api/*` (the session probe) would otherwise fall through
+      // to the SPA and answer html where the client expects json.
+      proxy: {
+        '/api': {
+          target: `http://localhost:${process.env.EH_API_PORT ?? 4000}`,
+          changeOrigin: true,
+        },
+      },
     },
     build: {
       copyPublicDir: false,
@@ -96,7 +107,8 @@ const config = defineConfig(({ mode }) => {
       watch: false,
       environment: 'jsdom',
       typecheck: { enabled: true },
-      setupFiles: ['./src/__tests__/integration/setup/testSetup.ts'],
+      // The jsdom/msw setup moved to @env-hopper/test-kit along with the
+      // integration scenarios; what is left here is pure-logic unit tests.
       include: ['./src/__tests__/**/*.test.{ts,tsx}'],
     },
     plugins: [
@@ -145,6 +157,14 @@ const config = defineConfig(({ mode }) => {
       }),
       viteReact(),
       svgr(),
+      // Dev only: `index.css` is the dev entry's sheet and needs `@import
+      // 'tailwindcss'` resolved, but the library build ships `src/*.css`
+      // uncompiled for consumers to compile themselves — see viteStaticCopy
+      // below. Compiling it here would change what `dist` contains.
+      ...tailwindcss().map((plugin) => ({
+        ...plugin,
+        apply: 'serve' as const,
+      })),
       // Copy public directory and CSS file to dist during build
       viteStaticCopy({
         targets: [
@@ -153,7 +173,9 @@ const config = defineConfig(({ mode }) => {
             dest: 'public',
           },
           {
-            src: 'src/index.css',
+            // index.css `@import`s its siblings, so they all have to land in
+            // dist next to it — consumers compile dist/index.css themselves.
+            src: 'src/*.css',
             dest: '.',
           },
         ],
@@ -164,15 +186,24 @@ const config = defineConfig(({ mode }) => {
 
   // Only merge tanstack config for non-test modes
   if (process.env.NODE_ENV !== 'test') {
-    return mergeConfig(
+    const merged = mergeConfig(
       tanstackViteConfig({
         tsconfigPath,
-        entry: './src/index.tsx',
+        entry: ['./src/index.tsx', './src/internal.ts'],
         srcDir: './src',
         cjs: false,
       }),
       myConfig,
     )
+    if (command === 'serve') {
+      // The library build's `preserve-directives` parses every module as
+      // javascript and so rejects Tailwind's compiled stylesheet. It exists to
+      // keep `'use client'` banners in `dist`, which the dev server has no
+      // stake in.
+      const plugins = merged.plugins as Array<{ name?: string } | undefined>
+      merged.plugins = plugins.filter((p) => p?.name !== 'preserve-directives')
+    }
+    return merged
   }
 
   return myConfig

@@ -1,5 +1,8 @@
 /* @import url(./modules/resourceJump/ui/JumpMainButton.css); */
 @import 'tailwindcss';
+/* The previous UI's look, scoped to `.eh-legacy`. See ./legacy-skin.css. */
+@import './legacy-theme.css';
+@import './legacy-skin.css';
 /* Other module imports this css, and we need to tell tailwind to scan our tsx files */
 @source ".";
 
@@ -63,7 +66,9 @@
     --tracking-normal: 0em;
     --spacing: 0.25rem;
     --hopper: oklch(0.7488 0.149 130.38);
-    --animation-btn: 0.25s;
+    /* Read by JumpMainButton and ResourceJumpButton as
+     * `active:hover:scale-(--btn-focus-scale)`. Keep it here: those render
+     * outside `.eh-legacy`, so the skin's own copy does not reach them. */
     --btn-focus-scale: 0.95;
     --eh-app-foreground: var(--foreground);
     --eh-app-border: #26ff67;
@@ -131,7 +136,7 @@
 
     --highlight: var(--color-amber-900);
     --hopper: oklch(0.7488 0.149 130.38);
-    --animation-btn: 0.25s;
+    /* See the note on this token in the :root block above. */
     --btn-focus-scale: 0.95;
   }
 }
@@ -195,8 +200,6 @@
   --color-eh-app-border: var(--eh-app-border);
   --color-eh-context-foreground: var(--eh-context-foreground);
   --color-eh-context-border: var(--eh-context-border);
-
-  --animate-button-pop: button-pop var(--animation-btn, 0.25s) ease-out;
 }
 
 @layer base {
@@ -210,16 +213,95 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@keyframes button-pop {
-  0% {
-    transform: scale(var(--btn-focus-scale, 0.98));
-  }
+/*
+ * Shadows inside the previous UI's skin, at the previous UI's values.
+ *
+ * A utility class the ported markup uses is compiled twice: once into
+ * ./legacy-skin.css by the previous toolchain, and again by this build. Both
+ * match, and this build's copy is in the `utilities` layer, which outranks the
+ * skin's `components` layer by design. Where the two agree that is invisible;
+ * for shadows they do not. This build's `shadow-*` read the theme's `--shadow-*`,
+ * which the theme above redefines to a much fainter shadow, so the skin rendered
+ * the current UI's shadows — measured on the jump card: `0 4px 8px -1px` where the
+ * previous UI drew `0 20px 25px -5px`.
+ *
+ * Redeclaring the variables on the scope element puts back the previous values,
+ * per name, for everything inside it. Per name matters: the two Tailwind versions
+ * renamed the scale, so these are the previous version's value for each class
+ * name, not the current version's defaults.
+ */
+.eh-legacy {
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
 
-  40% {
-    transform: scale(1.02);
-  }
+/*
+ * The previous UI's theme *colour* utilities. ./legacy-skin.css froze the
+ * component classes (`.menu`, `.btn`, `.input`) and it does declare the theme
+ * tokens `--b2`/`--bc`, but the colour utilities themselves came from a plugin
+ * that registered them with Tailwind, so nothing emits them now and they
+ * silently resolve to `transparent`: measured `bg-base-200` as
+ * `rgba(0, 0, 0, 0)` with no matching rule in any stylesheet.
+ *
+ * That left the autocomplete dropdown with no background at all, so the page
+ * behind it read straight through the open suggestion list.
+ *
+ * Written as plain rules rather than `@utility`/`@apply`: these are used from
+ * .tsx that ships as published source, which Tailwind's scanner does not
+ * compile at the consumer.
+ */
+.eh-legacy .bg-base-200 {
+  background-color: var(--fallback-b2, oklch(var(--b2) / 1));
+}
 
-  100% {
-    transform: scale(1);
-  }
+.eh-legacy .text-base-content,
+.eh-legacy .hover\:text-base-content:hover {
+  color: var(--fallback-bc, oklch(var(--bc) / 1));
+}
+
+.eh-legacy .hover\:bg-base-content\/10:hover {
+  background-color: var(--fallback-bc, oklch(var(--bc) / 0.1));
+}
+
+/*
+ * Same story for the favourite star's resting outline. `:not(:hover)` because
+ * the star also carries `hover:stroke-yellow-400`, and that one Tailwind *does*
+ * emit — inside `@layer utilities`, which an unlayered rule like this outranks
+ * whatever the specificity. Without the guard the hover stroke never shows.
+ */
+.eh-legacy .stroke-base-content\/30:not(:hover) {
+  stroke: var(--fallback-bc, oklch(var(--bc) / 0.3));
+}
+
+/*
+ * The about dialog's example "Jump" chip. Two different failures in one pair:
+ * `text-primary-content` matches nothing at all, while `bg-primary` DOES get
+ * emitted — but against the current theme's `--color-primary`, not the skin's
+ * `--p`, so the chip came out in the wrong brand colour on a correct-looking
+ * page. Both are pinned to the skin's own tokens here.
+ */
+.eh-legacy .bg-primary {
+  background-color: var(--fallback-p, oklch(var(--p) / 1));
+}
+
+.eh-legacy .text-primary-content {
+  color: var(--fallback-pc, oklch(var(--pc) / 1));
+}
+
+/*
+* And the kubernetes widget's settings gear, which is `fill-neutral-400
+ * hover:fill-accent`. Measured: `fill-accent` gave `rgb(0, 0, 0)` — the initial
+ * value, i.e. nothing matched, so hovering turned the gear black instead of
+ * accent. No `:not(:hover)` guard is needed in this direction: `fill-neutral-400`
+ * IS emitted by Tailwind, inside `@layer utilities`, and this unlayered rule
+ * outranks it exactly when it should, on hover.
+ */
+.eh-legacy .hover\:fill-accent:hover {
+  fill: var(--fallback-a, oklch(var(--a) / 1));
 }

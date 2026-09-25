@@ -16,7 +16,11 @@ import './index.css'
 const trpcClient = createTRPCClient<TRPCRouter>({
   links: [
     httpBatchLink({
-      url: 'http://localhost:4000/trpc',
+      // Relative by default so the request stays same-origin and the dev
+      // server's `/api` proxy forwards it. An absolute default sends the
+      // browser cross-origin and CORS blocks it whenever the api is not on
+      // the port the frontend guessed.
+      url: import.meta.env.VITE_EH_API_URL ?? '/api/trpc',
     }),
   ],
 })

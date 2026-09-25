@@ -11,9 +11,12 @@ import { CommandPalette } from '~/modules/resourceJump/ui/cmdk/CommandPalette'
 import { QuickSearchProvider } from '~/modules/resourceJump/ui/cmdk/QuickSearchContext'
 import { CenterColumn } from '~/modules/resourceJump/ui/layout/CenterColumn'
 import { ResourceJumpBreadcrubms } from '~/modules/resourceJump/ui/ResourceJumpBreadcrumbs'
+import { AppLinksPanel } from '~/modules/uiSettings/AppLinksPanel'
 import ContextDebug from '~/ui/components/contextDebug'
+import { LegacyPage } from '~/legacy/LegacyPage'
 import { MainLayout } from '~/ui/layout/MainLayout'
 import { TopLevelProviders } from '~/ui/layout/TopLevelProviders'
+import { getUiSkin } from '~/ui/skin/EhShell'
 
 export interface ResourceJumpLayoutProps {
   children: React.ReactNode
@@ -28,6 +31,33 @@ export function ResourceJumpLayout({
   queryClient,
   trpcClient,
 }: ResourceJumpLayoutProps) {
+  /*
+   * On the previous skin this page contributes only its body: the chrome comes
+   * from `EhShell` further up, which already renders a header, a footer and a
+   * theme switch of its own. Rendering `MainLayout` as well produced two of each
+   * — deliberate while the previous skin had no body to show, and removable now
+   * that it has one.
+   *
+   * The providers above `MainLayout` stay in both branches: auth lives in
+   * `TopLevelProviders`, and dropping it is what produces
+   * "useAuth must be used within AuthProvider". The resource-jump providers are
+   * skipped, because nothing the previous skin renders reads them — it goes
+   * through the adapter instead.
+   */
+  if (getUiSkin() === 'legacy') {
+    return (
+      <TopLevelProviders queryClient={queryClient} trpcClient={trpcClient}>
+        <LegacyPage
+          selection={{
+            envId: loaderData.envSlug,
+            appId: loaderData.resourceSlug,
+            subValue: loaderData.crossCuttingParams[0]?.stringValue,
+          }}
+        />
+      </TopLevelProviders>
+    )
+  }
+
   return (
     <TopLevelProviders queryClient={queryClient} trpcClient={trpcClient}>
       <EnvironmentProvider initialEnvSlug={loaderData.envSlug}>
@@ -75,6 +105,7 @@ export function ResourceJumpLayout({
                   </div> */}
                   <div className="flex flex-col gap-4 flex-1 items-center">
                     <CenterColumn>{children}</CenterColumn>
+                    <AppLinksPanel />
                   </div>
                   {/* <div className="flex flex-col gap-4 w-fit">
                     <RightColumn />

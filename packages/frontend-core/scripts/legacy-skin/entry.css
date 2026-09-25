@@ -1,0 +1,3 @@
+/* Check-only entry point for check.mjs and browser-check.mjs. Not shipped. */
+@import '../../src/index.css';
+@source "./fixture.html";

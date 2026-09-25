@@ -1,6 +1,7 @@
 import type { DefaultWithOverridesAndTemplate } from '@env-hopper/shared-core'
 import type { EhAppsMeta, EhContextIndexed } from '../backend/api.js'
 import type { EhAppIndexed } from './app/appTypes.js'
+import type { EhCustomizationData } from './customizationTypes.js'
 import type { EhEnvIndexed } from './env/envTypes.js'
 
 export type JumpResourceSlug = string
@@ -15,6 +16,18 @@ export interface BootstrapConfigData {
     envSlug: EnvSlug
     resourceJumpSlug: JumpResourceSlug
   }
+  /** Absent for a deployment that customizes nothing. */
+  customization?: EhCustomizationData
+  /**
+   * The running server's own version, shown in the header and reported with
+   * client errors.
+   *
+   * It comes from the server rather than from a frontend build define on
+   * purpose: a browser holding a cached bundle would otherwise report the
+   * version it was built with, which is exactly the case where knowing the
+   * deployed version matters.
+   */
+  appVersion?: string
 }
 
 export interface AvailabilityMatrixData {
@@ -54,6 +67,17 @@ export interface EnvBaseInfo extends SlugAndDisplayable {
 export interface LateResolvableParam extends SlugAndDisplayable {
   slug: string
   displayName: string
+  /**
+   * The value stays when the user switches environment. An order id means the
+   * same thing everywhere; a session id does not. (By default: false)
+   */
+  isSharedAcrossEnvs?: boolean
+  /**
+   * Let the browser suggest the user's earlier values for this param. Worth it
+   * for an id someone retypes; wrong for anything sensitive or single-use,
+   * since the browser then stores it. (By default: false)
+   */
+  isBrowserAutocomplete?: boolean
 }
 
 export interface ResourceJump extends SlugAndDisplayable {

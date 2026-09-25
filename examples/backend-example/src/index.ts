@@ -34,35 +34,26 @@ interface DataShape {
   resourceJumpsDataExtended: ResourceJumpsExtendedData
 }
 
+/**
+ * A private `src/local/` override if there is one, otherwise the example data
+ * that ships in this directory.
+ *
+ * The fallback used to be EMPTY lists, which meant a fresh clone's dev server
+ * came up with no environments and no applications — a form with nothing in it
+ * and no hint that a file was missing. `src/local/` is gitignored, so nobody
+ * gets the override by checking the repo out; the committed example data is what
+ * this example is FOR.
+ */
 async function loadStaticData(): Promise<DataShape> {
   try {
-    // Try to load local override first, fallback to example data
     return await import('./local/example-data.local.js')
   } catch {
-    // Use the clean example data as fallback
+    const { bootstrapConfigData, resourceJumpsData } =
+      await import('./example-data.js')
     return {
-      bootstrapConfigData: {
-        envs: {},
-        apps: {},
-        appsMeta: {
-          tags: {
-            descriptions: [],
-          },
-        },
-        contexts: [],
-        defaults: {
-          envSlug: '',
-          resourceJumpSlug: '',
-        },
-      },
-      resourceJumpsData: {
-        envs: [],
-        lateResolvableParams: [],
-        resourceJumps: [],
-      },
-      resourceJumpsDataExtended: {
-        envs: [],
-      },
+      bootstrapConfigData,
+      resourceJumpsData,
+      resourceJumpsDataExtended: { envs: [] },
     }
   }
 }

@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useEhServerSync, useLegacyCustomization } from '../adapter/legacyApi'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useModal } from '../hooks/useModal'
-import { BaseModal } from './Dialog/BaseModal'
+import { VersionDialog } from './Dialog/VersionDialog'
 import { LOCAL_STORAGE_KEY_VERSION } from '../lib/local-storage-constants'
 
 export interface HeaderProps {
@@ -35,8 +35,10 @@ export function Header({ className }: HeaderProps) {
     LOCAL_STORAGE_KEY_VERSION,
     undefined,
   )
-  const { versionHtml } = useLegacyCustomization()
+  const { versionRows, versionCredit, versionBuiltAt, icons } =
+    useLegacyCustomization()
   const [openVersion, versionDialog] = useModal()
+  const hasVersionDialog = Boolean(versionRows?.length)
 
   return (
     <header className={cn('flex items-center', className)}>
@@ -57,7 +59,7 @@ export function Header({ className }: HeaderProps) {
             title={'View release'}
             href={releaseUrl(installedAppVersion)}
             onClick={
-              versionHtml
+              hasVersionDialog
                 ? (event) => {
                     event.preventDefault()
                     openVersion()
@@ -85,22 +87,16 @@ export function Header({ className }: HeaderProps) {
           degraded
         </div>
       )}
-      {versionHtml && (
-        <BaseModal {...versionDialog}>
-          <h3 className="font-bold text-lg mb-2">Env hopper</h3>
-          <p>
-            Core{' '}
-            <a
-              className="link"
-              href={releaseUrl(installedAppVersion)}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {installedAppVersion ? `v${installedAppVersion}` : 'unknown'}
-            </a>
-          </p>
-          <div dangerouslySetInnerHTML={{ __html: versionHtml }} />
-        </BaseModal>
+      {hasVersionDialog && (
+        <VersionDialog
+          {...versionDialog}
+          version={installedAppVersion}
+          releaseHref={releaseUrl(installedAppVersion)}
+          rows={versionRows}
+          icons={icons}
+          credit={versionCredit}
+          builtAt={versionBuiltAt}
+        />
       )}
       {needRefresh && (
         <button className="btn btn-outline" onClick={refresh}>

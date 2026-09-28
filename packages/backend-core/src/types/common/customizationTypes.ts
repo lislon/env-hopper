@@ -32,14 +32,36 @@ export interface EhIconSvg {
   svg: string
 }
 
+/**
+ * One row of the dialog the header's version label opens: what this deployment
+ * was built from and where to ask about it.
+ */
+export interface EhVersionRow {
+  /** Matches `EhIconSvg.iconId`. An unknown id renders the row without an icon. */
+  iconId?: string
+  /** Static prefix before the value, e.g. `Pipeline`. */
+  label?: string
+  /** The row's value; a link when `href` is set. */
+  value: string
+  href?: string
+  /** One line under the row saying what it points at. */
+  description?: string
+  /** Renders the value in a monospace face, for ids and hashes. */
+  mono?: boolean
+}
+
 export interface EhCustomizationData {
   /** Raw HTML for the footer. */
   footerHtml?: string
   /**
-   * Raw HTML for a dialog the header's version label opens — build links, who to
-   * ask for help. Unset: the label links straight to the release.
+   * Rows for the dialog the header's version label opens — build links, who to
+   * ask for help. Empty: the label links straight to the release.
    */
-  versionHtml?: string
+  versionRows?: Array<EhVersionRow>
+  /** Small print in that dialog: who runs this deployment. */
+  versionCredit?: string
+  /** When this build was made, ISO 8601. Shown as a date beside the credit. */
+  versionBuiltAt?: string
   /** Raw JS injected once, with `{{APP_VERSION}}` substituted. */
   analyticsScript?: string
   /** Extra about-dialog slides, raw HTML, appended after the built-in ones. */

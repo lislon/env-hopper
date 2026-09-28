@@ -20,6 +20,7 @@ import {
   expect,
   test,
 } from 'vitest'
+import { within } from '@testing-library/react'
 import { setUiSkin } from '@env-hopper/frontend-core'
 import { createBackend, magazine, renderApp } from '../src/index'
 
@@ -98,7 +99,16 @@ describe('app shell', () => {
     const backend = createBackend({
       ...magazine.carShop(),
       customization: {
-        versionHtml: '<a href="https://ci.example.test/1">Build 1</a>',
+        versionRows: [
+          {
+            label: 'Build',
+            value: '1',
+            href: 'https://ci.example.test/1',
+            description: 'CI run that built this image',
+          },
+        ],
+        versionCredit: 'Made by the car shop',
+        versionBuiltAt: '2026-09-26T09:12:00.000Z',
       },
     })
 
@@ -107,9 +117,18 @@ describe('app shell', () => {
 
     const dialog = app.getByRole('dialog')
     expect(dialog).toHaveAttribute('open')
-    expect(app.getByText('Build 1')).toHaveAttribute(
+    expect(app.getByText('1')).toHaveAttribute(
       'href',
       'https://ci.example.test/1',
+    )
+    expect(app.getByText('CI run that built this image')).toBeVisible()
+    expect(app.getByText('Made by the car shop')).toBeVisible()
+    expect(app.getByText('Built 26 Sep 2026')).toBeVisible()
+    // The project home the core adds itself, alongside the deployment's rows.
+    // Scoped to the dialog: the footer links to the project too.
+    expect(within(dialog).getByText('lislon/env-hopper')).toHaveAttribute(
+      'href',
+      'https://github.com/lislon/env-hopper',
     )
     expect(app.getAllByText('v1.2.3').at(-1)).toHaveAttribute(
       'href',

@@ -134,7 +134,9 @@ export function VersionDialog({
         />
       </div>
       {(credit || builtAt) && (
-        <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between text-xs text-gray-500">
+        // `border-base-300` rather than a literal gray: the skin themes it, and a
+        // fixed light gray renders as a bright line on the dark theme.
+        <div className="mt-4 pt-3 border-t border-base-300 flex justify-between text-xs text-gray-500">
           <span>{credit}</span>
           <span>{formatBuiltAt(builtAt)}</span>
         </div>

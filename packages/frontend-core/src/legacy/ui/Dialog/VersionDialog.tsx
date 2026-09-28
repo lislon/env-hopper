@@ -134,9 +134,9 @@ export function VersionDialog({
         />
       </div>
       {(credit || builtAt) && (
-        // `border-base-300` rather than a literal gray: the skin themes it, and a
-        // fixed light gray renders as a bright line on the dark theme.
-        <div className="mt-4 pt-3 border-t border-base-300 flex justify-between text-xs text-gray-500">
+        // `eh-version-divider` is a plain rule in index.css, not a utility: a
+        // class introduced in published source is never compiled downstream.
+        <div className="mt-4 pt-3 eh-version-divider flex justify-between text-xs text-gray-500">
           <span>{credit}</span>
           <span>{formatBuiltAt(builtAt)}</span>
         </div>

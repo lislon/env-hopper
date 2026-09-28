@@ -280,6 +280,17 @@
 }
 
 /*
+ * The version dialog's footer rule. Plain CSS for the same reason as the colour
+ * utilities above — it is used from .tsx that ships as published source, so a
+ * utility class never reaches a consumer's stylesheet: `border-base-300` shipped
+ * and measured as Tailwind's default grey on BOTH themes, a bright line against
+ * the dark one. Mixed from `currentColor` so it needs no theme token at all.
+ */
+.eh-version-divider {
+  border-top: 1px solid color-mix(in oklab, currentColor 25%, transparent);
+}
+
+/*
  * The about dialog's example "Jump" chip. Two different failures in one pair:
  * `text-primary-content` matches nothing at all, while `bg-primary` DOES get
  * emitted — but against the current theme's `--color-primary`, not the skin's

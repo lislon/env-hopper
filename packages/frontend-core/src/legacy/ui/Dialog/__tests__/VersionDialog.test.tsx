@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { VersionDialog, formatBuiltAt } from '../VersionDialog'
@@ -70,6 +72,21 @@ describe('VersionDialog', () => {
     expect(screen.getByTestId('gitlab-icon')).toBeInTheDocument()
     // The row itself still renders — an unknown id costs the icon, not the row.
     expect(screen.getByRole('link', { name: 'bb157078' })).toBeInTheDocument()
+  })
+
+  // The footer rule cannot be a utility class: Tailwind compiles from source it
+  // scans, and this component ships as published source, so a utility would be
+  // dropped at the consumer and the divider would fall back to a fixed grey that
+  // glares on the dark theme. This asserts the plain rule is still shipped.
+  it('ships the footer divider as a real rule in the stylesheet', () => {
+    // `import.meta.url` is an http URL under vitest's transform, so this reads
+    // from the package root the runner starts in.
+    const css = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8')
+    expect(css).toMatch(/\.eh-version-divider\s*\{[^}]*border-top/)
+    renderDialog()
+    expect(screen.getByText('Made by Igor Golovin').closest('div')).toHaveClass(
+      'eh-version-divider',
+    )
   })
 
   it('shows the build date as a day, and nothing when there is none', () => {

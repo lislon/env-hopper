@@ -60,6 +60,14 @@ jobs:
           fi
       - name: Version packages (alpha snapshot)
         if: github.ref == 'refs/heads/alpha'
+        # The changelog generator is `@changesets/changelog-github`, which looks
+        # each changeset's commit up through the API and errors out without a
+        # token. It only does that for changesets that are committed, so the
+        # generated snapshot one above never needed it and this step passed for
+        # as long as nothing real was pending — the first genuine changeset on
+        # this branch failed it. The stable path below already passes the token.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm changeset version --snapshot alpha
       - name: Update lockfile (alpha)
         if: github.ref == 'refs/heads/alpha'

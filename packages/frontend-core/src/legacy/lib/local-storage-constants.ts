@@ -1,0 +1,17 @@
+/**
+ * The previous UI's localStorage keys, copied verbatim. Existing browsers hold
+ * values under exactly these names, so the keys are a compatibility surface —
+ * renaming one silently forgets whatever the user had.
+ */
+export const LOCAL_STORAGE_KEY_RECENT_JUMPS = 'recent'
+export const LOCAL_STORAGE_KEY_FAVORITE_ENVS = 'favoriteEnvs'
+export const LOCAL_STORAGE_KEY_FAVORITE_APPS = 'favoriteApps'
+export const LOCAL_STORAGE_KEY_VERSION = 'version'
+export const LOCAL_STORAGE_HIDE_SENSITIVE_INFO = 'hideSensitiveInfo'
+export const LOCAL_STORAGE_KEY_LAST_USED_ENV = 'lastUsedEnv'
+export const LOCAL_STORAGE_KEY_LAST_USED_APP = 'lastUsedApp'
+export const LOCAL_STORAGE_KEY_LAST_USED_SUBS = 'lastUsedSubs'
+export const LOCAL_STORAGE_KEY_USER_ID = 'userId'
+export const LOCAL_STORAGE_KEY_UI_PASS_TABS_POSITIONS = 'lastUiTabs'
+export const LOCAL_STORAGE_KEY_UI_K8S_TABS_POSITIONS = 'lastK8sTabs'
+export const LOCAL_STORAGE_KEY_UI_K8S_CLIENT_STYLE = 'k8sClientStyle'

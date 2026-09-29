@@ -27,6 +27,7 @@ describe('mapDisplayedItems', () => {
           "isChild": false,
           "item": {
             "displayName": "App A",
+            "parent": undefined,
             "slug": "app-a-home",
             "type": "pageUrl",
           },
@@ -40,6 +41,7 @@ describe('mapDisplayedItems', () => {
           "isChild": false,
           "item": {
             "displayName": "App B",
+            "parent": undefined,
             "slug": "app-b-home",
             "type": "pageUrl",
           },

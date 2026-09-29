@@ -18,6 +18,7 @@
     "dev": "nx run-many -t dev -p @env-hopper/backend-example,@env-hopper/frontend-example,@env-hopper/frontend-core --parallel=3",
     "dev:backend": "nx run-many --target=dev --projects=@env-hopper/backend-example",
     "dev:frontend": "nx run-many -t dev -p @env-hopper/frontend-example,@env-hopper/frontend-core --parallel=2",
+    "dev:local": "nx run-many -t dev -p @env-hopper/test-kit,@env-hopper/frontend-core --parallel=2",
     "dev:x": "nx run-many --target=dev --projects=packages/frontend-core",
     "dev:z": "nx run-many -t dev -p 'examples/*,packages/frontend-core' --parallel=10 --nx-ignore-cycles",
     "format": "prettier --write . && nx run-many -t test:eslint --fix --projects=*",

@@ -1,0 +1,74 @@
+/*
+ * The parts of the previous UI's Tailwind config that have to stay real
+ * utilities rather than being frozen into ./legacy-skin.css — so `md:` and the
+ * other variants keep working on them.
+ *
+ * The previous config got its grid areas from a plugin that never gained Tailwind
+ * 4 support (it stops at 4.0.0, peer `tailwindcss: ^3.0.1`), so the templates are
+ * written out here instead. The declarations are the same ones the plugin emitted.
+ *
+ * Unlike ./legacy-skin.css these are NOT scoped to `.eh-legacy`: they are layout
+ * utilities with no appearance of their own, and the current UI will want the
+ * same page skeleton.
+ */
+
+@theme {
+  --color-eh-green: oklch(74.88% 0.149 130.38);
+
+  /*
+   * Named grid areas. They live in `@theme` because Tailwind 4's functional
+   * utilities will not take a bare identifier — `--value([*])` rejects
+   * `grid-in-e-input` — so the names have to be theme keys to be resolvable.
+   */
+  --grid-area-e-input: e-input;
+  --grid-area-e-bar: e-bar;
+  --grid-area-a-input: a-input;
+  --grid-area-a-bar: a-bar;
+  --grid-area-a-widgets: a-widgets;
+  --grid-area-s-input: s-input;
+  --grid-area-jump: jump;
+  --grid-area-ui-widget: ui-widget;
+  --grid-area-history: history;
+}
+
+@utility grid-in-* {
+  grid-area: --value(--grid-area-*);
+}
+
+@utility grid-areas-layout-md {
+  grid-template-areas:
+    '   .    e-input   ui-widget'
+    '   .    e-bar     ui-widget'
+    '   .    a-input   ui-widget'
+    '   .    a-bar     ui-widget'
+    '   .    s-input   ui-widget'
+    '   .    jump      ui-widget'
+    'history history   history';
+}
+
+@utility grid-areas-layout-sm {
+  grid-template-areas:
+    'e-input'
+    'e-bar  '
+    'a-input'
+    'a-bar  '
+    's-input'
+    '  jump '
+    'ui-widget'
+    'history';
+}
+
+@utility grid-cols-layout-2xl {
+  grid-template-columns: minmax(250px, 1fr) minmax(auto, 800px) minmax(
+      250px,
+      1fr
+    );
+}
+
+@utility grid-cols-layout-md {
+  grid-template-columns: 1fr minmax(auto, 800px) 1fr;
+}
+
+@utility grid-cols-layout-sm {
+  grid-template-columns: 1fr;
+}

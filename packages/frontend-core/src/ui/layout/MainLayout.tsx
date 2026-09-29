@@ -1,5 +1,6 @@
 import React from 'react'
 import { Header } from '../components/header/Header'
+import { Footer } from './Footer'
 
 export interface MainLayoutProps {
   children: React.ReactNode
@@ -23,6 +24,7 @@ export function MainLayout({
           </div>
         </main>
       </div>
+      <Footer />
     </div>
   )
 }

@@ -13,6 +13,12 @@ export function buildJumpUrl(
   envSlug: EnvSlug | undefined,
   resourceJumpsData: ResourceJumpsData | undefined,
   lateParamValues?: Record<string, string>,
+  /**
+   * The app's environment-independent placeholders, lowest precedence of all.
+   * A url pattern shared by every environment lives here once instead of being
+   * repeated per (jump, environment).
+   */
+  appParams?: Record<string, string>,
 ): string | undefined {
   if (!resourceJumpsData || !jumpResourceSlug || !envSlug) {
     return undefined
@@ -42,5 +48,6 @@ export function buildJumpUrl(
     env.templateParams,
     resourceJump.urlTemplate.templateParams,
     lateParamValues,
+    appParams,
   )
 }

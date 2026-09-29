@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src", "tests", "*.config.ts", "*.config.js", "package.json"],
+  "exclude": ["eslint.config.ts", "root-symlink.eslint.config.js"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["vite/client", "vitest"],
+    // Resolve the app and this package's own entry from sources, so the check
+    // needs nothing built. `~/*` is how frontend-core's sources import
+    // themselves; mirrors the vite alias.
+    "paths": {
+      "~/*": ["../frontend-core/src/*"]
+    },
+    "outDir": "./dist-ts",
+    "rootDir": "."
+  }
+}

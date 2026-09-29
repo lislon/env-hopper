@@ -62,6 +62,8 @@ describe('ResourceJumps Backend Implementation', () => {
         "lateResolvableParams": [
           {
             "displayName": "Product ID",
+            "isBrowserAutocomplete": true,
+            "isSharedAcrossEnvs": true,
             "slug": "productId",
           },
           {

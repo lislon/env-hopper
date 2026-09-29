@@ -5,6 +5,8 @@ import type {
   CrossCuttingParamDef,
   CrossCuttingParamValue,
 } from '~/modules/crossCuttingParams/types'
+import { keepSharedAcrossEnvs } from '~/modules/crossCuttingParams/utils/keepSharedAcrossEnvs'
+import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 
 export interface CrossCuttingParamsContext {
   setCrossCuttingParams: (
@@ -39,6 +41,22 @@ export function CrossCuttingParamsProvider({
   const [crossCuttingParamDefs, setCrossCuttingParamsDefs] = useState<
     Array<CrossCuttingParamDef>
   >([])
+
+  // Drop the values that only meant something in the environment we left.
+  // Adjusting state during render rather than in an effect, so no render ever
+  // shows a stale value. Only a switch between two known environments counts:
+  // `currentEnv` starts undefined while the catalog loads, and pruning on that
+  // would wipe a value the url just supplied.
+  const { currentEnv } = useEnvironmentContext()
+  const [lastEnvSlug, setLastEnvSlug] = useState(currentEnv?.slug)
+  if (currentEnv && currentEnv.slug !== lastEnvSlug) {
+    if (lastEnvSlug !== undefined) {
+      setCrossCuttingParams(
+        keepSharedAcrossEnvs(crossCuttingParams, crossCuttingParamDefs),
+      )
+    }
+    setLastEnvSlug(currentEnv.slug)
+  }
 
   const getParamDefBySlug = useCallback(
     (slug: string): CrossCuttingParamDef | undefined => {

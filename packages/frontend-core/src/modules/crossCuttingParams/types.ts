@@ -7,7 +7,10 @@ export interface CrossCuttingLoaderParam {
 export interface CrossCuttingParamDef {
   slug: string
   displayName: string
-  //   scope: 'global' | 'environment';
+  /** The value survives an environment switch. Defaults to false. */
+  isSharedAcrossEnvs?: boolean
+  /** The browser may suggest the user's earlier values. Defaults to false. */
+  isBrowserAutocomplete?: boolean
 }
 
 export interface CrossCuttingParamValue {

@@ -62,17 +62,32 @@ export const bootstrapConfigData: BootstrapConfigData = {
     staging: {
       slug: 'staging',
       displayName: 'Staging',
+      // `meta` is free-form per deployment and is what `{{env.meta.*}}`
+      // templates resolve against.
+      meta: { region: 'eu-west', tier: 'preprod' },
     },
     uat: {
       slug: 'uat',
       displayName: 'User Acceptance Testing',
+      meta: { region: 'us-east', tier: 'preprod' },
     },
     prod: {
       slug: 'prod',
       displayName: 'Production',
     },
   },
-  contexts: [],
+  // Behavioural flags per parameter, joined onto a jump's late-resolvable
+  // params by slug. `env` has no matching param on purpose: it is the
+  // environment selector, not something a user types.
+  contexts: [
+    {
+      slug: 'kafkaTopic',
+      displayName: 'Kafka Topic',
+      isSharedAcrossEnvs: true,
+    },
+    { slug: 'postId', displayName: 'Post ID', isSharedAcrossEnvs: false },
+    { slug: 'env', displayName: 'Environment', isSharedAcrossEnvs: true },
+  ],
   appsMeta: {
     tags: {
       descriptions: [],
@@ -89,6 +104,12 @@ export const resourceJumpsData: ResourceJumpsData = {
     {
       slug: 'productId',
       displayName: 'Product ID',
+      // A product means the same thing in every environment, so the value is
+      // worth carrying when the user switches. A pod or session id would not be.
+      isSharedAcrossEnvs: true,
+      // Someone retypes the same handful of product ids all day, so let the
+      // browser suggest them.
+      isBrowserAutocomplete: true,
     },
     {
       slug: 'postId',

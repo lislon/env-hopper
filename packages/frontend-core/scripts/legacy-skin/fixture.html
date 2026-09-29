@@ -1,0 +1,45 @@
+<!doctype html>
+<!--
+  Not shipped and not rendered by the app. This is the class list check.mjs feeds
+  to Tailwind so the compiler emits the rules it then asserts on, and it is also
+  the page browser-check.mjs loads.
+-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>legacy skin check</title>
+    <link rel="stylesheet" href="./out.css" />
+  </head>
+  <body>
+    <div class="eh-legacy" id="scoped">
+      <button class="btn btn-primary" id="inside">
+        inside the legacy scope
+      </button>
+      <a class="tab tab-active tab-bordered">tab</a>
+      <!--
+        The quick bar carries no `menu` class, matching the previous app's markup.
+        It must not: `.menu { display: flex }` comes after it in the cascade and
+        would override its own `inline-flex`.
+      -->
+      <ul class="eh-quick-bar p-0 relative overflow-hidden flex-wrap">
+        <li><a class="menu-title">item</a></li>
+        <li><a>plain</a></li>
+      </ul>
+      <ul class="menu menu-horizontal menu-xs">
+        <li><a>a real menu, so those classes still compile</a></li>
+      </ul>
+      <div
+        class="card alert badge input select toggle checkbox navbar prose"
+      ></div>
+      <div
+        class="grid grid-areas-layout-md grid-cols-layout-2xl grid-in-e-input grid-in-e-bar grid-in-a-input grid-in-a-bar grid-in-a-widgets grid-in-s-input grid-in-jump grid-in-ui-widget grid-in-history bg-eh-green"
+      ></div>
+      <div
+        class="grid-areas-layout-sm grid-cols-layout-md grid-cols-layout-sm"
+      ></div>
+    </div>
+    <button class="btn btn-primary" id="outside">
+      outside the legacy scope
+    </button>
+  </body>
+</html>

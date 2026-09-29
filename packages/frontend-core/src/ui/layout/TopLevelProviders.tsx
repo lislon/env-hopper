@@ -5,6 +5,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import type { TRPCClient } from '@trpc/client'
+import { useQueryBootstrapConfig } from '~/api/data/useQueryBootstrapConfig'
 import { ThemeProvider } from '~/components/theme-provider'
 import { AuthProvider } from '~/modules/auth'
 import { AuthModalProvider } from '~/modules/auth/AuthModalContext'
@@ -22,7 +23,10 @@ export interface MainLayoutProps {
 }
 
 export function TopLevelProviders({ children }: MainLayoutProps) {
-  // const { data, failureCount, failureReason } = useQueryBootstrapConfig()
+  // Not gated on: the config only feeds optional presentation (meta-driven
+  // templates), and the jump path resolves without it. Blocking every route on
+  // this query would turn a bootstrap failure into a permanent loading screen.
+  const { data: bootstrapConfig } = useQueryBootstrapConfig()
   const [plugins] = useState(() => [
     // Future plugins can be added here
   ])
@@ -45,19 +49,7 @@ export function TopLevelProviders({ children }: MainLayoutProps) {
       <AuthModalProvider>
         <AuthProvider>
           <Suspense fallback={<LoadingScreen />}>
-            <BootstrapConfigProvider
-              bootstrapConfig={{
-                apps: {},
-                appsMeta: {
-                  tags: {
-                    descriptions: [],
-                  },
-                },
-                envs: {},
-                contexts: [],
-                defaults: { envSlug: '', resourceJumpSlug: '' },
-              }}
-            >
+            <BootstrapConfigProvider bootstrapConfig={bootstrapConfig}>
               <GlobalConfigProvider>
                 <PluginManagerContextProvider
                   plugins={plugins}

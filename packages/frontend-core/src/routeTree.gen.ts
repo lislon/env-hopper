@@ -19,7 +19,11 @@ import { Route as LayoutLoginRouteImport } from './routes/_layout/login'
 import { Route as LayoutEnvsIndexRouteImport } from './routes/_layout/envs.index'
 import { Route as LayoutDashboardIndexRouteImport } from './routes/_layout/dashboard.index'
 import { Route as LayoutEnvEnvSlugIndexRouteImport } from './routes/_layout/env.$envSlug.index'
+import { Route as LayoutAppAppSlugIndexRouteImport } from './routes/_layout/app.$appSlug.index'
+import { Route as LayoutEnvEnvSlugSubSubValueIndexRouteImport } from './routes/_layout/env.$envSlug.sub.$subValue.index'
 import { Route as LayoutEnvEnvSlugAppAppSlugIndexRouteImport } from './routes/_layout/env.$envSlug.app.$appSlug.index'
+import { Route as LayoutAppAppSlugSubSubValueIndexRouteImport } from './routes/_layout/app.$appSlug.sub.$subValue.index'
+import { Route as LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRouteImport } from './routes/_layout/env.$envSlug.app.$appSlug.sub.$subValue.index'
 
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
@@ -70,10 +74,33 @@ const LayoutEnvEnvSlugIndexRoute = LayoutEnvEnvSlugIndexRouteImport.update({
   path: '/env/$envSlug/',
   getParentRoute: () => LayoutRoute,
 } as any)
+const LayoutAppAppSlugIndexRoute = LayoutAppAppSlugIndexRouteImport.update({
+  id: '/app/$appSlug/',
+  path: '/app/$appSlug/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+const LayoutEnvEnvSlugSubSubValueIndexRoute =
+  LayoutEnvEnvSlugSubSubValueIndexRouteImport.update({
+    id: '/env/$envSlug/sub/$subValue/',
+    path: '/env/$envSlug/sub/$subValue/',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 const LayoutEnvEnvSlugAppAppSlugIndexRoute =
   LayoutEnvEnvSlugAppAppSlugIndexRouteImport.update({
     id: '/env/$envSlug/app/$appSlug/',
     path: '/env/$envSlug/app/$appSlug/',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutAppAppSlugSubSubValueIndexRoute =
+  LayoutAppAppSlugSubSubValueIndexRouteImport.update({
+    id: '/app/$appSlug/sub/$subValue/',
+    path: '/app/$appSlug/sub/$subValue/',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRoute =
+  LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRouteImport.update({
+    id: '/env/$envSlug/app/$appSlug/sub/$subValue/',
+    path: '/env/$envSlug/app/$appSlug/sub/$subValue/',
     getParentRoute: () => LayoutRoute,
   } as any)
 
@@ -86,8 +113,12 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/dashboard/': typeof LayoutDashboardIndexRoute
   '/envs/': typeof LayoutEnvsIndexRoute
+  '/app/$appSlug/': typeof LayoutAppAppSlugIndexRoute
   '/env/$envSlug/': typeof LayoutEnvEnvSlugIndexRoute
+  '/app/$appSlug/sub/$subValue/': typeof LayoutAppAppSlugSubSubValueIndexRoute
   '/env/$envSlug/app/$appSlug/': typeof LayoutEnvEnvSlugAppAppSlugIndexRoute
+  '/env/$envSlug/sub/$subValue/': typeof LayoutEnvEnvSlugSubSubValueIndexRoute
+  '/env/$envSlug/app/$appSlug/sub/$subValue/': typeof LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LayoutLoginRoute
@@ -97,8 +128,12 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/dashboard': typeof LayoutDashboardIndexRoute
   '/envs': typeof LayoutEnvsIndexRoute
+  '/app/$appSlug': typeof LayoutAppAppSlugIndexRoute
   '/env/$envSlug': typeof LayoutEnvEnvSlugIndexRoute
+  '/app/$appSlug/sub/$subValue': typeof LayoutAppAppSlugSubSubValueIndexRoute
   '/env/$envSlug/app/$appSlug': typeof LayoutEnvEnvSlugAppAppSlugIndexRoute
+  '/env/$envSlug/sub/$subValue': typeof LayoutEnvEnvSlugSubSubValueIndexRoute
+  '/env/$envSlug/app/$appSlug/sub/$subValue': typeof LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -111,8 +146,12 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/_layout/dashboard/': typeof LayoutDashboardIndexRoute
   '/_layout/envs/': typeof LayoutEnvsIndexRoute
+  '/_layout/app/$appSlug/': typeof LayoutAppAppSlugIndexRoute
   '/_layout/env/$envSlug/': typeof LayoutEnvEnvSlugIndexRoute
+  '/_layout/app/$appSlug/sub/$subValue/': typeof LayoutAppAppSlugSubSubValueIndexRoute
   '/_layout/env/$envSlug/app/$appSlug/': typeof LayoutEnvEnvSlugAppAppSlugIndexRoute
+  '/_layout/env/$envSlug/sub/$subValue/': typeof LayoutEnvEnvSlugSubSubValueIndexRoute
+  '/_layout/env/$envSlug/app/$appSlug/sub/$subValue/': typeof LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -125,8 +164,12 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/dashboard/'
     | '/envs/'
+    | '/app/$appSlug/'
     | '/env/$envSlug/'
+    | '/app/$appSlug/sub/$subValue/'
     | '/env/$envSlug/app/$appSlug/'
+    | '/env/$envSlug/sub/$subValue/'
+    | '/env/$envSlug/app/$appSlug/sub/$subValue/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -136,8 +179,12 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/envs'
+    | '/app/$appSlug'
     | '/env/$envSlug'
+    | '/app/$appSlug/sub/$subValue'
     | '/env/$envSlug/app/$appSlug'
+    | '/env/$envSlug/sub/$subValue'
+    | '/env/$envSlug/app/$appSlug/sub/$subValue'
   id:
     | '__root__'
     | '/_layout'
@@ -149,8 +196,12 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/_layout/dashboard/'
     | '/_layout/envs/'
+    | '/_layout/app/$appSlug/'
     | '/_layout/env/$envSlug/'
+    | '/_layout/app/$appSlug/sub/$subValue/'
     | '/_layout/env/$envSlug/app/$appSlug/'
+    | '/_layout/env/$envSlug/sub/$subValue/'
+    | '/_layout/env/$envSlug/app/$appSlug/sub/$subValue/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -231,11 +282,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutEnvEnvSlugIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
+    '/_layout/app/$appSlug/': {
+      id: '/_layout/app/$appSlug/'
+      path: '/app/$appSlug'
+      fullPath: '/app/$appSlug/'
+      preLoaderRoute: typeof LayoutAppAppSlugIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/env/$envSlug/sub/$subValue/': {
+      id: '/_layout/env/$envSlug/sub/$subValue/'
+      path: '/env/$envSlug/sub/$subValue'
+      fullPath: '/env/$envSlug/sub/$subValue/'
+      preLoaderRoute: typeof LayoutEnvEnvSlugSubSubValueIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
     '/_layout/env/$envSlug/app/$appSlug/': {
       id: '/_layout/env/$envSlug/app/$appSlug/'
       path: '/env/$envSlug/app/$appSlug'
       fullPath: '/env/$envSlug/app/$appSlug/'
       preLoaderRoute: typeof LayoutEnvEnvSlugAppAppSlugIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/app/$appSlug/sub/$subValue/': {
+      id: '/_layout/app/$appSlug/sub/$subValue/'
+      path: '/app/$appSlug/sub/$subValue'
+      fullPath: '/app/$appSlug/sub/$subValue/'
+      preLoaderRoute: typeof LayoutAppAppSlugSubSubValueIndexRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/env/$envSlug/app/$appSlug/sub/$subValue/': {
+      id: '/_layout/env/$envSlug/app/$appSlug/sub/$subValue/'
+      path: '/env/$envSlug/app/$appSlug/sub/$subValue'
+      fullPath: '/env/$envSlug/app/$appSlug/sub/$subValue/'
+      preLoaderRoute: typeof LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRouteImport
       parentRoute: typeof LayoutRoute
     }
   }
@@ -246,8 +325,12 @@ interface LayoutRouteChildren {
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutDashboardIndexRoute: typeof LayoutDashboardIndexRoute
   LayoutEnvsIndexRoute: typeof LayoutEnvsIndexRoute
+  LayoutAppAppSlugIndexRoute: typeof LayoutAppAppSlugIndexRoute
   LayoutEnvEnvSlugIndexRoute: typeof LayoutEnvEnvSlugIndexRoute
+  LayoutAppAppSlugSubSubValueIndexRoute: typeof LayoutAppAppSlugSubSubValueIndexRoute
   LayoutEnvEnvSlugAppAppSlugIndexRoute: typeof LayoutEnvEnvSlugAppAppSlugIndexRoute
+  LayoutEnvEnvSlugSubSubValueIndexRoute: typeof LayoutEnvEnvSlugSubSubValueIndexRoute
+  LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRoute: typeof LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
@@ -255,8 +338,13 @@ const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutDashboardIndexRoute: LayoutDashboardIndexRoute,
   LayoutEnvsIndexRoute: LayoutEnvsIndexRoute,
+  LayoutAppAppSlugIndexRoute: LayoutAppAppSlugIndexRoute,
   LayoutEnvEnvSlugIndexRoute: LayoutEnvEnvSlugIndexRoute,
+  LayoutAppAppSlugSubSubValueIndexRoute: LayoutAppAppSlugSubSubValueIndexRoute,
   LayoutEnvEnvSlugAppAppSlugIndexRoute: LayoutEnvEnvSlugAppAppSlugIndexRoute,
+  LayoutEnvEnvSlugSubSubValueIndexRoute: LayoutEnvEnvSlugSubSubValueIndexRoute,
+  LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRoute:
+    LayoutEnvEnvSlugAppAppSlugSubSubValueIndexRoute,
 }
 
 const LayoutRouteWithChildren =

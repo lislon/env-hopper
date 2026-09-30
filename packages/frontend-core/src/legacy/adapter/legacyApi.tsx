@@ -252,6 +252,18 @@ export interface EhServerSyncContextValue {
   error: Error | null
   needRefresh: boolean
   refresh: () => void
+  /**
+   * The running version, from the bootstrap payload, falling back to the last one
+   * stored when the payload is unavailable (offline, or a degraded load).
+   *
+   * Served from here rather than read out of local storage by whoever displays
+   * it: this hook is what WRITES the stored copy, and `useLocalStorage` is
+   * `useState` per instance with no subscription, so a second reader keeps its
+   * first value for the life of the page. A first-time visitor's header stayed on
+   * the "no version known" fallback until a reload, with the right version
+   * already sitting in storage.
+   */
+  appVersion: string | undefined
 }
 
 /**
@@ -277,7 +289,10 @@ export interface EhServerSyncContextValue {
 export function useEhServerSync(): EhServerSyncContextValue {
   const { data: config, error } = useLegacyConfig()
 
-  const [, setVersion] = useLocalStorage<string>(LOCAL_STORAGE_KEY_VERSION, '')
+  const [storedVersion, setVersion] = useLocalStorage<string>(
+    LOCAL_STORAGE_KEY_VERSION,
+    '',
+  )
   useEffect(() => {
     if (config?.appVersion) {
       setVersion(config.appVersion)
@@ -289,6 +304,7 @@ export function useEhServerSync(): EhServerSyncContextValue {
     isDegraded: error !== null && config !== undefined,
     needRefresh: false,
     refresh: () => window.location.reload(),
+    appVersion: config?.appVersion || storedVersion || undefined,
   }
 }
 

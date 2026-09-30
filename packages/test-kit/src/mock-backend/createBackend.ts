@@ -91,6 +91,13 @@ export interface Fixture {
   envs: Array<FixtureEnv>
   /** What the deployment fills in: the link list, its icons, footer markup. */
   customization?: EhCustomizationData
+  /**
+   * The version the deployment reports, as a real backend puts on the bootstrap
+   * payload. Without this there is no way to test what a first-time visitor sees:
+   * the header's label came out of local storage, so a fixture could only stage it
+   * by pre-seeding storage, which is the one case a fresh visitor is not.
+   */
+  appVersion?: string
 }
 
 export type OverrideBackendNetworkFn = (
@@ -175,6 +182,7 @@ export function createBackend(fixture: Fixture): MockBackend {
       resourceJumpSlug: resourceJumps[0]?.slug || '',
     },
     ...(fixture.customization && { customization: fixture.customization }),
+    ...(fixture.appVersion && { appVersion: fixture.appVersion }),
   }
 
   const resourceJumpsData: ResourceJumpsData = {

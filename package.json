@@ -11,7 +11,7 @@
     "build:all:lenient": "nx run-many --target=build:lenient --exclude=examples/** --exclude=e2e/**",
     "changeset": "changeset",
     "changeset:publish": "changeset publish",
-    "changeset:version": "changeset version && pnpm install --no-frozen-lockfile",
+    "changeset:version": "changeset version && node scripts/assert-approved-major.mjs && pnpm install --no-frozen-lockfile",
     "clean": "pnpm --filter \"./packages/**\" run clean",
     "db:repush": "pnpm run prisma:generate && pnpm run prisma:push && pnpm run db:sync",
     "db:sync": "pnpm --filter @env-hopper/backend-example run db:sync",

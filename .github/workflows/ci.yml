@@ -6,6 +6,10 @@ on:
       tag:
         description: override release tag
         required: false
+      allow_major:
+        description: 'permit a major version bump (see scripts/assert-approved-major.mjs)'
+        required: false
+        default: 'false'
   push:
     branches:
       - main
@@ -69,6 +73,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm changeset version --snapshot alpha
+      - name: Refuse an unapproved major (alpha)
+        if: github.ref == 'refs/heads/alpha'
+        env:
+          ALLOW_MAJOR: ${{ inputs.allow_major }}
+        run: node scripts/assert-approved-major.mjs
       - name: Update lockfile (alpha)
         if: github.ref == 'refs/heads/alpha'
         run: pnpm install --no-frozen-lockfile

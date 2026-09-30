@@ -10,7 +10,7 @@
     "build:all": "nx run-many --target=build --exclude=examples/** --exclude=e2e/**",
     "build:all:lenient": "nx run-many --target=build:lenient --exclude=examples/** --exclude=e2e/**",
     "changeset": "changeset",
-    "changeset:publish": "changeset publish",
+    "changeset:publish": "node scripts/publish-oidc.mjs --tag latest",
     "changeset:version": "changeset version && node scripts/assert-approved-major.mjs && pnpm install --no-frozen-lockfile",
     "clean": "pnpm --filter \"./packages/**\" run clean",
     "db:repush": "pnpm run prisma:generate && pnpm run prisma:push && pnpm run db:sync",

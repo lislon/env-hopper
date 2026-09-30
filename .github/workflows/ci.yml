@@ -84,12 +84,16 @@ jobs:
       - name: Build packages (alpha)
         if: github.ref == 'refs/heads/alpha'
         run: pnpm run build:all
+      # `pnpm changeset publish` reported success for packages that never reached
+      # the registry: three releases in a row landed five of six, a different one
+      # missing each time, with the log listing all six as published. pnpm 11
+      # regressed the spawned `npm publish` path so it no longer reaches npm's
+      # OIDC mint. This packs with pnpm (which resolves `workspace:*` into the
+      # tarball) and publishes with the npm CLI, which does mint, and which fails
+      # loudly per package.
       - name: Publish to @alpha tag
         if: github.ref == 'refs/heads/alpha'
-        run: pnpm changeset publish --tag alpha --no-git-tag
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: node scripts/publish-oidc.mjs --tag alpha
       - name: Commit version changes (alpha)
         if: github.ref == 'refs/heads/alpha'
         run: |

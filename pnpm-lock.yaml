@@ -347,7 +347,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/backend-core
       '@env-hopper/shared-core':
-        specifier: 2.1.0-alpha-20260930191116
+        specifier: 2.1.0-alpha-20260930195630
         version: link:../../packages/shared-core
       '@prisma/client':
         specifier: 'catalog:'
@@ -417,10 +417,10 @@ importers:
   examples/frontend-example:
     dependencies:
       '@env-hopper/frontend-build-vite':
-        specifier: 2.1.0-alpha-20260930191116
+        specifier: 2.1.0-alpha-20260930195630
         version: link:../../packages/frontend-build-vite
       '@env-hopper/frontend-core':
-        specifier: 2.1.0-alpha-20260930191116
+        specifier: 2.1.0-alpha-20260930195630
         version: link:../../packages/frontend-core
       cross-env:
         specifier: 'catalog:'

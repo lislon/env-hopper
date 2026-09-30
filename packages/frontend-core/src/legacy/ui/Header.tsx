@@ -1,10 +1,8 @@
 import cn from 'classnames'
 import { Link } from '@tanstack/react-router'
 import { useEhServerSync, useLegacyCustomization } from '../adapter/legacyApi'
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useModal } from '../hooks/useModal'
 import { VersionDialog } from './Dialog/VersionDialog'
-import { LOCAL_STORAGE_KEY_VERSION } from '../lib/local-storage-constants'
 
 export interface HeaderProps {
   className?: string
@@ -29,12 +27,13 @@ export function releaseUrl(version: string | undefined): string {
 }
 
 export function Header({ className }: HeaderProps) {
-  const { error, needRefresh, refresh, isDegraded } = useEhServerSync()
-
-  const [installedAppVersion] = useLocalStorage<string | undefined>(
-    LOCAL_STORAGE_KEY_VERSION,
-    undefined,
-  )
+  const {
+    error,
+    needRefresh,
+    refresh,
+    isDegraded,
+    appVersion: installedAppVersion,
+  } = useEhServerSync()
   const { versionRows, versionCredit, versionBuiltAt, icons } =
     useLegacyCustomization()
   const [openVersion, versionDialog] = useModal()

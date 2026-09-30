@@ -81,6 +81,32 @@ describe('app shell', () => {
     )
   })
 
+  /*
+   * The case a reload hides. The header used to read the version out of local
+   * storage, which this hook writes — two `useLocalStorage` instances over one
+   * key, and no subscription between them, so the reader kept its first (empty)
+   * value and the chip said "no version known" for the whole first visit. Storage
+   * held the right version the entire time, so any check that reloaded first, or
+   * that pre-seeded storage, passed.
+   */
+  test('a first-time visitor sees the version the server reports', async () => {
+    localStorage.removeItem('version')
+    const backend = createBackend({
+      ...magazine.carShop(),
+      appVersion: '2.1.0-alpha-20260930035402',
+    })
+
+    const app = await renderApp({ server, backend })
+
+    const release = app.getByTitle('View release')
+    expect(release).toHaveTextContent('v2.1.0-alpha-20260930035402')
+    // A snapshot build has no git tag, so the link goes to npm.
+    expect(release).toHaveAttribute(
+      'href',
+      'https://www.npmjs.com/package/@env-hopper/backend-core/v/2.1.0-alpha-20260930035402',
+    )
+  })
+
   test('a known version becomes a tagged release link', async () => {
     localStorage.setItem('version', JSON.stringify('1.2.3'))
 

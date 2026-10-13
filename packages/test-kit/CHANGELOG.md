@@ -1,5 +1,13 @@
 # @env-hopper/test-kit
 
+## 2.1.0-alpha-20261013000513
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @env-hopper/backend-core@2.1.0-alpha-20261013000513
+  - @env-hopper/frontend-core@2.1.0-alpha-20261013000513
+
 ## 2.1.0-alpha-20260930195630
 
 ### Patch Changes

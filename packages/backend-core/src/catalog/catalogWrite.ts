@@ -11,6 +11,7 @@ import type {
   CatalogHealthInput,
   CatalogReleaseInput,
 } from './catalogTypes'
+import { sanitizeUrl } from './healthCheck'
 
 // ponytail: row-by-row upsert inside one transaction; batch with createMany +
 // ON CONFLICT if a sync ever writes tens of thousands of rows.
@@ -147,8 +148,15 @@ async function writeDeployment(
   })
   await tx.catalogEndpoint.deleteMany({ where: { componentSlug, targetSlug } })
   if (endpoints.length) {
-    await tx.catalogEndpoint.createMany({
-      data: endpoints.map((e) => ({ componentSlug, targetSlug, ...e })),
+    const sanitized = endpoints.map((e) => {
+      const clean = sanitizeUrl(e.url)
+      if (clean === null) {
+        throw new Error(
+          `Invalid endpoint URL for ${componentSlug}/${targetSlug}: ${e.url}`,
+        )
+      }
+      return { componentSlug, targetSlug, ...e, url: clean }
     })
+    await tx.catalogEndpoint.createMany({ data: sanitized })
   }
 }

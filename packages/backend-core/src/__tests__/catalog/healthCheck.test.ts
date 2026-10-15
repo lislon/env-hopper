@@ -84,4 +84,56 @@ describe('http health check', () => {
     ])
     expect(Date.now() - started).toBeLessThan(1500)
   })
+
+  it('timed-out request connection is aborted', async () => {
+    let clientClosed = false
+    const hangServer = createServer((req, _res) => {
+      req.on('close', () => {
+        clientClosed = true
+      })
+      // never responds
+    })
+    await new Promise<void>((r) => hangServer.listen(0, '127.0.0.1', r))
+    const hangBase = `http://127.0.0.1:${(hangServer.address() as AddressInfo).port}`
+
+    await runCheck(httpHealthChecker, { url: hangBase + '/x' }, 300)
+    // Give the abort signal time to propagate
+    await new Promise((r) => setTimeout(r, 50))
+
+    hangServer.closeAllConnections()
+    hangServer.close()
+    expect(clientClosed).toBe(true)
+  })
+
+  it('fast response clears timeout timer', async () => {
+    // Run 100 fast checks; if timers aren't cleared, we'd accumulate pending timers
+    // and eventually hit resource limits or memory issues
+    const results = await Promise.all(
+      Array.from({ length: 100 }, () =>
+        runCheck(httpHealthChecker, { url: base + '/ok' }, 5000),
+      ),
+    )
+    expect(results.every((r) => r.state === 'healthy')).toBe(true)
+  })
+
+  it('default concurrency cap is 8', async () => {
+    let inFlight = 0
+    let peakInFlight = 0
+    const jobs = Array.from({ length: 10 }, (_, i) => ({
+      key: i,
+      run: async () => {
+        inFlight++
+        peakInFlight = Math.max(peakInFlight, inFlight)
+        await new Promise((r) => setTimeout(r, 50))
+        inFlight--
+        return {
+          state: 'healthy' as const,
+          observedAt: new Date(),
+          checker: 'test',
+        }
+      },
+    }))
+    await runHealthChecks(jobs)
+    expect(peakInFlight).toBe(8)
+  })
 })

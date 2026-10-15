@@ -246,4 +246,32 @@ describe.skipIf(!prisma)('catalog writes', () => {
     const endpoints = await prisma!.catalogEndpoint.findMany()
     expect(endpoints.map((e) => e.url)).toEqual(['https://us.example.com'])
   })
+
+  it('endpoint URLs are sanitized: credentials stripped, invalid rejected', async () => {
+    await givenOneComponentOnTwoTargets()
+    const urlWithCreds = `https://${'admin'}:${'secret'}@shop.example.com/api?key=xyz#frag`
+    await catalog!.replaceDeployments('ci', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        version: 'main-10',
+        source: 'ci',
+        endpoints: [{ kind: 'api' as const, url: urlWithCreds }],
+      },
+    ])
+    const stored = await prisma!.catalogEndpoint.findFirst()
+    expect(stored?.url).toBe('https://shop.example.com/api')
+
+    await expect(
+      catalog!.replaceDeployments('ci', [
+        {
+          componentSlug: 'shop-api',
+          targetSlug: 'k8s:prod/shop-us',
+          version: 'main-11',
+          source: 'ci',
+          endpoints: [{ kind: 'ui' as const, url: 'not a url' }],
+        },
+      ]),
+    ).rejects.toThrow('Invalid endpoint URL')
+  })
 })

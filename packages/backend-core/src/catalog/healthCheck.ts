@@ -31,57 +31,44 @@ export function sanitizeUrl(url: string): string | null {
     u.password = ''
     u.search = ''
     u.hash = ''
-    return u.toString()
+    let result = u.toString()
+    // Remove trailing slash added by URL() if the original pathname was just "/"
+    if (u.pathname === '/' && !url.includes('/', url.indexOf('://') + 3)) {
+      result = result.slice(0, -1)
+    }
+    return result
   } catch {
     return null
-  }
-}
-
-async function fetchWithTimeout(
-  url: string,
-  signal: AbortSignal,
-): Promise<Response> {
-  const controller = new AbortController()
-  const timeout = new Promise<never>((_, reject) => {
-    const id = setTimeout(() => {
-      controller.abort()
-      reject(new Error('timeout'))
-    }, MAX_TIMEOUT_MS)
-    signal.addEventListener('abort', () => {
-      clearTimeout(id)
-      controller.abort()
-      reject(new Error('timeout'))
-    })
-  })
-
-  try {
-    return await Promise.race([
-      fetch(url, { method: 'GET', redirect: 'manual' }),
-      timeout,
-    ])
-  } catch (e) {
-    controller.abort()
-    throw e
   }
 }
 
 export const httpHealthChecker: HealthChecker<HttpHealthCheckConfig> = {
   name: 'http',
   async check({ url, expectStatus, bodyIncludes }, signal) {
+    // Create our own AbortController for fetch to avoid vitest context incompatibility
+    const fetchController = new AbortController()
+    const abortListener = () => fetchController.abort()
+    signal.addEventListener('abort', abortListener)
+
     let res: Response
     try {
-      res = await fetchWithTimeout(url, signal)
+      res = await fetch(url, {
+        method: 'GET',
+        redirect: 'manual',
+        signal: fetchController.signal,
+      })
     } catch (e) {
-      const msg = (e as Error).message
       const code = (e as { cause?: { code?: string } }).cause?.code
+      const name = (e as Error).name
       // A name that does not resolve means the check is misconfigured, not that
       // the service is down.
       if (code === 'ENOTFOUND' || code === 'EAI_AGAIN')
         return { state: 'unknown', detail: code }
-      return {
-        state: 'down',
-        detail: msg === 'timeout' ? 'timeout' : (code ?? 'network error'),
-      }
+      if (name === 'AbortError' || fetchController.signal.aborted)
+        return { state: 'down', detail: 'timeout' }
+      return { state: 'down', detail: code ?? 'network error' }
+    } finally {
+      signal.removeEventListener('abort', abortListener)
     }
     const statusOk = expectStatus ? res.status === expectStatus : res.ok
     if (!statusOk) return { state: 'down', detail: `HTTP ${res.status}` }
@@ -98,15 +85,35 @@ export async function runCheck<TConfig>(
   timeoutMs = MAX_TIMEOUT_MS,
 ): Promise<HealthCheckResult> {
   const controller = new AbortController()
-  const timeout = setTimeout(
-    () => controller.abort(),
-    Math.min(timeoutMs, MAX_TIMEOUT_MS),
-  )
+  let timeoutId: NodeJS.Timeout | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(
+      () => {
+        controller.abort()
+        reject(new Error('timeout'))
+      },
+      Math.min(timeoutMs, MAX_TIMEOUT_MS),
+    )
+  })
+
   try {
-    const r = await checker.check(config, controller.signal)
+    const r = await Promise.race([
+      checker.check(config, controller.signal),
+      timeout,
+    ])
     return { ...r, observedAt: new Date(), checker: checker.name }
+  } catch (e) {
+    if (controller.signal.aborted) {
+      return {
+        state: 'down',
+        detail: 'timeout',
+        observedAt: new Date(),
+        checker: checker.name,
+      }
+    }
+    throw e
   } finally {
-    clearTimeout(timeout)
+    if (timeoutId !== undefined) clearTimeout(timeoutId)
   }
 }
 

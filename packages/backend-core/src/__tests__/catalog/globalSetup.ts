@@ -1,6 +1,10 @@
 import { execSync } from 'node:child_process'
 
-export default function setup() {
+export default function setup({
+  provide,
+}: {
+  provide: (key: string, value: unknown) => void
+}) {
   const url = process.env.EH_CORE_TEST_DATABASE_URL
   const isCI = process.env.CI === 'true'
 
@@ -19,6 +23,7 @@ export default function setup() {
     }
     console.warn('\n⏭️  Skipping catalog tests (no database available)\n')
     console.warn(message)
+    provide('catalogDbReady', false)
     return
   }
 
@@ -27,6 +32,7 @@ export default function setup() {
       stdio: 'pipe',
       env: { ...process.env, EH_CORE_DATABASE_URL: url },
     })
+    provide('catalogDbReady', true)
   } catch (error) {
     const message = [
       'Failed to connect to test database.',
@@ -44,5 +50,6 @@ export default function setup() {
     }
     console.warn('\n⏭️  Skipping catalog tests (database unreachable)\n')
     console.warn(message)
+    provide('catalogDbReady', false)
   }
 }

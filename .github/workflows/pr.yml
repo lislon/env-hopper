@@ -26,6 +26,10 @@ jobs:
         uses: nrwl/nx-set-shas@v4.1.2
         with:
           main-branch-name: main
+      - name: Self-check the release script
+        run: bash scripts/release-main.test.sh
+      - name: Check declared versions against the registry
+        run: node scripts/check-registry-versions.mjs
       - name: Run Checks
         run: pnpm run test:pr --parallel=3
   preview:

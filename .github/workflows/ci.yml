@@ -13,7 +13,6 @@ on:
   push:
     branches:
       - main
-      - alpha
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
@@ -44,76 +43,30 @@ jobs:
       - name: Run Tests
         run: pnpm run test:ci --parallel=3
 
-      # Alpha releases with @alpha tag (direct publish, no PR)
-      - name: Create snapshot changeset if none exists (alpha)
-        if: github.ref == 'refs/heads/alpha'
-        run: |
-          if [ ! "$(ls -A .changeset/*.md 2>/dev/null | grep -v README)" ]; then
-            echo "No changeset found, creating one..."
-            cat > .changeset/snapshot-release.md << 'EOF'
-          ---
-          "@env-hopper/backend-core": patch
-          "@env-hopper/frontend-core": patch
-          "@env-hopper/shared-core": patch
-          "@env-hopper/table-sync": patch
-          "@env-hopper/frontend-build-vite": patch
-          ---
-
-          Snapshot release from alpha branch
-          EOF
-          fi
-      - name: Version packages (alpha snapshot)
-        if: github.ref == 'refs/heads/alpha'
-        # The changelog generator is `@changesets/changelog-github`, which looks
-        # each changeset's commit up through the API and errors out without a
-        # token. It only does that for changesets that are committed, so the
-        # generated snapshot one above never needed it and this step passed for
-        # as long as nothing real was pending — the first genuine changeset on
-        # this branch failed it. The stable path below already passes the token.
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm changeset version --snapshot alpha
-      - name: Refuse an unapproved major (alpha)
-        if: github.ref == 'refs/heads/alpha'
-        env:
-          ALLOW_MAJOR: ${{ inputs.allow_major }}
-        run: node scripts/assert-approved-major.mjs
-      - name: Update lockfile (alpha)
-        if: github.ref == 'refs/heads/alpha'
-        run: pnpm install --no-frozen-lockfile
-      - name: Build packages (alpha)
-        if: github.ref == 'refs/heads/alpha'
-        run: pnpm run build:all
-      # `pnpm changeset publish` reported success for packages that never reached
-      # the registry: three releases in a row landed five of six, a different one
-      # missing each time, with the log listing all six as published. pnpm 11
-      # regressed the spawned `npm publish` path so it no longer reaches npm's
-      # OIDC mint. This packs with pnpm (which resolves `workspace:*` into the
-      # tarball) and publishes with the npm CLI, which does mint, and which fails
-      # loudly per package.
-      - name: Publish to @alpha tag
-        if: github.ref == 'refs/heads/alpha'
-        run: node scripts/publish-oidc.mjs --tag alpha
-      - name: Commit version changes (alpha)
-        if: github.ref == 'refs/heads/alpha'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add .
-          git diff --staged --quiet || git commit -m "chore: snapshot release [skip ci]"
-          git push
-
       # Stable releases for main branch
-      - name: Run Changesets (main)
+      - name: Check declared versions against the registry (main)
         if: github.ref == 'refs/heads/main'
-        uses: changesets/action@v1.5.3
-        with:
-          version: pnpm run changeset:version
-          publish: pnpm run changeset:publish
-          commit: 'chore: version packages'
-          title: 'chore: version packages'
+        run: node scripts/check-registry-versions.mjs
+      - name: Version, publish and record (main)
+        id: release
+        if: github.ref == 'refs/heads/main'
+        # One merge publishes. This replaced `changesets/action`, which only
+        # opened a "version packages" PR and left the actual release to a second
+        # merge. A push carrying no changeset is a no-op. The script also takes
+        # the dist-tag capture the assert below reads, because that capture is
+        # only meaningful *after* the version bump. Why it publishes before it
+        # records: scripts/release-main.sh.
+        run: bash scripts/release-main.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALLOW_MAJOR: ${{ inputs.allow_major }}
+      - name: Assert the @latest tag moved (main)
+        if: github.ref == 'refs/heads/main' && steps.release.outputs.published == 'true'
+        # A version already on the registry is only a warning, so the publish
+        # step exits 0 even when it shipped nothing. Prove the tag moved.
+        run: node scripts/dist-tag-guard.mjs assert --before "$RUNNER_TEMP/dist-tags-before.json" --mode release
+        env:
+          CHANGESETS_PUBLISHED: ${{ steps.release.outputs.published }}
 
   # push:
   #   needs: test-and-publish

@@ -18,7 +18,7 @@ const config = defineConfig(() => {
     cacheDir: '../../node_modules/.vite/apps/frontend',
 
     resolve: {
-      conditions: ['my-custom-condition'],
+      ...cfg.resolve,
       alias: {
         '~': fileURLToPath(
           new URL('../../packages/frontend-core/src', import.meta.url),

@@ -10,9 +10,12 @@ const config = defineConfig({
     environment: 'node',
     typecheck: { enabled: true },
   },
-  // Resolves workspace dependencies using my-custom-condition → src/, not built dist/
-  resolve: {
-    conditions: ['my-custom-condition', 'default'],
+  // Resolves workspace dependencies using my-custom-condition → src/, not built dist/.
+  // Node-environment tests resolve through vite's SSR side, which ignores `resolve.conditions`.
+  ssr: {
+    resolve: {
+      conditions: ['my-custom-condition', 'default'],
+    },
   },
 })
 

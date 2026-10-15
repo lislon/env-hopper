@@ -13,8 +13,8 @@ import type {
 } from './catalogTypes'
 import { sanitizeUrl } from './healthCheck'
 
-// ponytail: row-by-row upsert inside one transaction; batch with createMany +
-// ON CONFLICT if a sync ever writes tens of thousands of rows.
+// ponytail: the upserts below are one statement per row in a batch
+// transaction; switch to createMany + ON CONFLICT if they ever get slow.
 export function createCatalog(prisma: PrismaClient): Catalog {
   return {
     async upsertEnvironments(list: Array<CatalogEnvironmentInput>) {
@@ -90,38 +90,56 @@ export function createCatalog(prisma: PrismaClient): Catalog {
       scope: string,
       list: Array<CatalogDeploymentInput>,
     ) {
+      const rows = lastPerPair(list)
       await prisma.$transaction(async (tx) => {
-        const keep = list.map((d) => ({
-          componentSlug: d.componentSlug,
-          targetSlug: d.targetSlug,
-        }))
-        const toRemove = await tx.catalogDeployment.findMany({
-          where: { scope, NOT: keep.length ? { OR: keep } : undefined },
-          select: { componentSlug: true, targetSlug: true },
-        })
-        if (toRemove.length) {
-          await tx.catalogHealth.deleteMany({ where: { OR: toRemove } })
+        const endpoints = rows.flatMap(
+          ({ componentSlug, targetSlug, endpoints: eps = [] }) =>
+            eps.map((e) => {
+              const url = sanitizeUrl(e.url)
+              if (url === null) {
+                throw new Error(
+                  `Invalid endpoint URL for ${componentSlug}/${targetSlug}: ${e.url}`,
+                )
+              }
+              return { componentSlug, targetSlug, ...e, url }
+            }),
+        )
+        const incoming = new Set(rows.map(pairKey))
+        const removed = (
+          await tx.catalogDeployment.findMany({
+            where: { scope },
+            select: { componentSlug: true, targetSlug: true },
+          })
+        ).filter((p) => !incoming.has(pairKey(p)))
+        for (const part of chunks(removed)) {
+          await tx.catalogHealth.deleteMany({ where: { OR: part } })
         }
-        await tx.catalogDeployment.deleteMany({
-          where: { scope, NOT: keep.length ? { OR: keep } : undefined },
-        })
-        for (const d of list) await writeDeployment(tx, scope, d)
+        // This scope's rows, and rows of these pairs another scope held:
+        // a replace takes the pair over. Endpoints cascade.
+        await tx.catalogDeployment.deleteMany({ where: { scope } })
+        for (const part of chunks(rows.map(pair))) {
+          await tx.catalogDeployment.deleteMany({ where: { OR: part } })
+        }
+        for (const part of chunks(rows)) {
+          await tx.catalogDeployment.createMany({
+            data: part.map(({ endpoints: _eps, ...d }) => ({ ...d, scope })),
+          })
+        }
+        for (const part of chunks(endpoints)) {
+          await tx.catalogEndpoint.createMany({ data: part })
+        }
       })
     },
     async replaceHealth(scope: string, list: Array<CatalogHealthInput>) {
+      const rows = lastPerPair(list)
       await prisma.$transaction(async (tx) => {
-        const keep = list.map((h) => ({
-          componentSlug: h.componentSlug,
-          targetSlug: h.targetSlug,
-        }))
-        await tx.catalogHealth.deleteMany({
-          where: { scope, NOT: keep.length ? { OR: keep } : undefined },
-        })
-        for (const { componentSlug, targetSlug, ...rest } of list) {
-          await tx.catalogHealth.upsert({
-            where: { componentSlug_targetSlug: { componentSlug, targetSlug } },
-            create: { componentSlug, targetSlug, scope, ...rest },
-            update: { scope, ...rest },
+        await tx.catalogHealth.deleteMany({ where: { scope } })
+        for (const part of chunks(rows.map(pair))) {
+          await tx.catalogHealth.deleteMany({ where: { OR: part } })
+        }
+        for (const part of chunks(rows)) {
+          await tx.catalogHealth.createMany({
+            data: part.map((h) => ({ ...h, scope })),
           })
         }
       })
@@ -130,33 +148,24 @@ export function createCatalog(prisma: PrismaClient): Catalog {
   }
 }
 
-async function writeDeployment(
-  tx: Parameters<Parameters<PrismaClient['$transaction']>[0]>[0],
-  scope: string,
-  {
-    endpoints = [],
-    componentSlug,
-    targetSlug,
-    ...rest
-  }: CatalogDeploymentInput,
-) {
-  const key = { componentSlug_targetSlug: { componentSlug, targetSlug } }
-  await tx.catalogDeployment.upsert({
-    where: key,
-    create: { componentSlug, targetSlug, scope, ...rest },
-    update: { scope, ...rest },
-  })
-  await tx.catalogEndpoint.deleteMany({ where: { componentSlug, targetSlug } })
-  if (endpoints.length) {
-    const sanitized = endpoints.map((e) => {
-      const clean = sanitizeUrl(e.url)
-      if (clean === null) {
-        throw new Error(
-          `Invalid endpoint URL for ${componentSlug}/${targetSlug}: ${e.url}`,
-        )
-      }
-      return { componentSlug, targetSlug, ...e, url: clean }
-    })
-    await tx.catalogEndpoint.createMany({ data: sanitized })
-  }
+interface Pair {
+  componentSlug: string
+  targetSlug: string
+}
+const pair = ({ componentSlug, targetSlug }: Pair): Pair => ({
+  componentSlug,
+  targetSlug,
+})
+const pairKey = (p: Pair) => `${p.componentSlug}\0${p.targetSlug}`
+
+/** One row per (component, target); a later row wins, as an upsert would. */
+function lastPerPair<T extends Pair>(list: Array<T>): Array<T> {
+  return [...new Map(list.map((r) => [pairKey(r), r])).values()]
+}
+
+/** Bounded batches: Postgres takes at most 65535 bind parameters a query. */
+function chunks<T>(list: Array<T>, size = 1000): Array<Array<T>> {
+  const out: Array<Array<T>> = []
+  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size))
+  return out
 }

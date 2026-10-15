@@ -275,4 +275,82 @@ describe.skipIf(!prisma)('catalog writes', () => {
       ]),
     ).rejects.toThrow('Invalid endpoint URL')
   })
+
+  it('a replace takes over a pair another scope held, with its health', async () => {
+    await givenOneComponentOnTwoTargets()
+    const eu = {
+      componentSlug: 'shop-api',
+      targetSlug: 'k8s:prod/shop-eu',
+      version: 'main-10',
+    }
+    await catalog!.replaceDeployments('other', [{ ...eu, source: 'other' }])
+    await catalog!.replaceHealth('probe', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        state: 'healthy',
+        observedAt: new Date('2026-01-01'),
+        checker: 'http',
+      },
+    ])
+    await catalog!.replaceDeployments('ci', [
+      {
+        ...eu,
+        version: 'main-11',
+        source: 'ci',
+        endpoints: [{ kind: 'ui' as const, url: 'https://shop.example.com' }],
+      },
+    ])
+    await catalog!.replaceHealth('ci-health', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        state: 'down',
+        observedAt: new Date('2026-01-02'),
+        checker: 'k8s',
+      },
+    ])
+    expect(
+      await prisma!.catalogDeployment.findMany({
+        select: { scope: true, version: true },
+      }),
+    ).toEqual([{ scope: 'ci', version: 'main-11' }])
+    expect(
+      await prisma!.catalogHealth.findMany({
+        select: { scope: true, state: true },
+      }),
+    ).toEqual([{ scope: 'ci-health', state: 'down' }])
+    // The scope that lost the pair no longer owns anything to delete.
+    await catalog!.replaceDeployments('other', [])
+    expect(await prisma!.catalogDeployment.count()).toBe(1)
+  })
+
+  it('writes 2,000 deployments with endpoints inside the default transaction timeout', async () => {
+    await givenOneComponentOnTwoTargets()
+    const targets = Array.from({ length: 2000 }, (_, i) => ({
+      slug: `k8s:stage/ns-${i}`,
+      displayName: `ns-${i}`,
+    }))
+    await catalog!.upsertTargets(targets)
+    const list = targets.map((t) => ({
+      componentSlug: 'shop-api',
+      targetSlug: t.slug,
+      version: 'main-10',
+      source: 'ci',
+      endpoints: [
+        { kind: 'ui' as const, url: `https://${t.displayName}.example.com` },
+        {
+          kind: 'health' as const,
+          url: `https://${t.displayName}.example.com/health`,
+        },
+      ],
+    }))
+    const started = Date.now()
+    await catalog!.replaceDeployments('ci', list)
+    await catalog!.replaceDeployments('ci', list)
+    const elapsed = Date.now() - started
+    console.info(`2,000 deployments replaced twice in ${elapsed} ms`)
+    expect(await prisma!.catalogDeployment.count()).toBe(2000)
+    expect(await prisma!.catalogEndpoint.count()).toBe(4000)
+  })
 })

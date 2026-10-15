@@ -125,24 +125,47 @@ export function createK8sSource({
   }
 }
 
-export const k8sReadinessChecker: HealthChecker<{
+export interface K8sReadinessConfig {
   cluster: string
   namespace: string
   name: string
   apps: K8sAppsClient
-}> = {
+}
+
+export const k8sReadinessChecker: HealthChecker<K8sReadinessConfig> = {
   name: 'k8s',
-  async check({ namespace, name, apps }) {
+  async check({ namespace, name, apps }, signal) {
     let deployment: RawDeployment
+    let abortListener: (() => void) | undefined
+
     try {
-      const result = await apps.readNamespacedDeployment(name, namespace)
+      const lookup = apps.readNamespacedDeployment(name, namespace)
+
+      // Race the lookup against the abort signal
+      const aborted = new Promise<never>((_, reject) => {
+        if (signal.aborted) {
+          reject(new Error('timeout'))
+        } else {
+          abortListener = () => reject(new Error('timeout'))
+          signal.addEventListener('abort', abortListener)
+        }
+      })
+
+      const result = await Promise.race([lookup, aborted])
       deployment = result.body
     } catch (e) {
+      if ((e as Error).message === 'timeout' || signal.aborted) {
+        return { state: 'unknown', detail: 'timeout' }
+      }
       const statusCode = (e as any).statusCode
       if (statusCode === 404) {
         return { state: 'unknown', detail: 'workload not found' }
       }
       return { state: 'unknown', detail: 'k8s API error' }
+    } finally {
+      if (abortListener) {
+        signal.removeEventListener('abort', abortListener)
+      }
     }
 
     const replicas = deployment.spec?.replicas ?? 0
@@ -157,7 +180,7 @@ export const k8sReadinessChecker: HealthChecker<{
       }
     return { state: 'down', detail: `0/${replicas} ready` }
   },
-}
+} satisfies HealthChecker<K8sReadinessConfig>
 
 export function k8sClientsFromKubeConfig(kc: KubeConfig) {
   return {

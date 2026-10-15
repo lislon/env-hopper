@@ -260,4 +260,25 @@ describe('k8s source', () => {
     expect(result.detail).toContain('k8s API error')
     expect(result.detail).not.toContain('abc123')
   })
+  it('readiness checker honours abort signal timeout', async () => {
+    const hangingClient = {
+      readNamespacedDeployment: async () => {
+        // Never resolves
+        return new Promise(() => {})
+      },
+    }
+
+    const start = Date.now()
+    const result = await runCheck(
+      k8sReadinessChecker,
+      { cluster: 'c', namespace: 'n', name: 'x', apps: hangingClient as any },
+      80, // timeout in 80ms
+    )
+    const elapsed = Date.now() - start
+
+    expect(result.state).toBe('unknown')
+    expect(result.detail).toBe('timeout')
+    // Check completed promptly (within reasonable margin)
+    expect(elapsed).toBeLessThan(150)
+  })
 })

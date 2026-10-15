@@ -4,6 +4,12 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "include": ["src/**/*", "prisma/**/*", "kill-all.js"],
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "vite.config.ts",
+    "prisma/**/*",
+    "kill-all.js"
+  ],
   "exclude": ["node_modules", "dist"]
 }

@@ -19,7 +19,7 @@ catalogs:
       specifier: ^5.2.2
       version: 5.2.2
     '@prisma/adapter-pg':
-      specifier: ^7.4.2
+      specifier: ^7.8.0
       version: 7.8.0
     '@prisma/client':
       specifier: ^7.4.2
@@ -85,7 +85,7 @@ catalogs:
       specifier: ^24.3.0
       version: 24.10.4
     '@types/pg':
-      specifier: ^8.18.0
+      specifier: ^8.20.0
       version: 8.20.0
     '@types/react':
       specifier: ^19.0.8
@@ -130,7 +130,7 @@ catalogs:
       specifier: ^1.4.5-lts.1
       version: 1.4.5-lts.2
     pg:
-      specifier: ^8.20.0
+      specifier: ^8.22.0
       version: 8.22.0
     prisma:
       specifier: ^7.4.2
@@ -349,6 +349,12 @@ importers:
       '@env-hopper/shared-core':
         specifier: 2.1.0-alpha-20261014235627
         version: link:../../packages/shared-core
+      '@env-hopper/source-gitlab':
+        specifier: workspace:*
+        version: link:../../packages/source-gitlab
+      '@env-hopper/source-k8s':
+        specifier: workspace:*
+        version: link:../../packages/source-k8s
       '@prisma/client':
         specifier: 'catalog:'
         version: 7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)(typescript@5.9.3))(typescript@5.9.3)
@@ -374,21 +380,33 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
     devDependencies:
+      '@prisma/adapter-pg':
+        specifier: 'catalog:'
+        version: 7.8.0
       '@types/express':
         specifier: 'catalog:'
         version: 5.0.6
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.4
+      '@types/pg':
+        specifier: 'catalog:'
+        version: 8.20.0
       esbuild:
         specifier: 'catalog:'
         version: 0.25.12
+      pg:
+        specifier: 'catalog:'
+        version: 8.22.0
       prisma:
         specifier: 'catalog:'
         version: 7.8.0(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)(typescript@5.9.3)
       prisma-json-types-generator:
         specifier: 'catalog:'
         version: 4.1.1(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)(typescript@5.9.3))(typescript@5.9.3))(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.1.2(react@19.1.2))(react@19.1.2)(typescript@5.9.3))(typescript@5.9.3)
+      quickpickle:
+        specifier: ^1.11.2
+        version: 1.11.2(vitest@3.2.2)
       tsdown:
         specifier: ^0.15.7
         version: 0.15.12(publint@0.3.16)(typescript@5.9.3)
@@ -461,7 +479,7 @@ importers:
         version: 1.2.0(vite@6.4.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.51.2)(tsx@4.21.0)(yaml@2.8.2))(workbox-build@7.4.0(@types/babel__core@7.20.5))(workbox-window@7.4.0)
       vite-plugin-svgr:
         specifier: 'catalog:'
-        version: 4.5.0(rollup@2.80.0)(typescript@5.9.3)(vite@6.4.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.51.2)(tsx@4.21.0)(yaml@2.8.2))
+        version: 4.5.0(rollup@4.64.6)(typescript@5.9.3)(vite@6.4.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.51.2)(tsx@4.21.0)(yaml@2.8.2))
       vite-tsconfig-paths:
         specifier: 'catalog:'
         version: 5.1.4(typescript@5.9.3)(vite@6.4.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.51.2)(tsx@4.21.0)(yaml@2.8.2))
@@ -12269,7 +12287,7 @@ snapshots:
   '@changesets/parse@0.4.2':
     dependencies:
       '@changesets/types': 6.1.0
-      js-yaml: 4.1.1
+      js-yaml: 4.3.2
 
   '@changesets/pre@2.0.2':
     dependencies:
@@ -14683,14 +14701,6 @@ snapshots:
       estree-walker: 2.0.2
       picomatch: 2.3.1
 
-  '@rollup/pluginutils@5.3.0(rollup@2.80.0)':
-    dependencies:
-      '@types/estree': 1.0.8
-      estree-walker: 2.0.2
-      picomatch: 4.0.3
-    optionalDependencies:
-      rollup: 2.80.0
-
   '@rollup/pluginutils@5.3.0(rollup@4.64.6)':
     dependencies:
       '@types/estree': 1.0.8
@@ -15502,8 +15512,8 @@ snapshots:
       '@textlint/types': 15.5.0
       chalk: 4.1.2
       debug: 4.4.3
-      js-yaml: 4.1.1
-      lodash: 4.17.21
+      js-yaml: 4.3.2
+      lodash: 4.18.1
       pluralize: 2.0.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
@@ -17056,7 +17066,7 @@ snapshots:
   cosmiconfig@8.3.6(typescript@5.9.3):
     dependencies:
       import-fresh: 3.3.1
-      js-yaml: 4.1.1
+      js-yaml: 4.3.2
       parse-json: 5.2.0
       path-type: 4.0.0
     optionalDependencies:
@@ -17066,7 +17076,7 @@ snapshots:
     dependencies:
       env-paths: 2.2.1
       import-fresh: 3.3.1
-      js-yaml: 4.1.1
+      js-yaml: 4.3.2
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.9.3
@@ -20346,7 +20356,7 @@ snapshots:
       '@cucumber/tag-expressions': 6.2.0
       buffer: 6.0.3
       image-crop-or-pad: 1.0.1
-      js-yaml: 4.1.1
+      js-yaml: 4.3.2
       lodash: 4.18.1
       lodash-es: 4.18.1
       pngjs: 7.0.0
@@ -22342,17 +22352,6 @@ snapshots:
       picocolors: 1.1.1
       tinyglobby: 0.2.15
       vite: 6.4.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.51.2)(tsx@4.21.0)(yaml@2.8.2)
-
-  vite-plugin-svgr@4.5.0(rollup@2.80.0)(typescript@5.9.3)(vite@6.4.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.51.2)(tsx@4.21.0)(yaml@2.8.2)):
-    dependencies:
-      '@rollup/pluginutils': 5.3.0(rollup@2.80.0)
-      '@svgr/core': 8.1.0(typescript@5.9.3)
-      '@svgr/plugin-jsx': 8.1.0(@svgr/core@8.1.0(typescript@5.9.3))
-      vite: 6.4.4(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.51.2)(tsx@4.21.0)(yaml@2.8.2)
-    transitivePeerDependencies:
-      - rollup
-      - supports-color
-      - typescript
 
   vite-plugin-svgr@4.5.0(rollup@4.64.6)(typescript@5.9.3)(vite@6.4.4(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.51.2)(tsx@4.21.0)(yaml@2.8.2)):
     dependencies:

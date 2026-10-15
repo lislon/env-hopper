@@ -45,18 +45,9 @@ export function sanitizeUrl(url: string): string | null {
 export const httpHealthChecker: HealthChecker<HttpHealthCheckConfig> = {
   name: 'http',
   async check({ url, expectStatus, bodyIncludes }, signal) {
-    // Create our own AbortController for fetch to avoid vitest context incompatibility
-    const fetchController = new AbortController()
-    const abortListener = () => fetchController.abort()
-    signal.addEventListener('abort', abortListener)
-
     let res: Response
     try {
-      res = await fetch(url, {
-        method: 'GET',
-        redirect: 'manual',
-        signal: fetchController.signal,
-      })
+      res = await fetch(url, { method: 'GET', redirect: 'manual', signal })
     } catch (e) {
       const code = (e as { cause?: { code?: string } }).cause?.code
       const name = (e as Error).name
@@ -64,11 +55,9 @@ export const httpHealthChecker: HealthChecker<HttpHealthCheckConfig> = {
       // the service is down.
       if (code === 'ENOTFOUND' || code === 'EAI_AGAIN')
         return { state: 'unknown', detail: code }
-      if (name === 'AbortError' || fetchController.signal.aborted)
+      if (name === 'AbortError' || signal.aborted)
         return { state: 'down', detail: 'timeout' }
       return { state: 'down', detail: code ?? 'network error' }
-    } finally {
-      signal.removeEventListener('abort', abortListener)
     }
     const statusOk = expectStatus ? res.status === expectStatus : res.ok
     if (!statusOk) return { state: 'down', detail: `HTTP ${res.status}` }

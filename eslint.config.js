@@ -9,7 +9,7 @@ import vitest from '@vitest/eslint-plugin'
 const config = [
   {
     name: 'env-hopper/ignores',
-    ignores: ['**/dist-ts/**', '**/src/generated/**'],
+    ignores: ['**/dist-ts/**', '**/src/generated/**', '**/eslint.config.ts'],
   },
   ...tanstackConfig,
   {

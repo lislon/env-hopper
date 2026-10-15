@@ -47,7 +47,7 @@
     "xverify-links": "node scripts/verify-links.ts"
   },
   "lint-staged": {
-    "!(root-symlink.*)*.{ts,tsx,js,jsx}": [
+    "!(root-symlink|eslint.config)*.{ts,tsx,js,jsx}": [
       "prettier --write",
       "eslint  --max-warnings=0 --fix"
     ],

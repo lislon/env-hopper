@@ -12,18 +12,27 @@ export function createGitlabSource({
   token,
   fetch: f = fetch,
   perPage = 100,
+  maxPages = 1000,
 }: {
   baseUrl: string
   token: string
   fetch?: typeof fetch
   perPage?: number
+  maxPages?: number
 }): GitlabSource {
   async function* pages<T>(
     path: string,
     params: Record<string, string> = {},
   ): AsyncGenerator<Array<T>> {
     let page = '1'
+    let pageCount = 0
     while (page) {
+      pageCount++
+      if (pageCount > maxPages) {
+        throw new Error(
+          `GitLab ${path}: exceeded maxPages limit of ${maxPages}`,
+        )
+      }
       const q = new URLSearchParams({
         ...params,
         per_page: String(perPage),

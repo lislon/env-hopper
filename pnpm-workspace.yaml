@@ -8,7 +8,7 @@ catalog:
   '@dnd-kit/utilities': ^3.2.2
   '@hookform/resolvers': ^5.2.2
   '@prisma/adapter-pg': ^7.8.0
-  '@prisma/client': ^7.4.2
+  '@prisma/client': ^7.8.0
   '@tailwindcss/vite': ^4.0.5
   '@tanstack/eslint-config': ^0.3.4
   '@tanstack/query-sync-storage-persister': ^5.80.6
@@ -47,7 +47,7 @@ catalog:
   express: ^5.1.0
   multer: ^1.4.5-lts.1
   pg: ^8.22.0
-  prisma: ^7.4.2
+  prisma: ^7.8.0
   prisma-json-types-generator: ^4.1.1
   radashi: 12.5.0-beta.6d5c035
   react: 19.1.2

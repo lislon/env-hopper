@@ -11,6 +11,7 @@ export interface K8sWorkloadRecord {
   kind: 'Deployment'
   images: Array<ImageRef>
   labels: Record<string, string>
+  annotations: Record<string, string>
   replicas: number
   readyReplicas: number
 }
@@ -20,6 +21,8 @@ export interface K8sIngressRecord {
   namespace: string
   name: string
   hosts: Array<string>
+  paths: Array<string>
+  tlsHosts: Array<string>
   backendServices: Array<string>
 }
 
@@ -34,6 +37,7 @@ export interface RawDeployment {
     namespace?: string
     name?: string
     labels?: Record<string, string>
+    annotations?: Record<string, string>
   }
   spec?: {
     replicas?: number
@@ -54,10 +58,14 @@ export interface RawIngress {
     name?: string
   }
   spec?: {
+    tls?: Array<{
+      hosts?: Array<string>
+    }>
     rules?: Array<{
       host?: string
       http?: {
         paths?: Array<{
+          path?: string
           backend?: {
             service?: {
               name?: string
@@ -67,4 +75,41 @@ export interface RawIngress {
       }
     }>
   }
+}
+
+// Narrow client interfaces matching @kubernetes/client-node 0.22
+export interface K8sAppsClient {
+  listDeploymentForAllNamespaces: (
+    allowWatchBookmarks?: boolean,
+    _continue?: string,
+    fieldSelector?: string,
+    labelSelector?: string,
+    limit?: number,
+    pretty?: string,
+    resourceVersion?: string,
+    resourceVersionMatch?: string,
+    sendInitialEvents?: boolean,
+    timeoutSeconds?: number,
+    watch?: boolean,
+  ) => Promise<{
+    body: { items: Array<RawDeployment>; metadata?: { _continue?: string } }
+  }>
+}
+
+export interface K8sNetworkingClient {
+  listIngressForAllNamespaces: (
+    allowWatchBookmarks?: boolean,
+    _continue?: string,
+    fieldSelector?: string,
+    labelSelector?: string,
+    limit?: number,
+    pretty?: string,
+    resourceVersion?: string,
+    resourceVersionMatch?: string,
+    sendInitialEvents?: boolean,
+    timeoutSeconds?: number,
+    watch?: boolean,
+  ) => Promise<{
+    body: { items: Array<RawIngress>; metadata?: { _continue?: string } }
+  }>
 }

@@ -10,6 +10,7 @@ const config = defineConfig({
     environment: 'node',
     typecheck: { enabled: true },
   },
+  // Resolves workspace dependencies using my-custom-condition → src/, not built dist/
   resolve: {
     conditions: ['my-custom-condition', 'default'],
   },

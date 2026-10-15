@@ -50,6 +50,17 @@ describe('http health check', () => {
     expect((await check('/500')).state).toBe('down'))
   it('times out as down', async () =>
     expect((await check('/hang')).state).toBe('down'))
+  it('times out as the checker says when it declares a timeout state', async () => {
+    const hanging = {
+      name: 'observer',
+      timeoutState: 'unknown' as const,
+      check: () => new Promise<never>(() => {}),
+    }
+    expect(await runCheck(hanging, {}, 50)).toMatchObject({
+      state: 'unknown',
+      detail: 'timeout',
+    })
+  })
   it('connection refused is down', async () => {
     expect(
       (await runCheck(httpHealthChecker, { url: 'http://127.0.0.1:1/x' }, 300))

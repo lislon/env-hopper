@@ -11,6 +11,13 @@ export interface HealthCheckResult {
 
 export interface HealthChecker<TConfig> {
   name: string
+  /**
+   * What a probe that ran out of time says about the target. Default `down`:
+   * the target was reached and did not answer. A checker that asks an
+   * observer instead (an orchestrator API) sets `unknown`, because a slow
+   * observer says nothing about the target.
+   */
+  timeoutState?: HealthState
   check: (
     config: TConfig,
     signal: AbortSignal,
@@ -94,7 +101,7 @@ export async function runCheck<TConfig>(
   } catch (e) {
     if (controller.signal.aborted) {
       return {
-        state: 'down',
+        state: checker.timeoutState ?? 'down',
         detail: 'timeout',
         observedAt: new Date(),
         checker: checker.name,

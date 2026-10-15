@@ -134,6 +134,8 @@ export interface K8sReadinessConfig {
 
 export const k8sReadinessChecker: HealthChecker<K8sReadinessConfig> = {
   name: 'k8s',
+  // A slow k8s API says nothing about the workload.
+  timeoutState: 'unknown',
   async check({ namespace, name, apps }, signal) {
     let deployment: RawDeployment
     let abortListener: (() => void) | undefined

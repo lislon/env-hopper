@@ -1,6 +1,6 @@
 import type { PrismaClient } from '../generated/prisma/client'
 import type { Catalog } from './catalogRead'
-import { createCatalogReads } from './catalogRead'
+import { chunks, createCatalogReads } from './catalogRead'
 import type {
   CatalogAppInput,
   CatalogArtifactInput,
@@ -62,14 +62,28 @@ export function createCatalog(prisma: PrismaClient): Catalog {
       )
     },
     async upsertArtifacts(list: Array<CatalogArtifactInput>) {
+      // builtAt keeps the earliest time any run reported: a later sighting
+      // of the same build never moves it, and a missing one never clears it.
       await prisma.$transaction(
-        list.map(({ componentSlug, version, ...rest }) =>
+        list.flatMap(({ componentSlug, version, builtAt, ...rest }) => [
           prisma.catalogArtifact.upsert({
             where: { componentSlug_version: { componentSlug, version } },
-            create: { componentSlug, version, ...rest },
+            create: { componentSlug, version, builtAt, ...rest },
             update: rest,
           }),
-        ),
+          ...(builtAt
+            ? [
+                prisma.catalogArtifact.updateMany({
+                  where: {
+                    componentSlug,
+                    version,
+                    OR: [{ builtAt: null }, { builtAt: { gt: builtAt } }],
+                  },
+                  data: { builtAt },
+                }),
+              ]
+            : []),
+        ]),
       )
     },
     async replaceReleases(scope: string, list: Array<CatalogReleaseInput>) {
@@ -97,8 +111,9 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             eps.map((e) => {
               const url = sanitizeUrl(e.url)
               if (url === null) {
+                // The raw URL may carry credentials: never echo it.
                 throw new Error(
-                  `Invalid endpoint URL for ${componentSlug}/${targetSlug}: ${e.url}`,
+                  `Invalid endpoint URL for ${componentSlug}/${targetSlug}`,
                 )
               }
               return { componentSlug, targetSlug, ...e, url }
@@ -161,11 +176,4 @@ const pairKey = (p: Pair) => `${p.componentSlug}\0${p.targetSlug}`
 /** One row per (component, target); a later row wins, as an upsert would. */
 function lastPerPair<T extends Pair>(list: Array<T>): Array<T> {
   return [...new Map(list.map((r) => [pairKey(r), r])).values()]
-}
-
-/** Bounded batches: Postgres takes at most 65535 bind parameters a query. */
-function chunks<T>(list: Array<T>, size = 1000): Array<Array<T>> {
-  const out: Array<Array<T>> = []
-  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size))
-  return out
 }

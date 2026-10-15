@@ -59,6 +59,21 @@ describe.skipIf(!prisma)('catalog reads', () => {
     )
   })
 
+  it('after a rollback is re-observed, the alias still names the newest build', async () => {
+    await givenOneComponentOnTwoTargets()
+    const run = (version: string, builtAt: Date) =>
+      catalog!.upsertArtifacts([
+        { componentSlug: 'shop-api', version, aliases: ['spring'], builtAt },
+      ])
+    await run('main-10', new Date('2026-01-01'))
+    await run('main-11', new Date('2026-01-02'))
+    // Rolled back to main-10; a later run reports it with a later time.
+    await run('main-10', new Date('2026-01-03'))
+    expect((await catalog!.resolveAlias('shop-api', 'spring'))?.version).toBe(
+      'main-11',
+    )
+  })
+
   it('lists health beside the deployment, unknown when none was observed', async () => {
     await givenOneComponentOnTwoTargets()
     await catalog!.replaceDeployments('ci', [

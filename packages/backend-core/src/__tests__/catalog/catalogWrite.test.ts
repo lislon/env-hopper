@@ -142,6 +142,64 @@ describe.skipIf(!prisma)('catalog writes', () => {
     expect(await prisma!.catalogArtifact.count()).toBe(2)
   })
 
+  it('an artifact keeps the earliest build time any run reported', async () => {
+    await givenOneComponentOnTwoTargets()
+    const builtAt = async () =>
+      (
+        await prisma!.catalogArtifact.findUniqueOrThrow({
+          where: {
+            componentSlug_version: {
+              componentSlug: 'shop-api',
+              version: 'main-10',
+            },
+          },
+        })
+      ).builtAt
+    await catalog!.upsertArtifacts([
+      {
+        componentSlug: 'shop-api',
+        version: 'main-10',
+        builtAt: new Date('2026-03-01'),
+      },
+    ])
+    expect(await builtAt()).toEqual(new Date('2026-01-01'))
+    await catalog!.upsertArtifacts([
+      { componentSlug: 'shop-api', version: 'main-10', aliases: ['spring'] },
+    ])
+    expect(await builtAt()).toEqual(new Date('2026-01-01'))
+    await catalog!.upsertArtifacts([
+      {
+        componentSlug: 'shop-api',
+        version: 'main-10',
+        builtAt: new Date('2025-12-31'),
+      },
+    ])
+    expect(await builtAt()).toEqual(new Date('2025-12-31'))
+  })
+
+  it('an artifact first seen without a build time takes the first one reported', async () => {
+    await givenOneComponentOnTwoTargets()
+    await catalog!.upsertArtifacts([
+      { componentSlug: 'shop-api', version: 'main-12' },
+    ])
+    await catalog!.upsertArtifacts([
+      {
+        componentSlug: 'shop-api',
+        version: 'main-12',
+        builtAt: new Date('2026-02-01'),
+      },
+    ])
+    const row = await prisma!.catalogArtifact.findUniqueOrThrow({
+      where: {
+        componentSlug_version: {
+          componentSlug: 'shop-api',
+          version: 'main-12',
+        },
+      },
+    })
+    expect(row.builtAt).toEqual(new Date('2026-02-01'))
+  })
+
   it('a deployment of an unknown artifact fails loudly', async () => {
     await givenOneComponentOnTwoTargets()
     await expect(
@@ -273,7 +331,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
           endpoints: [{ kind: 'ui' as const, url: 'not a url' }],
         },
       ]),
-    ).rejects.toThrow('Invalid endpoint URL')
+    ).rejects.toThrow(/^Invalid endpoint URL for shop-api\/k8s:prod\/shop-us$/)
   })
 
   it('a replace takes over a pair another scope held, with its health', async () => {
@@ -352,5 +410,20 @@ describe.skipIf(!prisma)('catalog writes', () => {
     console.info(`2,000 deployments replaced twice in ${elapsed} ms`)
     expect(await prisma!.catalogDeployment.count()).toBe(2000)
     expect(await prisma!.catalogEndpoint.count()).toBe(4000)
+
+    await catalog!.replaceHealth(
+      'ci',
+      list.map((d) => ({
+        componentSlug: d.componentSlug,
+        targetSlug: d.targetSlug,
+        state: 'healthy' as const,
+        observedAt: new Date(),
+        checker: 'http',
+      })),
+    )
+    const listed = await catalog!.listDeployments()
+    expect(listed.filter((d) => d.health?.state === 'healthy')).toHaveLength(
+      2000,
+    )
   })
 })

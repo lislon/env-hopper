@@ -63,6 +63,13 @@ export interface CatalogDeploymentView {
   health: { state: HealthState; observedAt: Date; checker: string } | null
 }
 
+/** Bounded batches: Postgres takes at most 65535 bind parameters a query. */
+export function chunks<T>(list: Array<T>, size = 1000): Array<Array<T>> {
+  const out: Array<Array<T>> = []
+  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size))
+  return out
+}
+
 export function createCatalogReads(prisma: PrismaClient) {
   return {
     async listDeployments(
@@ -83,14 +90,20 @@ export function createCatalogReads(prisma: PrismaClient) {
         },
         orderBy: [{ componentSlug: 'asc' }, { targetSlug: 'asc' }],
       })
-      const health = await prisma.catalogHealth.findMany({
-        where: {
-          OR: rows.map((r) => ({
-            componentSlug: r.componentSlug,
-            targetSlug: r.targetSlug,
-          })),
-        },
-      })
+      const health = (
+        await Promise.all(
+          chunks(rows).map((part) =>
+            prisma.catalogHealth.findMany({
+              where: {
+                OR: part.map((r) => ({
+                  componentSlug: r.componentSlug,
+                  targetSlug: r.targetSlug,
+                })),
+              },
+            }),
+          ),
+        )
+      ).flat()
       const healthOf = new Map(
         health.map((h) => [`${h.componentSlug}\u0000${h.targetSlug}`, h]),
       )

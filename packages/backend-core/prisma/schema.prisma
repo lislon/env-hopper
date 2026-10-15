@@ -72,3 +72,106 @@ model verification {
 
 // ========== EnvHopper Models ==========
 // No additional models needed for core resource jumping functionality
+
+// ========== Catalog (see CONTEXT.md) ==========
+model CatalogEnvironment {
+  slug        String  @id
+  displayName String
+  description String?
+  meta        Json    @default("{}")
+  targets     CatalogDeploymentTarget[]
+}
+
+model CatalogApp {
+  slug        String             @id
+  displayName String
+  components  CatalogComponent[]
+}
+
+model CatalogComponent {
+  slug        String  @id
+  displayName String
+  appSlug     String?
+  app         CatalogApp? @relation(fields: [appSlug], references: [slug])
+  externalIds Json    @default("{}")
+  artifacts   CatalogArtifact[]
+  deployments CatalogDeployment[]
+}
+
+model CatalogDeploymentTarget {
+  slug            String  @id
+  displayName     String
+  environmentSlug String?
+  environment     CatalogEnvironment? @relation(fields: [environmentSlug], references: [slug])
+  meta            Json    @default("{}")
+  deployments     CatalogDeployment[]
+}
+
+model CatalogRelease {
+  key       String    @id
+  scope     String
+  tag       String?
+  commitSha String?
+  author    String?
+  createdAt DateTime?
+  artifacts CatalogArtifact[]
+
+  @@index([scope])
+}
+
+model CatalogArtifact {
+  componentSlug String
+  version       String
+  aliases       String[]  @default([])
+  releaseKey    String?
+  builtAt       DateTime?
+  component     CatalogComponent @relation(fields: [componentSlug], references: [slug])
+  release       CatalogRelease?  @relation(fields: [releaseKey], references: [key], onDelete: SetNull)
+  deployments   CatalogDeployment[]
+
+  @@id([componentSlug, version])
+  @@index([componentSlug, builtAt])
+}
+
+model CatalogDeployment {
+  componentSlug String
+  targetSlug    String
+  version       String
+  scope         String
+  source        String
+  deployedAt    DateTime?
+  component     CatalogComponent        @relation(fields: [componentSlug], references: [slug])
+  target        CatalogDeploymentTarget @relation(fields: [targetSlug], references: [slug])
+  artifact      CatalogArtifact         @relation(fields: [componentSlug, version], references: [componentSlug, version])
+  endpoints     CatalogEndpoint[]
+
+  @@id([componentSlug, targetSlug])
+  @@index([scope])
+}
+
+model CatalogEndpoint {
+  id            Int     @id @default(autoincrement())
+  componentSlug String
+  targetSlug    String
+  kind          String
+  label         String?
+  url           String
+  deployment    CatalogDeployment @relation(fields: [componentSlug, targetSlug], references: [componentSlug, targetSlug], onDelete: Cascade)
+
+  @@index([componentSlug, targetSlug])
+}
+
+// Health is written independently of Deployments (any Source, any time), so it
+// is keyed like a Deployment but not owned by one.
+model CatalogHealth {
+  componentSlug String
+  targetSlug    String
+  scope         String
+  state         String
+  observedAt    DateTime
+  checker       String
+  detail        String?
+
+  @@id([componentSlug, targetSlug])
+  @@index([scope])
+}

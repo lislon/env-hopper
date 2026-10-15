@@ -8,6 +8,8 @@ const config = defineConfig({
     watch: false,
     environment: 'jsdom',
     typecheck: { enabled: true },
+    globalSetup: ['./src/__tests__/catalog/globalSetup.ts'],
+    fileParallelism: false,
   },
 })
 

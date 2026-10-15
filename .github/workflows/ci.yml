@@ -32,6 +32,20 @@ jobs:
     name: Test, Build and Publish
     if: github.repository_owner == 'lislon'
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: env-hopper
+          POSTGRES_PASSWORD: env-hopper
+          POSTGRES_DB: env-hopper
+        ports: ['5532:5432']
+        options: >-
+          --health-cmd "pg_isready -U env-hopper" --health-interval 5s --health-retries 10
+    env:
+      # secretlint-disable
+      EH_CORE_TEST_DATABASE_URL: postgres://env-hopper:env-hopper@localhost:5532/env-hopper?schema=eh_core_test
+      # secretlint-enable
     steps:
       - uses: actions/checkout@v7.0.1
         with:

@@ -94,6 +94,11 @@ export interface K8sAppsClient {
   ) => Promise<{
     body: { items: Array<RawDeployment>; metadata?: { _continue?: string } }
   }>
+  readNamespacedDeployment: (
+    name: string,
+    namespace: string,
+    pretty?: string,
+  ) => Promise<{ body: RawDeployment }>
 }
 
 export interface K8sNetworkingClient {

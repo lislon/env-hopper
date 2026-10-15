@@ -163,24 +163,101 @@ describe('k8s source', () => {
     ])
   })
   it('readiness maps ready replicas to health', async () => {
-    const w = (replicas: number, ready: number) => ({
-      workload: {
-        cluster: 'c',
-        namespace: 'n',
-        name: 'x',
-        kind: 'Deployment' as const,
-        images: [],
-        labels: {},
-        annotations: {},
-        replicas,
-        readyReplicas: ready,
+    const client = {
+      readNamespacedDeployment: async (name: string) => ({
+        body: dep('n', name, 'img', 2, 2),
+      }),
+    }
+    expect(
+      (
+        await runCheck(k8sReadinessChecker, {
+          cluster: 'c',
+          namespace: 'n',
+          name: 'healthy',
+          apps: client as any,
+        })
+      ).state,
+    ).toBe('healthy')
+
+    const clientDegraded = {
+      readNamespacedDeployment: async () => ({
+        body: dep('n', 'x', 'img', 2, 1),
+      }),
+    }
+    expect(
+      (
+        await runCheck(k8sReadinessChecker, {
+          cluster: 'c',
+          namespace: 'n',
+          name: 'x',
+          apps: clientDegraded as any,
+        })
+      ).state,
+    ).toBe('degraded')
+
+    const clientDown = {
+      readNamespacedDeployment: async () => ({
+        body: dep('n', 'x', 'img', 2, 0),
+      }),
+    }
+    expect(
+      (
+        await runCheck(k8sReadinessChecker, {
+          cluster: 'c',
+          namespace: 'n',
+          name: 'x',
+          apps: clientDown as any,
+        })
+      ).state,
+    ).toBe('down')
+
+    const clientScaled = {
+      readNamespacedDeployment: async () => ({
+        body: dep('n', 'x', 'img', 0, 0),
+      }),
+    }
+    expect(
+      (
+        await runCheck(k8sReadinessChecker, {
+          cluster: 'c',
+          namespace: 'n',
+          name: 'x',
+          apps: clientScaled as any,
+        })
+      ).state,
+    ).toBe('unknown')
+  })
+  it('readiness checker returns unknown when workload not found', async () => {
+    const notFoundError: any = new Error('Not found')
+    notFoundError.statusCode = 404
+    const client = {
+      readNamespacedDeployment: async () => {
+        throw notFoundError
       },
+    }
+    const result = await runCheck(k8sReadinessChecker, {
+      cluster: 'c',
+      namespace: 'missing',
+      name: 'gone',
+      apps: client as any,
     })
-    expect((await runCheck(k8sReadinessChecker, w(2, 2))).state).toBe('healthy')
-    expect((await runCheck(k8sReadinessChecker, w(2, 1))).state).toBe(
-      'degraded',
-    )
-    expect((await runCheck(k8sReadinessChecker, w(2, 0))).state).toBe('down')
-    expect((await runCheck(k8sReadinessChecker, w(0, 0))).state).toBe('unknown')
+    expect(result.state).toBe('unknown')
+    expect(result.detail).toContain('not found')
+  })
+  it('readiness checker returns unknown on API error without leaking credentials', async () => {
+    const client = {
+      readNamespacedDeployment: async () => {
+        throw new Error('Unauthorized: invalid token abc123')
+      },
+    }
+    const result = await runCheck(k8sReadinessChecker, {
+      cluster: 'c',
+      namespace: 'ns',
+      name: 'x',
+      apps: client as any,
+    })
+    expect(result.state).toBe('unknown')
+    expect(result.detail).toContain('k8s API error')
+    expect(result.detail).not.toContain('abc123')
   })
 })

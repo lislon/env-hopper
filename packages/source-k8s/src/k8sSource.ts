@@ -5,7 +5,6 @@ import type {
   K8sAppsClient,
   K8sNetworkingClient,
   K8sSource,
-  K8sWorkloadRecord,
   RawDeployment,
   RawIngress,
 } from './k8sTypes'
@@ -127,14 +126,35 @@ export function createK8sSource({
 }
 
 export const k8sReadinessChecker: HealthChecker<{
-  workload: K8sWorkloadRecord
+  cluster: string
+  namespace: string
+  name: string
+  apps: K8sAppsClient
 }> = {
   name: 'k8s',
-  async check({ workload: { replicas, readyReplicas } }) {
+  async check({ namespace, name, apps }) {
+    let deployment: RawDeployment
+    try {
+      const result = await apps.readNamespacedDeployment(name, namespace)
+      deployment = result.body
+    } catch (e) {
+      const statusCode = (e as any).statusCode
+      if (statusCode === 404) {
+        return { state: 'unknown', detail: 'workload not found' }
+      }
+      return { state: 'unknown', detail: 'k8s API error' }
+    }
+
+    const replicas = deployment.spec?.replicas ?? 0
+    const readyReplicas = deployment.status?.readyReplicas ?? 0
+
     if (replicas === 0) return { state: 'unknown', detail: 'scaled to zero' }
     if (readyReplicas >= replicas) return { state: 'healthy' }
     if (readyReplicas > 0)
-      return { state: 'degraded', detail: `${readyReplicas}/${replicas} ready` }
+      return {
+        state: 'degraded',
+        detail: `${readyReplicas}/${replicas} ready`,
+      }
     return { state: 'down', detail: `0/${replicas} ready` }
   },
 }

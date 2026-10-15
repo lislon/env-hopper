@@ -5,6 +5,11 @@ export interface GitlabEnvironmentRecord {
   tier: string | null
   externalUrl: string | null
   state: string
+  /**
+   * When the environment was last deployed. Only `getEnvironment` fills it:
+   * GitLab's environment list does not return the last deployment, so
+   * `listEnvironments` always leaves it null.
+   */
   lastDeployedAt: string | null
 }
 
@@ -42,6 +47,14 @@ export interface GitlabSource {
       updatedAfter?: Date
     },
   ) => Promise<Array<GitlabDeploymentRecord>>
+  /** One environment with its last deployment (the list endpoint has neither). */
+  getEnvironment: (
+    projectId: number,
+    environmentId: number,
+  ) => Promise<{
+    environment: GitlabEnvironmentRecord
+    lastDeployment: GitlabDeploymentRecord | null
+  }>
   listReleases: (
     projectId: number,
     opts?: { limit?: number },
@@ -55,9 +68,7 @@ export interface RawEnvironment {
   tier?: string
   external_url?: string
   state: string
-  last_deployment?: {
-    created_at: string
-  }
+  last_deployment?: Omit<RawDeployment, 'environment'> & { created_at: string }
 }
 
 export interface RawDeployment {

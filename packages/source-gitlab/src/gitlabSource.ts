@@ -7,6 +7,39 @@ import type {
   RawRelease,
 } from './gitlabTypes'
 
+function environmentRecord(
+  projectId: number,
+  e: RawEnvironment,
+): GitlabEnvironmentRecord {
+  return {
+    projectId,
+    id: e.id,
+    name: e.name,
+    tier: e.tier ?? null,
+    externalUrl: e.external_url ?? null,
+    state: e.state,
+    lastDeployedAt: e.last_deployment?.created_at ?? null,
+  }
+}
+
+function deploymentRecord(
+  projectId: number,
+  environmentName: string,
+  d: Omit<RawDeployment, 'environment'>,
+): GitlabDeploymentRecord {
+  return {
+    projectId,
+    environmentName,
+    ref: d.ref,
+    sha: d.sha,
+    tag: d.tag ?? false,
+    jobName: d.deployable?.name ?? '',
+    pipelineId: d.deployable?.pipeline?.id ?? null,
+    status: d.status,
+    finishedAt: d.deployable?.finished_at ?? null,
+  }
+}
+
 export function createGitlabSource({
   baseUrl,
   token,
@@ -61,15 +94,7 @@ export function createGitlabSource({
           `/projects/${projectId}/environments`,
           { states: state },
         )) {
-          out.push({
-            projectId,
-            id: e.id,
-            name: e.name,
-            tier: e.tier ?? null,
-            externalUrl: e.external_url ?? null,
-            state: e.state,
-            lastDeployedAt: e.last_deployment?.created_at ?? null,
-          })
+          out.push(environmentRecord(projectId, e))
         }
       }
       return out
@@ -100,19 +125,26 @@ export function createGitlabSource({
           !jobNames(d.deployable?.name ?? '')
         )
           continue
-        latest.set(env, {
-          projectId,
-          environmentName: env,
-          ref: d.ref,
-          sha: d.sha,
-          tag: d.tag ?? false,
-          jobName: d.deployable?.name ?? '',
-          pipelineId: d.deployable?.pipeline?.id ?? null,
-          status: d.status,
-          finishedAt: d.deployable?.finished_at ?? null,
-        })
+        latest.set(env, deploymentRecord(projectId, env, d))
       }
       return [...latest.values()]
+    },
+    async getEnvironment(projectId, environmentId) {
+      const res = await f(
+        `${baseUrl}/api/v4/projects/${projectId}/environments/${environmentId}`,
+        { headers: { 'PRIVATE-TOKEN': token } },
+      )
+      if (!res.ok)
+        throw new Error(
+          `GitLab /projects/${projectId}/environments/${environmentId}: ${res.status}`,
+        )
+      const e = (await res.json()) as RawEnvironment
+      return {
+        environment: environmentRecord(projectId, e),
+        lastDeployment: e.last_deployment
+          ? deploymentRecord(projectId, e.name, e.last_deployment)
+          : null,
+      }
     },
     async listReleases(projectId, { limit = 50 } = {}) {
       const res = await f(

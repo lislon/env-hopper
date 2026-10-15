@@ -319,3 +319,79 @@ describe('gitlab source deployment window', () => {
     expect(urls[0]?.searchParams.has('updated_after')).toBe(false)
   })
 })
+
+describe('gitlab source single environment', () => {
+  const fetchJson = (body: unknown, status = 200) =>
+    (async () =>
+      new Response(JSON.stringify(body), {
+        status,
+      })) as unknown as typeof globalThis.fetch
+
+  it('returns the environment with its last deployment', async () => {
+    const src = createGitlabSource({
+      baseUrl: 'https://git.example',
+      token: 't',
+      fetch: fetchJson({
+        id: 5,
+        name: 'production/eu',
+        state: 'available',
+        external_url: 'https://app.example',
+        last_deployment: {
+          id: 9,
+          ref: 'main',
+          sha: 'c9',
+          status: 'success',
+          created_at: '2025-01-02T00:00:00Z',
+          updated_at: '2025-01-02T00:10:00Z',
+          deployable: {
+            name: 'deploy-prod',
+            pipeline: { id: 90 },
+            finished_at: '2025-01-02T00:09:00Z',
+          },
+        },
+      }),
+    })
+    expect(await src.getEnvironment(7, 5)).toEqual({
+      environment: {
+        projectId: 7,
+        id: 5,
+        name: 'production/eu',
+        tier: null,
+        externalUrl: 'https://app.example',
+        state: 'available',
+        lastDeployedAt: '2025-01-02T00:00:00Z',
+      },
+      lastDeployment: {
+        projectId: 7,
+        environmentName: 'production/eu',
+        ref: 'main',
+        sha: 'c9',
+        tag: false,
+        jobName: 'deploy-prod',
+        pipelineId: 90,
+        status: 'success',
+        finishedAt: '2025-01-02T00:09:00Z',
+      },
+    })
+  })
+
+  it('has no last deployment for a never-deployed environment', async () => {
+    const src = createGitlabSource({
+      baseUrl: 'https://git.example',
+      token: 't',
+      fetch: fetchJson({ id: 6, name: 'staging', state: 'available' }),
+    })
+    expect((await src.getEnvironment(7, 6)).lastDeployment).toBeNull()
+  })
+
+  it('names the status when GitLab refuses', async () => {
+    const src = createGitlabSource({
+      baseUrl: 'https://git.example',
+      token: 't',
+      fetch: fetchJson({}, 404),
+    })
+    await expect(src.getEnvironment(7, 6)).rejects.toThrow(
+      'GitLab /projects/7/environments/6: 404',
+    )
+  })
+})

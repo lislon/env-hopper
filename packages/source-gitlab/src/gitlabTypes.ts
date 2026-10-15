@@ -21,6 +21,8 @@ export interface GitlabDeploymentRecord {
   tag: boolean
   jobName: string
   pipelineId: number | null
+  /** When the deploy job's pipeline was created: the closest GitLab has to a build time. */
+  pipelineCreatedAt: string | null
   status: string
   finishedAt: string | null
 }
@@ -85,6 +87,7 @@ export interface RawDeployment {
     name: string
     pipeline?: {
       id: number
+      created_at?: string
     }
     finished_at?: string
   }

@@ -35,6 +35,7 @@ function deploymentRecord(
     tag: d.tag ?? false,
     jobName: d.deployable?.name ?? '',
     pipelineId: d.deployable?.pipeline?.id ?? null,
+    pipelineCreatedAt: d.deployable?.pipeline?.created_at ?? null,
     status: d.status,
     finishedAt: d.deployable?.finished_at ?? null,
   }

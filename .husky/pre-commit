@@ -49,8 +49,8 @@ if ! git diff --cached --quiet; then
     fi
   fi
 
-  # Export test database URL for catalog tests
-  export EH_CORE_TEST_DATABASE_URL="postgres://env-hopper:env-hopper@localhost:55436/env-hopper?schema=eh_core_test"
+  # Export test database URL for catalog tests (use existing value or default to compose DB)
+  export EH_CORE_TEST_DATABASE_URL="${EH_CORE_TEST_DATABASE_URL:-postgres://env-hopper:env-hopper@localhost:5532/env-hopper?schema=eh_core_test}"
 
   # Run affected tests with explicit base branch
   # Using --parallel=3 to speed up the checks

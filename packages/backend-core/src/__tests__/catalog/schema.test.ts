@@ -2,21 +2,22 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { getTestCatalogClient, resetCatalog } from './testDb'
 
 const prisma = getTestCatalogClient()
-beforeEach(() => resetCatalog(prisma))
 
-describe('catalog schema', () => {
+describe.skipIf(!prisma)('catalog schema', () => {
+  beforeEach(() => resetCatalog(prisma!))
+
   it('drops endpoints with their deployment', async () => {
     // given
-    await prisma.catalogComponent.create({
+    await prisma!.catalogComponent.create({
       data: { slug: 'api', displayName: 'API' },
     })
-    await prisma.catalogDeploymentTarget.create({
+    await prisma!.catalogDeploymentTarget.create({
       data: { slug: 't1', displayName: 'T1' },
     })
-    await prisma.catalogArtifact.create({
+    await prisma!.catalogArtifact.create({
       data: { componentSlug: 'api', version: 'main-1' },
     })
-    await prisma.catalogDeployment.create({
+    await prisma!.catalogDeployment.create({
       data: {
         componentSlug: 'api',
         targetSlug: 't1',
@@ -27,8 +28,8 @@ describe('catalog schema', () => {
       },
     })
     // act
-    await prisma.catalogDeployment.deleteMany({})
+    await prisma!.catalogDeployment.deleteMany({})
     // assert
-    expect(await prisma.catalogEndpoint.count()).toBe(0)
+    expect(await prisma!.catalogEndpoint.count()).toBe(0)
   })
 })

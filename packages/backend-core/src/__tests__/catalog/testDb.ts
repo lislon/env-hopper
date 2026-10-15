@@ -3,13 +3,16 @@ import pg from 'pg'
 import { PrismaClient } from '../../generated/prisma/client'
 
 let client: PrismaClient | undefined
-export function getTestCatalogClient(): PrismaClient {
+export function getTestCatalogClient(): PrismaClient | undefined {
+  if (!process.env.EH_CORE_TEST_DATABASE_URL) {
+    return undefined
+  }
   client ??= new PrismaClient({
     adapter: new PrismaPg(
       new pg.Pool({ connectionString: process.env.EH_CORE_TEST_DATABASE_URL }),
       {
         schema:
-          new URL(process.env.EH_CORE_TEST_DATABASE_URL!).searchParams.get(
+          new URL(process.env.EH_CORE_TEST_DATABASE_URL).searchParams.get(
             'schema',
           ) ?? 'public',
       },

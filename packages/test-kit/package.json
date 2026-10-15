@@ -14,7 +14,9 @@
     "./src/setup/*",
     "./dist/esm/setup/*",
     "./src/cucumber/*",
-    "./dist/esm/cucumber/*"
+    "./dist/esm/cucumber/*",
+    "./src/catalog-db/*",
+    "./dist/esm/catalog-db/*"
   ],
   "type": "module",
   "exports": {
@@ -37,6 +39,13 @@
       "import": {
         "types": "./dist/esm/cucumber/steps.d.ts",
         "default": "./dist/esm/cucumber/steps.js"
+      }
+    },
+    "./catalog-db": {
+      "my-custom-condition": "./src/catalog-db/index.ts",
+      "import": {
+        "types": "./dist/esm/catalog-db/index.d.ts",
+        "default": "./dist/esm/catalog-db/index.js"
       }
     },
     "./package.json": "./package.json"
@@ -72,12 +81,15 @@
   "devDependencies": {
     "@env-hopper/backend-core": "workspace:*",
     "@env-hopper/frontend-core": "workspace:*",
+    "@prisma/adapter-pg": "catalog:",
     "@tanstack/vite-config": "catalog:",
     "@types/node": "catalog:",
+    "@types/pg": "catalog:",
     "@types/react": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "jiti": "^2.6.1",
     "jsdom": "^25.0.1",
+    "pg": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plugin-svgr": "catalog:",

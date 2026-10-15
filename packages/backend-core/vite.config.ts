@@ -1,14 +1,18 @@
+import path from 'node:path'
 import { defineConfig } from 'vitest/config'
 import packageJson from './package.json'
 
 const config = defineConfig({
+  resolve: {
+    conditions: ['my-custom-condition'],
+  },
   test: {
     name: packageJson.name,
     dir: './src/__tests__',
     watch: false,
     environment: 'jsdom',
     typecheck: { enabled: true },
-    globalSetup: ['./src/__tests__/catalog/globalSetup.ts'],
+    globalSetup: [path.resolve(__dirname, '../test-kit/src/catalog-db/globalSetup.ts')],
     fileParallelism: false,
   },
 })

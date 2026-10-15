@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest'
-import { getTestCatalogClient, resetCatalog } from './testDb'
+import { getTestCatalogClient, resetCatalog } from '../../../../test-kit/src/catalog-db/index.ts'
 
 const prisma = getTestCatalogClient()
 

@@ -1078,12 +1078,18 @@ importers:
       '@env-hopper/frontend-core':
         specifier: workspace:*
         version: link:../frontend-core
+      '@prisma/adapter-pg':
+        specifier: 'catalog:'
+        version: 7.8.0
       '@tanstack/vite-config':
         specifier: 'catalog:'
         version: 0.4.3(@types/node@24.10.4)(rollup@4.64.6)(typescript@5.9.3)(vite@6.4.4(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.97.1)(sass@1.97.1)(terser@5.51.2)(tsx@4.21.0)(yaml@2.8.2))
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.4
+      '@types/pg':
+        specifier: 'catalog:'
+        version: 8.20.0
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.7
@@ -1096,6 +1102,9 @@ importers:
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1
+      pg:
+        specifier: 'catalog:'
+        version: 8.22.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -8993,9 +9002,6 @@ packages:
     peerDependencies:
       pg: '>=8.0'
 
-  pg-protocol@1.15.0:
-    resolution: {integrity: sha512-cq9sECI5s0+uPUXjbz8ioyPJni6RzsRib0US67i5IoTZKw8fNeYlVE7u8F4dG7vEJJtc5wdD1K189lCCUwqWTQ==}
-
   pg-protocol@1.16.1:
     resolution: {integrity: sha512-p9VOFMiHB/ZbJATetbg+99PxssTVSQRnyuPSQ67mN1+1KBOjZaZ83ZQzltnxPhJwSsC3nwVjJ10DVJlerbFzLg==}
 
@@ -15870,7 +15876,7 @@ snapshots:
   '@types/pg@8.20.0':
     dependencies:
       '@types/node': 25.0.3
-      pg-protocol: 1.15.0
+      pg-protocol: 1.16.1
       pg-types: 2.2.0
 
   '@types/qs@6.14.0': {}
@@ -20030,8 +20036,6 @@ snapshots:
   pg-pool@3.14.0(pg@8.22.0):
     dependencies:
       pg: 8.22.0
-
-  pg-protocol@1.15.0: {}
 
   pg-protocol@1.16.1: {}
 

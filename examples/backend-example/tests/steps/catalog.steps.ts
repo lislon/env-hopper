@@ -61,3 +61,44 @@ Then(
     expect(d?.health?.state ?? 'unknown').toBe(h)
   },
 )
+
+Then(
+  '{string} on {string} has {int} endpoints',
+  async (_w, c: string, t: string, n: number) => {
+    const d = (await catalog.listDeployments()).find(
+      (x) => x.component.slug === c && x.target.slug === t,
+    )
+    expect(d?.endpoints).toHaveLength(n)
+  },
+)
+
+Then(
+  '{string} on {string} endpoint {string} is {string}',
+  async (_w, c: string, t: string, kind: string, url: string) => {
+    const d = (await catalog.listDeployments()).find(
+      (x) => x.component.slug === c && x.target.slug === t,
+    )
+    const ep = d?.endpoints.find((e) => e.kind === kind)
+    expect(ep?.url).toBe(url)
+  },
+)
+
+Then('app {string} has {int} deployments', async (_w, app: string, n: number) =>
+  expect(
+    await catalog.listDeployments({ appSlug: app }),
+  ).toHaveLength(n),
+)
+
+Then('app {string} has {int} deployment', async (_w, app: string, n: number) =>
+  expect(
+    await catalog.listDeployments({ appSlug: app }),
+  ).toHaveLength(n),
+)
+
+Then('I see {int} deployments in total', async (_w, n: number) =>
+  expect(await catalog.listDeployments()).toHaveLength(n),
+)
+
+Then('I see {int} deployment in total', async (_w, n: number) =>
+  expect(await catalog.listDeployments()).toHaveLength(n),
+)

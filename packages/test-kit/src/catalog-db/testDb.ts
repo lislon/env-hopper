@@ -1,17 +1,20 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 import { inject } from 'vitest'
-import { PrismaClient } from '../../generated/prisma/client'
+import type { PrismaClient } from '../../../backend-core/src/generated/prisma/client'
+import { PrismaClient as PrismaClientImpl } from '../../../backend-core/src/generated/prisma/client'
 
 let client: PrismaClient | undefined
 export function getTestCatalogClient(): PrismaClient | undefined {
-  const dbReady = inject('catalogDbReady')
+  const dbReady = inject<boolean>('catalogDbReady')
   if (!dbReady) {
     return undefined
   }
-  client ??= new PrismaClient({
+  client ??= new PrismaClientImpl({
     adapter: new PrismaPg(
-      new pg.Pool({ connectionString: process.env.EH_CORE_TEST_DATABASE_URL! }),
+      new pg.Pool({
+        connectionString: process.env.EH_CORE_TEST_DATABASE_URL!,
+      }),
       {
         schema:
           new URL(process.env.EH_CORE_TEST_DATABASE_URL!).searchParams.get(

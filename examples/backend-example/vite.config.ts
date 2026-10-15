@@ -3,6 +3,9 @@ import { defineConfig } from 'vitest/config'
 import type { PluginOption } from 'vite'
 
 export default defineConfig({
+  resolve: {
+    conditions: ['my-custom-condition'],
+  },
   plugins: [quickpickle({ stepTimeout: 20000 }) as PluginOption],
   test: {
     // @vitest-environment node

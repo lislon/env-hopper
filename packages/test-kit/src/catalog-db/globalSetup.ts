@@ -15,7 +15,7 @@ export default function setup({
       '  docker compose -f examples/backend-example/docker-compose.yml up -d db',
       'Or point to another instance:',
       // secretlint-disable-next-line
-      '  export EH_CORE_TEST_DATABASE_URL=postgres://env-hopper:env-hopper@localhost:5532/env-hopper?schema=eh_core_test',
+      '  export EH_CORE_TEST_DATABASE_URL=postgres://env-hopper:env-hopper@localhost:55436/env-hopper?schema=<your_schema>',
     ].join('\n')
 
     if (isCI) {
@@ -28,7 +28,11 @@ export default function setup({
   }
 
   try {
-    execSync('pnpm exec prisma migrate reset --force', {
+    // Run from the workspace root to find the schema
+    const prismaCmd = process.cwd().includes('/examples/')
+      ? 'pnpm exec prisma migrate reset --force --schema=../../packages/backend-core/prisma/schema.prisma --config=../../packages/backend-core/prisma.config.ts'
+      : 'pnpm exec prisma migrate reset --force --schema=../backend-core/prisma/schema.prisma --config=../backend-core/prisma.config.ts'
+    execSync(prismaCmd, {
       stdio: 'pipe',
       env: { ...process.env, EH_CORE_DATABASE_URL: url },
     })

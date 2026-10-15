@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
 export default function setup({
   provide,
@@ -28,16 +29,20 @@ export default function setup({
   }
 
   try {
-    // Run from the workspace root to find the schema
-    const prismaCmd = process.cwd().includes('/examples/')
-      ? 'pnpm exec prisma migrate reset --force --schema=../../packages/backend-core/prisma/schema.prisma --config=../../packages/backend-core/prisma.config.ts'
-      : 'pnpm exec prisma migrate reset --force --schema=../backend-core/prisma/schema.prisma --config=../backend-core/prisma.config.ts'
-    execSync(prismaCmd, {
-      stdio: 'pipe',
-      env: { ...process.env, EH_CORE_DATABASE_URL: url },
-    })
+    execSync(
+      'pnpm exec prisma migrate reset --force --schema=prisma/schema.prisma --config=prisma.config.ts',
+      {
+        stdio: 'pipe',
+        // src/testing and dist/testing both sit two levels below the package root
+        cwd: fileURLToPath(new URL('../..', import.meta.url)),
+        env: { ...process.env, EH_CORE_DATABASE_URL: url },
+        encoding: 'utf8',
+      },
+    )
     provide('catalogDbReady', true)
-  } catch (error) {
+  } catch (error: unknown) {
+    const stderr = (error as { stderr?: string }).stderr || ''
+    const stdout = (error as { stdout?: string }).stdout || ''
     const message = [
       'Failed to connect to test database.',
       'To run catalog tests, start the dev database:',
@@ -47,6 +52,8 @@ export default function setup({
       `  export EH_CORE_TEST_DATABASE_URL=${url}`,
       '',
       `Error: ${error instanceof Error ? error.message : String(error)}`,
+      stderr ? `\nStderr: ${stderr}` : '',
+      stdout ? `\nStdout: ${stdout}` : '',
     ].join('\n')
 
     if (isCI) {

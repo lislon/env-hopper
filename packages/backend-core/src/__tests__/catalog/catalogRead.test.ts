@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createCatalog } from '../../catalog'
-import { getTestCatalogClient, resetCatalog } from '../../../../test-kit/src/catalog-db/index.ts'
+import { getTestCatalogClient, resetCatalog } from '../../testing'
 
 const prisma = getTestCatalogClient()
 const catalog = prisma ? createCatalog(prisma) : undefined

@@ -1,12 +1,18 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 import { inject } from 'vitest'
-import type { PrismaClient } from '../../../backend-core/src/generated/prisma/client'
-import { PrismaClient as PrismaClientImpl } from '../../../backend-core/src/generated/prisma/client'
+import type { PrismaClient } from '../generated/prisma/client'
+import { PrismaClient as PrismaClientImpl } from '../generated/prisma/client'
+
+declare module 'vitest' {
+  export interface ProvidedContext {
+    catalogDbReady: boolean
+  }
+}
 
 let client: PrismaClient | undefined
 export function getTestCatalogClient(): PrismaClient | undefined {
-  const dbReady = inject<boolean>('catalogDbReady')
+  const dbReady = inject('catalogDbReady')
   if (!dbReady) {
     return undefined
   }

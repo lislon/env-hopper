@@ -2,7 +2,7 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { EhDatabaseManager } from '../../middleware/database'
 import { createCatalog } from '../../catalog'
-import { getTestCatalogClient, resetCatalog } from '../../../../test-kit/src/catalog-db/index.ts'
+import { getTestCatalogClient, resetCatalog } from '../../testing'
 
 const prisma = getTestCatalogClient()
 

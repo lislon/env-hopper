@@ -20,6 +20,20 @@
         "default": "./dist/index.js"
       }
     },
+    "./testing": {
+      "my-custom-condition": "./src/testing/index.ts",
+      "import": {
+        "types": "./dist/testing/index.d.ts",
+        "default": "./dist/testing/index.js"
+      }
+    },
+    "./testing/global-setup": {
+      "my-custom-condition": "./src/testing/globalSetup.ts",
+      "import": {
+        "types": "./dist/testing/globalSetup.d.ts",
+        "default": "./dist/testing/globalSetup.js"
+      }
+    },
     "./package.json": "./package.json"
   },
   "module": "dist/index.js",
@@ -77,12 +91,19 @@
     "tsdown": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
-    "vite-plugin-dts": "^4.5.4"
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "@prisma/adapter-pg": "catalog:",
     "@prisma/client": "catalog:",
-    "pg": "catalog:"
+    "pg": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=16"

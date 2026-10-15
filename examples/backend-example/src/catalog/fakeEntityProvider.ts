@@ -214,8 +214,6 @@ const observerChecker: HealthChecker<{ url: string }> = {
   },
 }
 
-let hangServer: ReturnType<typeof createServer> | undefined
-
 export async function syncFakeCatalog(
   catalog: Catalog,
   scenario:
@@ -258,23 +256,23 @@ export async function syncFakeCatalog(
     await catalog.upsertArtifacts(timeoutArtifacts)
     await catalog.replaceDeployments('fake', timeoutDeployments)
 
-    // Create a server that hangs to test timeouts
-    if (!hangServer) {
-      hangServer = createServer((_req, res) => {
-        // Never respond — the request will timeout
-      })
-      await new Promise<void>((resolve) => {
-        hangServer!.listen(0, 'localhost', () => resolve())
-      })
-    }
-
+    // A host that accepts the request and never answers
+    const hangServer = createServer(() => {})
+    await new Promise<void>((resolve) =>
+      hangServer.listen(0, 'localhost', resolve),
+    )
     const addr = hangServer.address()
     const port = typeof addr === 'object' && addr ? addr.port : 0
     const hangUrl = `http://localhost:${port}/health`
 
-    // Run health checks: observerChecker with unknown on timeout, http with down
-    const unknownCheck = await runCheck(observerChecker, { url: hangUrl }, 100)
-    const downCheck = await runCheck(httpHealthChecker, { url: hangUrl }, 100)
+    let unknownCheck, downCheck
+    try {
+      unknownCheck = await runCheck(observerChecker, { url: hangUrl }, 100)
+      downCheck = await runCheck(httpHealthChecker, { url: hangUrl }, 100)
+    } finally {
+      hangServer.closeAllConnections()
+      await new Promise((resolve) => hangServer.close(resolve))
+    }
 
     await catalog.replaceHealth('test', [
       {
@@ -291,13 +289,4 @@ export async function syncFakeCatalog(
   }
   // else: 'failed-source' writes nothing — the Entity Provider rule.
   // The test verifies that deployments from a previous sync remain.
-}
-
-export async function shutdownTestServer(): Promise<void> {
-  if (hangServer) {
-    await new Promise<void>((resolve, reject) => {
-      hangServer!.close((err) => (err ? reject(err) : resolve()))
-    })
-    hangServer = undefined
-  }
 }

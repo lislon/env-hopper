@@ -1,14 +1,23 @@
-import { Given, Then, When } from 'quickpickle'
+import { Before, Given, Then, When } from 'quickpickle'
 import { expect } from 'vitest'
 import { createCatalog } from '@env-hopper/backend-core'
-import { getTestCatalogClient, resetCatalog } from './testDb'
+import {
+  getTestCatalogClient,
+  resetCatalog,
+} from '@env-hopper/backend-core/testing'
 import { syncFakeCatalog } from '../../src/catalog/fakeEntityProvider'
 
-const catalog = createCatalog(getTestCatalogClient())
+const prisma = getTestCatalogClient()
+// Without a test database every scenario is skipped (Before), so `catalog` is never read unset
+const catalog = (prisma ? createCatalog(prisma) : undefined)!
+
+Before(async (world) => {
+  if (!prisma) world.context.skip()
+})
 
 Given('the {string} catalog is synced', async (world, scenario: string) => {
   if (!world.data.synced) {
-    await resetCatalog(getTestCatalogClient()!)
+    await resetCatalog(prisma!)
     world.data.synced = true
   }
   await syncFakeCatalog(catalog, scenario as never)
@@ -84,15 +93,11 @@ Then(
 )
 
 Then('app {string} has {int} deployments', async (_w, app: string, n: number) =>
-  expect(
-    await catalog.listDeployments({ appSlug: app }),
-  ).toHaveLength(n),
+  expect(await catalog.listDeployments({ appSlug: app })).toHaveLength(n),
 )
 
 Then('app {string} has {int} deployment', async (_w, app: string, n: number) =>
-  expect(
-    await catalog.listDeployments({ appSlug: app }),
-  ).toHaveLength(n),
+  expect(await catalog.listDeployments({ appSlug: app })).toHaveLength(n),
 )
 
 Then('I see {int} deployments in total', async (_w, n: number) =>

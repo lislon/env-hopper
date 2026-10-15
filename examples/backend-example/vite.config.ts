@@ -3,8 +3,11 @@ import { defineConfig } from 'vitest/config'
 import type { PluginOption } from 'vite'
 
 export default defineConfig({
-  resolve: {
-    conditions: ['my-custom-condition'],
+  // Run the cores from their sources (node tests resolve through vite's SSR side)
+  ssr: {
+    resolve: {
+      conditions: ['my-custom-condition'],
+    },
   },
   plugins: [quickpickle({ stepTimeout: 20000 }) as PluginOption],
   test: {

@@ -1,4 +1,3 @@
-import path from 'node:path'
 import { defineConfig } from 'vitest/config'
 import packageJson from './package.json'
 
@@ -12,7 +11,7 @@ const config = defineConfig({
     watch: false,
     environment: 'jsdom',
     typecheck: { enabled: true },
-    globalSetup: [path.resolve(__dirname, '../test-kit/src/catalog-db/globalSetup.ts')],
+    globalSetup: ['./src/testing/globalSetup.ts'],
     fileParallelism: false,
   },
 })

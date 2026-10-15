@@ -1,0 +1,180 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import { createCatalog } from '../../catalog'
+import { getTestCatalogClient, resetCatalog } from './testDb'
+
+const prisma = getTestCatalogClient()
+const catalog = prisma ? createCatalog(prisma) : undefined
+
+async function givenOneComponentOnTwoTargets() {
+  if (!catalog) throw new Error('catalog not ready')
+  await catalog.upsertEnvironments([
+    { slug: 'prod', displayName: 'Production' },
+  ])
+  await catalog.upsertApps([{ slug: 'shop', displayName: 'Shop' }])
+  await catalog.upsertComponents([
+    { slug: 'shop-api', displayName: 'Shop API', appSlug: 'shop' },
+  ])
+  await catalog.upsertTargets([
+    { slug: 'k8s:prod/shop-eu', displayName: 'EU', environmentSlug: 'prod' },
+    { slug: 'k8s:prod/shop-us', displayName: 'US', environmentSlug: 'prod' },
+  ])
+  await catalog.upsertArtifacts([
+    {
+      componentSlug: 'shop-api',
+      version: 'main-10',
+      builtAt: new Date('2026-01-01'),
+    },
+    {
+      componentSlug: 'shop-api',
+      version: 'main-11',
+      builtAt: new Date('2026-01-02'),
+    },
+  ])
+}
+
+beforeEach(async () => {
+  if (prisma) await resetCatalog(prisma)
+})
+
+describe.skipIf(!prisma)('catalog writes', () => {
+  it('keeps one deployment per component per target', async () => {
+    await givenOneComponentOnTwoTargets()
+    await catalog!.replaceDeployments('ci', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        version: 'main-10',
+        source: 'ci',
+      },
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-us',
+        version: 'main-11',
+        source: 'ci',
+      },
+    ])
+    const rows = await catalog!.listDeployments({ environmentSlug: 'prod' })
+    const pairs = rows.map(
+      (r: { target: { slug: string }; artifact: { version: string } }) => [
+        r.target.slug,
+        r.artifact.version,
+      ],
+    )
+    expect(pairs).toEqual([
+      ['k8s:prod/shop-eu', 'main-10'],
+      ['k8s:prod/shop-us', 'main-11'],
+    ])
+  })
+
+  it('replace deletes what the scope no longer reports, and only that scope', async () => {
+    await givenOneComponentOnTwoTargets()
+    await catalog!.replaceDeployments('ci', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        version: 'main-10',
+        source: 'ci',
+      },
+    ])
+    await catalog!.replaceDeployments('other', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-us',
+        version: 'main-11',
+        source: 'other',
+      },
+    ])
+    await catalog!.replaceDeployments('ci', [])
+    const slugs = (await catalog!.listDeployments()).map(
+      (r: { target: { slug: string } }) => r.target.slug,
+    )
+    expect(slugs).toEqual(['k8s:prod/shop-us'])
+  })
+
+  it('replaces a deployment together with its endpoints', async () => {
+    await givenOneComponentOnTwoTargets()
+    const eu = {
+      componentSlug: 'shop-api',
+      targetSlug: 'k8s:prod/shop-eu',
+      version: 'main-10',
+      source: 'ci',
+    }
+    await catalog!.replaceDeployments('ci', [
+      {
+        ...eu,
+        endpoints: [{ kind: 'ui' as const, url: 'https://old.example.com' }],
+      },
+    ])
+    await catalog!.replaceDeployments('ci', [
+      {
+        ...eu,
+        endpoints: [
+          { kind: 'health' as const, url: 'https://new.example.com/health' },
+        ],
+      },
+    ])
+    expect((await catalog!.listDeployments())[0]!.endpoints).toEqual([
+      {
+        kind: 'health',
+        url: 'https://new.example.com/health',
+        label: undefined,
+      },
+    ])
+  })
+
+  it('upserted artifacts outlive the release that produced them', async () => {
+    await givenOneComponentOnTwoTargets()
+    await catalog!.replaceReleases('ci', [{ key: 'r1', tag: 'v1' }])
+    await catalog!.upsertArtifacts([
+      { componentSlug: 'shop-api', version: 'main-10', releaseKey: 'r1' },
+    ])
+    await catalog!.replaceReleases('ci', [])
+    const artifact = await prisma!.catalogArtifact.findUnique({
+      where: {
+        componentSlug_version: {
+          componentSlug: 'shop-api',
+          version: 'main-10',
+        },
+      },
+    })
+    expect(artifact?.releaseKey).toBeNull()
+    expect(await prisma!.catalogArtifact.count()).toBe(2)
+  })
+
+  it('a deployment of an unknown artifact fails loudly', async () => {
+    await givenOneComponentOnTwoTargets()
+    await expect(
+      catalog!.replaceDeployments('ci', [
+        {
+          componentSlug: 'shop-api',
+          targetSlug: 'k8s:prod/shop-eu',
+          version: 'nope',
+          source: 'ci',
+        },
+      ]),
+    ).rejects.toThrow()
+  })
+
+  it('replacing deployments does not cascade-delete health written by another scope', async () => {
+    await givenOneComponentOnTwoTargets()
+    await catalog!.replaceDeployments('ci', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        version: 'main-10',
+        source: 'ci',
+      },
+    ])
+    await catalog!.replaceHealth('probe', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        state: 'healthy',
+        observedAt: new Date(),
+        checker: 'http',
+      },
+    ])
+    await catalog!.replaceDeployments('ci', [])
+    expect(await prisma!.catalogHealth.count()).toBe(1)
+  })
+})

@@ -83,3 +83,6 @@ export {
   type EhMiddlewareResult,
   type MiddlewareContext,
 } from './middleware'
+
+// Catalog
+export * from './catalog'

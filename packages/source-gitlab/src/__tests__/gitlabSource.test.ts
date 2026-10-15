@@ -67,6 +67,8 @@ const canceledDeployments = [
   },
 ]
 
+// GitLab's environment list returns no `last_deployment` (verified against a
+// real instance); only the single-environment endpoint does.
 const environments = [
   {
     id: 9,
@@ -74,7 +76,6 @@ const environments = [
     tier: 'production',
     external_url: null,
     state: 'available',
-    last_deployment: { created_at: '2026-01-03T00:00:00Z' },
   },
   {
     id: 10,
@@ -82,7 +83,6 @@ const environments = [
     tier: 'staging',
     external_url: 'https://staging.example.com',
     state: 'stopped',
-    last_deployment: { created_at: '2026-01-02T00:00:00Z' },
   },
 ]
 
@@ -231,7 +231,7 @@ describe('gitlab source', () => {
         tier: 'staging',
         externalUrl: 'https://staging.example.com',
         state: 'stopped',
-        lastDeployedAt: '2026-01-02T00:00:00Z',
+        lastDeployedAt: null,
       },
     ])
   })
@@ -276,7 +276,7 @@ describe('gitlab source', () => {
         tier: 'production',
         externalUrl: null,
         state: 'available',
-        lastDeployedAt: '2026-01-03T00:00:00Z',
+        lastDeployedAt: null,
       },
     ])
   })

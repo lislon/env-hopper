@@ -1,0 +1,120 @@
+import type {
+  GitlabDeploymentRecord,
+  GitlabEnvironmentRecord,
+  GitlabSource,
+  RawDeployment,
+  RawEnvironment,
+  RawRelease,
+} from './gitlabTypes'
+
+export function createGitlabSource({
+  baseUrl,
+  token,
+  fetch: f = fetch,
+  perPage = 100,
+}: {
+  baseUrl: string
+  token: string
+  fetch?: typeof fetch
+  perPage?: number
+}): GitlabSource {
+  async function* pages<T>(
+    path: string,
+    params: Record<string, string> = {},
+  ): AsyncGenerator<Array<T>> {
+    let page = '1'
+    while (page) {
+      const q = new URLSearchParams({
+        ...params,
+        per_page: String(perPage),
+        page,
+      })
+      const res = await f(`${baseUrl}/api/v4${path}?${q}`, {
+        headers: { 'PRIVATE-TOKEN': token },
+      })
+      if (!res.ok) throw new Error(`GitLab ${path}: ${res.status}`)
+      yield (await res.json()) as Array<T>
+      page = res.headers.get('x-next-page') ?? ''
+    }
+  }
+
+  async function all<T>(path: string, params?: Record<string, string>) {
+    const out: Array<T> = []
+    for await (const p of pages<T>(path, params)) out.push(...p)
+    return out
+  }
+
+  return {
+    async listEnvironments(projectId, { states = ['available'] } = {}) {
+      const out: Array<GitlabEnvironmentRecord> = []
+      for (const state of states) {
+        for (const e of await all<RawEnvironment>(
+          `/projects/${projectId}/environments`,
+          { states: state },
+        )) {
+          out.push({
+            projectId,
+            id: e.id,
+            name: e.name,
+            tier: e.tier ?? null,
+            externalUrl: e.external_url ?? null,
+            state: e.state,
+            lastDeployedAt: e.last_deployment?.created_at ?? null,
+          })
+        }
+      }
+      return out
+    },
+    async latestDeployments(
+      projectId,
+      { status = 'success', jobNames = () => true } = {},
+    ) {
+      const latest = new Map<string, GitlabDeploymentRecord>()
+      for (const d of await all<RawDeployment>(
+        `/projects/${projectId}/deployments`,
+        {
+          status,
+          order_by: 'updated_at',
+          sort: 'desc',
+        },
+      )) {
+        const env = d.environment.name
+        // The API's status filter is trusted but re-checked: a stale-status row
+        // must never become "what runs there".
+        if (
+          d.status !== status ||
+          latest.has(env) ||
+          !jobNames(d.deployable?.name ?? '')
+        )
+          continue
+        latest.set(env, {
+          projectId,
+          environmentName: env,
+          ref: d.ref,
+          sha: d.sha,
+          tag: d.tag ?? false,
+          jobName: d.deployable?.name ?? '',
+          pipelineId: d.deployable?.pipeline?.id ?? null,
+          status: d.status,
+          finishedAt: d.deployable?.finished_at ?? null,
+        })
+      }
+      return [...latest.values()]
+    },
+    async listReleases(projectId, { limit = 50 } = {}) {
+      const res = await f(
+        `${baseUrl}/api/v4/projects/${projectId}/releases?per_page=${limit}`,
+        { headers: { 'PRIVATE-TOKEN': token } },
+      )
+      if (!res.ok)
+        throw new Error(`GitLab releases ${projectId}: ${res.status}`)
+      return ((await res.json()) as Array<RawRelease>).map((r) => ({
+        projectId,
+        tagName: r.tag_name,
+        commitSha: r.commit?.id ?? null,
+        author: r.author?.username ?? null,
+        releasedAt: r.released_at ?? null,
+      }))
+    },
+  }
+}

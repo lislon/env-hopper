@@ -35,9 +35,6 @@ if ! git diff --cached --quiet; then
       if git fetch origin main:main 2>/dev/null; then
         BASE_BRANCH="main"
         echo "📌 Fetched main branch from remote"
-      elif git fetch origin alpha:alpha 2>/dev/null && git rev-parse --verify "alpha" >/dev/null 2>&1; then
-        BASE_BRANCH="alpha"
-        echo "📌 Using alpha branch as fallback"
       elif git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
         # Last resort: compare against previous commit
         BASE_BRANCH="HEAD~1"

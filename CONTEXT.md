@@ -25,8 +25,16 @@ _Avoid_: Location (a different thing in Backstage), physical environment
 ## Deployments
 
 **Artifact**:
-One built version of a Component, identified by its version string.
+One built version of a Component, identified by its Version.
 _Avoid_: Image, build, tag
+
+**Version**:
+The exact, human-readable name of one Artifact, unique within its Component (e.g. `main-1234`). The Entity Provider derives it from whatever its Sources report, such as a pipeline id or a file name.
+_Avoid_: Build number, version signal
+
+**Version Alias**:
+Another name an Artifact is known by (e.g. `2.4.0`, `spring-train`). Unlike a Version, an alias may name many Artifacts; on its own it means the latest of them.
+_Avoid_: Tag, label, nickname
 
 **Release**:
 Where an Artifact came from: the tag, commit, author and date that produced it. An Artifact may have none.
@@ -44,6 +52,7 @@ erDiagram
   ENVIRONMENT ||--|{ DEPLOYMENT_TARGET : "spans"
   COMPONENT ||--o{ ARTIFACT : "is built as"
   ARTIFACT }o--o| RELEASE : "came from"
+  ARTIFACT }o--o{ VERSION_ALIAS : "is also known as"
   DEPLOYMENT }o--|| COMPONENT : "of"
   DEPLOYMENT }o--|| ENVIRONMENT : "in"
   DEPLOYMENT }o--|| DEPLOYMENT_TARGET : "on"

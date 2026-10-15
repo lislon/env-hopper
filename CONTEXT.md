@@ -33,7 +33,7 @@ The exact, human-readable name of one Artifact, unique within its Component (e.g
 _Avoid_: Build number, version signal
 
 **Version Alias**:
-Another name an Artifact is known by (e.g. `2.4.0`, `spring-train`). Unlike a Version, an alias may name many Artifacts; on its own it means the latest of them.
+Another name an Artifact is known by (e.g. `2.4.0`, `spring-train`). Unlike a Version, an alias may name many Artifacts; on its own it means the most recently built of them.
 _Avoid_: Tag, label, nickname
 
 **Release**:

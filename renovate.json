@@ -2,5 +2,12 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", "group:allNonMajor"],
   "schedule": ["* * * * 0,6"],
-  "automerge": true
+  "automerge": true,
+  "packageRules": [
+    {
+      "description": "A major can break consumers in ways tests do not catch, so it waits for a human.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    }
+  ]
 }

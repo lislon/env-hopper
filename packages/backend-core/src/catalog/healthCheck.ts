@@ -113,10 +113,15 @@ export async function runCheck<TConfig>(
   }
 }
 
+/**
+ * Runs every job; a job that throws reads `unknown` (detail `check threw`)
+ * instead of failing the pass. `checker` names it in that result.
+ */
 export async function runHealthChecks<T>(
   jobs: Array<{
     key: T
     run: (signal: AbortSignal) => Promise<HealthCheckResult>
+    checker?: string
   }>,
   { concurrency = 8 } = {},
 ) {
@@ -130,10 +135,19 @@ export async function runHealthChecks<T>(
         const i = next++
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), MAX_TIMEOUT_MS)
+        const job = jobs[i]!
         try {
+          out[i] = { key: job.key, result: await job.run(controller.signal) }
+        } catch {
+          // The error may carry the URL or credentials: keep it out of Health.
           out[i] = {
-            key: jobs[i]!.key,
-            result: await jobs[i]!.run(controller.signal),
+            key: job.key,
+            result: {
+              state: 'unknown',
+              detail: 'check threw',
+              observedAt: new Date(),
+              checker: job.checker ?? 'unknown',
+            },
           }
         } finally {
           clearTimeout(timeout)

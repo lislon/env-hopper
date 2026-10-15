@@ -97,6 +97,32 @@ describe('http health check', () => {
     expect(Date.now() - started).toBeLessThan(1500)
   })
 
+  it('a check that throws reads unknown and the rest still run', async () => {
+    const out = await runHealthChecks([
+      {
+        key: 'bad',
+        checker: 'http',
+        run: () =>
+          Promise.reject(
+            new Error('fetch https://u:secret@h.example/x failed'),
+          ),
+      },
+      { key: 'good', run: () => check('/ok') },
+    ])
+    expect(out).toEqual([
+      {
+        key: 'bad',
+        result: {
+          state: 'unknown',
+          detail: 'check threw',
+          observedAt: expect.any(Date),
+          checker: 'http',
+        },
+      },
+      { key: 'good', result: expect.objectContaining({ state: 'healthy' }) },
+    ])
+  })
+
   it('timed-out request connection is aborted', async () => {
     let clientClosed = false
     const hangServer = createServer((req, _res) => {

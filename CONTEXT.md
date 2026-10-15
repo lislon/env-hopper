@@ -45,7 +45,7 @@ The Artifact a Component last deployed successfully to a Deployment Target, and 
 _Avoid_: Rollout, install
 
 **Endpoint**:
-A URL where one Deployment can be reached, with a kind (`ui`, `api`, `docs`, `health`) and an optional label. A Deployment has zero or more; a background worker has none.
+A URL where one Deployment can be reached, with a kind (`ui`, `api`, `docs`, `health`, `other`) and an optional label. A Deployment has zero or more; a background worker has none.
 _Avoid_: Link, page, jump (those are the hand-written URL templates)
 
 **Health**:

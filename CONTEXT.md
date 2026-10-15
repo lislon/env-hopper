@@ -44,6 +44,18 @@ _Avoid_: Version (for this meaning)
 The Artifact a Component last deployed successfully to a Deployment Target, and so is running there now. Only the current state exists; there is one Deployment per Component per Deployment Target.
 _Avoid_: Rollout, install
 
+**Endpoint**:
+A URL where one Deployment can be reached, with a kind (`ui`, `api`, `docs`, `health`) and an optional label. A Deployment has zero or more; a background worker has none.
+_Avoid_: Link, page, jump (those are the hand-written URL templates)
+
+**Health**:
+The last observed condition of a Deployment: `healthy`, `degraded`, `down` or `unknown`, with when and by which Health Check it was seen. Only the current Health exists.
+_Avoid_: Status (that is whether a deploy succeeded)
+
+**Health Check**:
+How the Health of a Deployment is determined, configured per Component: for example a request to its `health` Endpoint, or the readiness a cluster reports. A Component with no Health Check is `unknown`.
+_Avoid_: Probe, monitor, ping
+
 ## Relationships
 
 ```mermaid
@@ -56,6 +68,9 @@ erDiagram
   DEPLOYMENT }o--|| COMPONENT : "of"
   DEPLOYMENT }o--|| DEPLOYMENT_TARGET : "on"
   DEPLOYMENT }o--|| ARTIFACT : "runs"
+  DEPLOYMENT ||--o{ ENDPOINT : "is reached at"
+  DEPLOYMENT ||--o| HEALTH : "is observed as"
+  COMPONENT ||--o{ HEALTH_CHECK : "is checked by"
 ```
 
 - A Deployment is unique per Component and Deployment Target. Which Environment it is in follows from its Deployment Target; a Deployment Target in no Environment is never offered to the user.

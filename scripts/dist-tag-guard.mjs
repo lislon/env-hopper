@@ -12,28 +12,19 @@
  *
  * Usage:
  *   node scripts/dist-tag-guard.mjs capture --tag <tag> --out <file>
- *   node scripts/dist-tag-guard.mjs assert  --before <file> --mode snapshot|release
+ *   node scripts/dist-tag-guard.mjs assert  --before <file>
  *
  * `capture` records, for every publishable package under `packages/`, the
  * version declared in package.json and the version the registry currently
  * serves on <tag>. Run it before the publish step, while package.json still
  * describes what this run intends to ship.
  *
- * `assert` re-reads the registry and fails the job when the publish was a no-op:
- *
- *   --mode snapshot   The pre-release channel. Every push mints a fresh
- *                     timestamped version, so the tag MUST move on every run.
- *                     Requires <tag> to now serve the version currently
- *                     declared in package.json.
- *
- *   --mode release    The stable channel. A push with nothing new to publish is
- *                     legitimate, so the expectation comes from the capture: for
- *                     each package whose captured declared version was not the
- *                     one the registry served, <tag> must now serve it. Packages
- *                     that were already published stay silent.
- *                     The expectation cannot be re-read from the working tree,
- *                     because `changesets/action` rewrites package.json in place
- *                     when it opens a version PR.
+ * `assert` re-reads the registry and fails the job when the publish was a no-op.
+ * A push with nothing new to publish is legitimate, so the expectation comes from
+ * the capture: for each package whose captured declared version was not the one
+ * the registry served, <tag> must now serve it. Packages that were already
+ * published stay silent. The expectation cannot be re-read from the working tree,
+ * because the release rewrites package.json in place.
  *
  * Reads are retried until a deadline, because a fresh publish takes a few
  * seconds to become visible through npm's CDN. Every individual lookup is also
@@ -69,7 +60,7 @@ function usage(message) {
   console.error(`${message}\n
 Usage:
   node scripts/dist-tag-guard.mjs capture --tag <tag> --out <file>
-  node scripts/dist-tag-guard.mjs assert  --before <file> --mode snapshot|release`)
+  node scripts/dist-tag-guard.mjs assert  --before <file>`)
   process.exit(2)
 }
 
@@ -182,11 +173,7 @@ async function capture() {
 
 async function assert() {
   const beforePath = flag('--before')
-  const mode = flag('--mode')
   if (!beforePath) usage('assert needs --before')
-  if (mode !== 'snapshot' && mode !== 'release') {
-    usage('assert needs --mode snapshot or --mode release')
-  }
 
   const before = JSON.parse(readFileSync(beforePath, 'utf8'))
   const tag = before.tag
@@ -196,42 +183,19 @@ async function assert() {
   }
 
   /** @type {{name: string, expect: string, was: string | null, actual?: string | null, error?: string | null}[]} */
-  let expected = []
-  if (mode === 'snapshot') {
-    const wasByName = new Map(before.packages.map((p) => [p.name, p.served]))
-    expected = declaredPackages().map((pkg) => ({
+  const expected = before.packages
+    .filter((pkg) => pkg.version !== pkg.served)
+    .map((pkg) => ({
       name: pkg.name,
       expect: pkg.version,
-      was: wasByName.get(pkg.name) ?? null,
+      was: pkg.served,
     }))
-    const alreadyServed = expected.filter((e) => e.expect === e.was)
-    if (alreadyServed.length > 0) {
-      console.error(
-        `The version(s) this run built are already on @${tag}, so the publish\n` +
-          'could only ever be a no-op. Every snapshot must be a new version:\n',
-      )
-      for (const e of alreadyServed) {
-        console.error(
-          `  ${e.name}: built ${e.expect}, @${tag} already served it`,
-        )
-      }
-      process.exit(1)
-    }
-  } else {
-    expected = before.packages
-      .filter((pkg) => pkg.version !== pkg.served)
-      .map((pkg) => ({
-        name: pkg.name,
-        expect: pkg.version,
-        was: pkg.served,
-      }))
-    if (expected.length === 0) {
-      console.log(
-        `Every package already declared the version @${tag} serves, so this run\n` +
-          'was not expected to publish anything. Nothing to assert.',
-      )
-      return
-    }
+  if (expected.length === 0) {
+    console.log(
+      `Every package already declared the version @${tag} serves, so this run\n` +
+        'was not expected to publish anything. Nothing to assert.',
+    )
+    return
   }
 
   console.log(`Waiting for @${tag} to serve ${expected.length} new version(s)…`)

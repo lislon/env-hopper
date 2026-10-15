@@ -64,7 +64,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && steps.release.outputs.published == 'true'
         # A version already on the registry is only a warning, so the publish
         # step exits 0 even when it shipped nothing. Prove the tag moved.
-        run: node scripts/dist-tag-guard.mjs assert --before "$RUNNER_TEMP/dist-tags-before.json" --mode release
+        run: node scripts/dist-tag-guard.mjs assert --before "$RUNNER_TEMP/dist-tags-before.json"
         env:
           CHANGESETS_PUBLISHED: ${{ steps.release.outputs.published }}
 

@@ -45,13 +45,7 @@ export interface CatalogArtifactView {
   version: string
   aliases: Array<string>
   builtAt: Date | null
-  release: {
-    key: string
-    tag?: string
-    commitSha?: string
-    author?: string
-    createdAt?: Date
-  } | null
+  release: CatalogReleaseInput | null
 }
 
 export interface CatalogDeploymentView {
@@ -135,7 +129,10 @@ export function createCatalogReads(prisma: PrismaClient) {
     async resolveAlias(componentSlug: string, alias: string) {
       const a = await prisma.catalogArtifact.findFirst({
         where: { componentSlug, aliases: { has: alias } },
-        orderBy: { builtAt: { sort: 'desc', nulls: 'last' } },
+        orderBy: [
+          { builtAt: { sort: 'desc', nulls: 'last' } },
+          { version: 'desc' },
+        ],
         include: { release: true },
       })
       return a ? toArtifactView(a) : null

@@ -132,7 +132,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
     )
   })
 
-  it('alias tie in builtAt picks one deterministically', async () => {
+  it('alias tie in builtAt breaks tie by version desc', async () => {
     await givenOneComponentOnTwoTargets()
     const sameBuildTime = new Date('2026-01-01')
     await catalog!.upsertArtifacts([
@@ -150,6 +150,6 @@ describe.skipIf(!prisma)('catalog reads', () => {
       },
     ])
     const resolved = await catalog!.resolveAlias('shop-api', 'snapshot')
-    expect(['main-10', 'main-11']).toContain(resolved?.version)
+    expect(resolved?.version).toBe('main-11')
   })
 })

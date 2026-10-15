@@ -1,4 +1,7 @@
 export * from './catalogTypes'
-export * from './catalogRead'
+export type {
+  Catalog,
+  CatalogArtifactView,
+  CatalogDeploymentView,
+} from './catalogRead'
 export { createCatalog } from './catalogWrite'
-export type { Catalog } from './catalogRead'

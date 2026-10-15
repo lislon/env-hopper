@@ -94,6 +94,13 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           componentSlug: d.componentSlug,
           targetSlug: d.targetSlug,
         }))
+        const toRemove = await tx.catalogDeployment.findMany({
+          where: { scope, NOT: keep.length ? { OR: keep } : undefined },
+          select: { componentSlug: true, targetSlug: true },
+        })
+        if (toRemove.length) {
+          await tx.catalogHealth.deleteMany({ where: { OR: toRemove } })
+        }
         await tx.catalogDeployment.deleteMany({
           where: { scope, NOT: keep.length ? { OR: keep } : undefined },
         })

@@ -155,7 +155,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
     ).rejects.toThrow()
   })
 
-  it('replacing deployments does not cascade-delete health written by another scope', async () => {
+  it('replacing deployments cascade-deletes their health', async () => {
     await givenOneComponentOnTwoTargets()
     await catalog!.replaceDeployments('ci', [
       {
@@ -175,6 +175,75 @@ describe.skipIf(!prisma)('catalog writes', () => {
       },
     ])
     await catalog!.replaceDeployments('ci', [])
-    expect(await prisma!.catalogHealth.count()).toBe(1)
+    expect(await prisma!.catalogHealth.count()).toBe(0)
+  })
+
+  it('replacing deployments keeps health for deployments not removed', async () => {
+    await givenOneComponentOnTwoTargets()
+    await catalog!.replaceDeployments('ci', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        version: 'main-10',
+        source: 'ci',
+      },
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-us',
+        version: 'main-11',
+        source: 'ci',
+      },
+    ])
+    await catalog!.replaceHealth('probe', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        state: 'healthy',
+        observedAt: new Date(),
+        checker: 'http',
+      },
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-us',
+        state: 'healthy',
+        observedAt: new Date(),
+        checker: 'http',
+      },
+    ])
+    await catalog!.replaceDeployments('ci', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-us',
+        version: 'main-11',
+        source: 'ci',
+      },
+    ])
+    const health = await prisma!.catalogHealth.findMany()
+    expect(health.map((h) => h.targetSlug)).toEqual(['k8s:prod/shop-us'])
+  })
+
+  it('replacing deployments removes endpoints with the deployment', async () => {
+    await givenOneComponentOnTwoTargets()
+    await catalog!.replaceDeployments('ci', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        version: 'main-10',
+        source: 'ci',
+        endpoints: [{ kind: 'ui' as const, url: 'https://eu.example.com' }],
+      },
+    ])
+    await catalog!.replaceDeployments('other', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-us',
+        version: 'main-11',
+        source: 'other',
+        endpoints: [{ kind: 'api' as const, url: 'https://us.example.com' }],
+      },
+    ])
+    await catalog!.replaceDeployments('ci', [])
+    const endpoints = await prisma!.catalogEndpoint.findMany()
+    expect(endpoints.map((e) => e.url)).toEqual(['https://us.example.com'])
   })
 })

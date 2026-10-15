@@ -5,7 +5,7 @@ Env Hopper takes a user from "this app, in this environment" to the right URL, a
 ## Catalog
 
 **App**:
-What the user picks and jumps into, thought of as one thing, made of one or more Components.
+What the user picks and jumps into, thought of as one thing, made of zero or more Components. An App with none is links only, such as a vendor tool nobody here builds.
 _Avoid_: System, application suite, product
 
 **Component**:
@@ -15,11 +15,11 @@ _Avoid_: Service, module, deployable module
 ## Environments
 
 **Environment**:
-A stage the user picks (`dev`, `prod`), the same name for every App, however many places it physically spans.
+A stage the user picks (`dev`, `prod`), the same name for every App, however many places it physically spans. Which Deployment Targets it groups is up to the Entity Provider.
 _Avoid_: Virtual environment, env profile
 
 **Deployment Target**:
-One physical place a Component runs, such as a specific account, cluster or namespace, with its own values (hosts, monitoring names) that links are built from. Many Deployment Targets make up one Environment; the user never picks one.
+One physical place a Component runs, such as a specific account, cluster or namespace, with its own values (hosts, monitoring names) that links are built from. It is identified by the place itself, not by what a Source calls it, so two names for one namespace are one Deployment Target. Many Deployment Targets make up one Environment, and one Component may run on several of them, such as one instance per product line; the user picks the Environment, not the Target.
 _Avoid_: Location (a different thing in Backstage), physical environment
 
 ## Deployments
@@ -37,29 +37,28 @@ Another name an Artifact is known by (e.g. `2.4.0`, `spring-train`). Unlike a Ve
 _Avoid_: Tag, label, nickname
 
 **Release**:
-Where an Artifact came from: the tag, commit, author and date that produced it. An Artifact may have none.
+Where an Artifact came from: the tag, commit, author and date that produced it. One Release may produce Artifacts of several Components; an Artifact may have none.
 _Avoid_: Version (for this meaning)
 
 **Deployment**:
-The Artifact of a Component currently running in an Environment, on a Deployment Target. Only the current state exists; there is one Deployment per Component per Environment.
+The Artifact a Component last deployed successfully to a Deployment Target, and so is running there now. Only the current state exists; there is one Deployment per Component per Deployment Target.
 _Avoid_: Rollout, install
 
 ## Relationships
 
 ```mermaid
 erDiagram
-  APP ||--|{ COMPONENT : "is made of"
-  ENVIRONMENT ||--|{ DEPLOYMENT_TARGET : "spans"
+  APP ||--o{ COMPONENT : "is made of"
+  ENVIRONMENT |o--|{ DEPLOYMENT_TARGET : "spans"
   COMPONENT ||--o{ ARTIFACT : "is built as"
   ARTIFACT }o--o| RELEASE : "came from"
   ARTIFACT }o--o{ VERSION_ALIAS : "is also known as"
   DEPLOYMENT }o--|| COMPONENT : "of"
-  DEPLOYMENT }o--|| ENVIRONMENT : "in"
   DEPLOYMENT }o--|| DEPLOYMENT_TARGET : "on"
   DEPLOYMENT }o--|| ARTIFACT : "runs"
 ```
 
-- A Deployment is unique per Component and Environment, and its Deployment Target belongs to that Environment.
+- A Deployment is unique per Component and Deployment Target. Which Environment it is in follows from its Deployment Target; a Deployment Target in no Environment is never offered to the user.
 - An Entity Provider combines one or more Sources and is the only writer of everything above.
 
 ## Integration

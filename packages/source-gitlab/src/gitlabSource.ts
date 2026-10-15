@@ -76,15 +76,19 @@ export function createGitlabSource({
     },
     async latestDeployments(
       projectId,
-      { status = 'success', jobNames = () => true } = {},
+      { status = 'success', jobNames = () => true, updatedAfter } = {},
     ) {
       const latest = new Map<string, GitlabDeploymentRecord>()
       for (const d of await all<RawDeployment>(
         `/projects/${projectId}/deployments`,
         {
           status,
+          // GitLab accepts updated_after only together with this order.
           order_by: 'updated_at',
           sort: 'desc',
+          ...(updatedAfter
+            ? { updated_after: updatedAfter.toISOString() }
+            : {}),
         },
       )) {
         const env = d.environment.name

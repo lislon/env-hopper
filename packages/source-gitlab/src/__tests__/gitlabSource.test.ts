@@ -281,3 +281,41 @@ describe('gitlab source', () => {
     ])
   })
 })
+
+describe('gitlab source deployment window', () => {
+  const capture = () => {
+    const urls: Array<URL> = []
+    const fetch = (async (input: string) => {
+      urls.push(new URL(input))
+      return new Response('[]', { status: 200 })
+    }) as unknown as typeof globalThis.fetch
+    return { urls, fetch }
+  }
+
+  it('starts from updatedAfter, paired with order_by=updated_at', async () => {
+    const { urls, fetch } = capture()
+    const src = createGitlabSource({
+      baseUrl: 'https://git.example',
+      token: 't',
+      fetch,
+    })
+    await src.latestDeployments(7, {
+      updatedAfter: new Date('2026-04-01T00:00:00Z'),
+    })
+    expect(urls[0]?.searchParams.get('updated_after')).toBe(
+      '2026-04-01T00:00:00.000Z',
+    )
+    expect(urls[0]?.searchParams.get('order_by')).toBe('updated_at')
+  })
+
+  it('reads the whole history without it', async () => {
+    const { urls, fetch } = capture()
+    const src = createGitlabSource({
+      baseUrl: 'https://git.example',
+      token: 't',
+      fetch,
+    })
+    await src.latestDeployments(7)
+    expect(urls[0]?.searchParams.has('updated_after')).toBe(false)
+  })
+})

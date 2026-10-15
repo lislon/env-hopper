@@ -35,7 +35,12 @@ export interface GitlabSource {
   ) => Promise<Array<GitlabEnvironmentRecord>>
   latestDeployments: (
     projectId: number,
-    opts?: { status?: string; jobNames?: (name: string) => boolean },
+    opts?: {
+      status?: string
+      jobNames?: (name: string) => boolean
+      /** Only deployments updated after this; older environments are left out. */
+      updatedAfter?: Date
+    },
   ) => Promise<Array<GitlabDeploymentRecord>>
   listReleases: (
     projectId: number,

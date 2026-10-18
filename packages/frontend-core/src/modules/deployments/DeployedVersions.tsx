@@ -95,7 +95,11 @@ function DetailsDialog({
           </tr>
         </thead>
         <tbody>
-          {components.map((c) => {
+          {/* The lead first, the rest in the catalog's order. */}
+          {[
+            ...components.filter((c) => c.slug === leadSlug),
+            ...components.filter((c) => c.slug !== leadSlug),
+          ].map((c) => {
             const d = of(c.slug)
             return (
               <tr key={c.slug} data-testid="deployed-component">

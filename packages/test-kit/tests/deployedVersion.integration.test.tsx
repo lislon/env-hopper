@@ -126,17 +126,18 @@ describe('deployed version under the jump card', () => {
     const rows = Array.from(
       dialog.querySelectorAll('[data-testid="deployed-component"]'),
     ).map((r) => r.textContent)
-    expect(rows[0]).toContain('API')
-    expect(rows[0]).toContain('down · http: 503')
-    expect(rows[1]).toContain('UIlead')
+    // The lead first.
+    expect(rows[0]).toContain('UIlead')
+    expect(rows[1]).toContain('API')
+    expect(rows[1]).toContain('down · http: 503')
     expect(
       Array.from(dialog.querySelectorAll('a')).map((a) => a.textContent),
     ).toEqual([
       'build pipeline',
       'deploy job',
+      'ui',
       'build pipeline',
       'deploy job',
-      'ui',
     ])
     await app.user.click(dialog.querySelector('button[aria-label="Close"]')!)
     expect(dialog).not.toHaveAttribute('open')

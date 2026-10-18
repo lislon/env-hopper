@@ -94,9 +94,12 @@ CREATE TABLE "verification" (
 -- CreateTable
 CREATE TABLE "CatalogEnvironment" (
     "slug" TEXT NOT NULL,
+    "scope" TEXT NOT NULL,
     "displayName" TEXT NOT NULL,
     "description" TEXT,
     "meta" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CatalogEnvironment_pkey" PRIMARY KEY ("slug")
 );
@@ -104,7 +107,10 @@ CREATE TABLE "CatalogEnvironment" (
 -- CreateTable
 CREATE TABLE "CatalogApp" (
     "slug" TEXT NOT NULL,
+    "scope" TEXT NOT NULL,
     "displayName" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CatalogApp_pkey" PRIMARY KEY ("slug")
 );
@@ -112,9 +118,12 @@ CREATE TABLE "CatalogApp" (
 -- CreateTable
 CREATE TABLE "CatalogComponent" (
     "slug" TEXT NOT NULL,
+    "scope" TEXT NOT NULL,
     "displayName" TEXT NOT NULL,
     "appSlug" TEXT,
     "externalIds" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CatalogComponent_pkey" PRIMARY KEY ("slug")
 );
@@ -122,9 +131,12 @@ CREATE TABLE "CatalogComponent" (
 -- CreateTable
 CREATE TABLE "CatalogDeploymentTarget" (
     "slug" TEXT NOT NULL,
+    "scope" TEXT NOT NULL,
     "displayName" TEXT NOT NULL,
     "environmentSlug" TEXT,
     "meta" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CatalogDeploymentTarget_pkey" PRIMARY KEY ("slug")
 );
@@ -136,7 +148,9 @@ CREATE TABLE "CatalogRelease" (
     "tag" TEXT,
     "commitSha" TEXT,
     "author" TEXT,
-    "createdAt" TIMESTAMP(3),
+    "releasedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CatalogRelease_pkey" PRIMARY KEY ("key")
 );
@@ -145,9 +159,12 @@ CREATE TABLE "CatalogRelease" (
 CREATE TABLE "CatalogArtifact" (
     "componentSlug" TEXT NOT NULL,
     "version" TEXT NOT NULL,
+    "scope" TEXT NOT NULL,
     "aliases" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "releaseKey" TEXT,
     "builtAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CatalogArtifact_pkey" PRIMARY KEY ("componentSlug","version")
 );
@@ -160,6 +177,8 @@ CREATE TABLE "CatalogDeployment" (
     "scope" TEXT NOT NULL,
     "source" TEXT NOT NULL,
     "deployedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CatalogDeployment_pkey" PRIMARY KEY ("componentSlug","targetSlug")
 );
@@ -172,6 +191,8 @@ CREATE TABLE "CatalogEndpoint" (
     "kind" TEXT NOT NULL,
     "label" TEXT,
     "url" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CatalogEndpoint_pkey" PRIMARY KEY ("id")
 );
@@ -185,6 +206,8 @@ CREATE TABLE "CatalogHealth" (
     "observedAt" TIMESTAMP(3) NOT NULL,
     "checker" TEXT NOT NULL,
     "detail" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CatalogHealth_pkey" PRIMARY KEY ("componentSlug","targetSlug")
 );
@@ -202,16 +225,31 @@ CREATE UNIQUE INDEX "account_providerId_accountId_key" ON "account"("providerId"
 CREATE UNIQUE INDEX "verification_identifier_value_key" ON "verification"("identifier", "value");
 
 -- CreateIndex
+CREATE INDEX "CatalogEnvironment_scope_idx" ON "CatalogEnvironment"("scope");
+
+-- CreateIndex
+CREATE INDEX "CatalogApp_scope_idx" ON "CatalogApp"("scope");
+
+-- CreateIndex
+CREATE INDEX "CatalogComponent_scope_idx" ON "CatalogComponent"("scope");
+
+-- CreateIndex
+CREATE INDEX "CatalogDeploymentTarget_scope_idx" ON "CatalogDeploymentTarget"("scope");
+
+-- CreateIndex
 CREATE INDEX "CatalogRelease_scope_idx" ON "CatalogRelease"("scope");
 
 -- CreateIndex
 CREATE INDEX "CatalogArtifact_componentSlug_builtAt_idx" ON "CatalogArtifact"("componentSlug", "builtAt");
 
 -- CreateIndex
+CREATE INDEX "CatalogArtifact_scope_idx" ON "CatalogArtifact"("scope");
+
+-- CreateIndex
 CREATE INDEX "CatalogDeployment_scope_idx" ON "CatalogDeployment"("scope");
 
 -- CreateIndex
-CREATE INDEX "CatalogEndpoint_componentSlug_targetSlug_idx" ON "CatalogEndpoint"("componentSlug", "targetSlug");
+CREATE UNIQUE INDEX "CatalogEndpoint_componentSlug_targetSlug_kind_url_key" ON "CatalogEndpoint"("componentSlug", "targetSlug", "kind", "url");
 
 -- CreateIndex
 CREATE INDEX "CatalogHealth_scope_idx" ON "CatalogHealth"("scope");
@@ -229,19 +267,19 @@ ALTER TABLE "CatalogComponent" ADD CONSTRAINT "CatalogComponent_appSlug_fkey" FO
 ALTER TABLE "CatalogDeploymentTarget" ADD CONSTRAINT "CatalogDeploymentTarget_environmentSlug_fkey" FOREIGN KEY ("environmentSlug") REFERENCES "CatalogEnvironment"("slug") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CatalogArtifact" ADD CONSTRAINT "CatalogArtifact_componentSlug_fkey" FOREIGN KEY ("componentSlug") REFERENCES "CatalogComponent"("slug") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "CatalogArtifact" ADD CONSTRAINT "CatalogArtifact_componentSlug_fkey" FOREIGN KEY ("componentSlug") REFERENCES "CatalogComponent"("slug") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "CatalogArtifact" ADD CONSTRAINT "CatalogArtifact_releaseKey_fkey" FOREIGN KEY ("releaseKey") REFERENCES "CatalogRelease"("key") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CatalogDeployment" ADD CONSTRAINT "CatalogDeployment_componentSlug_fkey" FOREIGN KEY ("componentSlug") REFERENCES "CatalogComponent"("slug") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "CatalogDeployment" ADD CONSTRAINT "CatalogDeployment_componentSlug_fkey" FOREIGN KEY ("componentSlug") REFERENCES "CatalogComponent"("slug") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CatalogDeployment" ADD CONSTRAINT "CatalogDeployment_targetSlug_fkey" FOREIGN KEY ("targetSlug") REFERENCES "CatalogDeploymentTarget"("slug") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "CatalogDeployment" ADD CONSTRAINT "CatalogDeployment_targetSlug_fkey" FOREIGN KEY ("targetSlug") REFERENCES "CatalogDeploymentTarget"("slug") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CatalogDeployment" ADD CONSTRAINT "CatalogDeployment_componentSlug_version_fkey" FOREIGN KEY ("componentSlug", "version") REFERENCES "CatalogArtifact"("componentSlug", "version") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "CatalogDeployment" ADD CONSTRAINT "CatalogDeployment_componentSlug_version_fkey" FOREIGN KEY ("componentSlug", "version") REFERENCES "CatalogArtifact"("componentSlug", "version") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "CatalogEndpoint" ADD CONSTRAINT "CatalogEndpoint_componentSlug_targetSlug_fkey" FOREIGN KEY ("componentSlug", "targetSlug") REFERENCES "CatalogDeployment"("componentSlug", "targetSlug") ON DELETE CASCADE ON UPDATE CASCADE;

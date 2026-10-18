@@ -8,18 +8,18 @@ const catalog = prisma ? createCatalog(prisma) : undefined
 
 async function givenOneComponentOnTwoTargets() {
   if (!catalog) throw new Error('catalog not ready')
-  await catalog.upsertEnvironments([
+  await catalog.syncEnvironments('ci', [
     { slug: 'prod', displayName: 'Production' },
   ])
-  await catalog.upsertApps([{ slug: 'shop', displayName: 'Shop' }])
-  await catalog.upsertComponents([
+  await catalog.syncApps('ci', [{ slug: 'shop', displayName: 'Shop' }])
+  await catalog.syncComponents('ci', [
     { slug: 'shop-api', displayName: 'Shop API', appSlug: 'shop' },
   ])
-  await catalog.upsertTargets([
+  await catalog.syncTargets('ci', [
     { slug: 'k8s:prod/shop-eu', displayName: 'EU', environmentSlug: 'prod' },
     { slug: 'k8s:prod/shop-us', displayName: 'US', environmentSlug: 'prod' },
   ])
-  await catalog.upsertArtifacts([
+  await catalog.syncArtifacts('ci', [
     {
       componentSlug: 'shop-api',
       version: 'main-10',
@@ -40,7 +40,7 @@ beforeEach(async () => {
 describe.skipIf(!prisma)('catalog writes', () => {
   it('keeps one deployment per component per target', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -67,9 +67,9 @@ describe.skipIf(!prisma)('catalog writes', () => {
     ])
   })
 
-  it('replace deletes what the scope no longer reports, and only that scope', async () => {
+  it('a sync deletes what the scope no longer reports, and only that scope', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -77,7 +77,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
         source: 'ci',
       },
     ])
-    await catalog!.replaceDeployments('other', [
+    await catalog!.syncDeployments('other', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-us',
@@ -85,14 +85,14 @@ describe.skipIf(!prisma)('catalog writes', () => {
         source: 'other',
       },
     ])
-    await catalog!.replaceDeployments('ci', [])
+    await catalog!.syncDeployments('ci', [])
     const slugs = (await catalog!.listDeployments()).map(
       (r: { target: { slug: string } }) => r.target.slug,
     )
     expect(slugs).toEqual(['k8s:prod/shop-us'])
   })
 
-  it('replaces a deployment together with its endpoints', async () => {
+  it('syncs a deployment together with its endpoints', async () => {
     await givenOneComponentOnTwoTargets()
     const eu = {
       componentSlug: 'shop-api',
@@ -100,13 +100,13 @@ describe.skipIf(!prisma)('catalog writes', () => {
       version: 'main-10',
       source: 'ci',
     }
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         ...eu,
         endpoints: [{ kind: 'ui' as const, url: 'https://old.example.com' }],
       },
     ])
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         ...eu,
         endpoints: [
@@ -123,13 +123,14 @@ describe.skipIf(!prisma)('catalog writes', () => {
     ])
   })
 
-  it('upserted artifacts outlive the release that produced them', async () => {
+  it('artifacts outlive the release that produced them', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.replaceReleases('ci', [{ key: 'r1', tag: 'v1' }])
-    await catalog!.upsertArtifacts([
+    await catalog!.syncReleases('ci', [{ key: 'r1', tag: 'v1' }])
+    await catalog!.syncArtifacts('ci', [
       { componentSlug: 'shop-api', version: 'main-10', releaseKey: 'r1' },
+      { componentSlug: 'shop-api', version: 'main-11' },
     ])
-    await catalog!.replaceReleases('ci', [])
+    await catalog!.syncReleases('ci', [])
     const artifact = await prisma!.catalogArtifact.findUnique({
       where: {
         componentSlug_version: {
@@ -140,6 +141,71 @@ describe.skipIf(!prisma)('catalog writes', () => {
     })
     expect(artifact?.releaseKey).toBeNull()
     expect(await prisma!.catalogArtifact.count()).toBe(2)
+  })
+
+  it('an unchanged row keeps its updatedAt and a changed row moves it', async () => {
+    await givenOneComponentOnTwoTargets()
+    const stamps = async () =>
+      Object.fromEntries(
+        (await prisma!.catalogDeploymentTarget.findMany()).map((t) => [
+          t.slug,
+          t.updatedAt.getTime(),
+        ]),
+      )
+    const before = await stamps()
+    await new Promise((r) => setTimeout(r, 20))
+    await catalog!.syncTargets('ci', [
+      { slug: 'k8s:prod/shop-eu', displayName: 'EU', environmentSlug: 'prod' },
+      {
+        slug: 'k8s:prod/shop-us',
+        displayName: 'US East',
+        environmentSlug: 'prod',
+      },
+    ])
+    const after = await stamps()
+    expect(after['k8s:prod/shop-eu']).toBe(before['k8s:prod/shop-eu'])
+    expect(after['k8s:prod/shop-us']).toBeGreaterThan(
+      before['k8s:prod/shop-us']!,
+    )
+  })
+
+  it('a stale artifact is deleted with its stale deployment and health', async () => {
+    await givenOneComponentOnTwoTargets()
+    const eu = {
+      componentSlug: 'shop-api',
+      targetSlug: 'k8s:prod/shop-eu',
+      source: 'ci',
+    }
+    await catalog!.syncDeployments('ci', [{ ...eu, version: 'main-10' }])
+    await catalog!.syncHealth('probe', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop-eu',
+        state: 'healthy',
+        observedAt: new Date(),
+        checker: 'http',
+      },
+    ])
+    // The next run no longer sees main-10 anywhere.
+    await catalog!.syncArtifacts('ci', [
+      { componentSlug: 'shop-api', version: 'main-11' },
+    ])
+    expect(await prisma!.catalogArtifact.count()).toBe(1)
+    expect(await prisma!.catalogDeployment.count()).toBe(0)
+    expect(await prisma!.catalogHealth.count()).toBe(0)
+  })
+
+  it('a sync takes over a row another scope held', async () => {
+    await givenOneComponentOnTwoTargets()
+    await catalog!.syncApps('other', [{ slug: 'shop', displayName: 'Shop 2' }])
+    expect(
+      await prisma!.catalogApp.findMany({
+        select: { slug: true, scope: true, displayName: true },
+      }),
+    ).toEqual([{ slug: 'shop', scope: 'other', displayName: 'Shop 2' }])
+    // The scope that lost the row no longer owns anything to delete.
+    await catalog!.syncApps('ci', [])
+    expect(await prisma!.catalogApp.count()).toBe(1)
   })
 
   it('an artifact keeps the earliest build time any run reported', async () => {
@@ -155,34 +221,25 @@ describe.skipIf(!prisma)('catalog writes', () => {
           },
         })
       ).builtAt
-    await catalog!.upsertArtifacts([
-      {
-        componentSlug: 'shop-api',
-        version: 'main-10',
-        builtAt: new Date('2026-03-01'),
-      },
-    ])
+    const sync = (ten: { builtAt?: Date; aliases?: Array<string> }) =>
+      catalog!.syncArtifacts('ci', [
+        { componentSlug: 'shop-api', version: 'main-10', ...ten },
+        { componentSlug: 'shop-api', version: 'main-11' },
+      ])
+    await sync({ builtAt: new Date('2026-03-01') })
     expect(await builtAt()).toEqual(new Date('2026-01-01'))
-    await catalog!.upsertArtifacts([
-      { componentSlug: 'shop-api', version: 'main-10', aliases: ['spring'] },
-    ])
+    await sync({ aliases: ['spring'] })
     expect(await builtAt()).toEqual(new Date('2026-01-01'))
-    await catalog!.upsertArtifacts([
-      {
-        componentSlug: 'shop-api',
-        version: 'main-10',
-        builtAt: new Date('2025-12-31'),
-      },
-    ])
+    await sync({ builtAt: new Date('2025-12-31') })
     expect(await builtAt()).toEqual(new Date('2025-12-31'))
   })
 
   it('an artifact first seen without a build time takes the first one reported', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.upsertArtifacts([
+    await catalog!.syncArtifacts('ci', [
       { componentSlug: 'shop-api', version: 'main-12' },
     ])
-    await catalog!.upsertArtifacts([
+    await catalog!.syncArtifacts('ci', [
       {
         componentSlug: 'shop-api',
         version: 'main-12',
@@ -203,7 +260,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
   it('a deployment of an unknown artifact fails loudly', async () => {
     await givenOneComponentOnTwoTargets()
     await expect(
-      catalog!.replaceDeployments('ci', [
+      catalog!.syncDeployments('ci', [
         {
           componentSlug: 'shop-api',
           targetSlug: 'k8s:prod/shop-eu',
@@ -214,9 +271,9 @@ describe.skipIf(!prisma)('catalog writes', () => {
     ).rejects.toThrow()
   })
 
-  it('replacing deployments cascade-deletes their health', async () => {
+  it('syncing deployments cascade-deletes their health', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -224,7 +281,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
         source: 'ci',
       },
     ])
-    await catalog!.replaceHealth('probe', [
+    await catalog!.syncHealth('probe', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -233,13 +290,13 @@ describe.skipIf(!prisma)('catalog writes', () => {
         checker: 'http',
       },
     ])
-    await catalog!.replaceDeployments('ci', [])
+    await catalog!.syncDeployments('ci', [])
     expect(await prisma!.catalogHealth.count()).toBe(0)
   })
 
-  it('replacing deployments keeps health for deployments not removed', async () => {
+  it('syncing deployments keeps health for deployments not removed', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -253,7 +310,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
         source: 'ci',
       },
     ])
-    await catalog!.replaceHealth('probe', [
+    await catalog!.syncHealth('probe', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -269,7 +326,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
         checker: 'http',
       },
     ])
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-us',
@@ -281,9 +338,9 @@ describe.skipIf(!prisma)('catalog writes', () => {
     expect(health.map((h) => h.targetSlug)).toEqual(['k8s:prod/shop-us'])
   })
 
-  it('replacing deployments removes endpoints with the deployment', async () => {
+  it('syncing deployments removes endpoints with the deployment', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -292,7 +349,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
         endpoints: [{ kind: 'ui' as const, url: 'https://eu.example.com' }],
       },
     ])
-    await catalog!.replaceDeployments('other', [
+    await catalog!.syncDeployments('other', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-us',
@@ -301,7 +358,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
         endpoints: [{ kind: 'api' as const, url: 'https://us.example.com' }],
       },
     ])
-    await catalog!.replaceDeployments('ci', [])
+    await catalog!.syncDeployments('ci', [])
     const endpoints = await prisma!.catalogEndpoint.findMany()
     expect(endpoints.map((e) => e.url)).toEqual(['https://us.example.com'])
   })
@@ -309,7 +366,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
   it('endpoint URLs are sanitized: credentials stripped, invalid rejected', async () => {
     await givenOneComponentOnTwoTargets()
     const urlWithCreds = `https://${'admin'}:${'secret'}@shop.example.com/api?key=xyz#frag`
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -322,7 +379,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
     expect(stored?.url).toBe('https://shop.example.com/api')
 
     await expect(
-      catalog!.replaceDeployments('ci', [
+      catalog!.syncDeployments('ci', [
         {
           componentSlug: 'shop-api',
           targetSlug: 'k8s:prod/shop-us',
@@ -334,15 +391,15 @@ describe.skipIf(!prisma)('catalog writes', () => {
     ).rejects.toThrow(/^Invalid endpoint URL for shop-api\/k8s:prod\/shop-us$/)
   })
 
-  it('a replace takes over a pair another scope held, with its health', async () => {
+  it('a sync takes over a pair another scope held, with its health', async () => {
     await givenOneComponentOnTwoTargets()
     const eu = {
       componentSlug: 'shop-api',
       targetSlug: 'k8s:prod/shop-eu',
       version: 'main-10',
     }
-    await catalog!.replaceDeployments('other', [{ ...eu, source: 'other' }])
-    await catalog!.replaceHealth('probe', [
+    await catalog!.syncDeployments('other', [{ ...eu, source: 'other' }])
+    await catalog!.syncHealth('probe', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -351,7 +408,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
         checker: 'http',
       },
     ])
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         ...eu,
         version: 'main-11',
@@ -359,7 +416,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
         endpoints: [{ kind: 'ui' as const, url: 'https://shop.example.com' }],
       },
     ])
-    await catalog!.replaceHealth('ci-health', [
+    await catalog!.syncHealth('ci-health', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -379,17 +436,17 @@ describe.skipIf(!prisma)('catalog writes', () => {
       }),
     ).toEqual([{ scope: 'ci-health', state: 'down' }])
     // The scope that lost the pair no longer owns anything to delete.
-    await catalog!.replaceDeployments('other', [])
+    await catalog!.syncDeployments('other', [])
     expect(await prisma!.catalogDeployment.count()).toBe(1)
   })
 
-  it('writes 2,000 deployments with endpoints inside the default transaction timeout', async () => {
+  it('syncs 2,000 deployments with endpoints inside the transaction timeout', async () => {
     await givenOneComponentOnTwoTargets()
     const targets = Array.from({ length: 2000 }, (_, i) => ({
       slug: `k8s:stage/ns-${i}`,
       displayName: `ns-${i}`,
     }))
-    await catalog!.upsertTargets(targets)
+    await catalog!.syncTargets('ci', targets)
     const list = targets.map((t) => ({
       componentSlug: 'shop-api',
       targetSlug: t.slug,
@@ -404,14 +461,14 @@ describe.skipIf(!prisma)('catalog writes', () => {
       ],
     }))
     const started = Date.now()
-    await catalog!.replaceDeployments('ci', list)
-    await catalog!.replaceDeployments('ci', list)
+    await catalog!.syncDeployments('ci', list)
+    await catalog!.syncDeployments('ci', list)
     const elapsed = Date.now() - started
-    console.info(`2,000 deployments replaced twice in ${elapsed} ms`)
+    console.info(`2,000 deployments synced twice in ${elapsed} ms`)
     expect(await prisma!.catalogDeployment.count()).toBe(2000)
     expect(await prisma!.catalogEndpoint.count()).toBe(4000)
 
-    await catalog!.replaceHealth(
+    await catalog!.syncHealth(
       'ci',
       list.map((d) => ({
         componentSlug: d.componentSlug,

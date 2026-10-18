@@ -32,7 +32,7 @@ Feature: Deployment catalog
     Given the "empty-app" catalog is synced
     Then app "link-only" has 0 deployments
 
-  Scenario: Replace-in-scope leaves other scopes untouched
+  Scenario: A sync leaves other scopes untouched
     Given the "scope-a" catalog is synced
     And the "scope-b" catalog is synced
     Then I see 2 deployments in total

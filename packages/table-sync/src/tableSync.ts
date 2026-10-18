@@ -6,7 +6,8 @@ export interface TableSyncParams<
   TUniqColumns extends ReadonlyArray<keyof T>,
   TId extends keyof T & (string | number),
 > {
-  id: TId
+  /** Surrogate key column. Omit it when the unique columns are the key. */
+  id?: TId
   readAll: () => Promise<Array<T>>
   writeAll: (
     create: Array<Omit<T, TId>>,
@@ -15,6 +16,8 @@ export interface TableSyncParams<
       where: Pick<T, FilteredKeys<T, TUniqColumns>>
     }>,
     deleteIds: Array<T[TId]>,
+    /** The existing rows to delete, for tables keyed by their unique columns. */
+    deleteRows: Array<T>,
   ) => Promise<Array<T>>
   uniqColumns: TUniqColumns
 }
@@ -81,12 +84,17 @@ export function tableSync<
       for (const item of upsertItems) {
         deletedStrKeys.delete(toStrKey(item))
       }
-      const deletedIds = [...deletedStrKeys].map((strKey) => {
+      const deletedRows = [...deletedStrKeys].map(
+        (strKey) => existingByStrKey[strKey]!,
+      )
+      const idColumn = params.id
+      const deletedIds = [...deletedStrKeys].flatMap((strKey) => {
+        if (idColumn === undefined) return []
         const existingByStrKeyElementElement =
-          existingByStrKey[strKey]?.[params.id]
+          existingByStrKey[strKey]?.[idColumn]
         if (existingByStrKeyElementElement === undefined) {
           throw new Error(
-            `The PK column '${params.id}' is not presented in ${JSON.stringify(existingByStrKey[strKey])}`,
+            `The PK column '${String(idColumn)}' is not presented in ${JSON.stringify(existingByStrKey[strKey])}`,
           )
         }
         return existingByStrKeyElementElement
@@ -101,6 +109,7 @@ export function tableSync<
           }
         }),
         deletedIds as Array<T[TId]>,
+        deletedRows,
       )
 
       const findActual = (key: Pick<T, TUniqColumns[number]>) => {
@@ -124,11 +133,14 @@ export function tableSync<
         findIdMaybe: (
           key: Pick<T, TUniqColumns[number]>,
         ): T[TId] | undefined => {
-          return findActual(key)?.[params.id]
+          return idColumn === undefined
+            ? undefined
+            : findActual(key)?.[idColumn]
         },
 
         findIdOrThrow: (key: Pick<T, TUniqColumns[number]>): T[TId] => {
-          const maybeInserted = findActual(key)?.[params.id]
+          const maybeInserted =
+            idColumn === undefined ? undefined : findActual(key)?.[idColumn]
           if (!maybeInserted) {
             const total = [toCreate, toUpdate, unmodified]
               .map((s) => s?.length || 0)

@@ -227,34 +227,39 @@ export async function syncFakeCatalog(
     | 'scope-a-reduced'
     | 'timeout-test',
 ): Promise<void> {
-  await catalog.upsertEnvironments(environments)
-  await catalog.upsertApps(apps)
-  await catalog.upsertComponents(components)
-  await catalog.upsertTargets(targets)
+  // A run with a failed Source writes nothing — the Entity Provider rule.
+  // The test verifies that the catalog of a previous sync remains.
+  if (scenario === 'failed-source') return
+
+  await catalog.syncEnvironments('fake', environments)
+  await catalog.syncApps('fake', apps)
+  await catalog.syncComponents('fake', components)
+  await catalog.syncTargets('fake', targets)
 
   if (scenario === 'multi-instance') {
-    await catalog.upsertArtifacts(multiInstanceArtifacts)
-    await catalog.replaceDeployments('fake', multiInstanceDeployments)
-    await catalog.replaceHealth('http', multiInstanceHealth)
+    await catalog.syncArtifacts('fake', multiInstanceArtifacts)
+    await catalog.syncDeployments('fake', multiInstanceDeployments)
+    await catalog.syncHealth('http', multiInstanceHealth)
   } else if (scenario === 'aliases') {
-    await catalog.upsertArtifacts(aliasArtifacts)
+    await catalog.syncArtifacts('fake', aliasArtifacts)
   } else if (scenario === 'endpoints') {
-    await catalog.upsertArtifacts(endpointsArtifacts)
-    await catalog.replaceDeployments('fake', endpointsDeployments)
+    await catalog.syncArtifacts('fake', endpointsArtifacts)
+    await catalog.syncDeployments('fake', endpointsDeployments)
   } else if (scenario === 'empty-app') {
     // link-only app already exists, no components or deployments
   } else if (scenario === 'scope-a') {
-    await catalog.upsertArtifacts(scopeAArtifacts)
-    await catalog.replaceDeployments('scope-a', scopeADeployments)
+    await catalog.syncArtifacts('scope-a', scopeAArtifacts)
+    await catalog.syncDeployments('scope-a', scopeADeployments)
   } else if (scenario === 'scope-b') {
-    await catalog.upsertArtifacts(scopeBArtifacts)
-    await catalog.replaceDeployments('scope-b', scopeBDeployments)
+    await catalog.syncArtifacts('scope-b', scopeBArtifacts)
+    await catalog.syncDeployments('scope-b', scopeBDeployments)
   } else if (scenario === 'scope-a-reduced') {
     // Sync scope-a with empty list — the deployment is removed
-    await catalog.replaceDeployments('scope-a', [])
-  } else if (scenario === 'timeout-test') {
-    await catalog.upsertArtifacts(timeoutArtifacts)
-    await catalog.replaceDeployments('fake', timeoutDeployments)
+    await catalog.syncDeployments('scope-a', [])
+  } else {
+    // 'timeout-test'
+    await catalog.syncArtifacts('fake', timeoutArtifacts)
+    await catalog.syncDeployments('fake', timeoutDeployments)
 
     // A host that accepts the request and never answers
     const hangServer = createServer(() => {})
@@ -274,7 +279,7 @@ export async function syncFakeCatalog(
       await new Promise((resolve) => hangServer.close(resolve))
     }
 
-    await catalog.replaceHealth('test', [
+    await catalog.syncHealth('test', [
       {
         componentSlug: 'timeout-unknown',
         targetSlug: 'prod-eu',
@@ -287,6 +292,4 @@ export async function syncFakeCatalog(
       },
     ])
   }
-  // else: 'failed-source' writes nothing — the Entity Provider rule.
-  // The test verifies that deployments from a previous sync remain.
 }

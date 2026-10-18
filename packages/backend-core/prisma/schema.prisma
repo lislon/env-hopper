@@ -74,47 +74,71 @@ model verification {
 // No additional models needed for core resource jumping functionality
 
 // ========== Catalog (see CONTEXT.md) ==========
+// Each row belongs to the scope that last synced it; a sync deletes the rows
+// of its scope it no longer reports.
 model CatalogEnvironment {
   slug        String  @id
+  scope       String
   displayName String
   description String?
   meta        Json    @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   targets     CatalogDeploymentTarget[]
+
+  @@index([scope])
 }
 
 model CatalogApp {
   slug        String             @id
+  scope       String
   displayName String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   components  CatalogComponent[]
+
+  @@index([scope])
 }
 
 model CatalogComponent {
   slug        String  @id
+  scope       String
   displayName String
   appSlug     String?
   app         CatalogApp? @relation(fields: [appSlug], references: [slug])
   externalIds Json    @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   artifacts   CatalogArtifact[]
   deployments CatalogDeployment[]
+
+  @@index([scope])
 }
 
 model CatalogDeploymentTarget {
   slug            String  @id
+  scope           String
   displayName     String
   environmentSlug String?
   environment     CatalogEnvironment? @relation(fields: [environmentSlug], references: [slug])
   meta            Json    @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   deployments     CatalogDeployment[]
+
+  @@index([scope])
 }
 
 model CatalogRelease {
-  key       String    @id
-  scope     String
-  tag       String?
-  commitSha String?
-  author    String?
-  createdAt DateTime?
-  artifacts CatalogArtifact[]
+  key        String    @id
+  scope      String
+  tag        String?
+  commitSha  String?
+  author     String?
+  releasedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  artifacts  CatalogArtifact[]
 
   @@index([scope])
 }
@@ -122,15 +146,19 @@ model CatalogRelease {
 model CatalogArtifact {
   componentSlug String
   version       String
+  scope         String
   aliases       String[]  @default([])
   releaseKey    String?
   builtAt       DateTime?
-  component     CatalogComponent @relation(fields: [componentSlug], references: [slug])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  component     CatalogComponent @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)
   release       CatalogRelease?  @relation(fields: [releaseKey], references: [key], onDelete: SetNull)
   deployments   CatalogDeployment[]
 
   @@id([componentSlug, version])
   @@index([componentSlug, builtAt])
+  @@index([scope])
 }
 
 model CatalogDeployment {
@@ -140,9 +168,11 @@ model CatalogDeployment {
   scope         String
   source        String
   deployedAt    DateTime?
-  component     CatalogComponent        @relation(fields: [componentSlug], references: [slug])
-  target        CatalogDeploymentTarget @relation(fields: [targetSlug], references: [slug])
-  artifact      CatalogArtifact         @relation(fields: [componentSlug, version], references: [componentSlug, version])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  component     CatalogComponent        @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)
+  target        CatalogDeploymentTarget @relation(fields: [targetSlug], references: [slug], onDelete: Cascade)
+  artifact      CatalogArtifact         @relation(fields: [componentSlug, version], references: [componentSlug, version], onDelete: Cascade)
   endpoints     CatalogEndpoint[]
 
   @@id([componentSlug, targetSlug])
@@ -156,9 +186,11 @@ model CatalogEndpoint {
   kind          String
   label         String?
   url           String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   deployment    CatalogDeployment @relation(fields: [componentSlug, targetSlug], references: [componentSlug, targetSlug], onDelete: Cascade)
 
-  @@index([componentSlug, targetSlug])
+  @@unique([componentSlug, targetSlug, kind, url])
 }
 
 // Health is written independently of Deployments (any Source, any time), so it
@@ -171,6 +203,8 @@ model CatalogHealth {
   observedAt    DateTime
   checker       String
   detail        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@id([componentSlug, targetSlug])
   @@index([scope])

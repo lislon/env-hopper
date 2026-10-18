@@ -10,13 +10,13 @@ describe.skipIf(!prisma)('catalog schema', () => {
   it('drops endpoints with their deployment', async () => {
     // given
     await prisma!.catalogComponent.create({
-      data: { slug: 'api', displayName: 'API' },
+      data: { slug: 'api', scope: 's', displayName: 'API' },
     })
     await prisma!.catalogDeploymentTarget.create({
-      data: { slug: 't1', displayName: 'T1' },
+      data: { slug: 't1', scope: 's', displayName: 'T1' },
     })
     await prisma!.catalogArtifact.create({
-      data: { componentSlug: 'api', version: 'main-1' },
+      data: { componentSlug: 'api', version: 'main-1', scope: 's' },
     })
     await prisma!.catalogDeployment.create({
       data: {

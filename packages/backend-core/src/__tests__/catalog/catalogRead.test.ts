@@ -8,18 +8,18 @@ const catalog = prisma ? createCatalog(prisma) : undefined
 
 async function givenOneComponentOnTwoTargets() {
   if (!catalog) throw new Error('catalog not ready')
-  await catalog.upsertEnvironments([
+  await catalog.syncEnvironments('ci', [
     { slug: 'prod', displayName: 'Production' },
   ])
-  await catalog.upsertApps([{ slug: 'shop', displayName: 'Shop' }])
-  await catalog.upsertComponents([
+  await catalog.syncApps('ci', [{ slug: 'shop', displayName: 'Shop' }])
+  await catalog.syncComponents('ci', [
     { slug: 'shop-api', displayName: 'Shop API', appSlug: 'shop' },
   ])
-  await catalog.upsertTargets([
+  await catalog.syncTargets('ci', [
     { slug: 'k8s:prod/shop-eu', displayName: 'EU', environmentSlug: 'prod' },
     { slug: 'k8s:prod/shop-us', displayName: 'US', environmentSlug: 'prod' },
   ])
-  await catalog.upsertArtifacts([
+  await catalog.syncArtifacts('ci', [
     {
       componentSlug: 'shop-api',
       version: 'main-10',
@@ -40,7 +40,7 @@ beforeEach(async () => {
 describe.skipIf(!prisma)('catalog reads', () => {
   it('alias resolves to most recently built', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.upsertArtifacts([
+    await catalog!.syncArtifacts('ci', [
       {
         componentSlug: 'shop-api',
         version: 'main-10',
@@ -61,14 +61,25 @@ describe.skipIf(!prisma)('catalog reads', () => {
 
   it('after a rollback is re-observed, the alias still names the newest build', async () => {
     await givenOneComponentOnTwoTargets()
-    const run = (version: string, builtAt: Date) =>
-      catalog!.upsertArtifacts([
-        { componentSlug: 'shop-api', version, aliases: ['spring'], builtAt },
+    // Each run reports every Artifact it sees, as a sync does.
+    const run = (tenAt: Date) =>
+      catalog!.syncArtifacts('ci', [
+        {
+          componentSlug: 'shop-api',
+          version: 'main-10',
+          aliases: ['spring'],
+          builtAt: tenAt,
+        },
+        {
+          componentSlug: 'shop-api',
+          version: 'main-11',
+          aliases: ['spring'],
+          builtAt: new Date('2026-01-02'),
+        },
       ])
-    await run('main-10', new Date('2026-01-01'))
-    await run('main-11', new Date('2026-01-02'))
+    await run(new Date('2026-01-01'))
     // Rolled back to main-10; a later run reports it with a later time.
-    await run('main-10', new Date('2026-01-03'))
+    await run(new Date('2026-01-03'))
     expect((await catalog!.resolveAlias('shop-api', 'spring'))?.version).toBe(
       'main-11',
     )
@@ -76,7 +87,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
 
   it('lists health beside the deployment, unknown when none was observed', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -90,7 +101,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
         source: 'ci',
       },
     ])
-    await catalog!.replaceHealth('probe', [
+    await catalog!.syncHealth('probe', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -107,7 +118,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
 
   it('filters by app', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.replaceDeployments('ci', [
+    await catalog!.syncDeployments('ci', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -120,7 +131,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
 
   it('health without a deployment is never returned', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.replaceHealth('probe', [
+    await catalog!.syncHealth('probe', [
       {
         componentSlug: 'shop-api',
         targetSlug: 'k8s:prod/shop-eu',
@@ -134,7 +145,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
 
   it('alias with no builtAt sorts last', async () => {
     await givenOneComponentOnTwoTargets()
-    await catalog!.upsertArtifacts([
+    await catalog!.syncArtifacts('ci', [
       { componentSlug: 'shop-api', version: 'main-12', aliases: ['latest'] },
       {
         componentSlug: 'shop-api',
@@ -151,7 +162,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
   it('alias tie in builtAt breaks tie by version desc', async () => {
     await givenOneComponentOnTwoTargets()
     const sameBuildTime = new Date('2026-01-01')
-    await catalog!.upsertArtifacts([
+    await catalog!.syncArtifacts('ci', [
       {
         componentSlug: 'shop-api',
         version: 'main-10',

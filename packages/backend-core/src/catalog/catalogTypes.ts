@@ -29,7 +29,7 @@ export interface CatalogReleaseInput {
   tag?: string
   commitSha?: string
   author?: string
-  createdAt?: Date
+  releasedAt?: Date
 }
 export interface CatalogArtifactInput {
   componentSlug: string

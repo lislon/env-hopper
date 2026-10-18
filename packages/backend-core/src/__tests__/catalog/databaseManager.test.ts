@@ -20,7 +20,9 @@ describe.skipIf(!prisma)('EhDatabaseManager', () => {
     expect(schema).not.toBe('public')
     const catalog = createCatalog(manager.getClient())
     // act
-    await catalog.upsertApps([{ slug: 'schema-probe', displayName: 'Probe' }])
+    await catalog.syncApps('ci', [
+      { slug: 'schema-probe', displayName: 'Probe' },
+    ])
     // assert
     const [row] = await prisma!.$queryRawUnsafe<Array<{ inSchema: bigint }>>(
       `select count(*) as "inSchema" from "${schema}"."CatalogApp" where slug = 'schema-probe'`,

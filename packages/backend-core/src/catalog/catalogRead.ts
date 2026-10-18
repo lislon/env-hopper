@@ -13,24 +13,39 @@ import type {
   HealthState,
 } from './catalogTypes'
 
+/**
+ * Each sync makes the rows of `scope` equal the list: new rows are created,
+ * changed rows updated, identical rows left alone, and rows of the scope the
+ * list no longer reports deleted together with what depends on them. A row
+ * another scope held is taken over. Sync parents before their children.
+ */
 export interface Catalog {
-  upsertEnvironments: (list: Array<CatalogEnvironmentInput>) => Promise<void>
-  upsertApps: (list: Array<CatalogAppInput>) => Promise<void>
-  upsertComponents: (list: Array<CatalogComponentInput>) => Promise<void>
-  upsertTargets: (list: Array<CatalogDeploymentTargetInput>) => Promise<void>
-  upsertArtifacts: (list: Array<CatalogArtifactInput>) => Promise<void>
-  replaceReleases: (
+  syncEnvironments: (
+    scope: string,
+    list: Array<CatalogEnvironmentInput>,
+  ) => Promise<void>
+  syncApps: (scope: string, list: Array<CatalogAppInput>) => Promise<void>
+  syncComponents: (
+    scope: string,
+    list: Array<CatalogComponentInput>,
+  ) => Promise<void>
+  syncTargets: (
+    scope: string,
+    list: Array<CatalogDeploymentTargetInput>,
+  ) => Promise<void>
+  syncReleases: (
     scope: string,
     list: Array<CatalogReleaseInput>,
   ) => Promise<void>
-  replaceDeployments: (
+  syncArtifacts: (
+    scope: string,
+    list: Array<CatalogArtifactInput>,
+  ) => Promise<void>
+  syncDeployments: (
     scope: string,
     list: Array<CatalogDeploymentInput>,
   ) => Promise<void>
-  replaceHealth: (
-    scope: string,
-    list: Array<CatalogHealthInput>,
-  ) => Promise<void>
+  syncHealth: (scope: string, list: Array<CatalogHealthInput>) => Promise<void>
   listDeployments: (filter?: {
     appSlug?: string
     environmentSlug?: string
@@ -162,7 +177,7 @@ function toArtifactView(artifact: {
     tag: string | null
     commitSha: string | null
     author: string | null
-    createdAt: Date | null
+    releasedAt: Date | null
   } | null
 }): CatalogArtifactView {
   return {
@@ -175,7 +190,7 @@ function toArtifactView(artifact: {
           tag: artifact.release.tag ?? undefined,
           commitSha: artifact.release.commitSha ?? undefined,
           author: artifact.release.author ?? undefined,
-          createdAt: artifact.release.createdAt ?? undefined,
+          releasedAt: artifact.release.releasedAt ?? undefined,
         }
       : null,
   }

@@ -1,6 +1,6 @@
 import Dexie from 'dexie'
 import type {
-  BootstrapConfigData,
+  BootstrapPayload,
   ResourceJumpsData,
   ResourceJumpsExtendedData,
 } from '@env-hopper/backend-core'
@@ -9,7 +9,7 @@ import type { EnvironmentHistoryItem } from '~/modules/environment/types'
 import type { ResourceJumpHistoryItem } from '~/modules/resourceJump/types'
 
 export class EhDb extends Dexie {
-  bootstrap!: Table<BootstrapConfigData>
+  bootstrap!: Table<BootstrapPayload>
   resourceJumps!: Table<ResourceJumpsData>
   resourceJumpsExtended!: Table<ResourceJumpsExtendedData>
   environmentHistory!: Table<EnvironmentHistoryItem>

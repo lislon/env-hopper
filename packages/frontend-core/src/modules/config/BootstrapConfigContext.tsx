@@ -1,8 +1,8 @@
 import { createContext, use } from 'react'
 import type { ReactNode } from 'react'
-import type { BootstrapConfigData } from '@env-hopper/backend-core'
+import type { BootstrapPayload } from '@env-hopper/backend-core'
 
-const BootstrapConfigContext = createContext<BootstrapConfigData | undefined>(
+const BootstrapConfigContext = createContext<BootstrapPayload | undefined>(
   undefined,
 )
 
@@ -11,9 +11,10 @@ const BootstrapConfigContext = createContext<BootstrapConfigData | undefined>(
  * object means `undefined` still means "no provider", so the hook below can
  * keep telling those two cases apart.
  */
-const EMPTY_BOOTSTRAP_CONFIG: BootstrapConfigData = {
+const EMPTY_BOOTSTRAP_CONFIG: BootstrapPayload = {
   apps: {},
   envs: {},
+  envDefaults: {},
   appsMeta: { tags: { descriptions: [] } },
   contexts: [],
   defaults: { envSlug: '', resourceJumpSlug: '' },
@@ -21,7 +22,7 @@ const EMPTY_BOOTSTRAP_CONFIG: BootstrapConfigData = {
 
 interface BootstrapConfigProviderProps {
   children: ReactNode
-  bootstrapConfig: BootstrapConfigData | undefined
+  bootstrapConfig: BootstrapPayload | undefined
 }
 
 export function BootstrapConfigProvider({
@@ -35,7 +36,7 @@ export function BootstrapConfigProvider({
   )
 }
 
-export function useBootstrapConfig(): BootstrapConfigData {
+export function useBootstrapConfig(): BootstrapPayload {
   const context = use(BootstrapConfigContext)
   if (context === undefined) {
     throw new Error(

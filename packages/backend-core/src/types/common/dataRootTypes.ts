@@ -1,4 +1,7 @@
-import type { DefaultWithOverridesAndTemplate } from '@env-hopper/shared-core'
+import type {
+  DefaultWithOverridesAndTemplate,
+  PackedEnvs,
+} from '@env-hopper/shared-core'
 import type { EhAppsMeta, EhContextIndexed } from '../backend/api.js'
 import type { EhAppIndexed } from './app/appTypes.js'
 import type { EhCustomizationData } from './customizationTypes.js'
@@ -29,6 +32,13 @@ export interface BootstrapConfigData {
    */
   appVersion?: string
 }
+
+/**
+ * `bootstrap` as it is sent: `envs` packed into per-field defaults plus each
+ * Environment's differences (`expandEnv` from shared-core rebuilds one).
+ * Every other key is `BootstrapConfigData`'s as it is.
+ */
+export type BootstrapPayload = Omit<BootstrapConfigData, 'envs'> & PackedEnvs
 
 export interface AvailabilityMatrixData {
   envSlugs: Array<EnvSlug>

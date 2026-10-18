@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
+import { bootstrapEnv } from '~/modules/config/bootstrapEnv'
 import { appSlugFromJumpSlug } from '~/util/route-utils'
 import type { EhTemplateSelection } from './ehTemplate'
 import { resolveEhTemplate } from './ehTemplate'
@@ -34,7 +35,7 @@ export function useEhTemplate(): (template: string) => string | undefined {
         slug: currentEnv.slug,
         displayName: currentEnv.displayName,
         templateParams: currentEnv.templateParams,
-        meta: bootstrap.envs[currentEnv.slug]?.meta,
+        meta: bootstrapEnv(bootstrap, currentEnv.slug)?.meta,
       },
     }),
     [currentResourceJump, currentEnv, bootstrap],

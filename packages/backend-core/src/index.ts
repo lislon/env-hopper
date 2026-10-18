@@ -1,6 +1,8 @@
 // common
 
-export { createTrpcRouter } from './server/controller'
+export { createTrpcRouter, packBootstrap } from './server/controller'
+/** Rebuilds one Environment of a packed `bootstrap`. */
+export { expandEnv } from '@env-hopper/shared-core'
 export type { TRPCRouter } from './server/controller'
 export { createEhTrpcContext } from './server/ehTrpcContext'
 export { MAX_SLICE_SLUGS } from './server/pairDetails'

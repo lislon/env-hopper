@@ -10,3 +10,5 @@ export type {
 } from './defaultWithOverridesAndTemplate'
 export { ehFormatUrl } from './ehFormatUrl'
 export * from './nullToUndefined'
+export { expandEnv, packEnvs } from './packEnvs'
+export type { Json, PackedEnvs } from './packEnvs'

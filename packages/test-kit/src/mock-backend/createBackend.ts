@@ -1,7 +1,11 @@
 import { http } from 'msw'
 import { createTRPCMsw, httpLink } from 'msw-trpc'
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
-import { createEhTrpcContext, createTrpcRouter } from '@env-hopper/backend-core'
+import {
+  createEhTrpcContext,
+  createTrpcRouter,
+  packBootstrap,
+} from '@env-hopper/backend-core'
 import type {
   BootstrapConfigData,
   Catalog,
@@ -213,7 +217,7 @@ export function createBackend(fixture: Fixture): MockBackend {
   }
 
   const backendData: BackendData = {
-    bootstrap,
+    bootstrap: packBootstrap(bootstrap),
     resourceJumps: resourceJumpsData,
     resourceJumpsExtended: { envs: [] },
     // Procedures no scenario drives yet: answered, but with nothing in them.
@@ -263,7 +267,7 @@ export function createBackend(fixture: Fixture): MockBackend {
       overrideBackendNetworkFn(server, mswTrpc, backendData)
     } else {
       server.use(
-        mswTrpc.bootstrap.query(() => bootstrap),
+        mswTrpc.bootstrap.query(() => backendData.bootstrap),
         mswTrpc.resourceJumps.query(() => resourceJumpsData),
       )
     }

@@ -1,6 +1,11 @@
 import z from 'zod'
+import { packEnvs } from '@env-hopper/shared-core'
 
-import type { BootstrapConfigData, ResourceJumpsData } from '../types'
+import type {
+  BootstrapConfigData,
+  BootstrapPayload,
+  ResourceJumpsData,
+} from '../types'
 
 import type { BetterAuth } from '../modules/auth/auth'
 import { createAuthRouter } from '../modules/auth/authRouter.js'
@@ -14,9 +19,8 @@ import { publicProcedure, router, t } from './trpcSetup'
 export function createTrpcRouter(auth?: BetterAuth) {
   return router({
     bootstrap: publicProcedure.query(
-      async ({ ctx }): Promise<BootstrapConfigData> => {
-        return await ctx.companySpecificBackend.getBootstrapData()
-      },
+      async ({ ctx }): Promise<BootstrapPayload> =>
+        packBootstrap(await ctx.companySpecificBackend.getBootstrapData()),
     ),
 
     authConfig: publicProcedure.query(async ({ ctx }) => {
@@ -92,6 +96,12 @@ export function createTrpcRouter(auth?: BetterAuth) {
     // Auth routes (requires auth instance)
     auth: createAuthRouter(t, auth),
   })
+}
+
+/** `bootstrap` as sent: only `envs` is packed; it keeps its place, `envDefaults` follows last. */
+export function packBootstrap(data: BootstrapConfigData): BootstrapPayload {
+  const { envDefaults, envs } = packEnvs(data.envs)
+  return { ...data, envs, envDefaults }
 }
 
 function filterSingleResourceJump(

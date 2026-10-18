@@ -17,9 +17,10 @@ import { LOCAL_STORAGE_KEY_VERSION } from '../lib/local-storage-constants'
 import { useQueryBootstrapConfig } from '~/api/data/useQueryBootstrapConfig'
 import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/api/ApiQueryMagazineResourceJump'
 import { mapToFlagshipResourceJumps } from '~/modules/resourceJump/utils/mapToFlagshipResourceJumps'
+import { bootstrapEnv } from '~/modules/config/bootstrapEnv'
 import { appSlugFromJumpSlug } from '~/util/route-utils'
 import type {
-  BootstrapConfigData,
+  BootstrapPayload,
   EhBackendAppInput,
   EhBackendDataSourceInputDb,
   EhCustomizationData,
@@ -47,7 +48,7 @@ import type {
  * catalogue, the jump slug's own app part resolves for all 111 jumps while the
  * group slug resolves for 106, and the two never disagree.
  *
- * Second, the cast. `BootstrapConfigData.apps` is typed `EhAppIndexed`, which
+ * Second, the cast. `BootstrapPayload.apps` is typed `EhAppIndexed`, which
  * declares neither `ui.credentials` nor `dataSources`, yet a backend fills both
  * in through `EhBackendAppInput` and the controller returns the object it was
  * given, so the fields are on the wire. Narrowing to the input type here says
@@ -56,7 +57,7 @@ import type {
  * is the only place that needs to lie.
  */
 function mapToLegacyWidgets(
-  app: BootstrapConfigData['apps'][string] | undefined,
+  app: BootstrapPayload['apps'][string] | undefined,
 ): EhAppWidgets | undefined {
   const source = app as EhBackendAppInput | undefined
   const credentials = source?.ui?.credentials
@@ -156,7 +157,7 @@ export interface LegacyConfig extends EhClientConfig {
  *    flags are joined on from the bootstrap contexts when a slug matches.
  */
 export function mapToLegacyConfig(
-  bootstrap: BootstrapConfigData,
+  bootstrap: BootstrapPayload,
   jumps: ResourceJumpsData,
 ): EhClientConfig {
   const flagships = mapToFlagshipResourceJumps(jumps)
@@ -185,7 +186,7 @@ export function mapToLegacyConfig(
   const envs: Array<EhEnv> = jumps.envs.map((env) => {
     // The resource-jump payload carries the environment's own parameters; its
     // kind and its app override are on the bootstrap entry for the same slug.
-    const indexed = bootstrap.envs[env.slug]
+    const indexed = bootstrapEnv(bootstrap, env.slug)
     return {
       id: env.slug,
       meta: env.templateParams,

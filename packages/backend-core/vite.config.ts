@@ -5,6 +5,13 @@ const config = defineConfig({
   resolve: {
     conditions: ['my-custom-condition'],
   },
+  // Tests load workspace packages through SSR resolution, which ignores
+  // resolve.conditions: without this they run each package's built dist.
+  ssr: {
+    resolve: {
+      conditions: ['my-custom-condition'],
+    },
+  },
   test: {
     name: packageJson.name,
     dir: './src/__tests__',

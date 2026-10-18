@@ -231,65 +231,69 @@ export async function syncFakeCatalog(
   // The test verifies that the catalog of a previous sync remains.
   if (scenario === 'failed-source') return
 
-  await catalog.syncEnvironments('fake', environments)
-  await catalog.syncApps('fake', apps)
-  await catalog.syncComponents('fake', components)
-  await catalog.syncTargets('fake', targets)
+  // Probes run before the write: no network call holds the transaction open.
+  const timeoutHealth = scenario === 'timeout-test' ? await probeTimeouts() : []
 
-  if (scenario === 'multi-instance') {
-    await catalog.syncArtifacts('fake', multiInstanceArtifacts)
-    await catalog.syncDeployments('fake', multiInstanceDeployments)
-    await catalog.syncHealth('http', multiInstanceHealth)
-  } else if (scenario === 'aliases') {
-    await catalog.syncArtifacts('fake', aliasArtifacts)
-  } else if (scenario === 'endpoints') {
-    await catalog.syncArtifacts('fake', endpointsArtifacts)
-    await catalog.syncDeployments('fake', endpointsDeployments)
-  } else if (scenario === 'empty-app') {
-    // link-only app already exists, no components or deployments
-  } else if (scenario === 'scope-a') {
-    await catalog.syncArtifacts('scope-a', scopeAArtifacts)
-    await catalog.syncDeployments('scope-a', scopeADeployments)
-  } else if (scenario === 'scope-b') {
-    await catalog.syncArtifacts('scope-b', scopeBArtifacts)
-    await catalog.syncDeployments('scope-b', scopeBDeployments)
-  } else if (scenario === 'scope-a-reduced') {
-    // Sync scope-a with empty list — the deployment is removed
-    await catalog.syncDeployments('scope-a', [])
-  } else {
-    // 'timeout-test'
-    await catalog.syncArtifacts('fake', timeoutArtifacts)
-    await catalog.syncDeployments('fake', timeoutDeployments)
+  // The whole run is one transaction: a reader never sees half of it.
+  await catalog.transaction(async (tx) => {
+    await catalog.syncEnvironments(tx, 'fake', environments)
+    await catalog.syncApps(tx, 'fake', apps)
+    await catalog.syncComponents(tx, 'fake', components)
+    await catalog.syncTargets(tx, 'fake', targets)
 
-    // A host that accepts the request and never answers
-    const hangServer = createServer(() => {})
-    await new Promise<void>((resolve) =>
-      hangServer.listen(0, 'localhost', resolve),
-    )
-    const addr = hangServer.address()
-    const port = typeof addr === 'object' && addr ? addr.port : 0
-    const hangUrl = `http://localhost:${port}/health`
-
-    let unknownCheck, downCheck
-    try {
-      unknownCheck = await runCheck(observerChecker, { url: hangUrl }, 100)
-      downCheck = await runCheck(httpHealthChecker, { url: hangUrl }, 100)
-    } finally {
-      hangServer.closeAllConnections()
-      await new Promise((resolve) => hangServer.close(resolve))
+    if (scenario === 'multi-instance') {
+      await catalog.syncArtifacts(tx, 'fake', multiInstanceArtifacts)
+      await catalog.syncDeployments(tx, 'fake', multiInstanceDeployments)
+      await catalog.syncHealth(tx, 'http', multiInstanceHealth)
+    } else if (scenario === 'aliases') {
+      await catalog.syncArtifacts(tx, 'fake', aliasArtifacts)
+    } else if (scenario === 'endpoints') {
+      await catalog.syncArtifacts(tx, 'fake', endpointsArtifacts)
+      await catalog.syncDeployments(tx, 'fake', endpointsDeployments)
+    } else if (scenario === 'empty-app') {
+      // link-only app already exists, no components or deployments
+    } else if (scenario === 'scope-a') {
+      await catalog.syncArtifacts(tx, 'scope-a', scopeAArtifacts)
+      await catalog.syncDeployments(tx, 'scope-a', scopeADeployments)
+    } else if (scenario === 'scope-b') {
+      await catalog.syncArtifacts(tx, 'scope-b', scopeBArtifacts)
+      await catalog.syncDeployments(tx, 'scope-b', scopeBDeployments)
+    } else if (scenario === 'scope-a-reduced') {
+      // Sync scope-a with empty list — the deployment is removed
+      await catalog.syncDeployments(tx, 'scope-a', [])
+    } else {
+      // 'timeout-test'
+      await catalog.syncArtifacts(tx, 'fake', timeoutArtifacts)
+      await catalog.syncDeployments(tx, 'fake', timeoutDeployments)
+      await catalog.syncHealth(tx, 'test', timeoutHealth)
     }
+  })
+}
 
-    await catalog.syncHealth('test', [
-      {
-        componentSlug: 'timeout-unknown',
-        targetSlug: 'prod-eu',
-        ...unknownCheck,
-      },
-      {
-        componentSlug: 'timeout-down',
-        targetSlug: 'prod-eu',
-        ...downCheck,
-      },
-    ])
+/** Checks a host that accepts the request and never answers, both ways. */
+async function probeTimeouts() {
+  const hangServer = createServer(() => {})
+  await new Promise<void>((resolve) =>
+    hangServer.listen(0, 'localhost', resolve),
+  )
+  const addr = hangServer.address()
+  const port = typeof addr === 'object' && addr ? addr.port : 0
+  const hangUrl = `http://localhost:${port}/health`
+
+  let unknownCheck, downCheck
+  try {
+    unknownCheck = await runCheck(observerChecker, { url: hangUrl }, 100)
+    downCheck = await runCheck(httpHealthChecker, { url: hangUrl }, 100)
+  } finally {
+    hangServer.closeAllConnections()
+    await new Promise((resolve) => hangServer.close(resolve))
   }
+  return [
+    {
+      componentSlug: 'timeout-unknown',
+      targetSlug: 'prod-eu',
+      ...unknownCheck,
+    },
+    { componentSlug: 'timeout-down', targetSlug: 'prod-eu', ...downCheck },
+  ]
 }

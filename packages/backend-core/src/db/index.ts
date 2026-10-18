@@ -5,10 +5,12 @@ export { connectDb, disconnectDb, getDbClient, setDbClient } from './client'
 export {
   tableSyncPrisma,
   type MakeTFromPrismaModel,
+  type PrismaDb,
   type ObjectKeys,
   type ScalarFilter,
   type ScalarKeys,
   type TableSyncParamsPrisma,
+  type WhereFilter,
 } from './tableSyncPrismaAdapter'
 
 export {

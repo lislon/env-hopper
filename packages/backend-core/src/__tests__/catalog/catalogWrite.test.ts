@@ -1,10 +1,14 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createCatalog } from '../../catalog'
-import { getTestCatalogClient, resetCatalog } from '../../testing'
+import {
+  getTestCatalogClient,
+  resetCatalog,
+  withOwnTransactions,
+} from '../../testing'
 
 const prisma = getTestCatalogClient()
-const catalog = prisma ? createCatalog(prisma) : undefined
+const catalog = prisma ? withOwnTransactions(createCatalog(prisma)) : undefined
 
 async function givenOneComponentOnTwoTargets() {
   if (!catalog) throw new Error('catalog not ready')
@@ -482,5 +486,52 @@ describe.skipIf(!prisma)('catalog writes', () => {
     expect(listed.filter((d) => d.health?.state === 'healthy')).toHaveLength(
       2000,
     )
+  })
+
+  it('a run whose deployment sync fails leaves the artifacts as they were', async () => {
+    await givenOneComponentOnTwoTargets()
+    const raw = createCatalog(prisma!)
+
+    const run = raw.transaction(async (tx) => {
+      await raw.syncArtifacts(tx, 'ci', [
+        { componentSlug: 'shop-api', version: 'main-12' },
+      ])
+      await raw.syncDeployments(tx, 'ci', [
+        {
+          componentSlug: 'shop-api',
+          targetSlug: 'k8s:prod/shop-eu',
+          version: 'no-such-artifact',
+          source: 'gitops',
+        },
+      ])
+    })
+
+    await expect(run).rejects.toThrow()
+    const versions = await prisma!.catalogArtifact.findMany({
+      select: { version: true },
+      orderBy: { version: 'asc' },
+    })
+    expect(versions.map((a) => a.version)).toEqual(['main-10', 'main-11'])
+  })
+
+  it('every sync reports what it did to its table', async () => {
+    await givenOneComponentOnTwoTargets()
+
+    const counts = await catalog!.syncArtifacts('ci', [
+      {
+        componentSlug: 'shop-api',
+        version: 'main-10',
+        builtAt: new Date('2026-01-01'),
+      },
+      { componentSlug: 'shop-api', version: 'main-11', aliases: ['latest'] },
+      { componentSlug: 'shop-api', version: 'main-12' },
+    ])
+
+    expect(counts).toEqual({ created: 1, updated: 1, deleted: 0, unchanged: 1 })
+    expect(
+      await catalog!.syncArtifacts('ci', [
+        { componentSlug: 'shop-api', version: 'main-12' },
+      ]),
+    ).toEqual({ created: 0, updated: 0, deleted: 2, unchanged: 1 })
   })
 })

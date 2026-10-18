@@ -2,6 +2,8 @@ export * from './catalogTypes'
 export type {
   Catalog,
   CatalogArtifactView,
+  CatalogSyncCounts,
+  CatalogTx,
   CatalogDeploymentView,
 } from './catalogRead'
 export { createCatalog } from './catalogWrite'

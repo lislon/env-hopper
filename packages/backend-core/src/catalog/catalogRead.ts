@@ -13,39 +13,46 @@ import type {
   HealthState,
 } from './catalogTypes'
 
+/** A write transaction the Catalog opened; pass it to every sync of the run. */
+export interface CatalogTx {
+  readonly __catalogTx: never
+}
+
+/** What one sync did to its table. */
+export interface CatalogSyncCounts {
+  created: number
+  updated: number
+  deleted: number
+  unchanged: number
+}
+
+type Sync<TInput> = (
+  tx: CatalogTx,
+  scope: string,
+  list: Array<TInput>,
+) => Promise<CatalogSyncCounts>
+
 /**
  * Each sync makes the rows of `scope` equal the list: new rows are created,
  * changed rows updated, identical rows left alone, and rows of the scope the
  * list no longer reports deleted together with what depends on them. A row
- * another scope held is taken over. Sync parents before their children.
+ * another scope held is taken over. Sync parents before their children, all
+ * inside one `transaction`, so readers never see half a run.
  */
 export interface Catalog {
-  syncEnvironments: (
-    scope: string,
-    list: Array<CatalogEnvironmentInput>,
-  ) => Promise<void>
-  syncApps: (scope: string, list: Array<CatalogAppInput>) => Promise<void>
-  syncComponents: (
-    scope: string,
-    list: Array<CatalogComponentInput>,
-  ) => Promise<void>
-  syncTargets: (
-    scope: string,
-    list: Array<CatalogDeploymentTargetInput>,
-  ) => Promise<void>
-  syncReleases: (
-    scope: string,
-    list: Array<CatalogReleaseInput>,
-  ) => Promise<void>
-  syncArtifacts: (
-    scope: string,
-    list: Array<CatalogArtifactInput>,
-  ) => Promise<void>
-  syncDeployments: (
-    scope: string,
-    list: Array<CatalogDeploymentInput>,
-  ) => Promise<void>
-  syncHealth: (scope: string, list: Array<CatalogHealthInput>) => Promise<void>
+  transaction: <T>(
+    fn: (tx: CatalogTx) => Promise<T>,
+    opts?: { timeoutMs?: number },
+  ) => Promise<T>
+  syncEnvironments: Sync<CatalogEnvironmentInput>
+  syncApps: Sync<CatalogAppInput>
+  syncComponents: Sync<CatalogComponentInput>
+  syncTargets: Sync<CatalogDeploymentTargetInput>
+  syncReleases: Sync<CatalogReleaseInput>
+  syncArtifacts: Sync<CatalogArtifactInput>
+  /** Counts the Deployments; each Deployment's Endpoints are synced with it. */
+  syncDeployments: Sync<CatalogDeploymentInput>
+  syncHealth: Sync<CatalogHealthInput>
   listDeployments: (filter?: {
     appSlug?: string
     environmentSlug?: string

@@ -61,12 +61,14 @@ export {
   TABLE_SYNC_MAGAZINE,
   tableSyncPrisma,
   type MakeTFromPrismaModel,
+  type PrismaDb,
   type ObjectKeys,
   type ScalarFilter,
   type ScalarKeys,
   type TableSyncMagazine,
   type TableSyncMagazineModelNameKey,
   type TableSyncParamsPrisma,
+  type WhereFilter,
 } from './db'
 
 // Middleware (batteries-included backend setup)

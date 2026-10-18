@@ -1,10 +1,14 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createCatalog } from '../../catalog'
-import { getTestCatalogClient, resetCatalog } from '../../testing'
+import {
+  getTestCatalogClient,
+  resetCatalog,
+  withOwnTransactions,
+} from '../../testing'
 
 const prisma = getTestCatalogClient()
-const catalog = prisma ? createCatalog(prisma) : undefined
+const catalog = prisma ? withOwnTransactions(createCatalog(prisma)) : undefined
 
 async function givenOneComponentOnTwoTargets() {
   if (!catalog) throw new Error('catalog not ready')

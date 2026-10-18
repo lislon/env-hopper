@@ -28,17 +28,26 @@ export interface CatalogSyncCounts {
   unchanged: number
 }
 
+export interface CatalogSyncOptions {
+  /**
+   * Create and update the listed rows, delete nothing: for a run that knows
+   * only part of the scope.
+   */
+  upsertOnly?: boolean
+}
+
 type Sync<TInput> = (
   tx: CatalogTx,
   scope: string,
   list: Array<TInput>,
+  opts?: CatalogSyncOptions,
 ) => Promise<CatalogSyncCounts>
 
 /**
  * Each sync makes the rows of `scope` equal the list: new rows are created,
  * changed rows updated, identical rows left alone, and rows of the scope the
- * list no longer reports deleted together with what depends on them. A row
- * another scope held is taken over. Sync parents before their children, all
+ * list no longer reports deleted together with what depends on them (none
+ * with `upsertOnly`). A row another scope held is taken over. Sync parents before their children, all
  * inside one `transaction`, so readers never see half a run.
  */
 export interface Catalog {

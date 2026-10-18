@@ -146,6 +146,13 @@ export function tableSync<
 
       return {
         counts,
+        /** The rows this sync created, as given. */
+        created: toCreate ?? [],
+        /** The rows this sync changed: each as given, and as it was stored. */
+        updated: (toUpdate ?? []).map((row) => ({
+          row,
+          was: existingByStrKey.get(toStrKey(row))!,
+        })),
         /** The existing rows this sync deleted. */
         deleted: deletedRows,
 

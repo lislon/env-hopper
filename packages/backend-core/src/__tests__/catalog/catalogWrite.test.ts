@@ -573,4 +573,59 @@ describe.skipIf(!prisma)('catalog writes', () => {
       ]),
     ).toEqual({ created: 0, updated: 0, deleted: 2, unchanged: 1 })
   })
+
+  it('upsertOnly writes the list and deletes nothing the scope held', async () => {
+    await givenOneComponentOnTwoTargets()
+    const a = {
+      slug: 'k8s:prod/shop-eu',
+      displayName: 'EU',
+      environmentSlug: 'prod',
+    }
+    const b = { ...a, slug: 'k8s:prod/shop-us', displayName: 'US' }
+
+    const counts = await catalog!.syncTargets(
+      'ci',
+      [{ ...a, displayName: 'Europe' }],
+      { upsertOnly: true },
+    )
+
+    expect(counts).toEqual({ created: 0, updated: 1, deleted: 0, unchanged: 0 })
+    const targets = await prisma!.catalogDeploymentTarget.findMany({
+      select: { slug: true, displayName: true },
+      orderBy: { slug: 'asc' },
+    })
+    expect(targets).toEqual([
+      { slug: a.slug, displayName: 'Europe' },
+      { slug: b.slug, displayName: 'US' },
+    ])
+  })
+
+  it('upsertOnly deployments keep the endpoints of deployments not listed', async () => {
+    await givenOneComponentOnTwoTargets()
+    const eu = {
+      componentSlug: 'shop-api',
+      targetSlug: 'k8s:prod/shop-eu',
+      version: 'main-10',
+      source: 'ci',
+      endpoints: [{ kind: 'ui' as const, url: 'https://eu.example.test' }],
+    }
+    const us = {
+      ...eu,
+      targetSlug: 'k8s:prod/shop-us',
+      endpoints: [{ kind: 'ui' as const, url: 'https://us.example.test' }],
+    }
+    await catalog!.syncDeployments('ci', [eu, us])
+
+    const counts = await catalog!.syncDeployments(
+      'ci',
+      [{ ...eu, version: 'main-11', endpoints: [] }],
+      { upsertOnly: true },
+    )
+
+    expect(counts.deleted).toBe(0)
+    const endpoints = await prisma!.catalogEndpoint.findMany({
+      select: { targetSlug: true },
+    })
+    expect(endpoints).toEqual([{ targetSlug: us.targetSlug }])
+  })
 })

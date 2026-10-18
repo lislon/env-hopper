@@ -32,6 +32,20 @@ function memoryTable(rows: Array<Row>) {
 }
 
 describe('tableSync', () => {
+  it('returns the rows it created and changed, each changed one with what it was', async () => {
+    const was = { id: 1, a: 'x', b: 'y', v: 1 }
+    const { sync } = memoryTable([was, { id: 2, a: 'k', b: 'k', v: 1 }])
+
+    const result = await sync.sync([
+      { a: 'x', b: 'y', v: 2 },
+      { a: 'k', b: 'k', v: 1 },
+      { a: 'n', b: 'n', v: 1 },
+    ])
+
+    expect(result.created).toEqual([{ a: 'n', b: 'n', v: 1 }])
+    expect(result.updated).toEqual([{ row: { a: 'x', b: 'y', v: 2 }, was }])
+  })
+
   it('keeps keys whose values contain the separator apart', async () => {
     const { sync, writes } = memoryTable([{ id: 1, a: 'x:y', b: 'z', v: 1 }])
 

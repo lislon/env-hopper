@@ -88,13 +88,19 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         maxWait: 10_000,
       }),
 
-    syncEnvironments: async (tx, scope, list: Array<CatalogEnvironmentInput>) =>
+    syncEnvironments: async (
+      tx,
+      scope,
+      list: Array<CatalogEnvironmentInput>,
+      opts = {},
+    ) =>
       (
         await tableSyncPrisma({
           prisma: txOf(tx),
           prismaModelName: 'CatalogEnvironment',
           uniqColumns: ['slug'],
           scope,
+          upsertOnly: opts.upsertOnly,
         }).sync(
           list.map((e) => ({
             slug: e.slug,
@@ -105,13 +111,14 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         )
       ).counts,
 
-    syncApps: async (tx, scope, list: Array<CatalogAppInput>) =>
+    syncApps: async (tx, scope, list: Array<CatalogAppInput>, opts = {}) =>
       (
         await tableSyncPrisma({
           prisma: txOf(tx),
           prismaModelName: 'CatalogApp',
           uniqColumns: ['slug'],
           scope,
+          upsertOnly: opts.upsertOnly,
         }).sync(
           list.map((a) => ({
             slug: a.slug,
@@ -121,13 +128,19 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         )
       ).counts,
 
-    syncComponents: async (tx, scope, list: Array<CatalogComponentInput>) =>
+    syncComponents: async (
+      tx,
+      scope,
+      list: Array<CatalogComponentInput>,
+      opts = {},
+    ) =>
       (
         await tableSyncPrisma({
           prisma: txOf(tx),
           prismaModelName: 'CatalogComponent',
           uniqColumns: ['slug'],
           scope,
+          upsertOnly: opts.upsertOnly,
           beforeDelete: cascadeHealth((r) => ({ componentSlug: r['slug'] })),
         }).sync(
           list.map((c) => ({
@@ -139,13 +152,19 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         )
       ).counts,
 
-    syncTargets: async (tx, scope, list: Array<CatalogDeploymentTargetInput>) =>
+    syncTargets: async (
+      tx,
+      scope,
+      list: Array<CatalogDeploymentTargetInput>,
+      opts = {},
+    ) =>
       (
         await tableSyncPrisma({
           prisma: txOf(tx),
           prismaModelName: 'CatalogDeploymentTarget',
           uniqColumns: ['slug'],
           scope,
+          upsertOnly: opts.upsertOnly,
           beforeDelete: cascadeHealth((r) => ({ targetSlug: r['slug'] })),
         }).sync(
           list.map((t) => ({
@@ -157,13 +176,14 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         )
       ).counts,
 
-    syncUsers: async (tx, scope, list: Array<CatalogUserInput>) =>
+    syncUsers: async (tx, scope, list: Array<CatalogUserInput>, opts = {}) =>
       (
         await tableSyncPrisma({
           prisma: txOf(tx),
           prismaModelName: 'CatalogUser',
           uniqColumns: ['username'],
           scope,
+          upsertOnly: opts.upsertOnly,
         }).sync(
           [...new Map(list.map((u) => [u.username, u])).values()].map((u) => ({
             username: u.username,
@@ -176,13 +196,19 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         )
       ).counts,
 
-    syncReleases: async (tx, scope, list: Array<CatalogReleaseInput>) =>
+    syncReleases: async (
+      tx,
+      scope,
+      list: Array<CatalogReleaseInput>,
+      opts = {},
+    ) =>
       (
         await tableSyncPrisma({
           prisma: txOf(tx),
           prismaModelName: 'CatalogRelease',
           uniqColumns: ['key'],
           scope,
+          upsertOnly: opts.upsertOnly,
         }).sync(
           list.map((r) => ({
             key: r.key,
@@ -194,13 +220,19 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         )
       ).counts,
 
-    syncArtifacts: async (tx, scope, list: Array<CatalogArtifactInput>) =>
+    syncArtifacts: async (
+      tx,
+      scope,
+      list: Array<CatalogArtifactInput>,
+      opts = {},
+    ) =>
       (
         await tableSyncPrisma({
           prisma: txOf(tx),
           prismaModelName: 'CatalogArtifact',
           uniqColumns: ['componentSlug', 'version'],
           scope,
+          upsertOnly: opts.upsertOnly,
           prepare: earliestBuiltAt,
           beforeDelete: cascadeHealth((r) => ({
             componentSlug: r['componentSlug'],
@@ -224,7 +256,12 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         )
       ).counts,
 
-    async syncDeployments(tx, scope, list: Array<CatalogDeploymentInput>) {
+    async syncDeployments(
+      tx,
+      scope,
+      list: Array<CatalogDeploymentInput>,
+      opts = {},
+    ) {
       const db = txOf(tx)
       const rows = lastPerPair(list)
       const endpoints = [
@@ -267,6 +304,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         prismaModelName: 'CatalogDeployment',
         uniqColumns: ['componentSlug', 'targetSlug'],
         scope,
+        upsertOnly: opts.upsertOnly,
         beforeDelete: (t, deleted) =>
           deleteHealthOf(t, deleted as unknown as Array<Pair>),
       }).sync(
@@ -281,24 +319,33 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         })),
       )
       // Every Deployment of the scope is now one this list reported; the
-      // Endpoints of the removed ones went with them.
+      // Endpoints of the removed ones went with them. `upsertOnly` replaces
+      // the Endpoints of the listed Deployments only.
       await tableSyncPrisma({
         prisma: db,
         prismaModelName: 'CatalogEndpoint',
         id: 'id',
         uniqColumns: ['componentSlug', 'targetSlug', 'kind', 'url'],
-        where: { deployment: { scope } },
+        where: opts.upsertOnly
+          ? {
+              OR: rows.map(({ componentSlug, targetSlug }) => ({
+                componentSlug,
+                targetSlug,
+              })),
+            }
+          : { deployment: { scope } },
       }).sync(endpoints)
       return counts satisfies CatalogSyncCounts
     },
 
-    syncHealth: async (tx, scope, list: Array<CatalogHealthInput>) =>
+    syncHealth: async (tx, scope, list: Array<CatalogHealthInput>, opts = {}) =>
       (
         await tableSyncPrisma({
           prisma: txOf(tx),
           prismaModelName: 'CatalogHealth',
           uniqColumns: ['componentSlug', 'targetSlug'],
           scope,
+          upsertOnly: opts.upsertOnly,
         }).sync(
           lastPerPair(list).map((h) => ({
             componentSlug: h.componentSlug,

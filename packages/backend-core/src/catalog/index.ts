@@ -7,6 +7,7 @@ export type {
   CatalogUserView,
   CatalogArtifactView,
   CatalogSyncCounts,
+  CatalogSyncOptions,
   CatalogTx,
   CatalogDeploymentView,
 } from './catalogRead'

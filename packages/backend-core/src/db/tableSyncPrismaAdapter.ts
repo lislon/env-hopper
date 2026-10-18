@@ -122,27 +122,40 @@ export function tableSyncPrisma<
       ? { [uniq.join('_')]: pick(where, uniq) }
       : pick(where, uniq)
 
-  /** This scope's rows, plus rows of the incoming keys another scope holds. */
+  /** The stored rows of the incoming keys, those of `filter` only. */
+  async function readKeys(
+    ops: GetOperationFns<TPrismaModelName>,
+    rows: Array<Row>,
+    filter: Row,
+  ): Promise<Array<Row>> {
+    const wanted = new Set(rows.map(keyOf))
+    const first = uniq[0]!
+    const out: Array<Row> = []
+    for (const part of chunks([...new Set(rows.map((r) => r[first]))])) {
+      const found = (await ops.findMany({
+        where: { ...whereGlobal, ...filter, [first]: { in: part } },
+      })) as Array<Row>
+      out.push(...found.filter((r) => wanted.has(keyOf(r))))
+    }
+    return out
+  }
+
+  /**
+   * This scope's rows, plus rows of the incoming keys another scope holds.
+   * `upsertOnly` reads the incoming keys alone: nothing else can be deleted.
+   */
   async function readExisting(
     ops: GetOperationFns<TPrismaModelName>,
     rows: Array<Row>,
   ): Promise<Array<Row>> {
+    if (upsertOnly === true) return readKeys(ops, rows, {})
     if (scope === undefined) {
       return (await ops.findMany({ where: whereGlobal })) as Array<Row>
     }
     const own = (await ops.findMany({
       where: { ...whereGlobal, scope },
     })) as Array<Row>
-    const wanted = new Set(rows.map(keyOf))
-    const first = uniq[0]!
-    const others: Array<Row> = []
-    for (const part of chunks([...new Set(rows.map((r) => r[first]))])) {
-      const found = (await ops.findMany({
-        where: { ...whereGlobal, scope: { not: scope }, [first]: { in: part } },
-      })) as Array<Row>
-      others.push(...found.filter((r) => wanted.has(keyOf(r))))
-    }
-    return [...own, ...others]
+    return [...own, ...(await readKeys(ops, rows, { scope: { not: scope } }))]
   }
 
   return {

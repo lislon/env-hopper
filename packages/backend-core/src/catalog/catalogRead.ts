@@ -162,12 +162,6 @@ export interface CatalogDeploymentView {
   } | null
 }
 
-/**
- * The checker name a deployment reports when nothing checks the Component;
- * such a Health is left off the pair, as if absent.
- */
-export const NO_CHECKER = 'none'
-
 /** Bounded batches: Postgres takes at most 65535 bind parameters a query. */
 export function chunks<T>(list: Array<T>, size = 1000): Array<Array<T>> {
   const out: Array<Array<T>> = []
@@ -323,15 +317,14 @@ export function createCatalogReads(prisma: PrismaClient) {
           ...(d.deployedAt && { deployedAt: d.deployedAt.toISOString() }),
           ...(u && { deployedBy: u.username }),
           source: d.source,
-          ...(h &&
-            h.checker !== NO_CHECKER && {
-              health: {
-                state: h.state,
-                checker: h.checker,
-                observedAt: h.observedAt.toISOString(),
-                ...(h.detail && { detail: h.detail }),
-              },
-            }),
+          ...(h && {
+            health: {
+              state: h.state,
+              checker: h.checker,
+              observedAt: h.observedAt.toISOString(),
+              ...(h.detail && { detail: h.detail }),
+            },
+          }),
           ...(d.endpoints.length > 0 && { endpoints: d.endpoints }),
         })
       }

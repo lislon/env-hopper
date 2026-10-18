@@ -481,16 +481,7 @@ describe.skipIf(!prisma)('pair over the real catalog', () => {
         source: 'ci',
       },
     ])
-    // Nothing checks it: no Health on the pair.
-    await w.syncHealth('ci', [
-      {
-        componentSlug: 'shop-api',
-        targetSlug: 'k8s:prod/shop',
-        state: 'unknown',
-        observedAt: new Date(),
-        checker: 'none',
-      },
-    ])
+    // Nothing checks it: no Health row, so no Health on the pair.
     await w.syncUsers('ci', [
       { username: 'ann', email: 'ann@example.com', firstName: 'Ann' },
     ])

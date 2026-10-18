@@ -41,11 +41,8 @@ function dotOf(lead: Deployment | undefined, all: Array<Deployment>) {
   return lead ? null : 'not-deployed'
 }
 
-const checked = (d: Deployment) =>
-  d.health !== undefined && d.health.checker !== 'none'
-
 const healthText = (d: Deployment) =>
-  d.health && checked(d)
+  d.health
     ? `${d.health.state} · ${d.health.checker}${d.health.detail ? `: ${d.health.detail}` : ''}`
     : 'no health check'
 
@@ -120,7 +117,7 @@ function DetailsDialog({
                       )}
                     </td>
                     <td>
-                      {d.health && checked(d) && (
+                      {d.health && (
                         <span
                           className={`eh-deployed-state eh-deployed-state-${d.health.state}`}
                         />

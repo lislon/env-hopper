@@ -8,6 +8,7 @@ import { initTRPC } from '@trpc/server'
 import * as trpcExpress from '@trpc/server/adapters/express'
 import express from 'express'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import http from 'node:http'
 import type { AddressInfo } from 'node:net'
 import type { Server } from 'node:http'
 import { ehCompression } from '../../middleware/compression'
@@ -21,6 +22,16 @@ const router = t.router({
     yield { facet: 'slow' }
   }),
   big: t.procedure.query(() => 'x'.repeat(50_000)),
+  many: t.procedure.query(async function* () {
+    for (let i = 0; i < 300; i++) {
+      yield {
+        facet: 'deployment',
+        app: `app-${i % 7}`,
+        env: `qa-${i}`,
+        rows: [],
+      }
+    }
+  }),
 })
 
 let server: Server
@@ -66,6 +77,32 @@ describe.each(['gzip', 'br'])('under %s', (encoding) => {
     expect(seen).toEqual([encoding])
     expect(at[0]).toBeLessThan(SLOW_MS / 2)
     expect(at[1]! - at[0]!).toBeGreaterThanOrEqual(SLOW_MS - 50)
+  })
+
+  it('keeps compressing across streamed chunks instead of starting over at each', async () => {
+    const wire = (ae: string) =>
+      new Promise<number>((resolve, reject) => {
+        const q = encodeURIComponent(JSON.stringify({ 0: {} }))
+        http
+          .get(
+            `${url}/many?batch=1&input=${q}`,
+            {
+              headers: {
+                'trpc-accept': 'application/jsonl',
+                'accept-encoding': ae,
+              },
+            },
+            (res) => {
+              let n = 0
+              res.on('data', (d: Buffer) => (n += d.length))
+              res.on('end', () => resolve(n))
+            },
+          )
+          .on('error', reject)
+      })
+    const [plain, packed] = [await wire('identity'), await wire(encoding)]
+    console.log(`[compression ${encoding}] 300 chunks: ${plain} -> ${packed} B`)
+    expect(packed).toBeLessThan(plain / 4)
   })
 
   it('compresses a plain response', async () => {

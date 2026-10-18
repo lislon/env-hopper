@@ -246,6 +246,23 @@ describe('pair', () => {
     expect(dataOf(chunks, 'shop/prod/deployment')).toEqual({ rows: [] })
   })
 
+  it('sends the jumps without waiting for the slower bootstrap data', async () => {
+    const SLOW_MS = 300
+    const getBootstrapData = backend.getBootstrapData
+    backend.getBootstrapData = () =>
+      new Promise((r) => setTimeout(() => r(bootstrap), SLOW_MS))
+    try {
+      const chunks = await collect(
+        client.pair.query({ appSlug: 'shop', envSlug: 'prod' }),
+      )
+      const at = (name: string) => chunks.find((c) => nameOf(c) === name)!.ms
+      expect(at('shop/prod/jumps')).toBeLessThan(SLOW_MS / 2)
+      expect(at('/prod/credentials')).toBeGreaterThanOrEqual(SLOW_MS - 50)
+    } finally {
+      backend.getBootstrapData = getBootstrapData
+    }
+  })
+
   it('a failing source fails only its facets', async () => {
     catalog = memoryCatalog(shopOnProd, 0, true)
     const chunks = await collect(

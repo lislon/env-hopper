@@ -421,12 +421,11 @@ export async function* pairDetails(
 ): AsyncGenerator<PairChunk> {
   const backend = ctx.companySpecificBackend
   const catalog = ctx.catalog
-  const config = Promise.all([
-    backend.getResourceJumps(),
-    backend.getBootstrapData(),
-  ])
+  // Each on its own: the jumps answer long before the bootstrap data.
+  const resourceJumps = backend.getResourceJumps()
+  const bootstrapData = backend.getBootstrapData()
   const credentials = (pairs: Array<Pair>) =>
-    config.then(([, bootstrap]) =>
+    bootstrapData.then((bootstrap) =>
       credentialChunks(
         pairs,
         bootstrap.apps as Record<string, EhBackendAppInput>,
@@ -450,7 +449,9 @@ export async function* pairDetails(
     yield* streamSources([
       {
         facets: ['jumps'],
-        chunks: whole(config.then(([jumps]) => [jumpsOf(scope.pair, jumps)])),
+        chunks: whole(
+          resourceJumps.then((jumps) => [jumpsOf(scope.pair, jumps)]),
+        ),
       },
       { facets: ['credentials'], chunks: whole(credentials([scope.pair])) },
       {
@@ -469,11 +470,15 @@ export async function* pairDetails(
 
   const { appSlugs, envSlugs, except } = scope
   // The horizontal slices the config alone names: an App with jumps has them
-  // on every Environment, since every jump has a default URL.
-  const configured = config.then(([jumps]) => ({
-    apps: [...new Set(jumps.resourceJumps.map((rj) => appOfJump(rj.slug)))],
-    envs: new Set(jumps.envs.map((e) => e.slug)),
-  }))
+  // on every Environment, since every jump has a default URL. Without the
+  // jumps, the slices are what the catalog knows.
+  const configured = resourceJumps.then(
+    (jumps) => ({
+      apps: [...new Set(jumps.resourceJumps.map((rj) => appOfJump(rj.slug)))],
+      envs: new Set(jumps.envs.map((e) => e.slug)),
+    }),
+    () => ({ apps: [], envs: new Set<string>() }),
+  )
   // One read per slice, each answering on its own: a pair is sent as soon as
   // the first slice holding it is read.
   const slices: Array<{ app: string } | { env: string }> = [
@@ -493,12 +498,10 @@ export async function* pairDetails(
   ): Promise<Array<Pair>> => {
     const fromConfig =
       'env' in slice
-        ? await configured.then(
-            ({ apps, envs }) =>
-              envs.has(slice.env)
-                ? apps.map((app) => ({ app, env: slice.env }))
-                : [],
-            () => [],
+        ? await configured.then(({ apps, envs }) =>
+            envs.has(slice.env)
+              ? apps.map((app) => ({ app, env: slice.env }))
+              : [],
           )
         : []
     return [...fromConfig, ...found.pairs].filter(

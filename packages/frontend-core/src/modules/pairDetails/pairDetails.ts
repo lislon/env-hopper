@@ -179,6 +179,55 @@ export async function loadSlices(
 }
 
 type Profile = PairDeployment['users'][string]
+interface Waiter {
+  resolve: (profile: Profile | null) => void
+  reject: (e: unknown) => void
+}
+type Waiting = Map<string, Array<Waiter>>
+/** The `users` cap (backend-core's `MAX_USERS`). */
+const USERS_PER_CALL = 100
+
+/** Per client, the usernames asked for in this tick and who waits for each. */
+const waiting = new WeakMap<TRPCClient<TRPCRouter>, Waiting>()
+
+/**
+ * Every profile asked for in the same tick goes out in one `users` call (at
+ * most 100 names a call); each asker gets its own, `null` when unknown.
+ */
+function askProfile(
+  trpc: TRPCClient<TRPCRouter>,
+  username: string,
+): Promise<Profile | null> {
+  let batch = waiting.get(trpc)
+  if (!batch) {
+    const thisTick: Waiting = new Map()
+    batch = thisTick
+    waiting.set(trpc, thisTick)
+    setTimeout(() => {
+      waiting.delete(trpc)
+      const names = [...thisTick.keys()]
+      for (let i = 0; i < names.length; i += USERS_PER_CALL) {
+        const part = names.slice(i, i + USERS_PER_CALL)
+        trpc.users.query({ usernames: part }).then(
+          (found) => {
+            for (const n of part)
+              for (const w of thisTick.get(n)!) w.resolve(found[n] ?? null)
+          },
+          (e: unknown) => {
+            for (const n of part) for (const w of thisTick.get(n)!) w.reject(e)
+          },
+        )
+      }
+    }, 0)
+  }
+  const forTick = batch
+  return new Promise((resolve, reject) => {
+    forTick.set(username, [
+      ...(forTick.get(username) ?? []),
+      { resolve, reject },
+    ])
+  })
+}
 
 /**
  * A User's profile, asked of `users` the first time something shows it and
@@ -188,9 +237,7 @@ export function userQuery(username: string) {
   return queryOptions({
     queryKey: userKey(username),
     staleTime: Infinity,
-    queryFn: async (ctx): Promise<Profile | null> =>
-      (await getTrpcFromMeta(ctx).users.query({ usernames: [username] }))[
-        username
-      ] ?? null,
+    queryFn: (ctx): Promise<Profile | null> =>
+      askProfile(getTrpcFromMeta(ctx), username),
   })
 }

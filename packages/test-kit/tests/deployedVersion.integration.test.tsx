@@ -255,6 +255,61 @@ describe('deployed version under the jump card', () => {
       expect(sent.filter((p) => p === 'users')).toHaveLength(1)
     })
 
+    test('the details ask `users` once for all the deployers whose profiles are missing', async () => {
+      localStorage.setItem(
+        'recent',
+        JSON.stringify([{ app: 'shop', env: 'dev', url: 'https://w' }]),
+      )
+      const asked: Array<Array<string>> = []
+      server.events.on('request:start', ({ request }) => {
+        const url = new URL(request.url)
+        if (/\/users$/.test(url.pathname)) {
+          asked.push(
+            (
+              JSON.parse(url.searchParams.get('input')!) as {
+                usernames: Array<string>
+              }
+            ).usernames,
+          )
+        }
+      })
+      const shopWorker = { slug: 'shop-worker', displayName: 'Worker' }
+      const app = await open('/env/staging/app/shop', {
+        shop: {
+          components: [shopApi, shopUi, shopWorker],
+          users: { ...users, asmith: { firstName: 'Al', lastName: 'Smith' } },
+          rows: [
+            row({}),
+            // On dev the lead names nobody, so the line asks for no one.
+            row({ env: 'dev', version: 'main-40', deployedBy: undefined }),
+            row({ env: 'dev', componentSlug: 'shop-api', version: 'main-9' }),
+            row({
+              env: 'dev',
+              componentSlug: 'shop-worker',
+              version: 'main-3',
+              deployedBy: 'asmith',
+            }),
+          ],
+        },
+      })
+      await waitFor(() => expect(lines(app.container)).toHaveLength(1))
+      app.queryClient.removeQueries({ queryKey: ['user'] })
+      await app.ui.legacyForm.pickEnvironment('Dev')
+      await waitFor(() =>
+        expect(
+          lines(app.container)[0]!.querySelector('button'),
+        ).toHaveTextContent('main-40'),
+      )
+      expect(asked).toEqual([])
+      await app.user.click(lines(app.container)[0]!.querySelector('button')!)
+      const dialog = app.container.querySelector('dialog')!
+      await waitFor(() => expect(dialog).toHaveTextContent('Al Smith'))
+      expect(dialog).toHaveTextContent('Jo Doe')
+      expect(asked.map((names) => [...names].sort())).toEqual([
+        ['asmith', 'jdoe'],
+      ])
+    })
+
     test('slices that arrive after a pair never overwrite it', async () => {
       const HOLD_MS = 1500
       localStorage.setItem(

@@ -18,6 +18,7 @@ import { MainLayout } from '~/ui/layout/MainLayout'
 import { TopLevelProviders } from '~/ui/layout/TopLevelProviders'
 import { getUiSkin } from '~/ui/skin/EhShell'
 import { usePreloadSlices } from '~/modules/pairDetails/usePreloadSlices'
+import { usePairsWatch } from '~/modules/pairDetails/usePairsWatch'
 import { appSlugFromJumpSlug } from '~/util/route-utils'
 
 export interface ResourceJumpLayoutProps {
@@ -33,12 +34,14 @@ export function ResourceJumpLayout({
   queryClient,
   trpcClient,
 }: ResourceJumpLayoutProps) {
-  usePreloadSlices(queryClient, trpcClient, {
+  const openPair = {
     appSlug: loaderData.resourceSlug
       ? appSlugFromJumpSlug(loaderData.resourceSlug)
       : undefined,
     envSlug: loaderData.envSlug,
-  })
+  }
+  usePreloadSlices(queryClient, trpcClient, openPair)
+  usePairsWatch(queryClient, trpcClient, openPair)
   /*
    * On the previous skin this page contributes only its body: the chrome comes
    * from `EhShell` further up, which already renders a header, a footer and a

@@ -83,7 +83,7 @@ export function expandDeployment(
  */
 async function intoCache(
   client: QueryClient,
-  stream: AsyncIterable<object>,
+  stream: AsyncIterable<object> | Iterable<object>,
   {
     signal,
     keepCached = false,
@@ -130,7 +130,7 @@ export function pairFacetQuery<TFacet extends PairFacetName>(
 ) {
   return queryOptions({
     queryKey: pairFacetKey(app, env, facet),
-    // ponytail: never refetched; pushed updates (`pairsWatch`) are the plan.
+    // Never refetched: `pairsWatch` pushes every change (see `usePairsWatch`).
     staleTime: Infinity,
     queryFn: async (ctx): Promise<PairFacetData<TFacet> | null> => {
       const cached = () =>
@@ -163,6 +163,14 @@ export async function loadSlices(
     signal,
     keepCached: true,
   })
+}
+
+/**
+ * Merges what `pairsWatch` pushed into the cache: it is newer than anything
+ * cached, so it replaces each pair facet it carries.
+ */
+export async function applyPush(client: QueryClient, chunks: Array<object>) {
+  await intoCache(client, chunks)
 }
 
 type Profile = PairDeployment['users'][string]

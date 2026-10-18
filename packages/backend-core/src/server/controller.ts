@@ -11,6 +11,9 @@ import type { BetterAuth } from '../modules/auth/auth'
 import { createAuthRouter } from '../modules/auth/authRouter.js'
 import { MAX_SLICE_SLUGS, MAX_USERS, pairDetails } from './pairDetails'
 import { pairsWatch } from './pairsWatch'
+// Named here so the router's declaration can name a `pairsWatch` event.
+import type { TrackedData } from '@trpc/server/unstable-core-do-not-import'
+import type { PairChunk } from './pairDetails'
 import { publicProcedure, router, t } from './trpcSetup'
 
 /**
@@ -161,3 +164,6 @@ function filterSingleResourceJump(
 }
 
 export type TRPCRouter = ReturnType<typeof createTrpcRouter>
+
+/** One `pairsWatch` event as the client receives it: its id and chunks. */
+export type PairsWatchEvent = TrackedData<Array<PairChunk>>

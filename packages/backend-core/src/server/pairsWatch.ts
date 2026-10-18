@@ -1,4 +1,5 @@
 import { tracked } from '@trpc/server'
+import type { TrackedEnvelope } from '@trpc/server'
 import { pairDetails } from './pairDetails'
 import type { CatalogChange } from '../catalog'
 import type { PairChunk } from './pairDetails'
@@ -57,7 +58,7 @@ export async function* pairsWatch(
   ctx: EhTrpcContext,
   input: PairsWatchInput,
   signal: AbortSignal | undefined,
-) {
+): AsyncGenerator<TrackedEnvelope<Array<PairChunk>>> {
   const catalog = ctx.catalog
   if (!catalog) return
   const appSlugs = input.appSlugs ?? []

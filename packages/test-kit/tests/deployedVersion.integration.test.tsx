@@ -2,6 +2,7 @@
  * The deployed-version line under the jump card, mounted in the real App
  * through a deep link, as a person opening a bookmark sees it.
  */
+import { http } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { waitFor } from '@testing-library/react'
@@ -161,41 +162,47 @@ describe('deployed version under the jump card', () => {
   })
 
   describe('pair details from the preloaded slices', () => {
-    /** The streamed queries the app sent, by path, in order. */
-    function streamedRequests() {
+    /** The tRPC requests the app sent, by path, in order. */
+    function trpcRequests() {
       const paths: Array<string> = []
       server.events.on('request:start', ({ request }) => {
-        const path = new URL(request.url).pathname.split('/').at(-1)!
-        if (/^(pair|slices)(,|$)/.test(path)) paths.push(path)
+        const url = new URL(request.url)
+        if (url.pathname.includes('/trpc/')) {
+          paths.push(url.pathname.split('/').at(-1)!)
+        }
       })
       return paths
     }
+    const streamed = (paths: Array<string>) =>
+      paths.filter((p) => /^(pair|slices)(,|$)/.test(p))
+    const shopOnBoth = () => ({
+      shop: {
+        components: [shopUi],
+        users,
+        rows: [row({}), row({ env: 'dev', version: 'main-40' })],
+      },
+    })
 
-    test('after the first render, slices load the open pair and the history; switching to a loaded Environment sends nothing', async () => {
+    test('a deep link starts its pair and the slices before anything renders; switching to a loaded Environment sends nothing', async () => {
       localStorage.setItem(
         'recent',
         JSON.stringify([{ app: 'wiki', env: 'dev', url: 'https://w' }]),
       )
-      const sent = streamedRequests()
-      const app = await open('/env/staging/app/shop', {
-        shop: {
-          components: [shopUi],
-          users,
-          rows: [row({}), row({ env: 'dev', version: 'main-40' })],
-        },
-      })
+      const sent = trpcRequests()
+      const app = await open('/env/staging/app/shop', shopOnBoth())
+      // The first request of all, before bootstrap.
+      expect(sent[0]).toBe('pair,slices')
       await waitFor(() => expect(lines(app.container)).toHaveLength(1))
       expect(
         lines(app.container)[0]!.querySelector('button'),
       ).toHaveTextContent('main-41')
-      await waitFor(() => expect(sent).toContain('slices'))
       // Every facet of a pair in the slices is cached on its own key.
       await waitFor(() =>
         expect(
-          app.queryClient.getQueryData(['pair', 'wiki', 'staging', 'jumps']),
+          app.queryClient.getQueryData(['pair', 'shop', 'dev', 'deployment']),
         ).toBeDefined(),
       )
-      const before = sent.length
+      const before = streamed(sent).length
 
       await app.ui.legacyForm.pickEnvironment('Dev')
       await waitFor(() =>
@@ -204,16 +211,107 @@ describe('deployed version under the jump card', () => {
         ).toHaveTextContent('main-40'),
       )
       await new Promise((r) => setTimeout(r, 50))
-      expect(sent.slice(before)).toEqual([])
+      expect(streamed(sent).slice(before)).toEqual([])
     })
 
-    test('a pair outside the slices is loaded by `pair` when opened', async () => {
-      const sent = streamedRequests()
-      const app = await open('/env/staging/app/shop', {
-        shop: { components: [shopUi], users, rows: [row({})] },
+    test('a pair from a slice names its deployer by username until `users` answers with the profile', async () => {
+      localStorage.setItem(
+        'recent',
+        JSON.stringify([{ app: 'shop', env: 'dev', url: 'https://w' }]),
+      )
+      const sent = trpcRequests()
+      const shop = backend(shopOnBoth())
+      // Hold the profile back, behind the kit's own handlers.
+      const setupNetwork = shop.setupNetwork
+      shop.setupNetwork = (s) => {
+        setupNetwork(s)
+        s.use(
+          http.get(/\/users(\?|$)/, async () => {
+            await new Promise((r) => setTimeout(r, 300))
+          }),
+        )
+      }
+      const app = await renderApp({
+        server,
+        backend: shop,
+        initialLink: '/env/staging/app/shop',
       })
+      const tip = () =>
+        lines(app.container)[0]!.querySelector('[role="tooltip"]')!.textContent
+      // The open pair came by `pair`, with its deployer's profile.
+      await waitFor(() => expect(tip()).toContain('by Jo Doe'))
+      app.queryClient.removeQueries({ queryKey: ['user'] })
+      await app.ui.legacyForm.pickEnvironment('Dev')
+      await waitFor(() =>
+        expect(
+          lines(app.container)[0]!.querySelector('button'),
+        ).toHaveTextContent('main-40'),
+      )
+      expect(tip()).toContain('by jdoe')
+      await waitFor(() => expect(tip()).toContain('by Jo Doe'), {
+        timeout: 2000,
+      })
+      expect(sent.filter((p) => p === 'users')).toHaveLength(1)
+    })
+
+    test('slices that arrive after a pair never overwrite it', async () => {
+      const HOLD_MS = 1500
+      localStorage.setItem(
+        'recent',
+        JSON.stringify([{ app: 'shop', env: 'dev', url: 'https://w' }]),
+      )
+      const sent = trpcRequests()
+      const deployments = shopOnBoth()
+      const shop = backend(deployments)
+      // Hold the first pair and its slices back, behind the kit's own
+      // handlers; the handler behind this one then answers.
+      const setupNetwork = shop.setupNetwork
+      shop.setupNetwork = (s) => {
+        setupNetwork(s)
+        s.use(
+          http.get(/\/pair,slices(\?|$)/, async () => {
+            await new Promise((r) => setTimeout(r, HOLD_MS))
+          }),
+        )
+      }
+      const app = await renderApp({
+        server,
+        backend: shop,
+        initialLink: '/env/staging/app/shop',
+        // The held-back pair would keep a full load waiting.
+        waitForFullLoad: false,
+      })
+      await waitFor(() =>
+        expect(app.container.querySelector('#jump-main-button')).not.toBeNull(),
+      )
+      await app.ui.legacyForm.pickEnvironment('Dev')
+      await waitFor(() => expect(streamed(sent)).toContain('pair'))
+      const key = ['pair', 'shop', 'dev', 'deployment']
+      await waitFor(() =>
+        expect(app.queryClient.getQueryData(key)).toBeDefined(),
+      )
+      const fromPair = app.queryClient.getQueryData(key)
+      // What the slices answer with later differs, so an overwrite shows.
+      deployments.shop.rows[1]!.version = 'main-39'
+      // The held-back slices, which hold shop on dev too, land after it.
+      await waitFor(
+        () =>
+          expect(
+            app.queryClient.getQueryData(['pair', 'wiki', 'dev', 'deployment']),
+          ).toBeDefined(),
+        { timeout: HOLD_MS * 2 },
+      )
+      expect(app.queryClient.getQueryData(key)).toEqual(fromPair)
+      expect(
+        lines(app.container)[0]!.querySelector('button'),
+      ).toHaveTextContent('main-40')
+    })
+
+    test('the slices leave out the open pair, which `pair` loads', async () => {
+      const sent = trpcRequests()
+      const app = await open('/env/staging/app/shop', shopOnBoth())
       await waitFor(() => expect(lines(app.container)).toHaveLength(1))
-      expect(sent[0]).toBe('pair')
+      expect(streamed(sent)).toEqual(['pair,slices'])
     })
   })
 })

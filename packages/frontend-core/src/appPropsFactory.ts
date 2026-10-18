@@ -6,6 +6,7 @@ import type { AppProps } from './App'
 import type { EhPlugin } from './modules/pluginCore/types'
 import { createQueryClient } from '~/api/infra/createQueryClient'
 import { createEhTrpcLinks } from '~/api/infra/trpcLinks'
+import { startPairDetails } from '~/modules/pairDetails/usePreloadSlices'
 import { createEhRouter } from '~/util/createEhRouter'
 
 // registerSW();
@@ -16,6 +17,7 @@ export function appPropsFactory(): AppProps {
 
   const db = new EhDb()
   const queryClient = createQueryClient({ trpcClient, db })
+  startPairDetails(queryClient, trpcClient, window.location.pathname)
   const plugins: Array<EhPlugin> = [
     // Future plugins can be added here
   ]

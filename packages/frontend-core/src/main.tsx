@@ -8,6 +8,7 @@ import type { TRPCRouter } from '@env-hopper/backend-core'
 import type { EhPlugin } from './modules/pluginCore/types'
 import { createQueryClient } from '~/api/infra/createQueryClient'
 import { createEhTrpcLinks } from '~/api/infra/trpcLinks'
+import { startPairDetails } from '~/modules/pairDetails/usePreloadSlices'
 import { App } from '~/App'
 import { createEhRouter } from '~/util/createEhRouter'
 import './index.css'
@@ -24,6 +25,7 @@ const trpcClient = createTRPCClient<TRPCRouter>({
 
 const db = new DbClass()
 const queryClient = createQueryClient({ trpcClient, db })
+startPairDetails(queryClient, trpcClient, window.location.pathname)
 const plugins: Array<EhPlugin> = [
   // Future plugins can be added here
 ]

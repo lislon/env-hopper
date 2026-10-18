@@ -15,3 +15,4 @@ export { createEhTrpcLinks } from './api/infra/trpcLinks'
 // What a route's loader hands the page — the shape a scenario asserts on when it
 // checks that a link's parts arrived.
 export type { ResourceJumpLoaderReturn } from './modules/resourceJump/types'
+export { startPairDetails } from './modules/pairDetails/usePreloadSlices'

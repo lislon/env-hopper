@@ -109,10 +109,21 @@ export function createTrpcRouter(auth?: BetterAuth) {
   })
 }
 
-/** `bootstrap` as sent: only `envs` is packed; it keeps its place, `envDefaults` follows last. */
+const packed = new WeakMap<BootstrapConfigData, BootstrapPayload>()
+
+/**
+ * `bootstrap` as sent: only `envs` is packed; it keeps its place, `envDefaults`
+ * follows last. Packed once per data object: a backend that returns the same
+ * object until its data changes packs once per change.
+ */
 export function packBootstrap(data: BootstrapConfigData): BootstrapPayload {
-  const { envDefaults, envs } = packEnvs(data.envs)
-  return { ...data, envs, envDefaults }
+  let payload = packed.get(data)
+  if (!payload) {
+    const { envDefaults, envs } = packEnvs(data.envs)
+    payload = { ...data, envs, envDefaults }
+    packed.set(data, payload)
+  }
+  return payload
 }
 
 function filterSingleResourceJump(

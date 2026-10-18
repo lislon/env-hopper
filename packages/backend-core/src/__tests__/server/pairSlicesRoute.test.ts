@@ -84,19 +84,23 @@ const backend = {
   getBootstrapData: () => Promise.resolve(bootstrap),
 } as EhBackendCompanySpecificBackend
 
+const PIPELINES = 'https://ci.example.com/shop/-/pipelines/'
 const shopOnProd: PairDeployments = {
   components: { shop: [{ slug: 'shop-api', displayName: 'API', lead: true }] },
   pairs: [
     {
       app: 'shop',
       env: 'prod',
-      users: {},
+      users: { ann: { firstName: 'Ann' } },
       rows: [
         {
           componentSlug: 'shop-api',
           targetSlug: 'k8s:prod/shop',
           version: 'main-7',
           aliases: [],
+          buildUrl: `${PIPELINES}101`,
+          deployUrl: `${PIPELINES}102`,
+          deployedBy: 'ann',
           source: 'ci',
         },
       ],
@@ -105,10 +109,15 @@ const shopOnProd: PairDeployments = {
 }
 
 /** A catalog answering from memory, `delayMs` late, the way a slow DB would. */
-function memoryCatalog(found: PairDeployments, delayMs = 0): Catalog {
+function memoryCatalog(
+  found: PairDeployments,
+  delayMs = 0,
+  fails = false,
+): Catalog {
   return {
     async getPairDeployments({ appSlugs, envSlugs }) {
       await new Promise((r) => setTimeout(r, delayMs))
+      if (fails) throw new Error('catalog down')
       return {
         components: Object.fromEntries(
           Object.entries(found.components).filter(
@@ -148,18 +157,27 @@ beforeEach(() => {
   catalog = memoryCatalog(shopOnProd)
 })
 
-type Facet = Pick<PairChunk, 'app' | 'env' | 'facet'>
+type Chunk = PairChunk & { ms: number }
 
 /** Times each chunk from the moment the request is sent. */
-async function collect<T extends Facet>(request: Promise<AsyncIterable<T>>) {
+async function collect(request: Promise<AsyncIterable<object>>) {
   const start = Date.now()
-  const chunks: Array<T & { ms: number }> = []
+  const chunks: Array<Chunk> = []
   for await (const c of await request)
-    chunks.push({ ...c, ms: Date.now() - start })
+    chunks.push({ ...(c as PairChunk), ms: Date.now() - start })
   return chunks
 }
-const facetsOf = (chunks: Array<Facet>) =>
-  chunks.map((c) => `${c.app}/${c.env}/${c.facet}`).sort()
+/** `app/env/facet`, a part left out where the chunk has none. */
+const nameOf = (c: PairChunk) =>
+  [
+    'app' in c ? c.app : '',
+    'env' in c ? c.env : '',
+    c.facet + ('error' in c ? '!' : ''),
+  ].join('/')
+const namesOf = (chunks: Array<PairChunk>) => chunks.map(nameOf)
+const dataOf = (chunks: Array<PairChunk>, name: string) =>
+  (chunks.find((c) => nameOf(c) === name) as { data: unknown } | undefined)
+    ?.data
 
 describe('pair', () => {
   it('streams each facet as its source answers: config first, a slow catalog last', async () => {
@@ -168,10 +186,14 @@ describe('pair', () => {
     const chunks = await collect(
       client.pair.query({ appSlug: 'shop', envSlug: 'prod' }),
     )
-    expect(chunks.map((c) => c.facet)).toEqual([
-      'jumps',
-      'credentials',
-      'deployment',
+    expect(namesOf(chunks.slice(0, 2)).sort()).toEqual([
+      '/prod/credentials',
+      'shop/prod/jumps',
+    ])
+    expect(namesOf(chunks.slice(2))).toEqual([
+      '//users',
+      'shop//components',
+      'shop/prod/deployment',
     ])
     const first = chunks[0]!.ms
     const last = chunks.at(-1)!.ms
@@ -182,12 +204,11 @@ describe('pair', () => {
     expect(last - first).toBeGreaterThanOrEqual(SLOW_MS - 50)
   })
 
-  it("carries the pair's jumps narrowed to its Environment, its credentials and its Deployment", async () => {
+  it("carries the pair's jumps narrowed to its Environment, its Environment's credentials and its Deployment", async () => {
     const chunks = await collect(
       client.pair.query({ appSlug: 'shop', envSlug: 'qa' }),
     )
-    const of = (f: string) => chunks.find((c) => c.facet === f)!.data
-    expect(of('jumps')).toEqual({
+    expect(dataOf(chunks, 'shop/qa/jumps')).toEqual({
       resourceJumps: [
         {
           slug: 'shop',
@@ -202,13 +223,14 @@ describe('pair', () => {
       envs: [jumps.envs[1]],
       lateResolvableParams: [{ slug: 'orderId', displayName: 'Order ID' }],
     })
-    expect(of('credentials')).toEqual({ ui: [login], dataSources: [] })
-    // Not deployed here: the Components, no rows.
-    expect(of('deployment')).toEqual({
-      components: shopOnProd.components.shop,
-      users: {},
-      rows: [],
+    expect(dataOf(chunks, '/qa/credentials')).toEqual({
+      shop: { ui: [login], dataSources: [] },
     })
+    // Not deployed here: the Components, no rows.
+    expect(dataOf(chunks, 'shop//components')).toEqual(
+      shopOnProd.components.shop,
+    )
+    expect(dataOf(chunks, 'shop/qa/deployment')).toEqual({ rows: [] })
   })
 
   it('an Environment that lacks credentials gets none; no catalog, no Deployments', async () => {
@@ -216,41 +238,161 @@ describe('pair', () => {
     const chunks = await collect(
       client.pair.query({ appSlug: 'shop', envSlug: 'prod' }),
     )
-    expect(chunks.find((c) => c.facet === 'credentials')!.data).toEqual({
-      ui: [],
-      dataSources: [],
-    })
-    expect(chunks.find((c) => c.facet === 'deployment')!.data).toEqual({
-      components: [],
-      users: {},
-      rows: [],
-    })
+    expect(dataOf(chunks, '/prod/credentials')).toEqual({})
+    expect(dataOf(chunks, 'shop/prod/deployment')).toEqual({ rows: [] })
+  })
+
+  it('a failing source fails only its facets', async () => {
+    catalog = memoryCatalog(shopOnProd, 0, true)
+    const chunks = await collect(
+      client.pair.query({ appSlug: 'shop', envSlug: 'prod' }),
+    )
+    expect(namesOf(chunks).sort()).toEqual([
+      '//deployment!',
+      '/prod/credentials',
+      'shop/prod/jumps',
+    ])
   })
 })
 
 describe('slices', () => {
-  it("is the union of each Environment's Apps and each App's Environments", async () => {
+  it("is each Environment's Apps and each App's deployed Environments, without jumps", async () => {
     const chunks = await collect(
-      client.slices.query({ appSlugs: ['wiki'], envSlugs: ['prod'] }),
+      client.slices.query({ appSlugs: ['shop'], envSlugs: ['qa'] }),
     )
-    expect(facetsOf(chunks)).toEqual(
-      facetsOf(
-        ['shop/prod', 'wiki/prod', 'wiki/qa'].flatMap((p) => {
-          const [app, env] = p.split('/') as [string, string]
-          return (['jumps', 'credentials', 'deployment'] as const).map(
-            (facet) => ({ app, env, facet }),
-          )
-        }),
-      ),
+    // qa: every App with a jump; shop: prod, where it is deployed, not every
+    // Environment.
+    expect(namesOf(chunks).sort()).toEqual(
+      [
+        '/prod/credentials',
+        '/qa/credentials',
+        'shop//components',
+        'shop/prod/deployment',
+        'shop/qa/deployment',
+        'wiki/qa/deployment',
+      ].sort(),
     )
-    const shopProd = chunks.find(
-      (c) => c.app === 'shop' && c.env === 'prod' && c.facet === 'deployment',
-    )!
-    expect(shopProd.data).toEqual({
-      components: shopOnProd.components.shop,
-      users: {},
-      rows: shopOnProd.pairs[0]!.rows,
+    expect(dataOf(chunks, '/qa/credentials')).toEqual({
+      shop: { ui: [login], dataSources: [] },
     })
+    expect(dataOf(chunks, '/prod/credentials')).toEqual({})
+  })
+
+  it('sends Components once per App, Users by username only, and pipeline links as ids', async () => {
+    const onQa = {
+      ...shopOnProd.pairs[0]!,
+      env: 'qa',
+      rows: [
+        {
+          ...shopOnProd.pairs[0]!.rows[0]!,
+          targetSlug: 'k8s:qa/shop',
+          buildUrl: `${PIPELINES}201`,
+          deployUrl: 'https://elsewhere.example.com/deploy',
+        },
+      ],
+    }
+    catalog = memoryCatalog({
+      ...shopOnProd,
+      pairs: [...shopOnProd.pairs, onQa],
+    })
+    const chunks = await collect(client.slices.query({ appSlugs: ['shop'] }))
+    expect(namesOf(chunks).filter((n) => !n.includes('credentials'))).toEqual([
+      'shop//components',
+      'shop/prod/deployment',
+      'shop/qa/deployment',
+    ])
+    // No profiles in a slice; the rows keep the username.
+    expect(dataOf(chunks, '//users')).toBeUndefined()
+    expect(dataOf(chunks, 'shop//components')).toEqual([
+      {
+        slug: 'shop-api',
+        displayName: 'API',
+        lead: true,
+        pipelineUrl: `${PIPELINES}{{id}}`,
+      },
+    ])
+    const {
+      buildUrl: _b,
+      deployUrl: _d,
+      ...row
+    } = shopOnProd.pairs[0]!.rows[0]!
+    expect(dataOf(chunks, 'shop/prod/deployment')).toEqual({
+      rows: [{ ...row, buildPipelineId: '101', deployPipelineId: '102' }],
+    })
+    expect(dataOf(chunks, 'shop/qa/deployment')).toEqual({
+      rows: [
+        {
+          ...row,
+          targetSlug: 'k8s:qa/shop',
+          buildPipelineId: '201',
+          deployUrl: 'https://elsewhere.example.com/deploy',
+        },
+      ],
+    })
+  })
+
+  it('sends the Health run time once and a detail only off healthy', async () => {
+    const at = '2026-10-18T10:00:00.000Z'
+    const later = '2026-10-18T10:05:00.000Z'
+    const base = shopOnProd.pairs[0]!.rows[0]!
+    const health = (state: 'healthy' | 'down', observedAt: string) => ({
+      state,
+      checker: 'http',
+      observedAt,
+      detail: state === 'healthy' ? '200 OK' : '503',
+    })
+    catalog = memoryCatalog({
+      ...shopOnProd,
+      pairs: [
+        {
+          ...shopOnProd.pairs[0]!,
+          rows: [{ ...base, health: health('healthy', at) }],
+        },
+        {
+          ...shopOnProd.pairs[0]!,
+          env: 'qa',
+          rows: [
+            { ...base, targetSlug: 'k8s:qa/a', health: health('down', at) },
+            {
+              ...base,
+              targetSlug: 'k8s:qa/b',
+              health: health('healthy', later),
+            },
+          ],
+        },
+      ],
+    })
+    const chunks = await collect(client.slices.query({ appSlugs: ['shop'] }))
+    expect(namesOf(chunks).filter((n) => n.startsWith('//meta'))).toHaveLength(
+      1,
+    )
+    expect(dataOf(chunks, '//meta')).toEqual({ observedAt: at })
+    const healthOf = (name: string) =>
+      (dataOf(chunks, name) as { rows: Array<{ health?: unknown }> }).rows.map(
+        (r) => r.health,
+      )
+    expect(healthOf('shop/prod/deployment')).toEqual([
+      { state: 'healthy', checker: 'http' },
+    ])
+    expect(healthOf('shop/qa/deployment')).toEqual([
+      { state: 'down', checker: 'http', detail: '503' },
+      { state: 'healthy', checker: 'http', observedAt: later },
+    ])
+  })
+
+  it('leaves out the pair it is told to, which `pair` loads', async () => {
+    const chunks = await collect(
+      client.slices.query({
+        appSlugs: ['shop'],
+        envSlugs: ['qa'],
+        exceptPair: { appSlug: 'shop', envSlug: 'prod' },
+      }),
+    )
+    const names = namesOf(chunks)
+    expect(names).not.toContain('shop/prod/deployment')
+    expect(names).toContain('shop/qa/deployment')
+    // No pair left on prod: no credentials for it either.
+    expect(names).not.toContain('/prod/credentials')
   })
 
   it('takes an App the config does not know through its Deployments', async () => {
@@ -259,7 +401,37 @@ describe('slices', () => {
       pairs: [{ ...shopOnProd.pairs[0]!, app: 'api', env: 'qa' }],
     })
     const chunks = await collect(client.slices.query({ appSlugs: ['api'] }))
-    expect(facetsOf(chunks)).toEqual(['api/qa/deployment'])
+    expect(namesOf(chunks).sort()).toEqual([
+      '/qa/credentials',
+      'api//components',
+      'api/qa/deployment',
+    ])
+  })
+
+  it('a failing catalog still sends the credentials the config knows', async () => {
+    catalog = memoryCatalog(shopOnProd, 0, true)
+    const chunks = await collect(
+      client.slices.query({ appSlugs: ['shop'], envSlugs: ['qa'] }),
+    )
+    expect(namesOf(chunks).sort()).toEqual(['//deployment!', '/qa/credentials'])
+  })
+
+  it('`users` answers the profiles asked for, at most 100 names', async () => {
+    catalog = {
+      getUsers: (names: Array<string>) =>
+        Promise.resolve(
+          Object.fromEntries(
+            names
+              .filter((n) => n === 'ann')
+              .map((n) => [n, { firstName: 'Ann' }]),
+          ),
+        ),
+    } as unknown as Catalog
+    expect(await client.users.query({ usernames: ['ann', 'nobody'] })).toEqual({
+      ann: { firstName: 'Ann' },
+    })
+    const tooMany = Array.from({ length: 101 }, (_, i) => `u${i}`)
+    await expect(client.users.query({ usernames: tooMany })).rejects.toThrow()
   })
 
   it('rejects more than 50 Apps or 50 Environments, and takes 50', async () => {
@@ -309,14 +481,31 @@ describe.skipIf(!prisma)('pair over the real catalog', () => {
         source: 'ci',
       },
     ])
+    // Nothing checks it: no Health on the pair.
+    await w.syncHealth('ci', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop',
+        state: 'unknown',
+        observedAt: new Date(),
+        checker: 'none',
+      },
+    ])
+    await w.syncUsers('ci', [
+      { username: 'ann', email: 'ann@example.com', firstName: 'Ann' },
+    ])
     catalog = createCatalog(prisma!)
+    // The profile, never the contact details.
+    expect(await catalog.getUsers(['ann', 'nobody'])).toEqual({
+      ann: { firstName: 'Ann' },
+    })
     const chunks = await collect(
       client.pair.query({ appSlug: 'shop', envSlug: 'prod' }),
     )
-    const d = chunks.find((c) => c.facet === 'deployment')!
-    expect(d.data).toEqual({
-      components: [{ slug: 'shop-api', displayName: 'Shop API', lead: true }],
-      users: {},
+    expect(dataOf(chunks, 'shop//components')).toEqual([
+      { slug: 'shop-api', displayName: 'Shop API', lead: true },
+    ])
+    expect(dataOf(chunks, 'shop/prod/deployment')).toEqual({
       rows: [
         {
           componentSlug: 'shop-api',

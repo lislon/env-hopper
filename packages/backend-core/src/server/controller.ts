@@ -9,7 +9,7 @@ import type {
 
 import type { BetterAuth } from '../modules/auth/auth'
 import { createAuthRouter } from '../modules/auth/authRouter.js'
-import { MAX_SLICE_SLUGS, pairDetails } from './pairDetails'
+import { MAX_SLICE_SLUGS, MAX_USERS, pairDetails } from './pairDetails'
 import { publicProcedure, router, t } from './trpcSetup'
 
 /**
@@ -77,21 +77,36 @@ export function createTrpcRouter(auth?: BetterAuth) {
 
     /**
      * The details of every pair in the slices: each Environment's Apps and
-     * each App's Environments, a chunk per facet per pair.
+     * each App's deployed Environments, a chunk per facet per pair.
+     * `exceptPair` is left out: the client loads it through `pair`.
      */
     slices: publicProcedure
       .input(
         z.object({
           appSlugs: z.array(z.string()).max(MAX_SLICE_SLUGS).optional(),
           envSlugs: z.array(z.string()).max(MAX_SLICE_SLUGS).optional(),
+          exceptPair: z
+            .object({ appSlug: z.string(), envSlug: z.string() })
+            .optional(),
         }),
       )
       .query(async function* ({ input, ctx }) {
         yield* pairDetails(ctx, {
           appSlugs: input.appSlugs ?? [],
           envSlugs: input.envSlugs ?? [],
+          except: input.exceptPair && {
+            app: input.exceptPair.appSlug,
+            env: input.exceptPair.envSlug,
+          },
         })
       }),
+
+    /** User profiles by username, for the rows a slice names only by username. */
+    users: publicProcedure
+      .input(z.object({ usernames: z.array(z.string()).max(MAX_USERS) }))
+      .query(async ({ input, ctx }) =>
+        ctx.catalog ? await ctx.catalog.getUsers(input.usernames) : {},
+      ),
 
     // Auth routes (requires auth instance)
     auth: createAuthRouter(t, auth),

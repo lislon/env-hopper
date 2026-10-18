@@ -41,8 +41,8 @@ type ProcedureKeys<T> = {
     : never
 }[keyof T]
 
-/** The streamed queries are left out: the real router serves them. */
-type StreamedKeys = 'pair' | 'slices'
+/** The pair-details queries are left out: the real router serves them. */
+type StreamedKeys = 'pair' | 'slices' | 'users'
 
 export type BackendData = {
   [K in Exclude<
@@ -319,7 +319,17 @@ function streamedQueries(
         })),
       })
     },
-  } as Pick<Catalog, 'getPairDeployments'> as Catalog
+    getUsers: (usernames) =>
+      Promise.resolve(
+        Object.fromEntries(
+          Object.values(deployments).flatMap((d) =>
+            Object.entries(d.users ?? {}).filter(([u]) =>
+              usernames.includes(u),
+            ),
+          ),
+        ),
+      ),
+  } as Pick<Catalog, 'getPairDeployments' | 'getUsers'> as Catalog
   const companySpecificBackend = {
     getBootstrapData: () => Promise.resolve(config.bootstrap),
     getResourceJumps: () => Promise.resolve(config.resourceJumps),
@@ -327,7 +337,9 @@ function streamedQueries(
   const router = createTrpcRouter()
   const endpoint = new URL(TRPC_URL).pathname
   return {
-    path: new RegExp(`^${TRPC_URL}/(pair|slices)(,(pair|slices))*(\\?|$)`),
+    path: new RegExp(
+      `^${TRPC_URL}/(pair|slices|users)(,(pair|slices|users))*(\\?|$)`,
+    ),
     handle: (req: Request) =>
       fetchRequestHandler({
         endpoint,

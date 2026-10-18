@@ -1,31 +1,131 @@
 import { queryOptions } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
-import type { TRPCRouter } from '@env-hopper/backend-core'
+import type {
+  EnvCredentials,
+  PairDeployment,
+  PairJumps,
+  StreamMeta,
+  TRPCRouter,
+  WireComponent,
+  WirePairDeployment,
+} from '@env-hopper/backend-core'
 import type { TRPCClient } from '@trpc/client'
 import { getTrpcFromMeta } from '~/util/reactQueryUtils'
 
-type Stream = Awaited<ReturnType<TRPCClient<TRPCRouter>['pair']['query']>>
-/** One facet of one pair, as it comes off the wire. */
-export type WirePairChunk = Stream extends AsyncIterable<infer C> ? C : never
-export type PairFacetName = WirePairChunk['facet']
-export type PairFacetData<TFacet extends PairFacetName> = Extract<
-  WirePairChunk,
-  { facet: TFacet }
->['data']
+/** What the cache holds per pair facet: the deployment expanded, as the UI reads it. */
+interface PairFacets {
+  deployment: PairDeployment
+  jumps: PairJumps
+  changes: unknown
+  workItems: unknown
+}
+export type PairFacetName = keyof PairFacets
+export type PairFacetData<TFacet extends PairFacetName> = PairFacets[TFacet]
 
 /** The cache holds pair details per (App, Environment, facet). */
 export const pairFacetKey = (app: string, env: string, facet: PairFacetName) =>
   ['pair', app, env, facet] as const
+/** A User's profile, per username, from a `pair` stream or `users`. */
+export const userKey = (username: string) => ['user', username] as const
 
+/** And an Environment's credentials, by App, once per Environment. */
+export const envCredentialsKey = (env: string) =>
+  ['pairEnv', env, 'credentials'] as const
+
+/** A chunk as it comes off the wire; only the fields this file reads. */
+type WireChunk =
+  | { facet: string; error: string }
+  | { facet: 'users'; data: PairDeployment['users'] }
+  | { facet: 'meta'; data: StreamMeta }
+  | { app: string; facet: 'components'; data: Array<WireComponent> }
+  | { env: string; facet: 'credentials'; data: EnvCredentials }
+  | { app: string; env: string; facet: 'deployment'; data: WirePairDeployment }
+  | {
+      app: string
+      env: string
+      facet: Exclude<PairFacetName, 'deployment'>
+      data?: unknown
+    }
+
+/** A pair's deployment as the UI reads it, from what the stream sent before it. */
+export function expandDeployment(
+  wire: WirePairDeployment,
+  components: Array<WireComponent>,
+  users: PairDeployment['users'],
+  meta: StreamMeta = {},
+): PairDeployment {
+  const pipelineUrl = new Map(components.map((c) => [c.slug, c.pipelineUrl]))
+  const named: PairDeployment['users'] = {}
+  const rows = wire.rows.map((row) => {
+    const { buildPipelineId, deployPipelineId, health, ...rest } = row
+    const url = (id: string | undefined) =>
+      id === undefined
+        ? undefined
+        : pipelineUrl.get(row.componentSlug)?.replace('{{id}}', id)
+    const buildUrl = rest.buildUrl ?? url(buildPipelineId)
+    const deployUrl = rest.deployUrl ?? url(deployPipelineId)
+    if (row.deployedBy && users[row.deployedBy]) {
+      named[row.deployedBy] = users[row.deployedBy]!
+    }
+    const observedAt = health?.observedAt ?? meta.observedAt
+    return {
+      ...rest,
+      ...(buildUrl && { buildUrl }),
+      ...(deployUrl && { deployUrl }),
+      ...(health && { health: { ...health, observedAt: observedAt ?? '' } }),
+    }
+  })
+  return {
+    components: components.map(({ pipelineUrl: _, ...c }) => c),
+    users: named,
+    rows,
+  }
+}
+
+/**
+ * Writes a stream into the cache as it arrives. `keepCached` leaves a pair
+ * facet already cached as it is: a slice never overwrites a fresher `pair`.
+ * Returns the facets a source failed to send; nothing is cached for them.
+ */
 async function intoCache(
   client: QueryClient,
-  stream: AsyncIterable<WirePairChunk>,
-  signal?: AbortSignal,
-) {
-  for await (const c of stream) {
-    if (signal?.aborted) break
-    client.setQueryData(pairFacetKey(c.app, c.env, c.facet), c.data)
+  stream: AsyncIterable<object>,
+  {
+    signal,
+    keepCached = false,
+  }: { signal?: AbortSignal; keepCached?: boolean } = {},
+): Promise<Set<string>> {
+  const failed = new Set<string>()
+  const components = new Map<string, Array<WireComponent>>()
+  const users: PairDeployment['users'] = {}
+  let meta: StreamMeta = {}
+  const put = (key: ReturnType<typeof pairFacetKey>, data: unknown) => {
+    if (keepCached && client.getQueryData(key) !== undefined) return
+    client.setQueryData(key, data)
   }
+  for await (const chunk of stream) {
+    if (signal?.aborted) break
+    const c = chunk as WireChunk
+    if ('error' in c) failed.add(c.facet)
+    else if (c.facet === 'users') {
+      Object.assign(users, c.data)
+      for (const [name, profile] of Object.entries(c.data)) {
+        client.setQueryData(userKey(name), profile)
+      }
+    } else if (c.facet === 'meta') meta = c.data
+    else if (c.facet === 'components') components.set(c.app, c.data)
+    else if (c.facet === 'credentials') {
+      client.setQueryData<EnvCredentials>(envCredentialsKey(c.env), (old) =>
+        keepCached ? { ...c.data, ...old } : { ...old, ...c.data },
+      )
+    } else if (c.facet === 'deployment') {
+      put(
+        pairFacetKey(c.app, c.env, 'deployment'),
+        expandDeployment(c.data, components.get(c.app) ?? [], users, meta),
+      )
+    } else put(pairFacetKey(c.app, c.env, c.facet), c.data)
+  }
+  return failed
 }
 
 /**
@@ -43,25 +143,51 @@ export function pairFacetQuery<TFacet extends PairFacetName>(
     // ponytail: never refetched; pushed updates (`pairsWatch`) are the plan.
     staleTime: Infinity,
     queryFn: async (ctx): Promise<PairFacetData<TFacet> | null> => {
+      const cached = () =>
+        ctx.client.getQueryData<PairFacetData<TFacet>>(ctx.queryKey)
       // No abort signal: an unmount then does not cancel the load, so
       // StrictMode's remount reuses it instead of sending the pair again.
       const stream = await getTrpcFromMeta(ctx).pair.query({
         appSlug: app,
         envSlug: env,
       })
-      await intoCache(ctx.client, stream)
-      return (ctx.client.getQueryData(ctx.queryKey) ??
-        null) as PairFacetData<TFacet> | null
+      const failed = await intoCache(ctx.client, stream)
+      if (failed.has(facet)) throw new Error(`pair ${facet} unavailable`)
+      return cached() ?? null
     },
   })
 }
 
-/** Loads every pair of the slices into the cache. */
+/** Loads every pair of the slices into the cache, never over a cached one. */
 export async function loadSlices(
   client: QueryClient,
   trpc: TRPCClient<TRPCRouter>,
-  input: { appSlugs: Array<string>; envSlugs: Array<string> },
+  input: {
+    appSlugs: Array<string>
+    envSlugs: Array<string>
+    exceptPair?: { appSlug: string; envSlug: string }
+  },
   signal?: AbortSignal,
 ) {
-  await intoCache(client, await trpc.slices.query(input, { signal }), signal)
+  await intoCache(client, await trpc.slices.query(input, { signal }), {
+    signal,
+    keepCached: true,
+  })
+}
+
+type Profile = PairDeployment['users'][string]
+
+/**
+ * A User's profile, asked of `users` the first time something shows it and
+ * kept per username; `null` for a User the catalog does not know.
+ */
+export function userQuery(username: string) {
+  return queryOptions({
+    queryKey: userKey(username),
+    staleTime: Infinity,
+    queryFn: async (ctx): Promise<Profile | null> =>
+      (await getTrpcFromMeta(ctx).users.query({ usernames: [username] }))[
+        username
+      ] ?? null,
+  })
 }

@@ -75,6 +75,8 @@ export interface Catalog {
     appSlugs?: Array<string>
     envSlugs?: Array<string>
   }) => Promise<PairDeployments>
+  /** The profiles of the Users named, by username; unknown ones are absent. */
+  getUsers: (usernames: Array<string>) => Promise<PairDeployment['users']>
 }
 
 /** JSON-ready (dates as ISO strings): it is served as is. */
@@ -159,6 +161,12 @@ export interface CatalogDeploymentView {
     detail: string | null
   } | null
 }
+
+/**
+ * The checker name a deployment reports when nothing checks the Component;
+ * such a Health is left off the pair, as if absent.
+ */
+export const NO_CHECKER = 'none'
 
 /** Bounded batches: Postgres takes at most 65535 bind parameters a query. */
 export function chunks<T>(list: Array<T>, size = 1000): Array<Array<T>> {
@@ -303,13 +311,7 @@ export function createCatalogReads(prisma: PrismaClient) {
         const pair = pairs.get(key) ?? { app, env, rows: [], users: {} }
         pairs.set(key, pair)
         const u = d.deployedBy
-        if (u) {
-          pair.users[u.username] = {
-            ...(u.firstName && { firstName: u.firstName }),
-            ...(u.lastName && { lastName: u.lastName }),
-            ...(u.avatarUrl && { avatarUrl: u.avatarUrl }),
-          }
-        }
+        if (u) pair.users[u.username] = profileOf(u)
         const h = d.health
         pair.rows.push({
           componentSlug: d.component.slug,
@@ -321,18 +323,31 @@ export function createCatalogReads(prisma: PrismaClient) {
           ...(d.deployedAt && { deployedAt: d.deployedAt.toISOString() }),
           ...(u && { deployedBy: u.username }),
           source: d.source,
-          ...(h && {
-            health: {
-              state: h.state,
-              checker: h.checker,
-              observedAt: h.observedAt.toISOString(),
-              ...(h.detail && { detail: h.detail }),
-            },
-          }),
+          ...(h &&
+            h.checker !== NO_CHECKER && {
+              health: {
+                state: h.state,
+                checker: h.checker,
+                observedAt: h.observedAt.toISOString(),
+                ...(h.detail && { detail: h.detail }),
+              },
+            }),
           ...(d.endpoints.length > 0 && { endpoints: d.endpoints }),
         })
       }
       return { components, pairs: [...pairs.values()] }
+    },
+    async getUsers(usernames: Array<string>) {
+      const users = await prisma.catalogUser.findMany({
+        where: { username: { in: usernames } },
+        select: {
+          username: true,
+          firstName: true,
+          lastName: true,
+          avatarUrl: true,
+        },
+      })
+      return Object.fromEntries(users.map((u) => [u.username, profileOf(u)]))
     },
     async resolveAlias(componentSlug: string, alias: string) {
       const a = await prisma.catalogArtifact.findFirst({
@@ -347,6 +362,19 @@ export function createCatalogReads(prisma: PrismaClient) {
     },
   }
   return reads
+}
+
+/** What a User shows: the name and avatar, never the contact details. */
+function profileOf(u: {
+  firstName: string | null
+  lastName: string | null
+  avatarUrl: string | null
+}): PairDeployment['users'][string] {
+  return {
+    ...(u.firstName && { firstName: u.firstName }),
+    ...(u.lastName && { lastName: u.lastName }),
+    ...(u.avatarUrl && { avatarUrl: u.avatarUrl }),
+  }
 }
 
 function toArtifactView(artifact: {

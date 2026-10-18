@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
-import { useRef } from 'react'
+import { useQueries, useQuery } from '@tanstack/react-query'
+import { useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import type { PairDeployment } from '@env-hopper/backend-core'
-import { pairFacetQuery } from '~/modules/pairDetails/pairDetails'
+import { pairFacetQuery, userQuery } from '~/modules/pairDetails/pairDetails'
 import { appSlugFromJumpSlug } from '~/util/route-utils'
 
 type Deployment = PairDeployment['rows'][number]
@@ -178,6 +178,32 @@ function DetailsDialog({
  * per-Component details. Renders nothing while loading, on error, or for an
  * App the catalog does not know.
  */
+/**
+ * The profiles the line and, once opened, the details show. A pair from a
+ * slice names its Users by username only: each missing profile is asked for
+ * once, and the username shows until it arrives.
+ */
+function useProfiles(data: PairDeployment | null | undefined, opened: boolean) {
+  const known = data?.users ?? {}
+  const rows = data?.rows ?? []
+  const lead =
+    data?.components.find((c) => c.lead)?.slug ?? data?.components[0]?.slug
+  const wanted = [
+    ...new Set(
+      rows
+        .filter((r) => opened || r.componentSlug === lead)
+        .flatMap((r) => (r.deployedBy ? [r.deployedBy] : [])),
+    ),
+  ].filter((u) => !(u in known))
+  const fetched = useQueries({ queries: wanted.map((u) => userQuery(u)) })
+  const users: Users = { ...known }
+  wanted.forEach((u, i) => {
+    const profile = fetched[i]?.data
+    if (profile) users[u] = profile
+  })
+  return users
+}
+
 export function DeployedVersions({
   jumpSlug,
   envSlug,
@@ -192,6 +218,8 @@ export function DeployedVersions({
   })
   const dialogRef = useRef<HTMLDialogElement>(null)
   const openerRef = useRef<HTMLButtonElement>(null)
+  const [opened, setOpened] = useState(false)
+  const users = useProfiles(data, opened)
   const leadComponent =
     data?.components.find((c) => c.lead) ?? data?.components[0]
   if (!data || !envSlug || !leadComponent) return null
@@ -206,7 +234,7 @@ export function DeployedVersions({
       : []
   })
   const dot = dotOf(lead, here)
-  const by = lead && deployerName(lead, data.users)
+  const by = lead && deployerName(lead, users)
 
   return (
     <div className="eh-deployed">
@@ -219,7 +247,10 @@ export function DeployedVersions({
               ? 'eh-deployed-version'
               : 'eh-deployed-version eh-deployed-muted'
           }
-          onClick={() => dialogRef.current?.showModal()}
+          onClick={() => {
+            setOpened(true)
+            dialogRef.current?.showModal()
+          }}
         >
           {lead ? lead.version : 'not deployed'}
           {dot && <span className={`eh-deployed-dot eh-deployed-dot-${dot}`} />}
@@ -260,7 +291,7 @@ export function DeployedVersions({
         components={data.components}
         leadSlug={leadComponent.slug}
         of={of}
-        users={data.users}
+        users={users}
       />
     </div>
   )

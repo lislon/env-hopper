@@ -32,11 +32,12 @@ function deploymentRecord(
     environmentName,
     ref: d.ref,
     sha: d.sha,
-    tag: d.tag ?? false,
+    tag: d.deployable?.tag ?? false,
     jobName: d.deployable?.name ?? '',
     pipelineId: d.deployable?.pipeline?.id ?? null,
     pipelineCreatedAt: d.deployable?.pipeline?.created_at ?? null,
     pipelineUrl: d.deployable?.pipeline?.web_url ?? null,
+    committedAt: d.deployable?.commit?.committed_date ?? null,
     status: d.status,
     finishedAt: d.deployable?.finished_at ?? null,
     user: d.user

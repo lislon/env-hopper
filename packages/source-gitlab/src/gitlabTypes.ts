@@ -18,6 +18,7 @@ export interface GitlabDeploymentRecord {
   environmentName: string
   ref: string
   sha: string
+  /** True when `ref` is a tag. */
   tag: boolean
   jobName: string
   pipelineId: number | null
@@ -25,6 +26,8 @@ export interface GitlabDeploymentRecord {
   pipelineCreatedAt: string | null
   /** The deploy pipeline's page. */
   pipelineUrl: string | null
+  /** When the deployed commit was committed. */
+  committedAt: string | null
   status: string
   finishedAt: string | null
   /** Who triggered the deploy, as GitLab knows them. */
@@ -89,7 +92,6 @@ export interface RawDeployment {
   id: number
   ref: string
   sha: string
-  tag?: boolean
   status: string
   updated_at: string
   environment: {
@@ -97,6 +99,9 @@ export interface RawDeployment {
   }
   deployable?: {
     name: string
+    /** True when the deployed ref is a tag; the deployment itself has no such field. */
+    tag?: boolean
+    commit?: { committed_date?: string }
     pipeline?: {
       id: number
       created_at?: string

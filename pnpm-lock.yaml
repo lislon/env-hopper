@@ -370,9 +370,6 @@ importers:
       radashi:
         specifier: 'catalog:'
         version: 12.5.0-beta.6d5c035
-      rand-seed:
-        specifier: ^3.0.0
-        version: 3.0.0
     devDependencies:
       '@prisma/adapter-pg':
         specifier: 'catalog:'
@@ -9264,9 +9261,6 @@ packages:
         optional: true
       '@types/react-dom':
         optional: true
-
-  rand-seed@3.0.0:
-    resolution: {integrity: sha512-Zy8wnL6whyIAGOX2i9Mn1Orq3t9TNizGUk8euxamr60Z3PmspwFeT+vCZPcYMAR5nOztnAKPtVi3jt8EzmCB6g==}
 
   randombytes@2.1.0:
     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
@@ -20032,8 +20026,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.7
       '@types/react-dom': 19.2.3(@types/react@19.2.7)
-
-  rand-seed@3.0.0: {}
 
   randombytes@2.1.0:
     dependencies:

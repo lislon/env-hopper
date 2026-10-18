@@ -29,10 +29,6 @@ export function createTrpcRouter(auth?: BetterAuth) {
       }
     }),
 
-    availabilityMatrix: publicProcedure.query(async ({ ctx }) => {
-      return await ctx.companySpecificBackend.getAvailabilityMatrix()
-    }),
-
     tryFindRenameRule: publicProcedure
       .input(
         z.object({

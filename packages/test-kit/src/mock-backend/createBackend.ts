@@ -221,12 +221,6 @@ export function createBackend(fixture: Fixture): MockBackend {
     resourceJumps: resourceJumpsData,
     resourceJumpsExtended: { envs: [] },
     // Procedures no scenario drives yet: answered, but with nothing in them.
-    availabilityMatrix: {
-      envSlugs: [],
-      resourceJumpSlugs: [],
-      availabilityVariants: [],
-      matrix: [],
-    },
     tryFindRenameRule: false,
     resourceJumpBySlugAndEnv: {
       resourceJumps: [],

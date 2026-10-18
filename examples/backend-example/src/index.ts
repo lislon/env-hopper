@@ -21,7 +21,6 @@ import {
   getAuthProviders,
   validateAuthConfig,
 } from './config/authProviders.js'
-import { getRandomAvailabilityMatrix } from './utils.js'
 
 loadEnv()
 
@@ -73,13 +72,6 @@ const companySpecificBackend: EhBackendCompanySpecificBackend = {
       }
     }
     return false
-  },
-  async getAvailabilityMatrix() {
-    const bootstrapConfigData = (await loadStaticData()).bootstrapConfigData
-    return getRandomAvailabilityMatrix({
-      apps: Object.values(bootstrapConfigData.apps),
-      envs: Object.values(bootstrapConfigData.envs),
-    })
   },
   async getResourceJumps() {
     return (await loadStaticData()).resourceJumpsData

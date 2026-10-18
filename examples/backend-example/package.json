@@ -29,8 +29,7 @@
     "cross-env": "catalog:",
     "dotenv-defaults": "catalog:",
     "express": "catalog:",
-    "radashi": "catalog:",
-    "rand-seed": "^3.0.0"
+    "radashi": "catalog:"
   },
   "devDependencies": {
     "@prisma/adapter-pg": "catalog:",

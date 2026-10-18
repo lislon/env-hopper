@@ -40,19 +40,6 @@ export interface BootstrapConfigData {
  */
 export type BootstrapPayload = Omit<BootstrapConfigData, 'envs'> & PackedEnvs
 
-export interface AvailabilityMatrixData {
-  envSlugs: Array<EnvSlug>
-  resourceJumpSlugs: Array<JumpResourceSlug>
-  availabilityVariants: Array<AvailabilityVariant>
-  matrix: Array<Array<number>>
-}
-
-export interface AvailabilityVariant {
-  isDeployed: boolean
-  isHealthy?: boolean
-  hasData?: boolean
-}
-
 export type ResourceJumpMetaInfo = Record<string, string>
 
 export interface Sluggable {

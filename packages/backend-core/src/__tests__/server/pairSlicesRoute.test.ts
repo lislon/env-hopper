@@ -403,6 +403,18 @@ describe('slices', () => {
     ])
   })
 
+  it('sends a pair once, however many of its slices hold it', async () => {
+    // shop on prod: by its jumps and its Deployment on prod, and in shop's
+    // vertical slice, read after.
+    catalog = memoryCatalog(shopOnProd, (f) => (f.appSlugs ? 50 : 0))
+    const chunks = await collect(
+      client.slices.query({ appSlugs: ['shop'], envSlugs: ['prod'] }),
+    )
+    expect(
+      namesOf(chunks).filter((n) => n === 'shop/prod/deployment'),
+    ).toHaveLength(1)
+  })
+
   it('leaves out the pair it is told to, which `pair` loads', async () => {
     const chunks = await collect(
       client.slices.query({

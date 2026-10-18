@@ -310,9 +310,14 @@ function deploymentChunks(
       p.rows.flatMap((r) => (r.health ? [r.health.observedAt] : [])),
     ),
   )
-  const fresh = pairs.filter((p) => !sent.pairs.has(keyOf(p)))
+  // Once each: a pair two slices hold, or one slice lists twice (by its jumps
+  // and by its Deployment), goes out once.
+  const fresh = pairs.filter((p) => {
+    if (sent.pairs.has(keyOf(p))) return false
+    sent.pairs.add(keyOf(p))
+    return true
+  })
   return fresh.map(({ app, env }) => {
-    sent.pairs.add(keyOf({ app, env }))
     const out: Array<PairChunk> = []
     const hit = byKey.get(keyOf({ app, env }))
     if (!sent.meta && hit?.rows.some((r) => r.health)) {

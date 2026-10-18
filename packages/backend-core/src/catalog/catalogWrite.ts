@@ -1,6 +1,11 @@
 import type { Prisma, PrismaClient } from '../generated/prisma/client'
 import { tableSyncPrisma } from '../db/tableSyncPrismaAdapter'
-import type { Catalog, CatalogSyncCounts, CatalogTx } from './catalogRead'
+import type {
+  Catalog,
+  CatalogChange,
+  CatalogSyncCounts,
+  CatalogTx,
+} from './catalogRead'
 import { chunks, createCatalogReads } from './catalogRead'
 import type {
   CatalogAppInput,
@@ -41,7 +46,15 @@ async function deleteHealthOf(tx: Tx, pairs: Array<Pair>) {
   }
 }
 
-/** Drops the Health of the Deployments these parent rows cascade-delete. */
+/** Per open transaction, the (Component, Target) of every changed row. */
+const touchedIn = new WeakMap<object, Array<Pair>>()
+const touch = (tx: object, pairs: Array<Pair>) =>
+  touchedIn.get(tx)?.push(...pairs)
+
+/**
+ * Drops the Health of the Deployments these parent rows cascade-delete, and
+ * counts those Deployments as changed.
+ */
 const cascadeHealth =
   (parentFilter: (row: Row) => Row) => async (tx: Tx, rows: Array<Row>) => {
     for (const part of chunks(rows)) {
@@ -49,6 +62,7 @@ const cascadeHealth =
         where: { OR: part.map(parentFilter) },
         select: { componentSlug: true, targetSlug: true },
       })
+      touch(tx, pairs)
       await deleteHealthOf(tx, pairs)
     }
   }
@@ -80,13 +94,106 @@ function lastPerPair<T extends Pair>(list: Array<T>): Array<T> {
   return [...new Map(list.map((r) => [pairKey(r), r])).values()]
 }
 
+/** What a sync returned that says which rows it changed. */
+interface Changed {
+  created: Array<Row>
+  updated: Array<{ row: Row; was: Row }>
+  deleted: Array<Row>
+}
+
+/** The (Component, Target) of every row created, updated or deleted. */
+function pairsOf(
+  { created, updated, deleted }: Changed,
+  same: (row: Row, was: Row) => boolean = () => false,
+): Array<Pair> {
+  return [
+    ...created,
+    ...updated.filter((u) => !same(u.row, u.was)).map((u) => u.row),
+    ...deleted,
+  ].map((r) => ({
+    componentSlug: r['componentSlug'] as string,
+    targetSlug: r['targetSlug'] as string,
+  }))
+}
+
+/** The pairs (App, Environment) the changed rows belong to. */
+async function changedPairs(
+  tx: Tx,
+  touched: Array<Pair>,
+): Promise<CatalogChange['pairs']> {
+  if (touched.length === 0) return []
+  const unique = <T>(list: Array<T>) => [...new Set(list)]
+  const [components, targets] = await Promise.all([
+    tx.catalogComponent.findMany({
+      where: { slug: { in: unique(touched.map((p) => p.componentSlug)) } },
+      select: { slug: true, appSlug: true },
+    }),
+    tx.catalogDeploymentTarget.findMany({
+      where: { slug: { in: unique(touched.map((p) => p.targetSlug)) } },
+      select: { slug: true, environmentSlug: true },
+    }),
+  ])
+  const appOf = new Map(components.map((c) => [c.slug, c.appSlug]))
+  const envOf = new Map(targets.map((t) => [t.slug, t.environmentSlug]))
+  const pairs = new Map<string, CatalogChange['pairs'][number]>()
+  for (const p of touched) {
+    const app = appOf.get(p.componentSlug)
+    const env = envOf.get(p.targetSlug)
+    if (app && env) pairs.set(`${app}\0${env}`, { app, env })
+  }
+  return [...pairs.values()]
+}
+
+/** A Health that only says it was checked again changes nothing a reader shows. */
+const sameHealth = (row: Row, was: Row) =>
+  row['state'] === was['state'] &&
+  row['checker'] === was['checker'] &&
+  (row['detail'] ?? null) === (was['detail'] ?? null)
+
 export function createCatalog(prisma: PrismaClient): Catalog {
+  // ponytail: in-process listeners, so only this pod's readers hear its
+  // writes; with more than one pod serving, carry them over Postgres
+  // LISTEN/NOTIFY.
+  const listeners = new Set<(change: CatalogChange) => void>()
+  // A new id each boot: a reader holding an id from before a restart has
+  // missed whatever changed while it was down.
+  const boot = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+  let seq = 0
+  let lastChangeId = `${boot}-0`
   return {
-    transaction: (fn, opts = {}) =>
-      prisma.$transaction((tx) => fn(tx as unknown as CatalogTx), {
-        timeout: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-        maxWait: 10_000,
-      }),
+    async transaction(fn, opts = {}) {
+      let pairs: CatalogChange['pairs'] = []
+      const result = await prisma.$transaction(
+        async (tx) => {
+          const touched: Array<Pair> = []
+          touchedIn.set(tx, touched)
+          const out = await fn(tx as unknown as CatalogTx)
+          pairs = await changedPairs(tx, touched)
+          return out
+        },
+        { timeout: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS, maxWait: 10_000 },
+      )
+      // Committed: only now may a reader see it.
+      if (pairs.length > 0) {
+        lastChangeId = `${boot}-${++seq}`
+        const change = { id: lastChangeId, pairs }
+        for (const listener of listeners) {
+          try {
+            listener(change)
+          } catch (e) {
+            console.error('[catalog] change listener failed', e)
+          }
+        }
+      }
+      return result
+    },
+
+    onChange(listener) {
+      listeners.add(listener)
+      return () => void listeners.delete(listener)
+    },
+
+    lastChangeId: () => lastChangeId,
 
     syncEnvironments: async (
       tx,
@@ -299,7 +406,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             ),
         ).values(),
       ]
-      const { counts } = await tableSyncPrisma({
+      const deployments = await tableSyncPrisma({
         prisma: db,
         prismaModelName: 'CatalogDeployment',
         uniqColumns: ['componentSlug', 'targetSlug'],
@@ -321,7 +428,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
       // Every Deployment of the scope is now one this list reported; the
       // Endpoints of the removed ones went with them. `upsertOnly` replaces
       // the Endpoints of the listed Deployments only.
-      await tableSyncPrisma({
+      const endpointRows = await tableSyncPrisma({
         prisma: db,
         prismaModelName: 'CatalogEndpoint',
         id: 'id',
@@ -335,28 +442,33 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             }
           : { deployment: { scope } },
       }).sync(endpoints)
-      return counts satisfies CatalogSyncCounts
+      touch(tx, [
+        ...pairsOf(deployments as Changed),
+        ...pairsOf(endpointRows as Changed),
+      ])
+      return deployments.counts satisfies CatalogSyncCounts
     },
 
-    syncHealth: async (tx, scope, list: Array<CatalogHealthInput>, opts = {}) =>
-      (
-        await tableSyncPrisma({
-          prisma: txOf(tx),
-          prismaModelName: 'CatalogHealth',
-          uniqColumns: ['componentSlug', 'targetSlug'],
-          scope,
-          upsertOnly: opts.upsertOnly,
-        }).sync(
-          lastPerPair(list).map((h) => ({
-            componentSlug: h.componentSlug,
-            targetSlug: h.targetSlug,
-            state: h.state,
-            observedAt: h.observedAt,
-            checker: h.checker,
-            detail: h.detail ?? null,
-          })),
-        )
-      ).counts,
+    async syncHealth(tx, scope, list: Array<CatalogHealthInput>, opts = {}) {
+      const health = await tableSyncPrisma({
+        prisma: txOf(tx),
+        prismaModelName: 'CatalogHealth',
+        uniqColumns: ['componentSlug', 'targetSlug'],
+        scope,
+        upsertOnly: opts.upsertOnly,
+      }).sync(
+        lastPerPair(list).map((h) => ({
+          componentSlug: h.componentSlug,
+          targetSlug: h.targetSlug,
+          state: h.state,
+          observedAt: h.observedAt,
+          checker: h.checker,
+          detail: h.detail ?? null,
+        })),
+      )
+      touch(tx, pairsOf(health as Changed, sameHealth))
+      return health.counts
+    },
 
     ...createCatalogReads(prisma),
   }

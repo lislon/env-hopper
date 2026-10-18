@@ -10,6 +10,7 @@ import type {
 import type { BetterAuth } from '../modules/auth/auth'
 import { createAuthRouter } from '../modules/auth/authRouter.js'
 import { MAX_SLICE_SLUGS, MAX_USERS, pairDetails } from './pairDetails'
+import { pairsWatch } from './pairsWatch'
 import { publicProcedure, router, t } from './trpcSetup'
 
 /**
@@ -95,6 +96,22 @@ export function createTrpcRouter(auth?: BetterAuth) {
             env: input.exceptPair.envSlug,
           },
         })
+      }),
+
+    /**
+     * Pushed over server-sent events: the details of the pairs in these
+     * slices each time the catalog changes them, as `slices` would send them.
+     */
+    pairsWatch: publicProcedure
+      .input(
+        z.object({
+          appSlugs: z.array(z.string()).max(MAX_SLICE_SLUGS).optional(),
+          envSlugs: z.array(z.string()).max(MAX_SLICE_SLUGS).optional(),
+          lastEventId: z.string().nullish(),
+        }),
+      )
+      .subscription(async function* ({ input, ctx, signal }) {
+        yield* pairsWatch(ctx, input, signal)
       }),
 
     /** User profiles by username, for the rows a slice names only by username. */

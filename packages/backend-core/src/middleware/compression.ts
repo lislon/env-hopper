@@ -5,8 +5,9 @@ import type { RequestHandler } from 'express'
 /**
  * gzip / brotli for every response, streamed ones included.
  *
- * A streamed query (`httpBatchStreamLink`) and server-sent events must reach
- * the client chunk by chunk, while zlib holds output until its buffer fills.
+ * A streamed query (`httpBatchStreamLink`) must reach the client chunk by
+ * chunk, while zlib holds output until its buffer fills. (Server-sent events
+ * pass through uncompressed: tRPC sends them `Cache-Control: no-transform`.)
  * So every write is flushed, a SYNC flush that keeps what came before as the
  * dictionary. tRPC also calls `res.flush()` after each chunk; the middleware's
  * own flush is a FULL flush, which drops the dictionary at every chunk (a

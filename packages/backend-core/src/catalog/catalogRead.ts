@@ -20,6 +20,17 @@ export interface CatalogTx {
   readonly __catalogTx: never
 }
 
+/**
+ * A committed transaction that changed what pair details show: a Deployment,
+ * its Endpoints or its Health (a Health only checked again is no change).
+ */
+export interface CatalogChange {
+  /** Unique per change in this process, and never reused after a restart. */
+  id: string
+  /** The pairs (App, Environment) whose Deployments changed. */
+  pairs: Array<{ app: string; env: string }>
+}
+
 /** What one sync did to its table. */
 export interface CatalogSyncCounts {
   created: number
@@ -66,6 +77,13 @@ export interface Catalog {
   /** Counts the Deployments; each Deployment's Endpoints are synced with it. */
   syncDeployments: Sync<CatalogDeploymentInput>
   syncHealth: Sync<CatalogHealthInput>
+  /**
+   * Calls `listener` after each committed transaction that changed a pair's
+   * Deployments. Returns the function that stops it.
+   */
+  onChange: (listener: (change: CatalogChange) => void) => () => void
+  /** The id of the last change committed; before any, an id of its own. */
+  lastChangeId: () => string
   /** Filters are AND-ed; an omitted one takes all. */
   listDeployments: (filter?: {
     appSlugs?: Array<string>

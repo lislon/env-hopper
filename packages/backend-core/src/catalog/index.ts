@@ -6,6 +6,7 @@ export type {
   Catalog,
   CatalogUserView,
   CatalogArtifactView,
+  CatalogChange,
   CatalogSyncCounts,
   CatalogSyncOptions,
   CatalogTx,

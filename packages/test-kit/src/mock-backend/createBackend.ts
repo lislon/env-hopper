@@ -41,8 +41,12 @@ type ProcedureKeys<T> = {
     : never
 }[keyof T]
 
-/** The pair-details queries are left out: the real router serves them. */
-type StreamedKeys = 'pair' | 'slices' | 'users'
+/**
+ * The pair-details queries are left out: the real router serves them. So is
+ * the `pairsWatch` subscription: the test DOM has no EventSource, so the app
+ * never opens it in a scenario.
+ */
+type StreamedKeys = 'pair' | 'slices' | 'users' | 'pairsWatch'
 
 export type BackendData = {
   [K in Exclude<

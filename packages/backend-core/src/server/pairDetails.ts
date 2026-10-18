@@ -331,7 +331,8 @@ export async function* pairDetails(
   ctx: EhTrpcContext,
   scope:
     | { pair: Pair }
-    | { appSlugs: Array<string>; envSlugs: Array<string>; except?: Pair },
+    | { appSlugs: Array<string>; envSlugs: Array<string>; except?: Pair }
+    | { changed: Array<Pair> },
 ): AsyncGenerator<PairChunk> {
   const backend = ctx.companySpecificBackend
   const catalog = ctx.catalog
@@ -374,6 +375,35 @@ export async function* pairDetails(
             await components,
             sent,
           ).flat(),
+        ),
+      },
+    ])
+    return
+  }
+
+  if ('changed' in scope) {
+    // Like a slice, but of exactly these pairs: one read per App, and a pair
+    // with nothing deployed any more goes out with no rows.
+    const envsOf = new Map<string, Array<string>>()
+    for (const { app, env } of scope.changed) {
+      envsOf.set(app, [...(envsOf.get(app) ?? []), env])
+    }
+    const components = componentsOf({ appSlugs: [...envsOf.keys()] })
+    yield* streamSources([
+      {
+        facets: ['deployment'],
+        chunks: asReady(
+          [...envsOf.keys()].map((app) => ({ app })),
+          'deployment',
+          async ({ app }) => {
+            const envs = envsOf.get(app)!
+            return deploymentChunks(
+              envs.map((env) => ({ app, env })),
+              await read({ appSlugs: [app], envSlugs: envs }),
+              await components,
+              sent,
+            ).flat()
+          },
         ),
       },
     ])

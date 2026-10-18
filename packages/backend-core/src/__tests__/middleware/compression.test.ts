@@ -22,6 +22,11 @@ const router = t.router({
     yield { facet: 'slow' }
   }),
   big: t.procedure.query(() => 'x'.repeat(50_000)),
+  ticks: t.procedure.subscription(async function* () {
+    yield 'first'
+    await new Promise((r) => setTimeout(r, SLOW_MS))
+    yield 'second'
+  }),
   many: t.procedure.query(async function* () {
     for (let i = 0; i < 300; i++) {
       yield {
@@ -103,6 +108,38 @@ describe.each(['gzip', 'br'])('under %s', (encoding) => {
     const [plain, packed] = [await wire('identity'), await wire(encoding)]
     console.log(`[compression ${encoding}] 300 chunks: ${plain} -> ${packed} B`)
     expect(packed).toBeLessThan(plain / 4)
+  })
+
+  it('sends each server-sent event when it is yielded, uncompressed', async () => {
+    const start = Date.now()
+    const res = await fetch(`${url}/ticks`, {
+      headers: { 'accept-encoding': encoding },
+    })
+    expect(res.headers.get('content-type')).toMatch(/^text\/event-stream/)
+    // tRPC marks the stream `no-transform`: neither this middleware nor a
+    // proxy may compress (and so hold back) it.
+    expect(res.headers.get('cache-control')).toMatch(/no-transform/)
+    expect(res.headers.get('content-encoding')).toBeNull()
+    // fetch decodes the body; each event is a `data:` line.
+    const at: Record<string, number> = {}
+    const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader()
+    let text = ''
+    while (!('second' in at)) {
+      const { value, done } = await reader.read()
+      if (done) break
+      text += value
+      for (const word of ['first', 'second']) {
+        if (!(word in at) && text.includes(`"${word}"`)) {
+          at[word] = Date.now() - start
+        }
+      }
+    }
+    await reader.cancel()
+    console.log(
+      `[compression ${encoding}] SSE first ${at.first} ms, second ${at.second} ms`,
+    )
+    expect(at.first).toBeLessThan(SLOW_MS / 2)
+    expect(at.second! - at.first!).toBeGreaterThanOrEqual(SLOW_MS - 50)
   })
 
   it('compresses a plain response', async () => {

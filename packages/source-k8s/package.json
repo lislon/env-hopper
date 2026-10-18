@@ -54,7 +54,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@env-hopper/backend-core": "workspace:*"
+    "@env-hopper/backend-core": "workspace:^"
   },
   "engines": {
     "node": ">=16"

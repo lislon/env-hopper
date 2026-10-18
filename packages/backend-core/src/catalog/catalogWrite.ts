@@ -101,7 +101,13 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           prismaModelName: 'CatalogApp',
           uniqColumns: ['slug'],
           scope,
-        }).sync(list.map((a) => ({ slug: a.slug, displayName: a.displayName })))
+        }).sync(
+          list.map((a) => ({
+            slug: a.slug,
+            displayName: a.displayName,
+            leadComponentSlug: a.leadComponentSlug ?? null,
+          })),
+        )
       ).counts,
 
     syncComponents: async (tx, scope, list: Array<CatalogComponentInput>) =>

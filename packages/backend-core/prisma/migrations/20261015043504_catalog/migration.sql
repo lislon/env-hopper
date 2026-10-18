@@ -109,6 +109,7 @@ CREATE TABLE "CatalogApp" (
     "slug" TEXT NOT NULL,
     "scope" TEXT NOT NULL,
     "displayName" TEXT NOT NULL,
+    "leadComponentSlug" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

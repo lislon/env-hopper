@@ -71,6 +71,8 @@ export interface Catalog {
 /** JSON-ready (dates as ISO strings): it is served as is. */
 export interface AppDeploymentsData {
   components: Array<{ slug: string; displayName: string }>
+  /** Stands for the App where one Version is shown; null = the first Component. */
+  leadComponentSlug: string | null
   deployments: Array<{
     environmentSlug: string
     componentSlug: string
@@ -82,6 +84,7 @@ export interface AppDeploymentsData {
     deployedBy: CatalogUserView | null
     deployUrl: string | null
     source: string
+    endpoints: Array<{ kind: EndpointKind; url: string; label?: string }>
     health: {
       state: HealthState
       checker: string
@@ -221,7 +224,14 @@ export function createCatalogReads(prisma: PrismaClient) {
         select: { slug: true, displayName: true },
         orderBy: { slug: 'asc' },
       })
-      if (components.length === 0) return { components, deployments: [] }
+      const app = await prisma.catalogApp.findUnique({
+        where: { slug: appSlug },
+        select: { leadComponentSlug: true },
+      })
+      const leadComponentSlug = app?.leadComponentSlug ?? null
+      if (components.length === 0) {
+        return { components, leadComponentSlug, deployments: [] }
+      }
       const rows = await reads.listDeployments({ appSlug })
       // One Deployment per Component per Environment: a live Target wins over
       // a retired one (meta.retired = 'true'), then the latest deploy.
@@ -241,6 +251,7 @@ export function createCatalogReads(prisma: PrismaClient) {
       }
       return {
         components,
+        leadComponentSlug,
         deployments: [...best.values()].map((d) => ({
           environmentSlug: d.target.environmentSlug!,
           componentSlug: d.component.slug,
@@ -252,6 +263,7 @@ export function createCatalogReads(prisma: PrismaClient) {
           deployedBy: d.deployedBy,
           deployUrl: d.deployUrl,
           source: d.source,
+          endpoints: d.endpoints,
           health: d.health
             ? { ...d.health, observedAt: d.health.observedAt.toISOString() }
             : null,

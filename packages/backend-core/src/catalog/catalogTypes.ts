@@ -11,6 +11,8 @@ export interface CatalogEnvironmentInput {
 export interface CatalogAppInput {
   slug: string
   displayName: string
+  /** The Component that stands for the App where one Version is shown. */
+  leadComponentSlug?: string
 }
 export interface CatalogComponentInput {
   slug: string

@@ -31,6 +31,7 @@ describe('deployments query', () => {
   it('is empty when the deployment keeps no catalog', async () => {
     expect(await call(null).deployments({ appSlug: 'shop' })).toEqual({
       components: [],
+      leadComponentSlug: null,
       deployments: [],
     })
   })

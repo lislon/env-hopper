@@ -325,17 +325,14 @@
  */
 .eh-deployed {
   margin-top: 18px;
-  display: grid;
-  grid-template-columns: repeat(4, max-content);
+  display: flex;
   justify-content: center;
-  column-gap: 8px;
-  row-gap: 3px;
   font-size: 12px;
 }
 /*
  * Under the previous UI's jump card the line sits out of flow: the card's grid
- * row centres its content, so an in-flow line would lift the card by half its
- * own height. Measured: 36px.
+ * row centres its content, so an in-flow line lifted the card by 36px. It is
+ * always one line, which fits the space above the history table.
  */
 .eh-legacy .eh-deployed {
   position: absolute;
@@ -345,74 +342,33 @@
   /* The 18px gap: the card's wrapper already pads 16px below it (py-4). */
   margin-top: 2px;
 }
-/*
- * Out of flow, a line of several Components would run into the history table
- * below. The history row is outside the rows the widget panel spans, so pushing
- * it down moves nothing above it: 22px per row past the first (19px row + 3px
- * gap). Past eight Components the last rows may touch it.
- */
-.eh-legacy
-  :has(> .grid-in-jump .eh-deployed[data-rows='2'])
-  > .grid-in-history {
-  margin-top: calc(1rem + 22px);
-}
-.eh-legacy
-  :has(> .grid-in-jump .eh-deployed[data-rows='3'])
-  > .grid-in-history {
-  margin-top: calc(1rem + 44px);
-}
-.eh-legacy
-  :has(> .grid-in-jump .eh-deployed[data-rows='4'])
-  > .grid-in-history {
-  margin-top: calc(1rem + 66px);
-}
-.eh-legacy
-  :has(> .grid-in-jump .eh-deployed[data-rows='5'])
-  > .grid-in-history {
-  margin-top: calc(1rem + 88px);
-}
-.eh-legacy
-  :has(> .grid-in-jump .eh-deployed[data-rows='6'])
-  > .grid-in-history {
-  margin-top: calc(1rem + 110px);
-}
-.eh-legacy
-  :has(> .grid-in-jump .eh-deployed[data-rows='7'])
-  > .grid-in-history {
-  margin-top: calc(1rem + 132px);
-}
-.eh-legacy
-  :has(> .grid-in-jump .eh-deployed[data-rows='8'])
-  > .grid-in-history {
-  margin-top: calc(1rem + 154px);
-}
 .eh-deployed-row {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: subgrid;
+  display: inline-flex;
   align-items: baseline;
+  gap: 6px;
   position: relative;
-}
-.eh-deployed-label {
-  text-align: right;
-  opacity: 0.5;
 }
 .eh-deployed-version {
+  font: inherit;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   color: inherit;
+  background: none;
+  border: 0;
+  padding: 0 7px 0 0;
+  cursor: pointer;
   opacity: 0.7;
-  text-decoration: none;
   position: relative;
-  padding-right: 7px;
 }
-a.eh-deployed-version:hover,
-a.eh-deployed-version:focus-visible {
+.eh-deployed-version:hover,
+.eh-deployed-version:focus-visible {
   opacity: 1;
   text-decoration: underline;
 }
 .eh-deployed-muted {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   opacity: 0.45;
+}
+.eh-deployed-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 .eh-deployed-ago {
   opacity: 0.45;
@@ -426,14 +382,29 @@ a.eh-deployed-version:focus-visible {
   height: 6px;
   border-radius: 50%;
 }
-.eh-deployed-dot-down {
+.eh-deployed-dot-down,
+.eh-deployed-state-down {
   background: var(--destructive);
 }
-.eh-deployed-dot-degraded {
+.eh-deployed-dot-degraded,
+.eh-deployed-state-degraded {
   background: oklch(0.8 0.15 85);
 }
 .eh-deployed-dot-not-deployed {
   background: color-mix(in oklab, currentColor 55%, transparent);
+}
+.eh-deployed-state-healthy {
+  background: oklch(0.72 0.17 145);
+}
+.eh-deployed-state-unknown {
+  background: color-mix(in oklab, currentColor 55%, transparent);
+}
+/* A sibling Component runs another Version than the lead. */
+.eh-deployed-star {
+  color: oklch(0.8 0.15 85);
+  font-weight: 700;
+  margin-left: -6px;
+  cursor: default;
 }
 .eh-deployed-tip {
   display: none;
@@ -452,11 +423,83 @@ a.eh-deployed-version:focus-visible {
   color: var(--popover-foreground);
   box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.3);
 }
-.eh-legacy .eh-deployed-tip {
+.eh-legacy .eh-deployed-tip,
+.eh-legacy .eh-deployed-dialog {
   background: var(--fallback-b1, oklch(var(--b1) / 1));
   color: var(--fallback-bc, oklch(var(--bc) / 1));
 }
 .eh-deployed-row:hover .eh-deployed-tip,
 .eh-deployed-row:focus-within .eh-deployed-tip {
   display: block;
+}
+/* The details opened by clicking the Version. */
+.eh-deployed-dialog {
+  margin: auto;
+  min-width: min(760px, 95vw);
+  max-width: 95vw;
+  padding: 20px 24px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in oklab, currentColor 30%, transparent);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  font-size: 13px;
+  text-align: left;
+}
+.eh-deployed-dialog::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+.eh-deployed-dialog h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.eh-deployed-dialog table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.eh-deployed-dialog th {
+  text-align: left;
+  font-weight: 600;
+  opacity: 0.7;
+  padding: 6px 10px;
+  border-bottom: 1px solid color-mix(in oklab, currentColor 30%, transparent);
+}
+.eh-deployed-dialog td {
+  padding: 8px 10px;
+  border-bottom: 1px solid color-mix(in oklab, currentColor 15%, transparent);
+  vertical-align: top;
+}
+.eh-deployed-dialog-close {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  font-size: 20px;
+  line-height: 1;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.eh-deployed-lead {
+  margin-left: 6px;
+  font-size: 11px;
+  padding: 0 4px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in oklab, currentColor 50%, transparent);
+  opacity: 0.7;
+}
+.eh-deployed-state {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+.eh-deployed-links a {
+  text-decoration: underline;
+  margin-right: 10px;
+}
+/* Reserved for the Version's merge request, staleness and Work Items. */
+.eh-deployed-dialog-footer:empty {
+  display: none;
 }

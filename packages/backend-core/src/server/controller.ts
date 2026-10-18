@@ -68,7 +68,7 @@ export function createTrpcRouter(auth?: BetterAuth) {
       .query(async ({ input, ctx }): Promise<AppDeploymentsData> => {
         return ctx.catalog
           ? await ctx.catalog.getAppDeployments(input.appSlug)
-          : { components: [], deployments: [] }
+          : { components: [], leadComponentSlug: null, deployments: [] }
       }),
 
     // Auth routes (requires auth instance)

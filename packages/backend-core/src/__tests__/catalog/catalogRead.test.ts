@@ -227,6 +227,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
       await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
       expect(await catalog!.getAppDeployments('shop')).toEqual({
         components: [{ slug: 'shop-api', displayName: 'Shop API' }],
+        leadComponentSlug: null,
         deployments: [
           {
             environmentSlug: 'prod',
@@ -244,6 +245,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
             },
             deployUrl: 'https://ci.example.com/d/0',
             source: 'ci',
+            endpoints: [],
             health: null,
           },
         ],
@@ -265,12 +267,24 @@ describe.skipIf(!prisma)('catalog reads', () => {
       await givenOneComponentOnTwoTargets()
       expect(await catalog!.getAppDeployments('unknown')).toEqual({
         components: [],
+        leadComponentSlug: null,
         deployments: [],
       })
       expect(await catalog!.getAppDeployments('shop')).toEqual({
         components: [{ slug: 'shop-api', displayName: 'Shop API' }],
+        leadComponentSlug: null,
         deployments: [],
       })
+    })
+
+    it('names the lead Component the App was given', async () => {
+      await givenOneComponentOnTwoTargets()
+      await catalog!.syncApps('ci', [
+        { slug: 'shop', displayName: 'Shop', leadComponentSlug: 'shop-api' },
+      ])
+      expect((await catalog!.getAppDeployments('shop')).leadComponentSlug).toBe(
+        'shop-api',
+      )
     })
 
     it('deleting the User keeps the Deployment, without a deployer', async () => {

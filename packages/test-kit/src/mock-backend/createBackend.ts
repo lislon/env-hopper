@@ -213,10 +213,14 @@ export function createBackend(fixture: Fixture): MockBackend {
       lateResolvableParams: [],
     },
     authConfig: { adminGroups: ['env_hopper_ui_super_admins'] },
-    deployments: { components: [], deployments: [] },
+    deployments: { components: [], leadComponentSlug: null, deployments: [] },
   }
   const deploymentsOf = (appSlug: string): AppDeploymentsData =>
-    fixture.deployments?.[appSlug] ?? { components: [], deployments: [] }
+    fixture.deployments?.[appSlug] ?? {
+      components: [],
+      leadComponentSlug: null,
+      deployments: [],
+    }
 
   let overrideBackendNetworkFn: OverrideBackendNetworkFn | null = null
 

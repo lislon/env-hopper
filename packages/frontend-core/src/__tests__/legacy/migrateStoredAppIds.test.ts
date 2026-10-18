@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { migrateStoredAppIds } from '~/legacy/lib/migrateStoredAppIds'
+import {
+  findRenamedAppIds,
+  migrateStoredAppIds,
+} from '~/legacy/lib/migrateStoredAppIds'
 
 /*
  * An explicit in-memory store rather than the ambient `localStorage`: under
@@ -93,5 +96,64 @@ describe('migrateStoredAppIds', () => {
 
     expect(localStorage.getItem('favoriteApps')).toBe('["orders@shipments"]')
     expect(localStorage.getItem('recent')).toBe('not json')
+  })
+
+  it('rewrites favourites, history and the last-used app through renames', () => {
+    localStorage.setItem(
+      'favoriteApps',
+      JSON.stringify(['shop-ui', 'shop', 'billing']),
+    )
+    localStorage.setItem(
+      'recent',
+      JSON.stringify([{ env: 'dev', app: 'shop-ui@orders', url: 'u1' }]),
+    )
+    localStorage.setItem('lastUsedApp', JSON.stringify('shop-ui'))
+
+    migrateStoredAppIds(localStorage, {
+      'shop-ui': 'shop',
+      'shop-ui@orders': 'shop@orders',
+    })
+
+    expect(JSON.parse(localStorage.getItem('favoriteApps')!)).toEqual([
+      'shop',
+      'billing',
+    ])
+    expect(JSON.parse(localStorage.getItem('recent')!)).toEqual([
+      { env: 'dev', app: 'shop@orders', url: 'u1' },
+    ])
+    expect(localStorage.getItem('lastUsedApp')).toBe('"shop"')
+  })
+})
+
+describe('findRenamedAppIds', () => {
+  beforeEach(() => {
+    localStorage = memoryStorage()
+  })
+
+  it('asks once for each stored id no app has, and returns those that were renamed', async () => {
+    localStorage.setItem(
+      'favoriteApps',
+      JSON.stringify(['shop-ui', 'gone', 'billing']),
+    )
+    localStorage.setItem(
+      'recent',
+      JSON.stringify([
+        { env: 'dev', app: 'shop-ui', url: 'u1' },
+        { env: 'qa', app: 'shop-ui', url: 'u2' },
+      ]),
+    )
+    const asked: Array<string> = []
+
+    const renamed = await findRenamedAppIds(
+      localStorage,
+      new Set(['billing', 'shop']),
+      (id) => {
+        asked.push(id)
+        return Promise.resolve(id === 'shop-ui' ? 'shop' : undefined)
+      },
+    )
+
+    expect(asked.sort()).toEqual(['gone', 'shop-ui'])
+    expect(renamed).toEqual({ 'shop-ui': 'shop' })
   })
 })

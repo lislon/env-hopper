@@ -9,7 +9,13 @@ import type {
   EhSubstitutionType,
   EhSubstitutionValue,
 } from '../types'
-import React, { createContext, use, useCallback, useState } from 'react'
+import React, {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import {
   findSubstitutionIdByUrl,
@@ -17,8 +23,12 @@ import {
   maskSensitiveDataIfNeeded,
 } from '../lib/utils'
 import { MAX_HISTORY_JUMPS } from '../lib/constants'
-import { migrateStoredAppIds } from '../lib/migrateStoredAppIds'
+import {
+  findRenamedAppIds,
+  migrateStoredAppIds,
+} from '../lib/migrateStoredAppIds'
 import { useLegacyConfig } from '../adapter/legacyApi'
+import { useTRPCClient } from '~/api/infra/trpc'
 import {
   LOCAL_STORAGE_HIDE_SENSITIVE_INFO,
   LOCAL_STORAGE_KEY_FAVORITE_APPS,
@@ -140,6 +150,44 @@ export function EhContextProvider({ children }: EhContextProviderProps) {
     LOCAL_STORAGE_KEY_FAVORITE_APPS,
     [],
   )
+
+  // A stored id no app has may be an app the backend renamed since (a starred
+  // `orders-ui` now `orders`): once the apps are known, ask for each such id
+  // and move it, in storage and in the state read from it, to the new name.
+  const trpcClient = useTRPCClient()
+  useEffect(() => {
+    if (!data) return
+    let cancelled = false
+    void findRenamedAppIds(
+      localStorage,
+      new Set(data.apps.map((a) => a.id)),
+      (id) =>
+        trpcClient.tryFindRenameRule.query({ resourceSlug: id }).then(
+          (rule) =>
+            rule && rule.type === 'resourceRename'
+              ? rule.targetSlug
+              : undefined,
+          () => undefined,
+        ),
+    ).then((renamed) => {
+      if (cancelled || Object.keys(renamed).length === 0) return
+      migrateStoredAppIds(localStorage, renamed)
+      // Only what parses: anything else the migration left as it was.
+      const reread = (key: string, set: (v: never) => void) => {
+        try {
+          const value: unknown = JSON.parse(localStorage.getItem(key) ?? '')
+          if (Array.isArray(value)) set(value as never)
+        } catch {
+          // left alone
+        }
+      }
+      reread(LOCAL_STORAGE_KEY_FAVORITE_APPS, setFavoriteAppIds)
+      reread(LOCAL_STORAGE_KEY_RECENT_JUMPS, setRecentJumps)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [data, trpcClient, setFavoriteAppIds, setRecentJumps])
 
   const [isHideSensitiveInfo, setHideSensitiveInfo] = useLocalStorage<boolean>(
     LOCAL_STORAGE_HIDE_SENSITIVE_INFO,

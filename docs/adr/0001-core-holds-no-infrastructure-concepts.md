@@ -17,7 +17,7 @@ Reading a given kind of infrastructure is the same everywhere, so that part ship
 ## Consequences
 
 - The core imposes no run order; the Entity Provider sequences its Sources, because their data depends on each other in ways only the deployment knows.
-- A write to the core either replaces everything that Source reported within a scope, or only adds and updates. Deployments and Releases are replaced; Artifacts and Environments outlive the Source rows that produced them.
+- A write to the core replaces everything a scope reports: rows the scope no longer reports are deleted, Artifacts and Environments included.
 - The core has no conflict policy. Two sources disagreeing is the Entity Provider's problem, and the core stores whatever it is told.
 - A software catalog such as Backstage is one more source for an Entity Provider, not a core integration. Its `System` maps onto App and its `Component` onto Component inside the provider.
 

@@ -28,7 +28,10 @@ export const pairFacetKey = (app: string, env: string, facet: PairFacetName) =>
 /** A User's profile, per username, from a `pair` stream or `users`. */
 export const userKey = (username: string) => ['user', username] as const
 
-/** And an Environment's credentials, by App, once per Environment. */
+/**
+ * What an Environment lacks, by App: credentials or data sources it marks
+ * unavailable. The credentials themselves are templates in `bootstrap.apps`.
+ */
 export const envCredentialsKey = (env: string) =>
   ['pairEnv', env, 'credentials'] as const
 

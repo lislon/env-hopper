@@ -1,8 +1,7 @@
 import type { PairDeployment, PairDeployments } from '../catalog'
 import type {
+  EhAppFacility,
   EhBackendAppInput,
-  EhBackendCredentialInput,
-  EhBackendDataSourceInput,
   ResourceJumpsData,
 } from '../types'
 import type { EhTrpcContext } from './ehTrpcContext'
@@ -22,14 +21,12 @@ export type StreamFacet = PairFacet | EnvFacet | 'components' | 'users' | 'meta'
 /** The pair's jumps, each URL template narrowed to the pair's Environment. */
 export type PairJumps = ResourceJumpsData
 
-/** What the config holds for the App, minus what the Environment lacks. */
-export interface PairCredentials {
-  ui: Array<EhBackendCredentialInput>
-  dataSources: Array<EhBackendDataSourceInput>
-}
-
-/** An Environment's credentials, by App: only the Apps that have some. */
-export type EnvCredentials = Record<string, PairCredentials>
+/**
+ * What an Environment lacks, by App: the in-scope Apps whose credentials or
+ * data sources it marks unavailable, and which of the two. Only Apps that
+ * have them in `bootstrap.apps`, where their templates come from.
+ */
+export type EnvCredentials = Record<string, Array<EhAppFacility>>
 
 /**
  * A Component as streamed, once per App. `pipelineUrl` is the URL its rows'
@@ -87,6 +84,7 @@ export type PairChunk =
   | { app: string; env: string; facet: 'jumps'; data: PairJumps }
   // Reserved; not emitted yet.
   | { app: string; env: string; facet: 'changes' | 'workItems'; data: unknown }
+  // Only for an Environment that lacks some in-scope App's credentials.
   | { env: string; facet: 'credentials'; data: EnvCredentials }
   | { app: string; facet: 'components'; data: Array<WireComponent> }
   | { facet: 'users'; data: PairDeployment['users'] }
@@ -127,6 +125,29 @@ async function* asCompleted<T>(promises: Array<Promise<T>>): AsyncGenerator<T> {
 }
 
 /**
+ * Each item's chunks the moment its own load settles, never after the
+ * others. An item whose load fails gets an error chunk for `facet`, naming
+ * what the item names; the other items still arrive.
+ */
+function asReady<T extends { app?: string; env?: string }>(
+  items: Array<T>,
+  facet: PairFacet,
+  load: (item: T) => Promise<Array<PairChunk>>,
+): AsyncIterable<PairChunk> {
+  return (async function* () {
+    for await (const chunks of asCompleted(
+      items.map((item) =>
+        load(item).catch((e: unknown): Array<PairChunk> => {
+          console.error('[pairDetails] load failed', facet, item, e)
+          return [{ ...item, facet, error: 'source failed' }]
+        }),
+      ),
+    ))
+      yield* chunks
+  })()
+}
+
+/**
  * A source that answers per pair: each pair's chunks are sent the moment its
  * own data is ready, never after the whole slice. A pair whose load fails
  * gets an error chunk for `facet`; the other pairs still arrive.
@@ -136,17 +157,7 @@ export function perPair(
   facet: PairFacet,
   load: (pair: Pair) => Promise<Array<PairChunk>>,
 ): AsyncIterable<PairChunk> {
-  return (async function* () {
-    for await (const chunks of asCompleted(
-      pairs.map((p) =>
-        load(p).catch((e: unknown): Array<PairChunk> => {
-          console.error('[pairDetails] pair failed', facet, p, e)
-          return [{ app: p.app, env: p.env, facet, error: 'source failed' }]
-        }),
-      ),
-    ))
-      yield* chunks
-  })()
+  return asReady(pairs, facet, load)
 }
 
 /**
@@ -215,27 +226,24 @@ function jumpsOf({ app, env }: Pair, jumps: ResourceJumpsData): PairChunk {
   }
 }
 
-/** One `credentials` chunk per Environment, for the pairs' Apps there. */
+/**
+ * A `credentials` chunk per Environment that lacks some of the pairs' Apps'
+ * credentials or data sources; none where it lacks nothing they have.
+ */
 function credentialChunks(
   pairs: Array<Pair>,
   apps: Record<string, EhBackendAppInput>,
-  unavailableOf: (env: string) => ReadonlySet<string>,
+  unavailableOf: (env: string) => Array<EhAppFacility>,
 ): Array<PairChunk> {
+  const has = (app: string, facility: EhAppFacility) =>
+    ((facility === 'credentials'
+      ? apps[app]?.ui?.credentials
+      : apps[app]?.dataSources
+    )?.length ?? 0) > 0
   const byEnv = new Map<string, EnvCredentials>()
   for (const { app, env } of pairs) {
-    const data = byEnv.get(env) ?? {}
-    byEnv.set(env, data)
-    const unavailable = unavailableOf(env)
-    const source = apps[app]
-    const ui = unavailable.has('credentials')
-      ? []
-      : (source?.ui?.credentials ?? [])
-    const dataSources = unavailable.has('dataSources')
-      ? []
-      : (source?.dataSources ?? [])
-    if (ui.length > 0 || dataSources.length > 0) {
-      data[app] = { ui, dataSources }
-    }
+    const lacks = unavailableOf(env).filter((f) => has(app, f))
+    if (lacks.length > 0) byEnv.set(env, { ...byEnv.get(env), [app]: lacks })
   }
   return [...byEnv].map(([env, data]) => ({ env, facet: 'credentials', data }))
 }
@@ -273,19 +281,22 @@ function mostCommon(values: Array<string>): string | undefined {
   return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0]
 }
 
-/** What a stream has already sent, so it sends each shared part once. */
+/** What a stream has already sent, so it sends each part once. */
 interface Sent {
-  apps: Set<string>
+  pairs: Set<string>
+  /** Per App whose Components went out, each Component's `pipelineUrl`. */
+  apps: Map<string, Map<string, string>>
   /** `null`: the stream sends no profiles, its rows name Users by username. */
   users: Set<string> | null
   meta?: StreamMeta
 }
 
 /**
- * The deployment chunks of the pairs, a pair's chunks together: before its
- * `deployment` chunk, the stream's `meta`, its App's `components` and every
- * new User it names (unless the stream sends no profiles), each only the
- * first time any pair needs it.
+ * The deployment chunks of the pairs not sent yet, a pair's chunks together:
+ * before its `deployment` chunk, the stream's `meta`, its App's `components`
+ * and every new User it names (unless the stream sends no profiles), each
+ * only the first time any pair needs it. A row's links are encoded against
+ * the `pipelineUrl` its Component went out with.
  */
 function deploymentChunks(
   pairs: Array<Pair>,
@@ -299,7 +310,9 @@ function deploymentChunks(
       p.rows.flatMap((r) => (r.health ? [r.health.observedAt] : [])),
     ),
   )
-  return pairs.map(({ app, env }) => {
+  const fresh = pairs.filter((p) => !sent.pairs.has(keyOf(p)))
+  return fresh.map(({ app, env }) => {
+    sent.pairs.add(keyOf({ app, env }))
     const out: Array<PairChunk> = []
     const hit = byKey.get(keyOf({ app, env }))
     if (!sent.meta && hit?.rows.some((r) => r.health)) {
@@ -314,17 +327,25 @@ function deploymentChunks(
       }
     }
     if (Object.keys(users).length > 0) out.push({ facet: 'users', data: users })
-    const components = found.components[app] ?? []
-    if (!sent.apps.has(app) && components.length > 0) {
-      sent.apps.add(app)
-      out.push({
-        app,
-        facet: 'components',
-        data: components.map((c) => {
-          const pipelineUrl = urls.get(c.slug)
-          return pipelineUrl ? { ...c, pipelineUrl } : c
+    if (!sent.apps.has(app)) {
+      const components = found.components[app] ?? []
+      const templates = new Map(
+        components.flatMap((c) => {
+          const url = urls.get(c.slug)
+          return url ? [[c.slug, url] as const] : []
         }),
-      })
+      )
+      sent.apps.set(app, templates)
+      if (components.length > 0) {
+        out.push({
+          app,
+          facet: 'components',
+          data: components.map((c) => {
+            const pipelineUrl = templates.get(c.slug)
+            return pipelineUrl ? { ...c, pipelineUrl } : c
+          }),
+        })
+      }
     }
     const run = sent.meta?.observedAt
     out.push({
@@ -334,7 +355,7 @@ function deploymentChunks(
       data: {
         rows: (hit?.rows ?? []).map((row) => {
           const { buildUrl, deployUrl, health, ...rest } = row
-          const template = urls.get(row.componentSlug)
+          const template = sent.apps.get(app)?.get(row.componentSlug)
           const link = (
             url: string | undefined,
             idKey: string,
@@ -373,7 +394,7 @@ const EMPTY: PairDeployments = { components: {}, pairs: [] }
 
 /**
  * The details of the pairs in scope: a chunk per pair-level facet per pair,
- * a `credentials` chunk per Environment.
+ * a `credentials` chunk per Environment that lacks some.
  *
  * `pair` names one pair, and also gets its jumps. Otherwise the scope is the
  * union of the slices: for each of `envSlugs`, every App that has a jump or a
@@ -397,44 +418,37 @@ export async function* pairDetails(
       credentialChunks(
         pairs,
         bootstrap.apps as Record<string, EhBackendAppInput>,
-        (env) => new Set(bootstrap.envs[env]?.appOverride?.unavailable),
+        (env) => bootstrap.envs[env]?.appOverride?.unavailable ?? [],
       ),
     )
   // `pair` names its own deployers; a slice sends usernames only, and the
   // client asks `users` for a profile when it shows one.
   const sent: Sent = {
-    apps: new Set(),
+    pairs: new Set(),
+    apps: new Map(),
     users: 'pair' in scope ? new Set() : null,
   }
-  // The catalog answers a whole scope in one read; its pairs are sent as
-  // separate chunks, a pair's shared parts first.
-  const deployments = (
-    pairs: Promise<Array<Pair>>,
-    found: Promise<PairDeployments>,
-  ) =>
-    (async function* () {
-      const [p, f] = await Promise.all([pairs, found])
-      for (const chunks of deploymentChunks(p, f, sent)) yield* chunks
-    })()
+  const read = (filter: {
+    appSlugs?: Array<string>
+    envSlugs?: Array<string>
+  }) => (catalog ? catalog.getPairDeployments(filter) : Promise.resolve(EMPTY))
 
   if ('pair' in scope) {
-    const pairs = [scope.pair]
+    const { app, env } = scope.pair
     yield* streamSources([
       {
         facets: ['jumps'],
         chunks: whole(config.then(([jumps]) => [jumpsOf(scope.pair, jumps)])),
       },
-      { facets: ['credentials'], chunks: whole(credentials(pairs)) },
+      { facets: ['credentials'], chunks: whole(credentials([scope.pair])) },
       {
         facets: ['deployment'],
-        chunks: deployments(
-          Promise.resolve(pairs),
-          catalog
-            ? catalog.getPairDeployments({
-                appSlugs: [scope.pair.app],
-                envSlugs: [scope.pair.env],
-              })
-            : Promise.resolve(EMPTY),
+        chunks: perPair([scope.pair], 'deployment', async (p) =>
+          deploymentChunks(
+            [p],
+            await read({ appSlugs: [app], envSlugs: [env] }),
+            sent,
+          ).flat(),
         ),
       },
     ])
@@ -442,55 +456,63 @@ export async function* pairDetails(
   }
 
   const { appSlugs, envSlugs, except } = scope
-  // Two reads, one per slice direction; a pair in both is listed twice.
-  const deployed = catalog
-    ? Promise.all([
-        appSlugs.length > 0
-          ? catalog.getPairDeployments({ appSlugs })
-          : Promise.resolve(EMPTY),
-        envSlugs.length > 0
-          ? catalog.getPairDeployments({ envSlugs })
-          : Promise.resolve(EMPTY),
-      ]).then(([v, h]) => ({
-        components: { ...h.components, ...v.components },
-        pairs: [...v.pairs, ...h.pairs],
-      }))
-    : Promise.resolve(EMPTY)
-
   // The horizontal slices the config alone names: an App with jumps has them
   // on every Environment, since every jump has a default URL.
-  const configPairs = config.then(([jumps]) => {
-    const apps = new Set(jumps.resourceJumps.map((rj) => appOfJump(rj.slug)))
-    const envs = new Set(jumps.envs.map((e) => e.slug))
-    return envSlugs
-      .filter((env) => envs.has(env))
-      .flatMap((env) => [...apps].map((app) => ({ app, env })))
-  })
-  // Each source fails alone: without the other, its scope is what it knows.
-  const inScope = ([pairs, found]: [Array<Pair>, PairDeployments]) =>
-    uniquePairs([
-      ...pairs,
-      ...found.pairs.filter(
-        (p) => appSlugs.includes(p.app) || envSlugs.includes(p.env),
-      ),
-    ]).filter((p) => !except || keyOf(p) !== keyOf(except))
-  const deployedOrNone = deployed.catch(() => EMPTY)
+  const configured = config.then(([jumps]) => ({
+    apps: [...new Set(jumps.resourceJumps.map((rj) => appOfJump(rj.slug)))],
+    envs: new Set(jumps.envs.map((e) => e.slug)),
+  }))
+  // One read per slice, each answering on its own: a pair is sent as soon as
+  // the first slice holding it is read.
+  const slices: Array<{ app: string } | { env: string }> = [
+    ...appSlugs.map((app) => ({ app })),
+    ...envSlugs.map((env) => ({ env })),
+  ]
+  const reads = new Map(
+    slices.map((s) => [
+      s,
+      read('app' in s ? { appSlugs: [s.app] } : { envSlugs: [s.env] }),
+    ]),
+  )
+  /** A slice's pairs: what its read found, and on an Environment its jumps. */
+  const pairsOf = async (
+    slice: (typeof slices)[number],
+    found: PairDeployments,
+  ): Promise<Array<Pair>> => {
+    const fromConfig =
+      'env' in slice
+        ? await configured.then(
+            ({ apps, envs }) =>
+              envs.has(slice.env)
+                ? apps.map((app) => ({ app, env: slice.env }))
+                : [],
+            () => [],
+          )
+        : []
+    return [...fromConfig, ...found.pairs].filter(
+      (p) => !except || keyOf(p) !== keyOf(except),
+    )
+  }
 
   yield* streamSources([
     {
+      // Each source fails alone: without the catalog, the scope is what the
+      // config knows.
       facets: ['credentials'],
       chunks: whole(
-        Promise.all([configPairs, deployedOrNone]).then((both) =>
-          credentials(inScope(both)),
-        ),
+        Promise.all(
+          slices.map(async (s) =>
+            pairsOf(s, await reads.get(s)!.catch(() => EMPTY)),
+          ),
+        ).then((all) => credentials(uniquePairs(all.flat()))),
       ),
     },
     {
       facets: ['deployment'],
-      chunks: deployments(
-        Promise.all([configPairs.catch(() => []), deployed]).then(inScope),
-        deployed,
-      ),
+      chunks: asReady(slices, 'deployment', async (s) => {
+        const found = await reads.get(s)!
+        return deploymentChunks(await pairsOf(s, found), found, sent).flat()
+      }),
     },
   ])
 }

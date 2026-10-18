@@ -10,7 +10,6 @@ export type {
   EnvCredentials,
   EnvFacet,
   PairChunk,
-  PairCredentials,
   PairFacet,
   PairJumps,
   StreamFacet,

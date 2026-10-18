@@ -108,15 +108,18 @@ const shopOnProd: PairDeployments = {
   ],
 }
 
+type Filter = { appSlugs?: Array<string>; envSlugs?: Array<string> }
 /** A catalog answering from memory, `delayMs` late, the way a slow DB would. */
 function memoryCatalog(
   found: PairDeployments,
-  delayMs = 0,
+  delayMs: number | ((filter: Filter) => number) = 0,
   fails = false,
 ): Catalog {
   return {
     async getPairDeployments({ appSlugs, envSlugs }) {
-      await new Promise((r) => setTimeout(r, delayMs))
+      const ms =
+        typeof delayMs === 'number' ? delayMs : delayMs({ appSlugs, envSlugs })
+      await new Promise((r) => setTimeout(r, ms))
       if (fails) throw new Error('catalog down')
       return {
         components: Object.fromEntries(
@@ -204,7 +207,7 @@ describe('pair', () => {
     expect(last - first).toBeGreaterThanOrEqual(SLOW_MS - 50)
   })
 
-  it("carries the pair's jumps narrowed to its Environment, its Environment's credentials and its Deployment", async () => {
+  it("carries the pair's jumps narrowed to its Environment and its Deployment; no credentials where nothing lacks them", async () => {
     const chunks = await collect(
       client.pair.query({ appSlug: 'shop', envSlug: 'qa' }),
     )
@@ -223,9 +226,8 @@ describe('pair', () => {
       envs: [jumps.envs[1]],
       lateResolvableParams: [{ slug: 'orderId', displayName: 'Order ID' }],
     })
-    expect(dataOf(chunks, '/qa/credentials')).toEqual({
-      shop: { ui: [login], dataSources: [] },
-    })
+    // Their templates are in `bootstrap.apps`; qa lacks none of them.
+    expect(namesOf(chunks)).not.toContain('/qa/credentials')
     // Not deployed here: the Components, no rows.
     expect(dataOf(chunks, 'shop//components')).toEqual(
       shopOnProd.components.shop,
@@ -233,12 +235,14 @@ describe('pair', () => {
     expect(dataOf(chunks, 'shop/qa/deployment')).toEqual({ rows: [] })
   })
 
-  it('an Environment that lacks credentials gets none; no catalog, no Deployments', async () => {
+  it('an Environment that lacks credentials names the App; no catalog, no Deployments', async () => {
     catalog = null
     const chunks = await collect(
       client.pair.query({ appSlug: 'shop', envSlug: 'prod' }),
     )
-    expect(dataOf(chunks, '/prod/credentials')).toEqual({})
+    expect(dataOf(chunks, '/prod/credentials')).toEqual({
+      shop: ['credentials'],
+    })
     expect(dataOf(chunks, 'shop/prod/deployment')).toEqual({ rows: [] })
   })
 
@@ -248,8 +252,8 @@ describe('pair', () => {
       client.pair.query({ appSlug: 'shop', envSlug: 'prod' }),
     )
     expect(namesOf(chunks).sort()).toEqual([
-      '//deployment!',
       '/prod/credentials',
+      'shop/prod/deployment!',
       'shop/prod/jumps',
     ])
   })
@@ -265,17 +269,36 @@ describe('slices', () => {
     expect(namesOf(chunks).sort()).toEqual(
       [
         '/prod/credentials',
-        '/qa/credentials',
         'shop//components',
         'shop/prod/deployment',
         'shop/qa/deployment',
         'wiki/qa/deployment',
       ].sort(),
     )
-    expect(dataOf(chunks, '/qa/credentials')).toEqual({
-      shop: { ui: [login], dataSources: [] },
+    // Only prod lacks something: shop's credentials.
+    expect(dataOf(chunks, '/prod/credentials')).toEqual({
+      shop: ['credentials'],
     })
-    expect(dataOf(chunks, '/prod/credentials')).toEqual({})
+  })
+
+  it("sends each slice's pairs as soon as that slice is read, not after the slowest", async () => {
+    const SLOW_MS = 400
+    // qa's read answers at once, shop's vertical read late.
+    catalog = memoryCatalog(shopOnProd, (f) => (f.appSlugs ? SLOW_MS : 0))
+    const chunks = await collect(
+      client.slices.query({ appSlugs: ['shop'], envSlugs: ['qa'] }),
+    )
+    const at = (name: string) => chunks.find((c) => nameOf(c) === name)!.ms
+    console.log(
+      `[slices] qa pairs at ${at('wiki/qa/deployment')} ms, shop/prod at ${at('shop/prod/deployment')} ms (slow read ${SLOW_MS} ms)`,
+    )
+    expect(at('wiki/qa/deployment')).toBeLessThan(SLOW_MS / 2)
+    expect(at('shop/qa/deployment')).toBeLessThan(SLOW_MS / 2)
+    expect(at('shop/prod/deployment')).toBeGreaterThanOrEqual(SLOW_MS - 50)
+    // A pair in both slices goes out once.
+    expect(
+      namesOf(chunks).filter((n) => n === 'shop/qa/deployment'),
+    ).toHaveLength(1)
   })
 
   it('sends Components once per App, Users by username only, and pipeline links as ids', async () => {
@@ -402,18 +425,21 @@ describe('slices', () => {
     })
     const chunks = await collect(client.slices.query({ appSlugs: ['api'] }))
     expect(namesOf(chunks).sort()).toEqual([
-      '/qa/credentials',
       'api//components',
       'api/qa/deployment',
     ])
   })
 
-  it('a failing catalog still sends the credentials the config knows', async () => {
+  it('a failing catalog fails each slice and still sends the credentials the config knows', async () => {
     catalog = memoryCatalog(shopOnProd, 0, true)
     const chunks = await collect(
-      client.slices.query({ appSlugs: ['shop'], envSlugs: ['qa'] }),
+      client.slices.query({ appSlugs: ['shop'], envSlugs: ['prod'] }),
     )
-    expect(namesOf(chunks).sort()).toEqual(['//deployment!', '/qa/credentials'])
+    expect(namesOf(chunks).sort()).toEqual([
+      '/prod/credentials',
+      '/prod/deployment!',
+      'shop//deployment!',
+    ])
   })
 
   it('`users` answers the profiles asked for, at most 100 names', async () => {

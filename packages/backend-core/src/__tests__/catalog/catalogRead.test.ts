@@ -130,7 +130,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
         source: 'ci',
       },
     ])
-    expect(await catalog!.listDeployments({ appSlug: 'other' })).toEqual([])
+    expect(await catalog!.listDeployments({ appSlugs: ['other'] })).toEqual([])
   })
 
   it('health without a deployment is never returned', async () => {
@@ -184,7 +184,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
     expect(resolved?.version).toBe('main-11')
   })
 
-  describe('app deployments', () => {
+  describe('pair deployments', () => {
     async function givenShopDeployedOn(
       targets: Array<{ slug: string; retired?: boolean }>,
     ) {
@@ -223,33 +223,35 @@ describe.skipIf(!prisma)('catalog reads', () => {
       )
     }
 
-    it('returns the deployer, links and ISO dates', async () => {
+    it('returns the deployer, links and ISO dates, users by username', async () => {
       await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
-      expect(await catalog!.getAppDeployments('shop')).toEqual({
-        components: [{ slug: 'shop-api', displayName: 'Shop API' }],
-        leadComponentSlug: null,
-        deployments: [
-          {
-            environmentSlug: 'prod',
-            componentSlug: 'shop-api',
-            targetSlug: 'k8s:prod/shop',
-            version: 'main-10',
-            aliases: [],
-            buildUrl: 'https://ci.example.com/p/10',
-            deployedAt: '2026-01-01T10:00:00.000Z',
-            deployedBy: {
-              username: 'jdoe',
-              firstName: 'Jo',
-              lastName: 'Doe',
-              avatarUrl: null,
-            },
-            deployUrl: 'https://ci.example.com/d/0',
-            source: 'ci',
-            endpoints: [],
-            health: null,
+      expect(await catalog!.getPairDeployments({ appSlugs: ['shop'] })).toEqual(
+        {
+          components: {
+            shop: [{ slug: 'shop-api', displayName: 'Shop API', lead: true }],
           },
-        ],
-      })
+          pairs: [
+            {
+              app: 'shop',
+              env: 'prod',
+              users: { jdoe: { firstName: 'Jo', lastName: 'Doe' } },
+              rows: [
+                {
+                  componentSlug: 'shop-api',
+                  targetSlug: 'k8s:prod/shop',
+                  version: 'main-10',
+                  aliases: [],
+                  buildUrl: 'https://ci.example.com/p/10',
+                  deployedAt: '2026-01-01T10:00:00.000Z',
+                  deployedBy: 'jdoe',
+                  deployUrl: 'https://ci.example.com/d/0',
+                  source: 'ci',
+                },
+              ],
+            },
+          ],
+        },
+      )
     })
 
     it('a live Target wins over a retired one, even when the retired deploy is newer', async () => {
@@ -257,41 +259,57 @@ describe.skipIf(!prisma)('catalog reads', () => {
         { slug: 'k8s:prod/shop' },
         { slug: 'old:shop', retired: true },
       ])
-      const { deployments } = await catalog!.getAppDeployments('shop')
-      expect(deployments.map((d) => [d.targetSlug, d.version])).toEqual([
+      const { pairs } = await catalog!.getPairDeployments({})
+      expect(pairs[0]!.rows.map((d) => [d.targetSlug, d.version])).toEqual([
         ['k8s:prod/shop', 'main-10'],
       ])
     })
 
-    it('an App with no Components has nothing; a Component deployed nowhere is listed', async () => {
+    it('filters by Environment too; a Component deployed nowhere has Components and no pair', async () => {
+      await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
+      expect(
+        (await catalog!.getPairDeployments({ envSlugs: ['qa'] })).pairs,
+      ).toEqual([])
+      expect(
+        (await catalog!.getPairDeployments({ envSlugs: ['prod'] })).pairs,
+      ).toHaveLength(1)
+      await resetCatalog(prisma!)
       await givenOneComponentOnTwoTargets()
-      expect(await catalog!.getAppDeployments('unknown')).toEqual({
-        components: [],
-        leadComponentSlug: null,
-        deployments: [],
-      })
-      expect(await catalog!.getAppDeployments('shop')).toEqual({
-        components: [{ slug: 'shop-api', displayName: 'Shop API' }],
-        leadComponentSlug: null,
-        deployments: [],
+      expect(
+        await catalog!.getPairDeployments({ appSlugs: ['shop', 'unknown'] }),
+      ).toEqual({
+        components: {
+          shop: [{ slug: 'shop-api', displayName: 'Shop API', lead: true }],
+        },
+        pairs: [],
       })
     })
 
-    it('names the lead Component the App was given', async () => {
+    it('marks the lead Component the App was given', async () => {
       await givenOneComponentOnTwoTargets()
-      await catalog!.syncApps('ci', [
-        { slug: 'shop', displayName: 'Shop', leadComponentSlug: 'shop-api' },
+      await catalog!.syncComponents('ci', [
+        { slug: 'shop-api', displayName: 'Shop API', appSlug: 'shop' },
+        { slug: 'shop-ui', displayName: 'Shop UI', appSlug: 'shop' },
       ])
-      expect((await catalog!.getAppDeployments('shop')).leadComponentSlug).toBe(
-        'shop-api',
-      )
+      await catalog!.syncApps('ci', [
+        { slug: 'shop', displayName: 'Shop', leadComponentSlug: 'shop-ui' },
+      ])
+      expect(
+        (await catalog!.getPairDeployments({ appSlugs: ['shop'] })).components,
+      ).toEqual({
+        shop: [
+          { slug: 'shop-api', displayName: 'Shop API' },
+          { slug: 'shop-ui', displayName: 'Shop UI', lead: true },
+        ],
+      })
     })
 
     it('deleting the User keeps the Deployment, without a deployer', async () => {
       await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
       await catalog!.syncUsers('ci', [])
-      const [d] = (await catalog!.getAppDeployments('shop')).deployments
-      expect(d?.deployedBy).toBeNull()
+      const [pair] = (await catalog!.getPairDeployments({})).pairs
+      expect(pair?.rows[0]?.deployedBy).toBeUndefined()
+      expect(pair?.users).toEqual({})
     })
   })
 })

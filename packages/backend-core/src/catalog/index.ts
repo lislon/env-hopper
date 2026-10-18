@@ -1,6 +1,7 @@
 export * from './catalogTypes'
 export type {
-  AppDeploymentsData,
+  PairDeployment,
+  PairDeployments,
   Catalog,
   CatalogUserView,
   CatalogArtifactView,

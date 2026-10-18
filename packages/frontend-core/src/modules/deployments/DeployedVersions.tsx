@@ -1,21 +1,13 @@
-import { queryOptions, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useRef } from 'react'
 import type { RefObject } from 'react'
-import type { AppDeploymentsData } from '@env-hopper/backend-core'
-import { getTrpcFromMeta } from '~/util/reactQueryUtils'
+import type { PairDeployment } from '@env-hopper/backend-core'
+import { pairFacetQuery } from '~/modules/pairDetails/pairDetails'
 import { appSlugFromJumpSlug } from '~/util/route-utils'
 
-type Deployment = AppDeploymentsData['deployments'][number]
-type Component = AppDeploymentsData['components'][number]
-
-/** One request per App: switching Environments reads the cache. */
-export function appDeploymentsQuery(appSlug: string) {
-  return queryOptions<AppDeploymentsData, Error>({
-    queryKey: ['appDeployments', appSlug],
-    queryFn: (ctx) => getTrpcFromMeta(ctx).deployments.query({ appSlug }),
-    staleTime: 60_000,
-  })
-}
+type Deployment = PairDeployment['rows'][number]
+type Component = PairDeployment['components'][number]
+type Users = PairDeployment['users']
 
 export function timeAgo(iso: string, now = Date.now()): string {
   const min = Math.max(0, Math.floor((now - Date.parse(iso)) / 60_000))
@@ -35,11 +27,11 @@ const fullDate = (iso: string) =>
     minute: '2-digit',
   })
 
-function deployerName(d: Deployment): string | null {
-  const u = d.deployedBy
-  if (!u) return null
-  const name = [u.firstName, u.lastName].filter(Boolean).join(' ')
-  return name || u.username
+function deployerName(d: Deployment, users: Users): string | null {
+  if (!d.deployedBy) return null
+  const u = users[d.deployedBy]
+  const name = [u?.firstName, u?.lastName].filter(Boolean).join(' ')
+  return name || d.deployedBy
 }
 
 /** Only a problem draws a dot: the worst Health of the App's Components. */
@@ -50,7 +42,7 @@ function dotOf(lead: Deployment | undefined, all: Array<Deployment>) {
 }
 
 const checked = (d: Deployment) =>
-  d.health !== null && d.health.checker !== 'none'
+  d.health !== undefined && d.health.checker !== 'none'
 
 const healthText = (d: Deployment) =>
   d.health && checked(d)
@@ -64,6 +56,7 @@ function DetailsDialog({
   components,
   leadSlug,
   of,
+  users,
 }: {
   dialogRef: RefObject<HTMLDialogElement | null>
   onClose: () => void
@@ -71,6 +64,7 @@ function DetailsDialog({
   components: Array<Component>
   leadSlug: string
   of: (slug: string) => Deployment | undefined
+  users: Users
 }) {
   return (
     <dialog
@@ -138,7 +132,7 @@ function DetailsDialog({
                     >
                       {d.deployedAt ? timeAgo(d.deployedAt) : ''}
                     </td>
-                    <td>{deployerName(d) ?? ''}</td>
+                    <td>{deployerName(d, users) ?? ''}</td>
                     <td className="eh-deployed-links">
                       {d.buildUrl && (
                         <a href={d.buildUrl} target="_blank" rel="noreferrer">
@@ -150,7 +144,7 @@ function DetailsDialog({
                           deploy job
                         </a>
                       )}
-                      {d.endpoints.map((e) => (
+                      {d.endpoints?.map((e) => (
                         <a
                           key={`${e.kind} ${e.url}`}
                           href={e.url}
@@ -193,17 +187,16 @@ export function DeployedVersions({
 }) {
   const appSlug = jumpSlug ? appSlugFromJumpSlug(jumpSlug) : ''
   const { data } = useQuery({
-    ...appDeploymentsQuery(appSlug),
+    ...pairFacetQuery(appSlug, envSlug ?? '', 'deployment'),
     enabled: appSlug !== '' && envSlug !== undefined,
   })
   const dialogRef = useRef<HTMLDialogElement>(null)
   const openerRef = useRef<HTMLButtonElement>(null)
   const leadComponent =
-    data?.components.find((c) => c.slug === data.leadComponentSlug) ??
-    data?.components[0]
+    data?.components.find((c) => c.lead) ?? data?.components[0]
   if (!data || !envSlug || !leadComponent) return null
 
-  const here = data.deployments.filter((d) => d.environmentSlug === envSlug)
+  const here = data.rows
   const of = (slug: string) => here.find((d) => d.componentSlug === slug)
   const lead = of(leadComponent.slug)
   const others = data.components.flatMap((c) => {
@@ -213,7 +206,7 @@ export function DeployedVersions({
       : []
   })
   const dot = dotOf(lead, here)
-  const by = lead && deployerName(lead)
+  const by = lead && deployerName(lead, data.users)
 
   return (
     <div className="eh-deployed">
@@ -267,6 +260,7 @@ export function DeployedVersions({
         components={data.components}
         leadSlug={leadComponent.slug}
         of={of}
+        users={data.users}
       />
     </div>
   )

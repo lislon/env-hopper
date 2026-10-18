@@ -6,9 +6,9 @@ import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
 import { waitFor } from '@testing-library/react'
 import { createBackend, renderApp } from '../src/index'
-import type { AppDeploymentsData } from '@env-hopper/backend-core'
+import type { FixtureDeployments } from '../src/index'
 
-type Row = AppDeploymentsData['deployments'][number]
+type Row = FixtureDeployments['rows'][number]
 
 // jsdom ships no modal dialog: open and close by attribute, as the browser
 // would, so the details are reachable in the accessibility tree.
@@ -23,27 +23,21 @@ beforeAll(() => {
 })
 
 const row = (over: Partial<Row>): Row => ({
-  environmentSlug: 'staging',
+  env: 'staging',
   componentSlug: 'shop-ui',
   targetSlug: 'k8s:staging/shop',
   version: 'main-41',
   aliases: [],
   buildUrl: 'https://ci.example.com/pipelines/41',
   deployedAt: new Date(Date.now() - 15 * 60_000).toISOString(),
-  deployedBy: {
-    username: 'jdoe',
-    firstName: 'Jo',
-    lastName: 'Doe',
-    avatarUrl: null,
-  },
+  deployedBy: 'jdoe',
   deployUrl: 'https://ci.example.com/pipelines/42',
   source: 'ci',
-  endpoints: [],
-  health: null,
   ...over,
 })
+const users = { jdoe: { firstName: 'Jo', lastName: 'Doe' } }
 
-const backend = (deployments: Record<string, AppDeploymentsData>) =>
+const backend = (deployments: Record<string, FixtureDeployments>) =>
   createBackend({
     apps: [
       { slug: 'shop', resourceJumps: '1-pager' },
@@ -53,7 +47,7 @@ const backend = (deployments: Record<string, AppDeploymentsData>) =>
     deployments,
   })
 
-const shopUi = { slug: 'shop-ui', displayName: 'UI' }
+const shopUi = { slug: 'shop-ui', displayName: 'UI', lead: true as const }
 const shopApi = { slug: 'shop-api', displayName: 'API' }
 const down = {
   state: 'down' as const,
@@ -61,10 +55,10 @@ const down = {
   observedAt: new Date().toISOString(),
   detail: '503',
 }
-const shopTwoComponents = (lead: Partial<Row> = {}): AppDeploymentsData => ({
+const shopTwoComponents = (lead: Partial<Row> = {}): FixtureDeployments => ({
   components: [shopApi, shopUi],
-  leadComponentSlug: 'shop-ui',
-  deployments: [
+  users,
+  rows: [
     row(lead),
     row({ componentSlug: 'shop-api', version: 'main-9', health: down }),
   ],
@@ -78,7 +72,7 @@ describe('deployed version under the jump card', () => {
 
   const open = (
     link: string,
-    deployments: Record<string, AppDeploymentsData>,
+    deployments: Record<string, FixtureDeployments>,
   ) => renderApp({ server, backend: backend(deployments), initialLink: link })
 
   const lines = (container: HTMLElement) =>
@@ -90,11 +84,7 @@ describe('deployed version under the jump card', () => {
 
   test('a healthy deploy shows its Version and time, with no dot', async () => {
     const app = await open('/env/staging/app/shop', {
-      shop: {
-        components: [shopUi],
-        leadComponentSlug: null,
-        deployments: [row({})],
-      },
+      shop: { components: [shopUi], users, rows: [row({})] },
     })
     await waitFor(() => expect(lines(app.container)).toHaveLength(1))
     const [line] = lines(app.container)
@@ -154,11 +144,7 @@ describe('deployed version under the jump card', () => {
 
   test('the lead not deployed on this Environment says so, with a grey dot', async () => {
     const app = await open('/env/dev/app/shop', {
-      shop: {
-        components: [shopUi],
-        leadComponentSlug: null,
-        deployments: [row({})],
-      },
+      shop: { components: [shopUi], users, rows: [row({})] },
     })
     await waitFor(() => expect(lines(app.container)).toHaveLength(1))
     const [line] = lines(app.container)
@@ -172,5 +158,62 @@ describe('deployed version under the jump card', () => {
     // Give the query time to answer before asserting absence.
     await new Promise((r) => setTimeout(r, 50))
     expect(lines(app.container)).toHaveLength(0)
+  })
+
+  describe('pair details from the preloaded slices', () => {
+    /** The streamed queries the app sent, by path, in order. */
+    function streamedRequests() {
+      const paths: Array<string> = []
+      server.events.on('request:start', ({ request }) => {
+        const path = new URL(request.url).pathname.split('/').at(-1)!
+        if (/^(pair|slices)(,|$)/.test(path)) paths.push(path)
+      })
+      return paths
+    }
+
+    test('after the first render, slices load the open pair and the history; switching to a loaded Environment sends nothing', async () => {
+      localStorage.setItem(
+        'recent',
+        JSON.stringify([{ app: 'wiki', env: 'dev', url: 'https://w' }]),
+      )
+      const sent = streamedRequests()
+      const app = await open('/env/staging/app/shop', {
+        shop: {
+          components: [shopUi],
+          users,
+          rows: [row({}), row({ env: 'dev', version: 'main-40' })],
+        },
+      })
+      await waitFor(() => expect(lines(app.container)).toHaveLength(1))
+      expect(
+        lines(app.container)[0]!.querySelector('button'),
+      ).toHaveTextContent('main-41')
+      await waitFor(() => expect(sent).toContain('slices'))
+      // Every facet of a pair in the slices is cached on its own key.
+      await waitFor(() =>
+        expect(
+          app.queryClient.getQueryData(['pair', 'wiki', 'staging', 'jumps']),
+        ).toBeDefined(),
+      )
+      const before = sent.length
+
+      await app.ui.legacyForm.pickEnvironment('Dev')
+      await waitFor(() =>
+        expect(
+          lines(app.container)[0]!.querySelector('button'),
+        ).toHaveTextContent('main-40'),
+      )
+      await new Promise((r) => setTimeout(r, 50))
+      expect(sent.slice(before)).toEqual([])
+    })
+
+    test('a pair outside the slices is loaded by `pair` when opened', async () => {
+      const sent = streamedRequests()
+      const app = await open('/env/staging/app/shop', {
+        shop: { components: [shopUi], users, rows: [row({})] },
+      })
+      await waitFor(() => expect(lines(app.container)).toHaveLength(1))
+      expect(sent[0]).toBe('pair')
+    })
   })
 })

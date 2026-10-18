@@ -27,8 +27,8 @@ When(
   'I list the deployments of app {string} in {string}',
   async (world, app: string, env: string) => {
     world.data.rows = await catalog.listDeployments({
-      appSlug: app,
-      environmentSlug: env,
+      appSlugs: [app],
+      environmentSlugs: [env],
     })
   },
 )
@@ -41,7 +41,10 @@ Then(
   'I see {int} deployments of app {string} in {string}',
   async (_w, n: number, app: string, env: string) =>
     expect(
-      await catalog.listDeployments({ appSlug: app, environmentSlug: env }),
+      await catalog.listDeployments({
+        appSlugs: [app],
+        environmentSlugs: [env],
+      }),
     ).toHaveLength(n),
 )
 
@@ -93,11 +96,11 @@ Then(
 )
 
 Then('app {string} has {int} deployments', async (_w, app: string, n: number) =>
-  expect(await catalog.listDeployments({ appSlug: app })).toHaveLength(n),
+  expect(await catalog.listDeployments({ appSlugs: [app] })).toHaveLength(n),
 )
 
 Then('app {string} has {int} deployment', async (_w, app: string, n: number) =>
-  expect(await catalog.listDeployments({ appSlug: app })).toHaveLength(n),
+  expect(await catalog.listDeployments({ appSlugs: [app] })).toHaveLength(n),
 )
 
 Then('I see {int} deployments in total', async (_w, n: number) =>

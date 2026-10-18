@@ -146,7 +146,7 @@ export interface EhMiddlewareOptions {
   /** Company-specific backend implementation (required) */
   backend: EhBackendProvider
 
-  /** The deployment catalog the `deployments` query reads (optional) */
+  /** The deployment catalog the `pair` and `slices` queries read (optional) */
   catalog?: Catalog
 
   /** AI admin chat configuration (optional) */

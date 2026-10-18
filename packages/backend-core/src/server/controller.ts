@@ -1,10 +1,10 @@
 import z from 'zod'
 
 import type { BootstrapConfigData, ResourceJumpsData } from '../types'
-import type { AppDeploymentsData } from '../catalog'
 
 import type { BetterAuth } from '../modules/auth/auth'
 import { createAuthRouter } from '../modules/auth/authRouter.js'
+import { MAX_SLICE_SLUGS, pairDetails } from './pairDetails'
 import { publicProcedure, router, t } from './trpcSetup'
 
 /**
@@ -62,13 +62,31 @@ export function createTrpcRouter(auth?: BetterAuth) {
         )
       }),
 
-    /** Where an App's Components run; empty when there is no catalog. */
-    deployments: publicProcedure
-      .input(z.object({ appSlug: z.string() }))
-      .query(async ({ input, ctx }): Promise<AppDeploymentsData> => {
-        return ctx.catalog
-          ? await ctx.catalog.getAppDeployments(input.appSlug)
-          : { components: [], leadComponentSlug: null, deployments: [] }
+    /** One pair's details, a chunk per facet as each source answers. */
+    pair: publicProcedure
+      .input(z.object({ appSlug: z.string(), envSlug: z.string() }))
+      .query(async function* ({ input, ctx }) {
+        yield* pairDetails(ctx, {
+          pair: { app: input.appSlug, env: input.envSlug },
+        })
+      }),
+
+    /**
+     * The details of every pair in the slices: each Environment's Apps and
+     * each App's Environments, a chunk per facet per pair.
+     */
+    slices: publicProcedure
+      .input(
+        z.object({
+          appSlugs: z.array(z.string()).max(MAX_SLICE_SLUGS).optional(),
+          envSlugs: z.array(z.string()).max(MAX_SLICE_SLUGS).optional(),
+        }),
+      )
+      .query(async function* ({ input, ctx }) {
+        yield* pairDetails(ctx, {
+          appSlugs: input.appSlugs ?? [],
+          envSlugs: input.envSlugs ?? [],
+        })
       }),
 
     // Auth routes (requires auth instance)

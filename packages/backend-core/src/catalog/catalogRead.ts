@@ -57,41 +57,67 @@ export interface Catalog {
   /** Counts the Deployments; each Deployment's Endpoints are synced with it. */
   syncDeployments: Sync<CatalogDeploymentInput>
   syncHealth: Sync<CatalogHealthInput>
+  /** Filters are AND-ed; an omitted one takes all. */
   listDeployments: (filter?: {
-    appSlug?: string
-    environmentSlug?: string
+    appSlugs?: Array<string>
+    environmentSlugs?: Array<string>
   }) => Promise<Array<CatalogDeploymentView>>
   resolveAlias: (
     componentSlug: string,
     alias: string,
   ) => Promise<CatalogArtifactView | null>
-  /** An App's Components and where each is deployed, by Environment. */
-  getAppDeployments: (appSlug: string) => Promise<AppDeploymentsData>
+  /**
+   * One Deployment per Component per pair (App, Environment), for the
+   * Components of `appSlugs` deployed on `envSlugs`; an omitted filter takes
+   * all. Pairs with nothing deployed are absent from `pairs`.
+   */
+  getPairDeployments: (filter: {
+    appSlugs?: Array<string>
+    envSlugs?: Array<string>
+  }) => Promise<PairDeployments>
 }
 
 /** JSON-ready (dates as ISO strings): it is served as is. */
-export interface AppDeploymentsData {
-  components: Array<{ slug: string; displayName: string }>
-  /** Stands for the App where one Version is shown; null = the first Component. */
-  leadComponentSlug: string | null
-  deployments: Array<{
-    environmentSlug: string
+export interface PairDeployment {
+  components: Array<{ slug: string; displayName: string; lead?: true }>
+  /** The Users the rows name, by username. */
+  users: Record<
+    string,
+    { firstName?: string; lastName?: string; avatarUrl?: string }
+  >
+  rows: Array<{
     componentSlug: string
     targetSlug: string
     version: string
     aliases: Array<string>
-    buildUrl: string | null
-    deployedAt: string | null
-    deployedBy: CatalogUserView | null
-    deployUrl: string | null
+    buildUrl?: string
+    deployUrl?: string
+    deployedAt?: string
+    /** Username, a key of `users`. */
+    deployedBy?: string
     source: string
-    endpoints: Array<{ kind: EndpointKind; url: string; label?: string }>
-    health: {
+    /** Absent: nothing checks it. */
+    health?: {
       state: HealthState
       checker: string
       observedAt: string
-      detail: string | null
-    } | null
+      detail?: string
+    }
+    endpoints?: Array<{ kind: EndpointKind; url: string; label?: string }>
+  }>
+}
+
+export interface PairDeployments {
+  /**
+   * Each App's Components, the lead marked: for `appSlugs`, or for every App
+   * when that filter is omitted.
+   */
+  components: Record<string, PairDeployment['components']>
+  pairs: Array<{
+    app: string
+    env: string
+    rows: PairDeployment['rows']
+    users: PairDeployment['users']
   }>
 }
 
@@ -144,13 +170,18 @@ export function chunks<T>(list: Array<T>, size = 1000): Array<Array<T>> {
 export function createCatalogReads(prisma: PrismaClient) {
   const reads = {
     async listDeployments(
-      filter: { appSlug?: string; environmentSlug?: string } = {},
+      filter: {
+        appSlugs?: Array<string>
+        environmentSlugs?: Array<string>
+      } = {},
     ) {
       const rows = await prisma.catalogDeployment.findMany({
         where: {
-          component: filter.appSlug ? { appSlug: filter.appSlug } : undefined,
-          target: filter.environmentSlug
-            ? { environmentSlug: filter.environmentSlug }
+          component: filter.appSlugs
+            ? { appSlug: { in: filter.appSlugs } }
+            : undefined,
+          target: filter.environmentSlugs
+            ? { environmentSlug: { in: filter.environmentSlugs } }
             : undefined,
         },
         include: {
@@ -221,21 +252,33 @@ export function createCatalogReads(prisma: PrismaClient) {
         } satisfies CatalogDeploymentView
       })
     },
-    async getAppDeployments(appSlug: string): Promise<AppDeploymentsData> {
-      const components = await prisma.catalogComponent.findMany({
-        where: { appSlug },
-        select: { slug: true, displayName: true },
-        orderBy: { slug: 'asc' },
-      })
-      const app = await prisma.catalogApp.findUnique({
-        where: { slug: appSlug },
-        select: { leadComponentSlug: true },
-      })
-      const leadComponentSlug = app?.leadComponentSlug ?? null
-      if (components.length === 0) {
-        return { components, leadComponentSlug, deployments: [] }
+    async getPairDeployments(filter: {
+      appSlugs?: Array<string>
+      envSlugs?: Array<string>
+    }): Promise<PairDeployments> {
+      const { appSlugs, envSlugs } = filter
+      const [apps, rows] = await Promise.all([
+        prisma.catalogApp.findMany({
+          where: appSlugs ? { slug: { in: appSlugs } } : undefined,
+          select: {
+            slug: true,
+            leadComponentSlug: true,
+            components: {
+              select: { slug: true, displayName: true },
+              orderBy: { slug: 'asc' },
+            },
+          },
+        }),
+        reads.listDeployments({ appSlugs, environmentSlugs: envSlugs }),
+      ])
+      const components: PairDeployments['components'] = {}
+      for (const a of apps) {
+        if (a.components.length === 0) continue
+        const lead = a.leadComponentSlug ?? a.components[0]!.slug
+        components[a.slug] = a.components.map((c) =>
+          c.slug === lead ? { ...c, lead: true as const } : c,
+        )
       }
-      const rows = await reads.listDeployments({ appSlug })
       // One Deployment per Component per Environment: a live Target wins over
       // a retired one (meta.retired = 'true'), then the latest deploy.
       const rank = (d: CatalogDeploymentView) =>
@@ -245,33 +288,51 @@ export function createCatalogReads(prisma: PrismaClient) {
         ] as const
       const best = new Map<string, CatalogDeploymentView>()
       for (const d of rows) {
-        if (!d.target.environmentSlug) continue
+        if (!d.target.environmentSlug || !d.component.appSlug) continue
         const key = `${d.target.environmentSlug}\u0000${d.component.slug}`
         const held = best.get(key)
         const [a0, a1] = rank(d)
         const [b0, b1] = held ? rank(held) : [-1, -1]
         if (a0 > b0 || (a0 === b0 && a1 > b1)) best.set(key, d)
       }
-      return {
-        components,
-        leadComponentSlug,
-        deployments: [...best.values()].map((d) => ({
-          environmentSlug: d.target.environmentSlug!,
+      const pairs = new Map<string, PairDeployments['pairs'][number]>()
+      for (const d of best.values()) {
+        const app = d.component.appSlug!
+        const env = d.target.environmentSlug!
+        const key = `${app}\u0000${env}`
+        const pair = pairs.get(key) ?? { app, env, rows: [], users: {} }
+        pairs.set(key, pair)
+        const u = d.deployedBy
+        if (u) {
+          pair.users[u.username] = {
+            ...(u.firstName && { firstName: u.firstName }),
+            ...(u.lastName && { lastName: u.lastName }),
+            ...(u.avatarUrl && { avatarUrl: u.avatarUrl }),
+          }
+        }
+        const h = d.health
+        pair.rows.push({
           componentSlug: d.component.slug,
           targetSlug: d.target.slug,
           version: d.artifact.version,
           aliases: d.artifact.aliases,
-          buildUrl: d.artifact.buildUrl,
-          deployedAt: d.deployedAt?.toISOString() ?? null,
-          deployedBy: d.deployedBy,
-          deployUrl: d.deployUrl,
+          ...(d.artifact.buildUrl && { buildUrl: d.artifact.buildUrl }),
+          ...(d.deployUrl && { deployUrl: d.deployUrl }),
+          ...(d.deployedAt && { deployedAt: d.deployedAt.toISOString() }),
+          ...(u && { deployedBy: u.username }),
           source: d.source,
-          endpoints: d.endpoints,
-          health: d.health
-            ? { ...d.health, observedAt: d.health.observedAt.toISOString() }
-            : null,
-        })),
+          ...(h && {
+            health: {
+              state: h.state,
+              checker: h.checker,
+              observedAt: h.observedAt.toISOString(),
+              ...(h.detail && { detail: h.detail }),
+            },
+          }),
+          ...(d.endpoints.length > 0 && { endpoints: d.endpoints }),
+        })
       }
+      return { components, pairs: [...pairs.values()] }
     },
     async resolveAlias(componentSlug: string, alias: string) {
       const a = await prisma.catalogArtifact.findFirst({

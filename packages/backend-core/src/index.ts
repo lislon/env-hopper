@@ -3,6 +3,13 @@
 export { createTrpcRouter } from './server/controller'
 export type { TRPCRouter } from './server/controller'
 export { createEhTrpcContext } from './server/ehTrpcContext'
+export { MAX_SLICE_SLUGS } from './server/pairDetails'
+export type {
+  PairChunk,
+  PairCredentials,
+  PairFacet,
+  PairJumps,
+} from './server/pairDetails'
 export type {
   EhTrpcContext,
   EhTrpcContextOptions,

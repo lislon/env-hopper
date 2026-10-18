@@ -7,6 +7,7 @@ import {
   App,
   EhDb,
   createEhRouter,
+  createEhTrpcLinks,
   createQueryClient,
 } from '@env-hopper/frontend-core/internal'
 import { TRPC_URL } from '../mock-backend/createBackend'
@@ -129,7 +130,9 @@ export async function renderApp(options: RenderAppOptions): Promise<AppHandle> {
   backend.setupNetwork(options.server)
 
   const trpcClient = createTRPCClient<TRPCRouter>({
-    links: [httpLink({ url: TRPC_URL })],
+    // The streamed queries as the app sends them; the rest one per request,
+    // which is what the msw handlers answer.
+    links: createEhTrpcLinks(TRPC_URL, httpLink),
   })
 
   const queryClient = createQueryClient({ trpcClient, db })

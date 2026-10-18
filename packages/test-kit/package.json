@@ -64,6 +64,7 @@
     "@testing-library/react": "catalog:",
     "@testing-library/user-event": "^14.6.1",
     "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
     "fake-indexeddb": "^6.2.4",
     "msw": "^2.12.14",
     "msw-trpc": "^2.0.1",

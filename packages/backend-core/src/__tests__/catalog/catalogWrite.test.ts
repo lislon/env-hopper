@@ -58,7 +58,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
         source: 'ci',
       },
     ])
-    const rows = await catalog!.listDeployments({ environmentSlug: 'prod' })
+    const rows = await catalog!.listDeployments({ environmentSlugs: ['prod'] })
     const pairs = rows.map(
       (r: { target: { slug: string }; artifact: { version: string } }) => [
         r.target.slug,

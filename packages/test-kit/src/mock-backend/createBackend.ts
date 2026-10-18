@@ -1,14 +1,18 @@
 import { http } from 'msw'
 import { createTRPCMsw, httpLink } from 'msw-trpc'
+import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
+import { createEhTrpcContext, createTrpcRouter } from '@env-hopper/backend-core'
 import type {
-  AppDeploymentsData,
   BootstrapConfigData,
+  Catalog,
   EhBackendAppInput,
+  EhBackendCompanySpecificBackend,
   EhCustomizationData,
   EhEnvAppOverride,
   EhEnvIndexed,
   EhEnvType,
   EhMetaDictionary,
+  PairDeployment,
   ResourceJump,
   ResourceJumpGroup,
   ResourceJumpsData,
@@ -33,8 +37,14 @@ type ProcedureKeys<T> = {
     : never
 }[keyof T]
 
+/** The streamed queries are left out: the real router serves them. */
+type StreamedKeys = 'pair' | 'slices'
+
 export type BackendData = {
-  [K in ProcedureKeys<TRPCRouter>]: TRPCRouter[K] extends {
+  [K in Exclude<
+    ProcedureKeys<TRPCRouter>,
+    StreamedKeys
+  >]: TRPCRouter[K] extends {
     _def: { $types: { output: infer O } }
   }
     ? O
@@ -100,7 +110,14 @@ export interface Fixture {
    */
   appVersion?: string
   /** What the deployment catalog knows, per App slug; absent means nothing. */
-  deployments?: Record<string, AppDeploymentsData>
+  deployments?: Record<string, FixtureDeployments>
+}
+
+/** An App's Components and where each runs, a row per Environment. */
+export interface FixtureDeployments {
+  components: PairDeployment['components']
+  rows: Array<PairDeployment['rows'][number] & { env: string }>
+  users?: PairDeployment['users']
 }
 
 export type OverrideBackendNetworkFn = (
@@ -213,14 +230,11 @@ export function createBackend(fixture: Fixture): MockBackend {
       lateResolvableParams: [],
     },
     authConfig: { adminGroups: ['env_hopper_ui_super_admins'] },
-    deployments: { components: [], leadComponentSlug: null, deployments: [] },
   }
-  const deploymentsOf = (appSlug: string): AppDeploymentsData =>
-    fixture.deployments?.[appSlug] ?? {
-      components: [],
-      leadComponentSlug: null,
-      deployments: [],
-    }
+  const streamed = streamedQueries(
+    { bootstrap, resourceJumps: resourceJumpsData },
+    fixture.deployments ?? {},
+  )
 
   let overrideBackendNetworkFn: OverrideBackendNetworkFn | null = null
 
@@ -242,6 +256,7 @@ export function createBackend(fixture: Fixture): MockBackend {
     // answer; any other failure makes the app log an error.
     server.use(
       http.get('*/api/auth/session', () => new Response(null, { status: 401 })),
+      http.get(streamed.path, ({ request }) => streamed.handle(request)),
     )
 
     if (overrideBackendNetworkFn) {
@@ -250,7 +265,6 @@ export function createBackend(fixture: Fixture): MockBackend {
       server.use(
         mswTrpc.bootstrap.query(() => bootstrap),
         mswTrpc.resourceJumps.query(() => resourceJumpsData),
-        mswTrpc.deployments.query(({ input }) => deploymentsOf(input.appSlug)),
       )
     }
   }
@@ -263,6 +277,65 @@ export function createBackend(fixture: Fixture): MockBackend {
     overrideBackendNetwork: (fn) => {
       overrideBackendNetworkFn = fn
     },
+  }
+}
+
+/**
+ * `pair` and `slices`, answered by the real router over the fixture: its
+ * config, and a catalog holding the fixture's Deployments. A batch of them is
+ * one path, `pair,slices`.
+ */
+function streamedQueries(
+  config: { bootstrap: BootstrapConfigData; resourceJumps: ResourceJumpsData },
+  deployments: Record<string, FixtureDeployments>,
+) {
+  const catalog = {
+    getPairDeployments: ({ appSlugs, envSlugs }) => {
+      const apps = Object.entries(deployments).filter(
+        ([app]) => !appSlugs || appSlugs.includes(app),
+      )
+      const pairs = new Map<
+        string,
+        { app: string; env: string; rows: PairDeployment['rows'] }
+      >()
+      for (const [app, d] of apps) {
+        for (const { env, ...row } of d.rows) {
+          if (envSlugs && !envSlugs.includes(env)) continue
+          const key = `${app} ${env}`
+          const pair = pairs.get(key) ?? { app, env, rows: [] }
+          pair.rows.push(row)
+          pairs.set(key, pair)
+        }
+      }
+      return Promise.resolve({
+        components: Object.fromEntries(apps.map(([a, d]) => [a, d.components])),
+        pairs: [...pairs.values()].map((p) => ({
+          ...p,
+          users: deployments[p.app]?.users ?? {},
+        })),
+      })
+    },
+  } as Pick<Catalog, 'getPairDeployments'> as Catalog
+  const companySpecificBackend = {
+    getBootstrapData: () => Promise.resolve(config.bootstrap),
+    getResourceJumps: () => Promise.resolve(config.resourceJumps),
+  } as EhBackendCompanySpecificBackend
+  const router = createTrpcRouter()
+  const endpoint = new URL(TRPC_URL).pathname
+  return {
+    path: new RegExp(`^${TRPC_URL}/(pair|slices)(,(pair|slices))*(\\?|$)`),
+    handle: (req: Request) =>
+      fetchRequestHandler({
+        endpoint,
+        req,
+        router,
+        createContext: () =>
+          createEhTrpcContext({
+            companySpecificBackend,
+            adminGroups: [],
+            catalog,
+          }),
+      }),
   }
 }
 

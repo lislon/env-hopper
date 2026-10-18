@@ -403,6 +403,57 @@ describe('slices', () => {
     ])
   })
 
+  it('a Component with no link in the first read gets its pipelineUrl from a later one', async () => {
+    const ui = { slug: 'shop-ui', displayName: 'UI' }
+    const base = shopOnProd.pairs[0]!.rows[0]!
+    const { buildUrl: _b, deployUrl: _d, ...bare } = base
+    catalog = memoryCatalog(
+      {
+        components: { shop: [...shopOnProd.components.shop!, ui] },
+        pairs: [
+          // qa: read first, only the API, linked.
+          { ...shopOnProd.pairs[0]!, env: 'qa', rows: [base] },
+          // prod: read later, the UI too.
+          {
+            ...shopOnProd.pairs[0]!,
+            rows: [
+              base,
+              {
+                ...bare,
+                componentSlug: 'shop-ui',
+                buildUrl: `${PIPELINES}301`,
+              },
+            ],
+          },
+        ],
+      },
+      (f) => (f.appSlugs ? 50 : 0),
+    )
+    const chunks = await collect(
+      client.slices.query({ appSlugs: ['shop'], envSlugs: ['qa'] }),
+    )
+    expect(namesOf(chunks).filter((n) => !n.includes('credentials'))).toEqual([
+      'shop//components',
+      'shop/qa/deployment',
+      'wiki/qa/deployment',
+      'shop//components',
+      'shop/prod/deployment',
+    ])
+    const components = chunks.filter((c) => c.facet === 'components')
+    expect(
+      (components[1] as { data: Array<{ pipelineUrl?: string }> }).data.map(
+        (c) => c.pipelineUrl,
+      ),
+    ).toEqual([`${PIPELINES}{{id}}`, `${PIPELINES}{{id}}`])
+    const rows = (
+      dataOf(chunks, 'shop/prod/deployment') as {
+        rows: Array<{ buildPipelineId?: string; buildUrl?: string }>
+      }
+    ).rows
+    expect(rows[1]).toMatchObject({ buildPipelineId: '301' })
+    expect(rows[1]!.buildUrl).toBeUndefined()
+  })
+
   it('sends a pair once, however many of its slices hold it', async () => {
     // shop on prod: by its jumps and its Deployment on prod, and in shop's
     // vertical slice, read after.

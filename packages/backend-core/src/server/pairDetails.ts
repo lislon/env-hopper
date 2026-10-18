@@ -76,7 +76,8 @@ export interface WirePairDeployment {
  * One chunk of a pair-details stream, sent as soon as its source answers.
  * Pair-level chunks name an App and an Environment, env-level ones only the
  * Environment. A `components` chunk precedes an App's first `deployment`
- * chunk, and a `users` chunk precedes the first row naming a User. A source
+ * chunk, and comes again when a Component gains its `pipelineUrl`; a `users`
+ * chunk precedes the first row naming a User. A source
  * that fails sends `{facet, error}` for each facet it owns.
  */
 export type PairChunk =
@@ -296,7 +297,8 @@ interface Sent {
  * before its `deployment` chunk, the stream's `meta`, its App's `components`
  * and every new User it names (unless the stream sends no profiles), each
  * only the first time any pair needs it. A row's links are encoded against
- * the `pipelineUrl` its Component went out with.
+ * the `pipelineUrl` its Component went out with; the App's `components` go
+ * out again when one of them gains its first.
  */
 function deploymentChunks(
   pairs: Array<Pair>,
@@ -332,25 +334,30 @@ function deploymentChunks(
       }
     }
     if (Object.keys(users).length > 0) out.push({ facet: 'users', data: users })
-    if (!sent.apps.has(app)) {
-      const components = found.components[app] ?? []
-      const templates = new Map(
-        components.flatMap((c) => {
-          const url = urls.get(c.slug)
-          return url ? [[c.slug, url] as const] : []
-        }),
-      )
-      sent.apps.set(app, templates)
-      if (components.length > 0) {
-        out.push({
-          app,
-          facet: 'components',
-          data: components.map((c) => {
-            const pipelineUrl = templates.get(c.slug)
-            return pipelineUrl ? { ...c, pipelineUrl } : c
-          }),
-        })
+    // A Component's `pipelineUrl` is fixed once sent; one that had no link
+    // yet gets it from the first read that has some, and the App's
+    // Components go out again with it.
+    const components = found.components[app] ?? []
+    const firstOfApp = !sent.apps.has(app)
+    const templates = sent.apps.get(app) ?? new Map<string, string>()
+    sent.apps.set(app, templates)
+    let gained = false
+    for (const c of components) {
+      const url = urls.get(c.slug)
+      if (url && !templates.has(c.slug)) {
+        templates.set(c.slug, url)
+        gained = true
       }
+    }
+    if (components.length > 0 && (firstOfApp || gained)) {
+      out.push({
+        app,
+        facet: 'components',
+        data: components.map((c) => {
+          const pipelineUrl = templates.get(c.slug)
+          return pipelineUrl ? { ...c, pipelineUrl } : c
+        }),
+      })
     }
     const run = sent.meta?.observedAt
     out.push({

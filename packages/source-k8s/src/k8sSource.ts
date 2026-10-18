@@ -3,8 +3,10 @@ import type { KubeConfig } from '@kubernetes/client-node'
 import { AppsV1Api, NetworkingV1Api } from '@kubernetes/client-node'
 import type {
   K8sAppsClient,
+  K8sIngressRecord,
   K8sNetworkingClient,
   K8sSource,
+  K8sWorkloadRecord,
   RawDeployment,
   RawIngress,
 } from './k8sTypes'
@@ -46,6 +48,53 @@ async function listAll<T>(
   return out
 }
 
+/** A Deployment as the neutral record a Source returns. */
+export function toWorkloadRecord(
+  cluster: string,
+  d: RawDeployment,
+): K8sWorkloadRecord {
+  return {
+    cluster,
+    kind: 'Deployment',
+    namespace: d.metadata?.namespace ?? '',
+    name: d.metadata?.name ?? '',
+    labels: d.metadata?.labels ?? {},
+    annotations: d.metadata?.annotations ?? {},
+    images: (d.spec?.template?.spec?.containers ?? []).map((c) =>
+      parseImageRef(c.image ?? ''),
+    ),
+    replicas: d.spec?.replicas ?? 0,
+    readyReplicas: d.status?.readyReplicas ?? 0,
+  }
+}
+
+/** An Ingress as the neutral record a Source returns. */
+export function toIngressRecord(
+  cluster: string,
+  i: RawIngress,
+): K8sIngressRecord {
+  const tlsHosts = new Set<string>()
+  for (const tls of i.spec?.tls ?? []) {
+    for (const host of tls.hosts ?? []) {
+      tlsHosts.add(host)
+    }
+  }
+  const paths = (i.spec?.rules ?? []).flatMap((r) => r.http?.paths ?? [])
+  return {
+    cluster,
+    namespace: i.metadata?.namespace ?? '',
+    name: i.metadata?.name ?? '',
+    hosts: (i.spec?.rules ?? [])
+      .map((r) => r.host)
+      .filter((h): h is string => !!h),
+    paths: paths.map((p) => p.path).filter((p): p is string => !!p),
+    tlsHosts: Array.from(tlsHosts),
+    backendServices: paths
+      .map((p) => p.backend?.service?.name)
+      .filter((s): s is string => !!s),
+  }
+}
+
 export function createK8sSource({
   cluster,
   apps,
@@ -68,19 +117,7 @@ export function createK8sSource({
         pageSize,
         maxPages,
       )
-      return items.map((d) => ({
-        cluster,
-        kind: 'Deployment' as const,
-        namespace: d.metadata?.namespace ?? '',
-        name: d.metadata?.name ?? '',
-        labels: d.metadata?.labels ?? {},
-        annotations: d.metadata?.annotations ?? {},
-        images: (d.spec?.template?.spec?.containers ?? []).map((c) =>
-          parseImageRef(c.image ?? ''),
-        ),
-        replicas: d.spec?.replicas ?? 0,
-        readyReplicas: d.status?.readyReplicas ?? 0,
-      }))
+      return items.map((d) => toWorkloadRecord(cluster, d))
     },
     async listIngresses() {
       const items = await listAll<RawIngress>(
@@ -96,31 +133,7 @@ export function createK8sSource({
         pageSize,
         maxPages,
       )
-      return items.map((i) => {
-        const tlsHosts = new Set<string>()
-        for (const tls of i.spec?.tls ?? []) {
-          for (const host of tls.hosts ?? []) {
-            tlsHosts.add(host)
-          }
-        }
-        return {
-          cluster,
-          namespace: i.metadata?.namespace ?? '',
-          name: i.metadata?.name ?? '',
-          hosts: (i.spec?.rules ?? [])
-            .map((r) => r.host)
-            .filter((h): h is string => !!h),
-          paths: (i.spec?.rules ?? [])
-            .flatMap((r) => r.http?.paths ?? [])
-            .map((p) => p.path)
-            .filter((p): p is string => !!p),
-          tlsHosts: Array.from(tlsHosts),
-          backendServices: (i.spec?.rules ?? [])
-            .flatMap((r) => r.http?.paths ?? [])
-            .map((p) => p.backend?.service?.name)
-            .filter((s): s is string => !!s),
-        }
-      })
+      return items.map((i) => toIngressRecord(cluster, i))
     },
   }
 }

@@ -38,6 +38,7 @@ export interface RawDeployment {
     name?: string
     labels?: Record<string, string>
     annotations?: Record<string, string>
+    resourceVersion?: string
   }
   spec?: {
     replicas?: number
@@ -56,6 +57,7 @@ export interface RawIngress {
   metadata?: {
     namespace?: string
     name?: string
+    resourceVersion?: string
   }
   spec?: {
     tls?: Array<{
@@ -77,6 +79,12 @@ export interface RawIngress {
   }
 }
 
+/** A list's metadata: where to continue, and the version to watch from. */
+export interface K8sListMeta {
+  _continue?: string
+  resourceVersion?: string
+}
+
 // Narrow client interfaces matching @kubernetes/client-node 0.22
 export interface K8sAppsClient {
   listDeploymentForAllNamespaces: (
@@ -92,7 +100,7 @@ export interface K8sAppsClient {
     timeoutSeconds?: number,
     watch?: boolean,
   ) => Promise<{
-    body: { items: Array<RawDeployment>; metadata?: { _continue?: string } }
+    body: { items: Array<RawDeployment>; metadata?: K8sListMeta }
   }>
   readNamespacedDeployment: (
     name: string,
@@ -115,6 +123,6 @@ export interface K8sNetworkingClient {
     timeoutSeconds?: number,
     watch?: boolean,
   ) => Promise<{
-    body: { items: Array<RawIngress>; metadata?: { _continue?: string } }
+    body: { items: Array<RawIngress>; metadata?: K8sListMeta }
   }>
 }

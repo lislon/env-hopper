@@ -9,7 +9,7 @@ import {
   createEhRouter,
   createEhTrpcLinks,
   createQueryClient,
-  startPairDetails,
+  startFirstLoad,
 } from '@env-hopper/frontend-core/internal'
 import { TRPC_URL } from '../mock-backend/createBackend'
 import { BackendMagazine, DbMagazine } from '../mock-backend/magazines'
@@ -137,8 +137,9 @@ export async function renderApp(options: RenderAppOptions): Promise<AppHandle> {
   })
 
   const queryClient = createQueryClient({ trpcClient, db })
-  // As the browser entry does: a deep link starts its pair before rendering.
-  startPairDetails(
+  // As the browser entry does: bootstrap, and on a deep link its pair,
+  // start before rendering.
+  startFirstLoad(
     queryClient,
     trpcClient,
     new URL(options.initialLink ?? '/', 'http://localhost').pathname,
@@ -185,9 +186,13 @@ export async function renderApp(options: RenderAppOptions): Promise<AppHandle> {
         // Deliberately not naming the keys: the previous harness waited on a
         // `['config']` query the app had stopped using, so it waited forever.
         const queries = queryClient.getQueryCache().getAll()
-        // A deep link starts its pair before rendering; that one alone does
-        // not mean the app has started loading.
-        if (queries.every((q) => q.queryKey[0] === 'pair')) {
+        // Bootstrap, and a deep link's pair, start before rendering; those
+        // alone do not mean the app has started loading.
+        if (
+          queries.every((q) =>
+            ['pair', 'bootstrapConfig'].includes(String(q.queryKey[0])),
+          )
+        ) {
           throw new Error('No query started yet')
         }
         const inFlight = queries.filter((q) => q.state.fetchStatus !== 'idle')

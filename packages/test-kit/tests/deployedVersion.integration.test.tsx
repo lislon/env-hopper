@@ -183,15 +183,16 @@ describe('deployed version under the jump card', () => {
       },
     })
 
-    test('a deep link starts its pair and the slices before anything renders; switching to a loaded Environment sends nothing', async () => {
+    test('a deep link starts bootstrap, its pair and the slices before anything renders; switching to a loaded Environment sends nothing', async () => {
       localStorage.setItem(
         'recent',
         JSON.stringify([{ app: 'wiki', env: 'dev', url: 'https://w' }]),
       )
       const sent = trpcRequests()
       const app = await open('/env/staging/app/shop', shopOnBoth())
-      // The first request of all, before bootstrap.
-      expect(sent[0]).toBe('pair,slices')
+      // The first requests of all, together, before the router asks for jumps.
+      await waitFor(() => expect(sent.length).toBeGreaterThanOrEqual(2))
+      expect(sent.slice(0, 2).sort()).toEqual(['bootstrap', 'pair,slices'])
       await waitFor(() => expect(lines(app.container)).toHaveLength(1))
       expect(
         lines(app.container)[0]!.querySelector('button'),

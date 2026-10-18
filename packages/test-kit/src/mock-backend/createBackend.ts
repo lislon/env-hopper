@@ -1,6 +1,7 @@
 import { http } from 'msw'
 import { createTRPCMsw, httpLink } from 'msw-trpc'
 import type {
+  AppDeploymentsData,
   BootstrapConfigData,
   EhBackendAppInput,
   EhCustomizationData,
@@ -98,6 +99,8 @@ export interface Fixture {
    * by pre-seeding storage, which is the one case a fresh visitor is not.
    */
   appVersion?: string
+  /** What the deployment catalog knows, per App slug; absent means nothing. */
+  deployments?: Record<string, AppDeploymentsData>
 }
 
 export type OverrideBackendNetworkFn = (
@@ -210,7 +213,10 @@ export function createBackend(fixture: Fixture): MockBackend {
       lateResolvableParams: [],
     },
     authConfig: { adminGroups: ['env_hopper_ui_super_admins'] },
+    deployments: { components: [], deployments: [] },
   }
+  const deploymentsOf = (appSlug: string): AppDeploymentsData =>
+    fixture.deployments?.[appSlug] ?? { components: [], deployments: [] }
 
   let overrideBackendNetworkFn: OverrideBackendNetworkFn | null = null
 
@@ -240,6 +246,7 @@ export function createBackend(fixture: Fixture): MockBackend {
       server.use(
         mswTrpc.bootstrap.query(() => bootstrap),
         mswTrpc.resourceJumps.query(() => resourceJumpsData),
+        mswTrpc.deployments.query(({ input }) => deploymentsOf(input.appSlug)),
       )
     }
   }

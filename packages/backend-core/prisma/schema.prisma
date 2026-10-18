@@ -150,6 +150,7 @@ model CatalogArtifact {
   aliases       String[]  @default([])
   releaseKey    String?
   builtAt       DateTime?
+  buildUrl      String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   component     CatalogComponent @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)
@@ -168,14 +169,33 @@ model CatalogDeployment {
   scope         String
   source        String
   deployedAt    DateTime?
+  deployedBy    String?
+  deployUrl     String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  deployer      CatalogUser?            @relation(fields: [deployedBy], references: [username], onDelete: SetNull)
   component     CatalogComponent        @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)
   target        CatalogDeploymentTarget @relation(fields: [targetSlug], references: [slug], onDelete: Cascade)
   artifact      CatalogArtifact         @relation(fields: [componentSlug, version], references: [componentSlug, version], onDelete: Cascade)
   endpoints     CatalogEndpoint[]
 
   @@id([componentSlug, targetSlug])
+  @@index([scope])
+}
+
+// A person a Source names, e.g. a deployer. Not a login account.
+model CatalogUser {
+  username    String   @id
+  scope       String
+  email       String?
+  provider    String?
+  firstName   String?
+  lastName    String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deployments CatalogDeployment[]
+
   @@index([scope])
 }
 

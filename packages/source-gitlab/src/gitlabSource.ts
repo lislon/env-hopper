@@ -36,8 +36,17 @@ function deploymentRecord(
     jobName: d.deployable?.name ?? '',
     pipelineId: d.deployable?.pipeline?.id ?? null,
     pipelineCreatedAt: d.deployable?.pipeline?.created_at ?? null,
+    pipelineUrl: d.deployable?.pipeline?.web_url ?? null,
     status: d.status,
     finishedAt: d.deployable?.finished_at ?? null,
+    user: d.user
+      ? {
+          username: d.user.username,
+          name: d.user.name ?? null,
+          avatarUrl: d.user.avatar_url ?? null,
+          email: d.user.public_email || null,
+        }
+      : null,
   }
 }
 

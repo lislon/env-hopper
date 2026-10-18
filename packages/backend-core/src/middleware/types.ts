@@ -1,3 +1,4 @@
+import type { Catalog } from '../catalog'
 import type { Router } from 'express'
 import type { LanguageModel, Tool } from 'ai'
 import type { BetterAuthOptions, BetterAuthPlugin } from 'better-auth'
@@ -144,6 +145,9 @@ export interface EhMiddlewareOptions {
 
   /** Company-specific backend implementation (required) */
   backend: EhBackendProvider
+
+  /** The deployment catalog the `deployments` query reads (optional) */
+  catalog?: Catalog
 
   /** AI admin chat configuration (optional) */
   adminChat?: EhAdminChatConfig

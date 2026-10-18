@@ -183,4 +183,101 @@ describe.skipIf(!prisma)('catalog reads', () => {
     const resolved = await catalog!.resolveAlias('shop-api', 'snapshot')
     expect(resolved?.version).toBe('main-11')
   })
+
+  describe('app deployments', () => {
+    async function givenShopDeployedOn(
+      targets: Array<{ slug: string; retired?: boolean }>,
+    ) {
+      await givenOneComponentOnTwoTargets()
+      await catalog!.syncTargets(
+        'ci',
+        targets.map((t) => ({
+          slug: t.slug,
+          displayName: t.slug,
+          environmentSlug: 'prod',
+          meta: t.retired ? { retired: 'true' } : undefined,
+        })),
+      )
+      await catalog!.syncUsers('ci', [
+        { username: 'jdoe', firstName: 'Jo', lastName: 'Doe' },
+      ])
+      await catalog!.syncArtifacts('ci', [
+        {
+          componentSlug: 'shop-api',
+          version: 'main-10',
+          buildUrl: 'https://ci.example.com/p/10',
+        },
+        { componentSlug: 'shop-api', version: 'main-11' },
+      ])
+      await catalog!.syncDeployments(
+        'ci',
+        targets.map((t, i) => ({
+          componentSlug: 'shop-api',
+          targetSlug: t.slug,
+          version: i === 0 ? 'main-10' : 'main-11',
+          source: 'ci',
+          deployedAt: new Date(`2026-01-0${i + 1}T10:00:00Z`),
+          deployedBy: 'jdoe',
+          deployUrl: `https://ci.example.com/d/${i}`,
+        })),
+      )
+    }
+
+    it('returns the deployer, links and ISO dates', async () => {
+      await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
+      expect(await catalog!.getAppDeployments('shop')).toEqual({
+        components: [{ slug: 'shop-api', displayName: 'Shop API' }],
+        deployments: [
+          {
+            environmentSlug: 'prod',
+            componentSlug: 'shop-api',
+            targetSlug: 'k8s:prod/shop',
+            version: 'main-10',
+            aliases: [],
+            buildUrl: 'https://ci.example.com/p/10',
+            deployedAt: '2026-01-01T10:00:00.000Z',
+            deployedBy: {
+              username: 'jdoe',
+              firstName: 'Jo',
+              lastName: 'Doe',
+              avatarUrl: null,
+            },
+            deployUrl: 'https://ci.example.com/d/0',
+            source: 'ci',
+            health: null,
+          },
+        ],
+      })
+    })
+
+    it('a live Target wins over a retired one, even when the retired deploy is newer', async () => {
+      await givenShopDeployedOn([
+        { slug: 'k8s:prod/shop' },
+        { slug: 'old:shop', retired: true },
+      ])
+      const { deployments } = await catalog!.getAppDeployments('shop')
+      expect(deployments.map((d) => [d.targetSlug, d.version])).toEqual([
+        ['k8s:prod/shop', 'main-10'],
+      ])
+    })
+
+    it('an App with no Components has nothing; a Component deployed nowhere is listed', async () => {
+      await givenOneComponentOnTwoTargets()
+      expect(await catalog!.getAppDeployments('unknown')).toEqual({
+        components: [],
+        deployments: [],
+      })
+      expect(await catalog!.getAppDeployments('shop')).toEqual({
+        components: [{ slug: 'shop-api', displayName: 'Shop API' }],
+        deployments: [],
+      })
+    })
+
+    it('deleting the User keeps the Deployment, without a deployer', async () => {
+      await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
+      await catalog!.syncUsers('ci', [])
+      const [d] = (await catalog!.getAppDeployments('shop')).deployments
+      expect(d?.deployedBy).toBeNull()
+    })
+  })
 })

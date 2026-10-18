@@ -9,6 +9,7 @@ import type {
   CatalogHealthInput,
   CatalogMeta,
   CatalogReleaseInput,
+  CatalogUserInput,
   EndpointKind,
   HealthState,
 } from './catalogTypes'
@@ -48,6 +49,8 @@ export interface Catalog {
   syncApps: Sync<CatalogAppInput>
   syncComponents: Sync<CatalogComponentInput>
   syncTargets: Sync<CatalogDeploymentTargetInput>
+  /** Users before the Deployments that name them. */
+  syncUsers: Sync<CatalogUserInput>
   syncReleases: Sync<CatalogReleaseInput>
   syncArtifacts: Sync<CatalogArtifactInput>
   /** Counts the Deployments; each Deployment's Endpoints are synced with it. */
@@ -61,13 +64,46 @@ export interface Catalog {
     componentSlug: string,
     alias: string,
   ) => Promise<CatalogArtifactView | null>
+  /** An App's Components and where each is deployed, by Environment. */
+  getAppDeployments: (appSlug: string) => Promise<AppDeploymentsData>
+}
+
+/** JSON-ready (dates as ISO strings): it is served as is. */
+export interface AppDeploymentsData {
+  components: Array<{ slug: string; displayName: string }>
+  deployments: Array<{
+    environmentSlug: string
+    componentSlug: string
+    targetSlug: string
+    version: string
+    aliases: Array<string>
+    buildUrl: string | null
+    deployedAt: string | null
+    deployedBy: CatalogUserView | null
+    deployUrl: string | null
+    source: string
+    health: {
+      state: HealthState
+      checker: string
+      observedAt: string
+      detail: string | null
+    } | null
+  }>
 }
 
 export interface CatalogArtifactView {
   version: string
   aliases: Array<string>
   builtAt: Date | null
+  buildUrl: string | null
   release: CatalogReleaseInput | null
+}
+
+export interface CatalogUserView {
+  username: string
+  firstName: string | null
+  lastName: string | null
+  avatarUrl: string | null
 }
 
 export interface CatalogDeploymentView {
@@ -81,8 +117,15 @@ export interface CatalogDeploymentView {
   artifact: CatalogArtifactView
   source: string
   deployedAt: Date | null
+  deployedBy: CatalogUserView | null
+  deployUrl: string | null
   endpoints: Array<{ kind: EndpointKind; url: string; label?: string }>
-  health: { state: HealthState; observedAt: Date; checker: string } | null
+  health: {
+    state: HealthState
+    observedAt: Date
+    checker: string
+    detail: string | null
+  } | null
 }
 
 /** Bounded batches: Postgres takes at most 65535 bind parameters a query. */
@@ -93,7 +136,7 @@ export function chunks<T>(list: Array<T>, size = 1000): Array<Array<T>> {
 }
 
 export function createCatalogReads(prisma: PrismaClient) {
-  return {
+  const reads = {
     async listDeployments(
       filter: { appSlug?: string; environmentSlug?: string } = {},
     ) {
@@ -108,6 +151,7 @@ export function createCatalogReads(prisma: PrismaClient) {
           component: true,
           target: true,
           artifact: { include: { release: true } },
+          deployer: true,
           endpoints: true,
         },
         orderBy: [{ componentSlug: 'asc' }, { targetSlug: 'asc' }],
@@ -146,6 +190,15 @@ export function createCatalogReads(prisma: PrismaClient) {
           artifact: toArtifactView(r.artifact),
           source: r.source,
           deployedAt: r.deployedAt,
+          deployedBy: r.deployer
+            ? {
+                username: r.deployer.username,
+                firstName: r.deployer.firstName,
+                lastName: r.deployer.lastName,
+                avatarUrl: r.deployer.avatarUrl,
+              }
+            : null,
+          deployUrl: r.deployUrl,
           endpoints: r.endpoints.map((e) => ({
             kind: e.kind as EndpointKind,
             url: e.url,
@@ -156,10 +209,54 @@ export function createCatalogReads(prisma: PrismaClient) {
                 state: h.state as HealthState,
                 observedAt: h.observedAt,
                 checker: h.checker,
+                detail: h.detail,
               }
             : null,
         } satisfies CatalogDeploymentView
       })
+    },
+    async getAppDeployments(appSlug: string): Promise<AppDeploymentsData> {
+      const components = await prisma.catalogComponent.findMany({
+        where: { appSlug },
+        select: { slug: true, displayName: true },
+        orderBy: { slug: 'asc' },
+      })
+      if (components.length === 0) return { components, deployments: [] }
+      const rows = await reads.listDeployments({ appSlug })
+      // One Deployment per Component per Environment: a live Target wins over
+      // a retired one (meta.retired = 'true'), then the latest deploy.
+      const rank = (d: CatalogDeploymentView) =>
+        [
+          d.target.meta['retired'] === 'true' ? 0 : 1,
+          d.deployedAt?.getTime() ?? 0,
+        ] as const
+      const best = new Map<string, CatalogDeploymentView>()
+      for (const d of rows) {
+        if (!d.target.environmentSlug) continue
+        const key = `${d.target.environmentSlug}\u0000${d.component.slug}`
+        const held = best.get(key)
+        const [a0, a1] = rank(d)
+        const [b0, b1] = held ? rank(held) : [-1, -1]
+        if (a0 > b0 || (a0 === b0 && a1 > b1)) best.set(key, d)
+      }
+      return {
+        components,
+        deployments: [...best.values()].map((d) => ({
+          environmentSlug: d.target.environmentSlug!,
+          componentSlug: d.component.slug,
+          targetSlug: d.target.slug,
+          version: d.artifact.version,
+          aliases: d.artifact.aliases,
+          buildUrl: d.artifact.buildUrl,
+          deployedAt: d.deployedAt?.toISOString() ?? null,
+          deployedBy: d.deployedBy,
+          deployUrl: d.deployUrl,
+          source: d.source,
+          health: d.health
+            ? { ...d.health, observedAt: d.health.observedAt.toISOString() }
+            : null,
+        })),
+      }
     },
     async resolveAlias(componentSlug: string, alias: string) {
       const a = await prisma.catalogArtifact.findFirst({
@@ -173,12 +270,14 @@ export function createCatalogReads(prisma: PrismaClient) {
       return a ? toArtifactView(a) : null
     },
   }
+  return reads
 }
 
 function toArtifactView(artifact: {
   version: string
   aliases: Array<string>
   builtAt: Date | null
+  buildUrl: string | null
   release: {
     key: string
     tag: string | null
@@ -191,6 +290,7 @@ function toArtifactView(artifact: {
     version: artifact.version,
     aliases: artifact.aliases,
     builtAt: artifact.builtAt,
+    buildUrl: artifact.buildUrl,
     release: artifact.release
       ? {
           key: artifact.release.key,

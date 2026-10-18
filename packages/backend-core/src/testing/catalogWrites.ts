@@ -5,6 +5,7 @@ const SYNCS = [
   'syncApps',
   'syncComponents',
   'syncTargets',
+  'syncUsers',
   'syncReleases',
   'syncArtifacts',
   'syncDeployments',

@@ -11,6 +11,7 @@ import type {
   CatalogEnvironmentInput,
   CatalogHealthInput,
   CatalogReleaseInput,
+  CatalogUserInput,
 } from './catalogTypes'
 import { sanitizeUrl } from './healthCheck'
 
@@ -139,6 +140,25 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         )
       ).counts,
 
+    syncUsers: async (tx, scope, list: Array<CatalogUserInput>) =>
+      (
+        await tableSyncPrisma({
+          prisma: txOf(tx),
+          prismaModelName: 'CatalogUser',
+          uniqColumns: ['username'],
+          scope,
+        }).sync(
+          [...new Map(list.map((u) => [u.username, u])).values()].map((u) => ({
+            username: u.username,
+            email: u.email ?? null,
+            provider: u.provider ?? null,
+            firstName: u.firstName ?? null,
+            lastName: u.lastName ?? null,
+            avatarUrl: u.avatarUrl ?? null,
+          })),
+        )
+      ).counts,
+
     syncReleases: async (tx, scope, list: Array<CatalogReleaseInput>) =>
       (
         await tableSyncPrisma({
@@ -175,6 +195,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             version: a.version,
             aliases: a.aliases ?? [],
             releaseKey: a.releaseKey ?? null,
+            buildUrl: a.buildUrl ?? null,
             ...(a.builtAt ? { builtAt: a.builtAt } : {}),
           })),
         )
@@ -232,6 +253,8 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           version: d.version,
           source: d.source,
           deployedAt: d.deployedAt ?? null,
+          deployedBy: d.deployedBy ?? null,
+          deployUrl: d.deployUrl ?? null,
         })),
       )
       // Every Deployment of the scope is now one this list reported; the

@@ -6,11 +6,12 @@ import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJ
 import { LateResolvableParamsInput } from '~/modules/resourceJump/ui/LateResolvableTopParam'
 import { ResourceJumpButton } from '~/modules/resourceJump/ui/ResourceJumpButton'
 import {
-    getFlashipResource,
-    isFlagshipResource,
+  getFlashipResource,
+  isFlagshipResource,
 } from '~/modules/resourceJump/utils/helpers'
 import { useMostRelevantLateParamSlug } from '~/modules/resourceJump/utils/statistics/useMostRelevantLateParamSlug'
 import { Card, CardContent, CardHeader } from '~/ui/card'
+import { DeployedVersions } from '~/modules/deployments/DeployedVersions'
 import { Skeleton } from '~/ui/skeleton'
 
 export function AppPageFlagship() {
@@ -67,6 +68,10 @@ export function AppPageFlagship() {
                       getFlashipResource(currentResourceJump.flagship).slug,
                     )
                   }
+                />
+                <DeployedVersions
+                  jumpSlug={currentResourceJump.slug}
+                  envSlug={currentEnv?.slug}
                 />
               </CardContent>
             </Card>

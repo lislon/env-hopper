@@ -23,8 +23,20 @@ export interface GitlabDeploymentRecord {
   pipelineId: number | null
   /** When the deploy job's pipeline was created: the closest GitLab has to a build time. */
   pipelineCreatedAt: string | null
+  /** The deploy pipeline's page. */
+  pipelineUrl: string | null
   status: string
   finishedAt: string | null
+  /** Who triggered the deploy, as GitLab knows them. */
+  user: GitlabUserRecord | null
+}
+
+export interface GitlabUserRecord {
+  username: string
+  name: string | null
+  avatarUrl: string | null
+  /** Only when the user made it public. */
+  email: string | null
 }
 
 export interface GitlabReleaseRecord {
@@ -88,8 +100,15 @@ export interface RawDeployment {
     pipeline?: {
       id: number
       created_at?: string
+      web_url?: string
     }
     finished_at?: string
+  }
+  user?: {
+    username: string
+    name?: string
+    avatar_url?: string | null
+    public_email?: string | null
   }
 }
 

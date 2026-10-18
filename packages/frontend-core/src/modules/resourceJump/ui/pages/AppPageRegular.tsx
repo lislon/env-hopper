@@ -1,3 +1,4 @@
+import { DeployedVersions } from '~/modules/deployments/DeployedVersions'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { ResourceJumpButton } from '~/modules/resourceJump/ui/ResourceJumpButton'
@@ -11,6 +12,10 @@ export function AppPageRegular() {
   return (
     <div className="flex flex-col gap-4 w-[600px]">
       <ResourceJumpButton resourceJump={currentResourceJump} env={currentEnv} />
+      <DeployedVersions
+        jumpSlug={currentResourceJump.slug}
+        envSlug={currentEnv?.slug}
+      />
     </div>
   )
 }

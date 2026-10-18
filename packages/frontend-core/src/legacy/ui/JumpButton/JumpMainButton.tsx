@@ -4,6 +4,7 @@ import { MainJumpButtonNotReady } from './MainJumpButtonNotReady'
 import cn from 'classnames'
 import { useState } from 'react'
 import { useMainAppFormContext } from '../../context/MainFormContextProvider'
+import { DeployedVersions } from '../../../modules/deployments/DeployedVersions'
 
 export const JUMP_MAIN_BTN_ID = 'jump-main-button'
 
@@ -63,6 +64,9 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
         >
           <MainJumpButtonNotReady isHovered={isHovered} />
         </div>
+      )}
+      {url !== undefined && (
+        <DeployedVersions jumpSlug={app?.id} envSlug={env?.id} />
       )}
     </div>
   )

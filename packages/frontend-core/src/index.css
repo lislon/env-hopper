@@ -316,3 +316,147 @@
 .eh-legacy .hover\:fill-accent:hover {
   fill: var(--fallback-a, oklch(var(--a) / 1));
 }
+
+/*
+ * The deployed-version line under the jump card. Plain CSS for the reason the
+ * rules above give: it ships as published .tsx, so utility classes would not
+ * reach a consumer's stylesheet. Colours mix from `currentColor` or use the
+ * theme's own `--destructive`, so it reads on both themes and both skins.
+ */
+.eh-deployed {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
+  justify-content: center;
+  column-gap: 8px;
+  row-gap: 3px;
+  font-size: 12px;
+}
+/*
+ * Under the previous UI's jump card the line sits out of flow: the card's grid
+ * row centres its content, so an in-flow line would lift the card by half its
+ * own height. Measured: 36px.
+ */
+.eh-legacy .eh-deployed {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  /* The 18px gap: the card's wrapper already pads 16px below it (py-4). */
+  margin-top: 2px;
+}
+/*
+ * Out of flow, a line of several Components would run into the history table
+ * below. The history row is outside the rows the widget panel spans, so pushing
+ * it down moves nothing above it: 22px per row past the first (19px row + 3px
+ * gap). Past eight Components the last rows may touch it.
+ */
+.eh-legacy
+  :has(> .grid-in-jump .eh-deployed[data-rows='2'])
+  > .grid-in-history {
+  margin-top: calc(1rem + 22px);
+}
+.eh-legacy
+  :has(> .grid-in-jump .eh-deployed[data-rows='3'])
+  > .grid-in-history {
+  margin-top: calc(1rem + 44px);
+}
+.eh-legacy
+  :has(> .grid-in-jump .eh-deployed[data-rows='4'])
+  > .grid-in-history {
+  margin-top: calc(1rem + 66px);
+}
+.eh-legacy
+  :has(> .grid-in-jump .eh-deployed[data-rows='5'])
+  > .grid-in-history {
+  margin-top: calc(1rem + 88px);
+}
+.eh-legacy
+  :has(> .grid-in-jump .eh-deployed[data-rows='6'])
+  > .grid-in-history {
+  margin-top: calc(1rem + 110px);
+}
+.eh-legacy
+  :has(> .grid-in-jump .eh-deployed[data-rows='7'])
+  > .grid-in-history {
+  margin-top: calc(1rem + 132px);
+}
+.eh-legacy
+  :has(> .grid-in-jump .eh-deployed[data-rows='8'])
+  > .grid-in-history {
+  margin-top: calc(1rem + 154px);
+}
+.eh-deployed-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: baseline;
+  position: relative;
+}
+.eh-deployed-label {
+  text-align: right;
+  opacity: 0.5;
+}
+.eh-deployed-version {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: inherit;
+  opacity: 0.7;
+  text-decoration: none;
+  position: relative;
+  padding-right: 7px;
+}
+a.eh-deployed-version:hover,
+a.eh-deployed-version:focus-visible {
+  opacity: 1;
+  text-decoration: underline;
+}
+.eh-deployed-muted {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  opacity: 0.45;
+}
+.eh-deployed-ago {
+  opacity: 0.45;
+}
+/* A superscript dot after the Version, like the 2 in x². */
+.eh-deployed-dot {
+  position: absolute;
+  top: -1px;
+  right: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.eh-deployed-dot-down {
+  background: var(--destructive);
+}
+.eh-deployed-dot-degraded {
+  background: oklch(0.8 0.15 85);
+}
+.eh-deployed-dot-not-deployed {
+  background: color-mix(in oklab, currentColor 55%, transparent);
+}
+.eh-deployed-tip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  white-space: nowrap;
+  text-align: left;
+  line-height: 1.5;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in oklab, currentColor 30%, transparent);
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 8px 16px -4px rgb(0 0 0 / 0.3);
+}
+.eh-legacy .eh-deployed-tip {
+  background: var(--fallback-b1, oklch(var(--b1) / 1));
+  color: var(--fallback-bc, oklch(var(--bc) / 1));
+}
+.eh-deployed-row:hover .eh-deployed-tip,
+.eh-deployed-row:focus-within .eh-deployed-tip {
+  display: block;
+}

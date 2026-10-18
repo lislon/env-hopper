@@ -1,6 +1,7 @@
 import z from 'zod'
 
 import type { BootstrapConfigData, ResourceJumpsData } from '../types'
+import type { AppDeploymentsData } from '../catalog'
 
 import type { BetterAuth } from '../modules/auth/auth'
 import { createAuthRouter } from '../modules/auth/authRouter.js'
@@ -59,6 +60,15 @@ export function createTrpcRouter(auth?: BetterAuth) {
           input.jumpResourceSlug,
           input.envSlug,
         )
+      }),
+
+    /** Where an App's Components run; empty when there is no catalog. */
+    deployments: publicProcedure
+      .input(z.object({ appSlug: z.string() }))
+      .query(async ({ input, ctx }): Promise<AppDeploymentsData> => {
+        return ctx.catalog
+          ? await ctx.catalog.getAppDeployments(input.appSlug)
+          : { components: [], deployments: [] }
       }),
 
     // Auth routes (requires auth instance)

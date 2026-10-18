@@ -105,6 +105,7 @@ export async function createEhMiddleware(
       companySpecificBackend,
       user: userWithGroups,
       adminGroups,
+      catalog: options.catalog,
     })
   }
 
@@ -121,6 +122,7 @@ export async function createEhMiddleware(
       return createEhTrpcContext({
         companySpecificBackend,
         adminGroups,
+        catalog: options.catalog,
       })
     },
     authConfig: options.auth,

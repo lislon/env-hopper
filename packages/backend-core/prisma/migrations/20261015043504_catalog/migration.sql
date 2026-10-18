@@ -163,6 +163,7 @@ CREATE TABLE "CatalogArtifact" (
     "aliases" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "releaseKey" TEXT,
     "builtAt" TIMESTAMP(3),
+    "buildUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -177,10 +178,27 @@ CREATE TABLE "CatalogDeployment" (
     "scope" TEXT NOT NULL,
     "source" TEXT NOT NULL,
     "deployedAt" TIMESTAMP(3),
+    "deployedBy" TEXT,
+    "deployUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "CatalogDeployment_pkey" PRIMARY KEY ("componentSlug","targetSlug")
+);
+
+-- CreateTable
+CREATE TABLE "CatalogUser" (
+    "username" TEXT NOT NULL,
+    "scope" TEXT NOT NULL,
+    "email" TEXT,
+    "provider" TEXT,
+    "firstName" TEXT,
+    "lastName" TEXT,
+    "avatarUrl" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CatalogUser_pkey" PRIMARY KEY ("username")
 );
 
 -- CreateTable
@@ -249,6 +267,9 @@ CREATE INDEX "CatalogArtifact_scope_idx" ON "CatalogArtifact"("scope");
 CREATE INDEX "CatalogDeployment_scope_idx" ON "CatalogDeployment"("scope");
 
 -- CreateIndex
+CREATE INDEX "CatalogUser_scope_idx" ON "CatalogUser"("scope");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "CatalogEndpoint_componentSlug_targetSlug_kind_url_key" ON "CatalogEndpoint"("componentSlug", "targetSlug", "kind", "url");
 
 -- CreateIndex
@@ -271,6 +292,9 @@ ALTER TABLE "CatalogArtifact" ADD CONSTRAINT "CatalogArtifact_componentSlug_fkey
 
 -- AddForeignKey
 ALTER TABLE "CatalogArtifact" ADD CONSTRAINT "CatalogArtifact_releaseKey_fkey" FOREIGN KEY ("releaseKey") REFERENCES "CatalogRelease"("key") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CatalogDeployment" ADD CONSTRAINT "CatalogDeployment_deployedBy_fkey" FOREIGN KEY ("deployedBy") REFERENCES "CatalogUser"("username") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "CatalogDeployment" ADD CONSTRAINT "CatalogDeployment_componentSlug_fkey" FOREIGN KEY ("componentSlug") REFERENCES "CatalogComponent"("slug") ON DELETE CASCADE ON UPDATE CASCADE;

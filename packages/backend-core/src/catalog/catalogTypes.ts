@@ -37,6 +37,8 @@ export interface CatalogArtifactInput {
   aliases?: Array<string>
   releaseKey?: string
   builtAt?: Date
+  /** Where the build can be inspected, e.g. its CI pipeline. */
+  buildUrl?: string
 }
 export interface CatalogEndpointInput {
   kind: EndpointKind
@@ -49,7 +51,20 @@ export interface CatalogDeploymentInput {
   version: string
   source: string
   deployedAt?: Date
+  /** Username of the User who deployed it; sync the User first. */
+  deployedBy?: string
+  /** Where the deploy can be inspected, e.g. its CI pipeline. */
+  deployUrl?: string
   endpoints?: Array<CatalogEndpointInput>
+}
+export interface CatalogUserInput {
+  username: string
+  email?: string
+  /** Where the User is known from, e.g. a CI system. */
+  provider?: string
+  firstName?: string
+  lastName?: string
+  avatarUrl?: string
 }
 export interface CatalogHealthInput {
   componentSlug: string

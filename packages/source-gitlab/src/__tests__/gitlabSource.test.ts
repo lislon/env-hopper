@@ -14,8 +14,18 @@ const successDeployments = [
     environment: { name: 'prod' },
     deployable: {
       name: 'deploy-prod',
-      pipeline: { id: 30, created_at: '2026-01-02T23:00:00Z' },
+      pipeline: {
+        id: 30,
+        created_at: '2026-01-02T23:00:00Z',
+        web_url: 'https://git.example.com/g/p/-/pipelines/30',
+      },
       finished_at: '2026-01-03T00:00:00Z',
+    },
+    user: {
+      username: 'jdoe',
+      name: 'Jo Doe',
+      avatar_url: 'https://git.example.com/a/jdoe.png',
+      public_email: '',
     },
   },
   {
@@ -172,8 +182,15 @@ describe('gitlab source', () => {
         jobName: 'deploy-prod',
         pipelineId: 30,
         pipelineCreatedAt: '2026-01-02T23:00:00Z',
+        pipelineUrl: 'https://git.example.com/g/p/-/pipelines/30',
         status: 'success',
         finishedAt: '2026-01-03T00:00:00Z',
+        user: {
+          username: 'jdoe',
+          name: 'Jo Doe',
+          avatarUrl: 'https://git.example.com/a/jdoe.png',
+          email: null,
+        },
       },
     ])
     expect(sawToken).toBe('t0k')
@@ -192,8 +209,10 @@ describe('gitlab source', () => {
         jobName: 'deploy-staging',
         pipelineId: 100,
         pipelineCreatedAt: null,
+        pipelineUrl: null,
         status: 'failed',
         finishedAt: null,
+        user: null,
       },
     ])
   })
@@ -211,8 +230,10 @@ describe('gitlab source', () => {
         jobName: 'deploy-preprod',
         pipelineId: 110,
         pipelineCreatedAt: null,
+        pipelineUrl: null,
         status: 'canceled',
         finishedAt: '2026-01-11T01:00:00Z',
+        user: null,
       },
     ])
   })
@@ -373,8 +394,10 @@ describe('gitlab source single environment', () => {
         jobName: 'deploy-prod',
         pipelineId: 90,
         pipelineCreatedAt: '2025-01-01T22:00:00Z',
+        pipelineUrl: null,
         status: 'success',
         finishedAt: '2025-01-02T00:09:00Z',
+        user: null,
       },
     })
   })

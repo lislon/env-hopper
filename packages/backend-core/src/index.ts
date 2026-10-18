@@ -88,6 +88,7 @@ export {
 // Middleware (batteries-included backend setup)
 export {
   createEhMiddleware,
+  ehCompression,
   EhDatabaseManager,
   type EhDatabaseConfig,
   type EhAuthConfig,

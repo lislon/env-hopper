@@ -63,6 +63,7 @@
     "@trpc/server": "catalog:",
     "ai": "^6.0.37",
     "better-auth": "^1.4.18",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv-defaults": "catalog:",
     "express": "catalog:",
@@ -78,6 +79,7 @@
   },
   "devDependencies": {
     "@tanstack/vite-config": "catalog:",
+    "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.18",
     "@types/dotenv-defaults": "catalog:",
     "@types/express": "catalog:",

@@ -5,6 +5,7 @@ import type {
   EhMiddlewareResult,
   MiddlewareContext,
 } from './types'
+import { ehCompression } from './compression'
 import { EhDatabaseManager } from './database'
 import { createBackendResolver } from './backendResolver'
 import { registerFeatures } from './featureRegistry'
@@ -111,6 +112,7 @@ export async function createEhMiddleware(
 
   // Create Express router
   const router = Router()
+  router.use(ehCompression())
   router.use(express.json())
 
   // Build middleware context for feature registration

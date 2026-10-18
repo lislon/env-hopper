@@ -1,7 +1,7 @@
 import { createMemoryHistory } from '@tanstack/react-router'
 import { cleanup, render, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
-import { createTRPCClient, httpLink } from '@trpc/client'
+import { createTRPCClient } from '@trpc/client'
 import { vi } from 'vitest'
 import {
   App,
@@ -131,9 +131,7 @@ export async function renderApp(options: RenderAppOptions): Promise<AppHandle> {
   backend.setupNetwork(options.server)
 
   const trpcClient = createTRPCClient<TRPCRouter>({
-    // The streamed queries as the app sends them; the rest one per request,
-    // which is what the msw handlers answer.
-    links: createEhTrpcLinks(TRPC_URL, httpLink),
+    links: createEhTrpcLinks(TRPC_URL),
   })
 
   const queryClient = createQueryClient({ trpcClient, db })

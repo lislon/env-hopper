@@ -1,4 +1,4 @@
-import { httpBatchLink, httpBatchStreamLink, splitLink } from '@trpc/client'
+import { httpBatchStreamLink, httpLink, splitLink } from '@trpc/client'
 import type { TRPCRouter } from '@env-hopper/backend-core'
 import type { TRPCLink } from '@trpc/client'
 
@@ -7,17 +7,15 @@ const STREAMED = new Set(['pair', 'slices'])
 
 /**
  * The streamed queries go through `httpBatchStreamLink`, each chunk as it
- * arrives; everything else keeps `link`, so its requests stay as they are.
+ * arrives. Everything else is one request per query: batched, `bootstrap`
+ * and `resourceJumps` would each wait for the slower of the two.
  */
-export function createEhTrpcLinks(
-  url: string,
-  link: (opts: { url: string }) => TRPCLink<TRPCRouter> = httpBatchLink,
-): Array<TRPCLink<TRPCRouter>> {
+export function createEhTrpcLinks(url: string): Array<TRPCLink<TRPCRouter>> {
   return [
     splitLink({
       condition: (op) => STREAMED.has(op.path),
       true: httpBatchStreamLink({ url }),
-      false: link({ url }),
+      false: httpLink({ url }),
     }),
   ]
 }

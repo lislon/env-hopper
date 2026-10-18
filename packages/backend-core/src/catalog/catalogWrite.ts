@@ -54,12 +54,23 @@ const cascadeHealth =
   }
 
 // builtAt keeps the earliest time any run reported: a later sighting of the
-// same build never moves it, and a missing one never clears it.
+// same build never moves it, and a missing one never clears it. A build's own
+// time always beats one borrowed from a deploy.
 function earliestBuiltAt(row: Row, stored: Row | undefined): Row {
   const was = stored?.['builtAt'] as Date | null | undefined
   const now = row['builtAt'] as Date | undefined
-  if (!now) return was ? { ...row, builtAt: was } : row
-  return was && was < now ? { ...row, builtAt: was } : row
+  const keep = {
+    ...row,
+    builtAt: was,
+    builtAtSource: stored?.['builtAtSource'] ?? null,
+  }
+  if (!now) return was ? keep : row
+  if (!was) return row
+  const fromDeploy = (r: Row | undefined) => r?.['builtAtSource'] === 'deploy'
+  if (fromDeploy(row) !== fromDeploy(stored)) {
+    return fromDeploy(row) ? keep : row
+  }
+  return was < now ? keep : row
 }
 
 const pairKey = (p: Pair) => `${p.componentSlug}\0${p.targetSlug}`
@@ -202,7 +213,13 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             aliases: a.aliases ?? [],
             releaseKey: a.releaseKey ?? null,
             buildUrl: a.buildUrl ?? null,
-            ...(a.builtAt ? { builtAt: a.builtAt } : {}),
+            changeRequest: a.changeRequest ?? null,
+            ...(a.builtAt
+              ? {
+                  builtAt: a.builtAt,
+                  builtAtSource: a.builtAtSource ?? 'build',
+                }
+              : {}),
           })),
         )
       ).counts,

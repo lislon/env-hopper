@@ -152,7 +152,11 @@ model CatalogArtifact {
   aliases       String[]  @default([])
   releaseKey    String?
   builtAt       DateTime?
+  /// Where builtAt came from: `build` (the build itself) or `deploy` (its first deploy, when the build time is unknown).
+  builtAtSource String?
   buildUrl      String?
+  /// The merge or pull request the build was made from; null for a branch or tag build.
+  changeRequest String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   component     CatalogComponent @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)

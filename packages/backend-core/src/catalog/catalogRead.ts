@@ -1,5 +1,6 @@
 import type { PrismaClient } from '../generated/prisma/client'
 import type {
+  BuiltAtSource,
   CatalogAppInput,
   CatalogArtifactInput,
   CatalogComponentInput,
@@ -98,7 +99,9 @@ export interface CatalogArtifactView {
   version: string
   aliases: Array<string>
   builtAt: Date | null
+  builtAtSource: BuiltAtSource | null
   buildUrl: string | null
+  changeRequest: string | null
   release: CatalogReleaseInput | null
 }
 
@@ -289,7 +292,9 @@ function toArtifactView(artifact: {
   version: string
   aliases: Array<string>
   builtAt: Date | null
+  builtAtSource: string | null
   buildUrl: string | null
+  changeRequest: string | null
   release: {
     key: string
     tag: string | null
@@ -302,7 +307,9 @@ function toArtifactView(artifact: {
     version: artifact.version,
     aliases: artifact.aliases,
     builtAt: artifact.builtAt,
+    builtAtSource: artifact.builtAtSource as BuiltAtSource | null,
     buildUrl: artifact.buildUrl,
+    changeRequest: artifact.changeRequest,
     release: artifact.release
       ? {
           key: artifact.release.key,

@@ -164,7 +164,9 @@ CREATE TABLE "CatalogArtifact" (
     "aliases" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "releaseKey" TEXT,
     "builtAt" TIMESTAMP(3),
+    "builtAtSource" TEXT,
     "buildUrl" TEXT,
+    "changeRequest" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

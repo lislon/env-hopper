@@ -238,6 +238,45 @@ describe.skipIf(!prisma)('catalog writes', () => {
     expect(await builtAt()).toEqual(new Date('2025-12-31'))
   })
 
+  it('a build time beats a deploy time, whichever is earlier, and says which it is', async () => {
+    await givenOneComponentOnTwoTargets()
+    const stored = async () =>
+      prisma!.catalogArtifact.findUniqueOrThrow({
+        where: {
+          componentSlug_version: { componentSlug: 'shop-api', version: 'v9' },
+        },
+        select: { builtAt: true, builtAtSource: true, changeRequest: true },
+      })
+    const sync = (a: {
+      builtAt?: Date
+      builtAtSource?: 'build' | 'deploy'
+      changeRequest?: string
+    }) =>
+      catalog!.syncArtifacts('ci', [
+        { componentSlug: 'shop-api', version: 'v9', ...a },
+      ])
+    await sync({
+      builtAt: new Date('2026-02-01'),
+      builtAtSource: 'deploy',
+      changeRequest: '42',
+    })
+    expect(await stored()).toEqual({
+      builtAt: new Date('2026-02-01'),
+      builtAtSource: 'deploy',
+      changeRequest: '42',
+    })
+    await sync({ builtAt: new Date('2026-03-01') })
+    expect(await stored()).toMatchObject({
+      builtAt: new Date('2026-03-01'),
+      builtAtSource: 'build',
+    })
+    await sync({ builtAt: new Date('2026-01-01'), builtAtSource: 'deploy' })
+    expect(await stored()).toMatchObject({
+      builtAt: new Date('2026-03-01'),
+      builtAtSource: 'build',
+    })
+  })
+
   it('an artifact first seen without a build time takes the first one reported', async () => {
     await givenOneComponentOnTwoTargets()
     await catalog!.syncArtifacts('ci', [

@@ -1,6 +1,7 @@
 export type HealthState = 'healthy' | 'degraded' | 'down' | 'unknown'
 export type EndpointKind = 'ui' | 'api' | 'docs' | 'health' | 'other'
 export type CatalogMeta = Record<string, string>
+export type BuiltAtSource = 'build' | 'deploy'
 
 export interface CatalogEnvironmentInput {
   slug: string
@@ -39,8 +40,15 @@ export interface CatalogArtifactInput {
   aliases?: Array<string>
   releaseKey?: string
   builtAt?: Date
+  /**
+   * Where `builtAt` came from: `build` is the build's own time, `deploy` its
+   * first deploy, used when no Source knows the build time.
+   */
+  builtAtSource?: BuiltAtSource
   /** Where the build can be inspected, e.g. its CI pipeline. */
   buildUrl?: string
+  /** The merge or pull request the build was made from; absent for a branch or tag build. */
+  changeRequest?: string
 }
 export interface CatalogEndpointInput {
   kind: EndpointKind

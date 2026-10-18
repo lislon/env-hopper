@@ -227,9 +227,6 @@ describe.skipIf(!prisma)('catalog reads', () => {
       await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
       expect(await catalog!.getPairDeployments({ appSlugs: ['shop'] })).toEqual(
         {
-          components: {
-            shop: [{ slug: 'shop-api', displayName: 'Shop API', lead: true }],
-          },
           pairs: [
             {
               app: 'shop',
@@ -277,11 +274,11 @@ describe.skipIf(!prisma)('catalog reads', () => {
       await givenOneComponentOnTwoTargets()
       expect(
         await catalog!.getPairDeployments({ appSlugs: ['shop', 'unknown'] }),
+      ).toEqual({ pairs: [] })
+      expect(
+        await catalog!.getComponents({ appSlugs: ['shop', 'unknown'] }),
       ).toEqual({
-        components: {
-          shop: [{ slug: 'shop-api', displayName: 'Shop API', lead: true }],
-        },
-        pairs: [],
+        shop: [{ slug: 'shop-api', displayName: 'Shop API', lead: true }],
       })
     })
 
@@ -294,14 +291,40 @@ describe.skipIf(!prisma)('catalog reads', () => {
       await catalog!.syncApps('ci', [
         { slug: 'shop', displayName: 'Shop', leadComponentSlug: 'shop-ui' },
       ])
-      expect(
-        (await catalog!.getPairDeployments({ appSlugs: ['shop'] })).components,
-      ).toEqual({
+      expect(await catalog!.getComponents({ appSlugs: ['shop'] })).toEqual({
         shop: [
           { slug: 'shop-api', displayName: 'Shop API' },
           { slug: 'shop-ui', displayName: 'Shop UI', lead: true },
         ],
       })
+    })
+
+    it('gives a Component the pipelineUrl most of its links fit, the same whatever is read', async () => {
+      // Two deploy links on /d/, one build link on /p/.
+      await givenShopDeployedOn([
+        { slug: 'k8s:prod/a' },
+        { slug: 'k8s:prod/b' },
+      ])
+      const shop = [
+        {
+          slug: 'shop-api',
+          displayName: 'Shop API',
+          lead: true,
+          pipelineUrl: 'https://ci.example.com/d/{{id}}',
+        },
+      ]
+      expect(await catalog!.getComponents({ appSlugs: ['shop'] })).toEqual({
+        shop,
+      })
+      expect((await catalog!.getComponents({})).shop).toEqual(shop)
+    })
+
+    it('breaks a tie between two links by name', async () => {
+      await givenShopDeployedOn([{ slug: 'k8s:prod/a' }])
+      expect(
+        (await catalog!.getComponents({ appSlugs: ['shop'] })).shop?.[0]
+          ?.pipelineUrl,
+      ).toBe('https://ci.example.com/d/{{id}}')
     })
 
     it('deleting the User keeps the Deployment, without a deployer', async () => {

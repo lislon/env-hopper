@@ -1,5 +1,6 @@
 export * from './catalogTypes'
 export type {
+  AppComponent,
   PairDeployment,
   PairDeployments,
   Catalog,

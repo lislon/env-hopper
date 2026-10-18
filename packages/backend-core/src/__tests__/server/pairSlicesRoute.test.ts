@@ -19,7 +19,7 @@ import {
   withOwnTransactions,
 } from '../../testing'
 import type { AddressInfo } from 'node:net'
-import type { Catalog, PairDeployments } from '../../catalog'
+import type { AppComponent, Catalog, PairDeployments } from '../../catalog'
 import type { PairChunk } from '../../server/pairDetails'
 import type { TRPCRouter } from '../../server/controller'
 import type {
@@ -69,8 +69,21 @@ const backend = {
 } as EhBackendCompanySpecificBackend
 
 const PIPELINES = 'https://ci.example.com/shop/-/pipelines/'
-const shopOnProd: PairDeployments = {
-  components: { shop: [{ slug: 'shop-api', displayName: 'API', lead: true }] },
+/** What the catalog holds: each App's Components, and the pairs' Deployments. */
+type Found = PairDeployments & {
+  components: Record<string, Array<AppComponent>>
+}
+const shopOnProd: Found = {
+  components: {
+    shop: [
+      {
+        slug: 'shop-api',
+        displayName: 'API',
+        lead: true,
+        pipelineUrl: `${PIPELINES}{{id}}`,
+      },
+    ],
+  },
   pairs: [
     {
       app: 'shop',
@@ -95,22 +108,25 @@ const shopOnProd: PairDeployments = {
 type Filter = { appSlugs?: Array<string>; envSlugs?: Array<string> }
 /** A catalog answering from memory, `delayMs` late, the way a slow DB would. */
 function memoryCatalog(
-  found: PairDeployments,
+  found: Found,
   delayMs: number | ((filter: Filter) => number) = 0,
   fails = false,
 ): Catalog {
   return {
+    async getComponents({ appSlugs }) {
+      if (fails) throw new Error('catalog down')
+      return Object.fromEntries(
+        Object.entries(found.components).filter(
+          ([a]) => !appSlugs || appSlugs.includes(a),
+        ),
+      )
+    },
     async getPairDeployments({ appSlugs, envSlugs }) {
       const ms =
         typeof delayMs === 'number' ? delayMs : delayMs({ appSlugs, envSlugs })
       await new Promise((r) => setTimeout(r, ms))
       if (fails) throw new Error('catalog down')
       return {
-        components: Object.fromEntries(
-          Object.entries(found.components).filter(
-            ([a]) => !appSlugs || appSlugs.includes(a),
-          ),
-        ),
         pairs: found.pairs.filter(
           (p) =>
             (!appSlugs || appSlugs.includes(p.app)) &&
@@ -386,55 +402,99 @@ describe('slices', () => {
     ])
   })
 
-  it('a Component with no link in the first read gets its pipelineUrl from a later one', async () => {
+  it('sends the same chunks whichever slice is read first, each pair once and every reference resolved', async () => {
     const ui = { slug: 'shop-ui', displayName: 'UI' }
     const base = shopOnProd.pairs[0]!.rows[0]!
     const { buildUrl: _b, deployUrl: _d, ...bare } = base
-    catalog = memoryCatalog(
-      {
-        components: { shop: [...shopOnProd.components.shop!, ui] },
-        pairs: [
-          // qa: read first, only the API, linked.
-          { ...shopOnProd.pairs[0]!, env: 'qa', rows: [base] },
-          // prod: read later, the UI too.
+    const found: Found = {
+      components: {
+        shop: [
+          ...shopOnProd.components.shop!,
+          { ...ui, pipelineUrl: `${PIPELINES}{{id}}` },
+        ],
+        api: [
           {
-            ...shopOnProd.pairs[0]!,
-            rows: [
-              base,
-              {
-                ...bare,
-                componentSlug: 'shop-ui',
-                buildUrl: `${PIPELINES}301`,
-              },
-            ],
+            slug: 'api',
+            displayName: 'API',
+            lead: true,
+            pipelineUrl: 'https://ci.example.com/api/-/pipelines/{{id}}',
           },
         ],
       },
-      (f) => (f.appSlugs ? 50 : 0),
-    )
-    const chunks = await collect(
-      client.slices.query({ appSlugs: ['shop'], envSlugs: ['qa'] }),
-    )
-    expect(namesOf(chunks)).toEqual([
-      'shop//components',
-      'shop/qa/deployment',
-      'wiki/qa/deployment',
-      'shop//components',
-      'shop/prod/deployment',
-    ])
-    const components = chunks.filter((c) => c.facet === 'components')
-    expect(
-      (components[1] as { data: Array<{ pipelineUrl?: string }> }).data.map(
-        (c) => c.pipelineUrl,
-      ),
-    ).toEqual([`${PIPELINES}{{id}}`, `${PIPELINES}{{id}}`])
-    const rows = (
-      dataOf(chunks, 'shop/prod/deployment') as {
-        rows: Array<{ buildPipelineId?: string; buildUrl?: string }>
+      pairs: [
+        // qa: only shop's API; prod: its UI too, the only UI link.
+        { ...shopOnProd.pairs[0]!, env: 'qa', rows: [base] },
+        {
+          ...shopOnProd.pairs[0]!,
+          rows: [
+            base,
+            { ...bare, componentSlug: 'shop-ui', buildUrl: `${PIPELINES}301` },
+          ],
+        },
+        {
+          app: 'api',
+          env: 'qa',
+          users: {},
+          rows: [
+            {
+              ...bare,
+              componentSlug: 'api',
+              buildUrl: 'https://ci.example.com/api/-/pipelines/7',
+              deployedBy: 'bob',
+            },
+          ],
+        },
+      ],
+    }
+    const input = { appSlugs: ['shop', 'api'], envSlugs: ['qa', 'prod'] }
+    const orders: Array<(f: Filter) => number> = [
+      (f) => (f.appSlugs ? 0 : 40),
+      (f) => (f.appSlugs ? 40 : 0),
+      (f) => (f.envSlugs?.[0] === 'prod' || f.appSlugs?.[0] === 'api' ? 0 : 40),
+    ]
+    const runs: Array<Array<PairChunk>> = []
+    for (const delay of orders) {
+      catalog = memoryCatalog(found, delay)
+      runs.push(
+        (await collect(client.slices.query(input))).map(
+          ({ ms: _, ...c }) => c as PairChunk,
+        ),
+      )
+    }
+    // The arrival order differs; the chunks do not.
+    expect(new Set(runs.map((r) => namesOf(r).join())).size).toBeGreaterThan(1)
+    const sorted = (r: Array<PairChunk>) =>
+      r.map((c) => JSON.stringify(c)).sort()
+    for (const run of runs) expect(sorted(run)).toEqual(sorted(runs[0]!))
+
+    for (const run of runs) {
+      const names = namesOf(run)
+      const deployments = names.filter((n) => n.endsWith('/deployment'))
+      expect(new Set(deployments).size).toBe(deployments.length)
+      // What breaks the spec: a second Components chunk for an App (its
+      // pipelineUrl could change), a Deployment before its App's Components,
+      // a row naming a Component the stream did not send.
+      const broken: Array<string> = []
+      const sentComponents = new Map<string, Array<AppComponent>>()
+      for (const c of run) {
+        if ('error' in c) broken.push(nameOf(c))
+        else if (c.facet === 'components') {
+          if (sentComponents.has(c.app))
+            broken.push(`${c.app} components twice`)
+          sentComponents.set(c.app, c.data)
+        } else if (c.facet === 'deployment') {
+          const known = sentComponents.get(c.app)
+          if ((known !== undefined) !== c.app in found.components)
+            broken.push(`${c.app}/${c.env} before its components`)
+          for (const row of c.data.rows)
+            if (!known?.some((k) => k.slug === row.componentSlug))
+              broken.push(`${c.app}/${c.env} names ${row.componentSlug}`)
+        }
       }
-    ).rows
-    expect(rows[1]).toMatchObject({ buildPipelineId: '301' })
-    expect(rows[1]!.buildUrl).toBeUndefined()
+      expect(broken).toEqual([])
+      // A slice names Users by username only; `users` answers them.
+      expect(names).not.toContain('//users')
+    }
   })
 
   it('sends a pair once, however many of its slices hold it', async () => {

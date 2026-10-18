@@ -75,6 +75,13 @@ export interface Catalog {
     appSlugs?: Array<string>
     envSlugs?: Array<string>
   }) => Promise<PairDeployments>
+  /**
+   * Each App's Components, the lead marked, for `appSlugs` or for every App
+   * when that filter is omitted. Apps without Components are absent.
+   */
+  getComponents: (filter: {
+    appSlugs?: Array<string>
+  }) => Promise<Record<string, Array<AppComponent>>>
   /** The profiles of the Users named, by username; unknown ones are absent. */
   getUsers: (usernames: Array<string>) => Promise<PairDeployment['users']>
 }
@@ -109,12 +116,49 @@ export interface PairDeployment {
   }>
 }
 
+/**
+ * A Component as pair details show it. `pipelineUrl` is the URL most of its
+ * Deployments' build and deploy links fit, with `{{id}}` where each link's id
+ * goes: it depends on the Component alone, not on which pairs are read.
+ */
+export interface AppComponent {
+  slug: string
+  displayName: string
+  lead?: true
+  pipelineUrl?: string
+}
+
+/** A URL ending in an id: the URL with `{{id}}` there, and the id. */
+export function splitId(
+  url: string,
+): [template: string, id: string] | undefined {
+  const m = /^(.*?)(\d+)$/.exec(url)
+  return m ? [`${m[1]}{{id}}`, m[2]!] : undefined
+}
+
+/** Per Component, the template most of its links fit; a tie goes to the first by name. */
+function pipelineUrls(
+  links: Array<{ componentSlug: string; url: string | null }>,
+): Map<string, string> {
+  const counts = new Map<string, Map<string, number>>()
+  for (const { componentSlug, url } of links) {
+    const split = url ? splitId(url) : undefined
+    if (!split) continue
+    const byTemplate = counts.get(componentSlug) ?? new Map<string, number>()
+    counts.set(componentSlug, byTemplate)
+    byTemplate.set(split[0], (byTemplate.get(split[0]) ?? 0) + 1)
+  }
+  return new Map(
+    [...counts].map(([slug, byTemplate]) => [
+      slug,
+      [...byTemplate].sort(
+        (a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0),
+      )[0]![0],
+    ]),
+  )
+}
+
 export interface PairDeployments {
-  /**
-   * Each App's Components, the lead marked: for `appSlugs`, or for every App
-   * when that filter is omitted.
-   */
-  components: Record<string, PairDeployment['components']>
   pairs: Array<{
     app: string
     env: string
@@ -259,28 +303,10 @@ export function createCatalogReads(prisma: PrismaClient) {
       envSlugs?: Array<string>
     }): Promise<PairDeployments> {
       const { appSlugs, envSlugs } = filter
-      const [apps, rows] = await Promise.all([
-        prisma.catalogApp.findMany({
-          where: appSlugs ? { slug: { in: appSlugs } } : undefined,
-          select: {
-            slug: true,
-            leadComponentSlug: true,
-            components: {
-              select: { slug: true, displayName: true },
-              orderBy: { slug: 'asc' },
-            },
-          },
-        }),
-        reads.listDeployments({ appSlugs, environmentSlugs: envSlugs }),
-      ])
-      const components: PairDeployments['components'] = {}
-      for (const a of apps) {
-        if (a.components.length === 0) continue
-        const lead = a.leadComponentSlug ?? a.components[0]!.slug
-        components[a.slug] = a.components.map((c) =>
-          c.slug === lead ? { ...c, lead: true as const } : c,
-        )
-      }
+      const rows = await reads.listDeployments({
+        appSlugs,
+        environmentSlugs: envSlugs,
+      })
       // One Deployment per Component per Environment: a live Target wins over
       // a retired one (meta.retired = 'true'), then the latest deploy.
       const rank = (d: CatalogDeploymentView) =>
@@ -328,7 +354,54 @@ export function createCatalogReads(prisma: PrismaClient) {
           ...(d.endpoints.length > 0 && { endpoints: d.endpoints }),
         })
       }
-      return { components, pairs: [...pairs.values()] }
+      return { pairs: [...pairs.values()] }
+    },
+    async getComponents({ appSlugs }: { appSlugs?: Array<string> }) {
+      const [apps, links] = await Promise.all([
+        prisma.catalogApp.findMany({
+          where: appSlugs ? { slug: { in: appSlugs } } : undefined,
+          select: {
+            slug: true,
+            leadComponentSlug: true,
+            components: {
+              select: { slug: true, displayName: true },
+              orderBy: { slug: 'asc' },
+            },
+          },
+        }),
+        prisma.catalogDeployment.findMany({
+          where: {
+            component: appSlugs
+              ? { appSlug: { in: appSlugs } }
+              : { appSlug: { not: null } },
+          },
+          select: {
+            componentSlug: true,
+            deployUrl: true,
+            artifact: { select: { buildUrl: true } },
+          },
+        }),
+      ])
+      const urls = pipelineUrls(
+        links.flatMap((l) => [
+          { componentSlug: l.componentSlug, url: l.artifact.buildUrl },
+          { componentSlug: l.componentSlug, url: l.deployUrl },
+        ]),
+      )
+      const components: Record<string, Array<AppComponent>> = {}
+      for (const a of apps) {
+        if (a.components.length === 0) continue
+        const lead = a.leadComponentSlug ?? a.components[0]!.slug
+        components[a.slug] = a.components.map((c) => {
+          const pipelineUrl = urls.get(c.slug)
+          return {
+            ...c,
+            ...(c.slug === lead && { lead: true as const }),
+            ...(pipelineUrl && { pipelineUrl }),
+          }
+        })
+      }
+      return components
     },
     async getUsers(usernames: Array<string>) {
       const users = await prisma.catalogUser.findMany({

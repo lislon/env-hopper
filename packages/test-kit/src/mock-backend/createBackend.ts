@@ -306,13 +306,20 @@ function streamedQueries(
         }
       }
       return Promise.resolve({
-        components: Object.fromEntries(apps.map(([a, d]) => [a, d.components])),
         pairs: [...pairs.values()].map((p) => ({
           ...p,
           users: deployments[p.app]?.users ?? {},
         })),
       })
     },
+    getComponents: ({ appSlugs }) =>
+      Promise.resolve(
+        Object.fromEntries(
+          Object.entries(deployments)
+            .filter(([app]) => !appSlugs || appSlugs.includes(app))
+            .map(([app, d]) => [app, d.components]),
+        ),
+      ),
     getUsers: (usernames) =>
       Promise.resolve(
         Object.fromEntries(
@@ -323,7 +330,10 @@ function streamedQueries(
           ),
         ),
       ),
-  } as Pick<Catalog, 'getPairDeployments' | 'getUsers'> as Catalog
+  } as Pick<
+    Catalog,
+    'getComponents' | 'getPairDeployments' | 'getUsers'
+  > as Catalog
   const companySpecificBackend = {
     getBootstrapData: () => Promise.resolve(config.bootstrap),
     getResourceJumps: () => Promise.resolve(config.resourceJumps),

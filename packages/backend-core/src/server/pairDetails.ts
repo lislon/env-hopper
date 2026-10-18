@@ -1,4 +1,5 @@
-import type { PairDeployment, PairDeployments } from '../catalog'
+import { splitId } from '../catalog/catalogRead'
+import type { AppComponent, PairDeployment, PairDeployments } from '../catalog'
 import type { ResourceJumpsData } from '../types'
 import type { EhTrpcContext } from './ehTrpcContext'
 
@@ -16,15 +17,11 @@ export type StreamFacet = PairFacet | 'components' | 'users' | 'meta'
 export type PairJumps = ResourceJumpsData
 
 /**
- * A Component as streamed, once per App. `pipelineUrl` is the URL its rows'
- * build and deploy links share, with `{{id}}` where each row's id goes.
+ * A Component as streamed, once per App. `pipelineUrl` is the URL most of its
+ * Deployments' build and deploy links fit, with `{{id}}` where each row's id
+ * goes.
  */
-export interface WireComponent {
-  slug: string
-  displayName: string
-  lead?: true
-  pipelineUrl?: string
-}
+export type WireComponent = AppComponent
 
 type DeploymentRow = PairDeployment['rows'][number]
 type Health = NonNullable<DeploymentRow['health']>
@@ -211,32 +208,6 @@ function jumpsOf({ app, env }: Pair, jumps: ResourceJumpsData): PairChunk {
   }
 }
 
-/** A URL ending in an id: the URL with `{{id}}` there, and the id. */
-function splitId(url: string): [template: string, id: string] | undefined {
-  const m = /^(.*?)(\d+)$/.exec(url)
-  return m ? [`${m[1]}{{id}}`, m[2]!] : undefined
-}
-
-/** Per Component, the `pipelineUrl` most of its rows' links fit. */
-function pipelineUrls(rows: Array<DeploymentRow>): Map<string, string> {
-  const counts = new Map<string, Map<string, number>>()
-  for (const r of rows) {
-    for (const url of [r.buildUrl, r.deployUrl]) {
-      const split = url ? splitId(url) : undefined
-      if (!split) continue
-      const byTemplate = counts.get(r.componentSlug) ?? new Map()
-      counts.set(r.componentSlug, byTemplate)
-      byTemplate.set(split[0], (byTemplate.get(split[0]) ?? 0) + 1)
-    }
-  }
-  return new Map(
-    [...counts].map(([slug, byTemplate]) => [
-      slug,
-      [...byTemplate].sort((a, b) => b[1] - a[1])[0]![0],
-    ]),
-  )
-}
-
 /** The value most of `values` hold. */
 function mostCommon(values: Array<string>): string | undefined {
   const counts = new Map<string, number>()
@@ -247,8 +218,8 @@ function mostCommon(values: Array<string>): string | undefined {
 /** What a stream has already sent, so it sends each part once. */
 interface Sent {
   pairs: Set<string>
-  /** Per App whose Components went out, each Component's `pipelineUrl`. */
-  apps: Map<string, Map<string, string>>
+  /** The Apps whose Components went out. */
+  apps: Set<string>
   /** `null`: the stream sends no profiles, its rows name Users by username. */
   users: Set<string> | null
   meta?: StreamMeta
@@ -259,16 +230,15 @@ interface Sent {
  * before its `deployment` chunk, the stream's `meta`, its App's `components`
  * and every new User it names (unless the stream sends no profiles), each
  * only the first time any pair needs it. A row's links are encoded against
- * the `pipelineUrl` its Component went out with; the App's `components` go
- * out again when one of them gains its first.
+ * its Component's `pipelineUrl`, which every read sees alike.
  */
 function deploymentChunks(
   pairs: Array<Pair>,
   found: PairDeployments,
+  components: Record<string, Array<AppComponent>>,
   sent: Sent,
 ): Array<Array<PairChunk>> {
   const byKey = new Map(found.pairs.map((p) => [keyOf(p), p]))
-  const urls = pipelineUrls(found.pairs.flatMap((p) => p.rows))
   const observedAt = mostCommon(
     found.pairs.flatMap((p) =>
       p.rows.flatMap((r) => (r.health ? [r.health.observedAt] : [])),
@@ -296,31 +266,12 @@ function deploymentChunks(
       }
     }
     if (Object.keys(users).length > 0) out.push({ facet: 'users', data: users })
-    // A Component's `pipelineUrl` is fixed once sent; one that had no link
-    // yet gets it from the first read that has some, and the App's
-    // Components go out again with it.
-    const components = found.components[app] ?? []
-    const firstOfApp = !sent.apps.has(app)
-    const templates = sent.apps.get(app) ?? new Map<string, string>()
-    sent.apps.set(app, templates)
-    let gained = false
-    for (const c of components) {
-      const url = urls.get(c.slug)
-      if (url && !templates.has(c.slug)) {
-        templates.set(c.slug, url)
-        gained = true
-      }
+    const appComponents = components[app] ?? []
+    if (appComponents.length > 0 && !sent.apps.has(app)) {
+      sent.apps.add(app)
+      out.push({ app, facet: 'components', data: appComponents })
     }
-    if (components.length > 0 && (firstOfApp || gained)) {
-      out.push({
-        app,
-        facet: 'components',
-        data: components.map((c) => {
-          const pipelineUrl = templates.get(c.slug)
-          return pipelineUrl ? { ...c, pipelineUrl } : c
-        }),
-      })
-    }
+    const templates = new Map(appComponents.map((c) => [c.slug, c.pipelineUrl]))
     const run = sent.meta?.observedAt
     out.push({
       app,
@@ -329,7 +280,7 @@ function deploymentChunks(
       data: {
         rows: (hit?.rows ?? []).map((row) => {
           const { buildUrl, deployUrl, health, ...rest } = row
-          const template = sent.apps.get(app)?.get(row.componentSlug)
+          const template = templates.get(row.componentSlug)
           const link = (
             url: string | undefined,
             idKey: string,
@@ -364,7 +315,7 @@ function deploymentChunks(
   })
 }
 
-const EMPTY: PairDeployments = { components: {}, pairs: [] }
+const EMPTY: PairDeployments = { pairs: [] }
 
 /**
  * The details of the pairs in scope: a chunk per pair-level facet per pair.
@@ -389,16 +340,24 @@ export async function* pairDetails(
   // client asks `users` for a profile when it shows one.
   const sent: Sent = {
     pairs: new Set(),
-    apps: new Map(),
+    apps: new Set(),
     users: 'pair' in scope ? new Set() : null,
   }
   const read = (filter: {
     appSlugs?: Array<string>
     envSlugs?: Array<string>
   }) => (catalog ? catalog.getPairDeployments(filter) : Promise.resolve(EMPTY))
+  // One read per stream, beside the pair reads: each pair waits for it.
+  const componentsOf = (filter: { appSlugs?: Array<string> }) => {
+    const found = catalog ? catalog.getComponents(filter) : Promise.resolve({})
+    // Awaited by every load; a stream with nothing to load leaves it unread.
+    found.catch(() => undefined)
+    return found
+  }
 
   if ('pair' in scope) {
     const { app, env } = scope.pair
+    const components = componentsOf({ appSlugs: [app] })
     yield* streamSources([
       {
         facets: ['jumps'],
@@ -412,6 +371,7 @@ export async function* pairDetails(
           deploymentChunks(
             [p],
             await read({ appSlugs: [app], envSlugs: [env] }),
+            await components,
             sent,
           ).flat(),
         ),
@@ -421,6 +381,8 @@ export async function* pairDetails(
   }
 
   const { appSlugs, envSlugs, except } = scope
+  // A horizontal slice holds any App: then every App's Components.
+  const components = componentsOf(envSlugs.length > 0 ? {} : { appSlugs })
   // The horizontal slices the config alone names: an App with jumps has them
   // on every Environment, since every jump has a default URL. Without the
   // jumps, the slices are what the catalog knows.
@@ -466,7 +428,12 @@ export async function* pairDetails(
       facets: ['deployment'],
       chunks: asReady(slices, 'deployment', async (s) => {
         const found = await reads.get(s)!
-        return deploymentChunks(await pairsOf(s, found), found, sent).flat()
+        return deploymentChunks(
+          await pairsOf(s, found),
+          found,
+          await components,
+          sent,
+        ).flat()
       }),
     },
   ])

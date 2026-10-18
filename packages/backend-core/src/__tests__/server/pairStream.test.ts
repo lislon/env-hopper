@@ -49,10 +49,10 @@ describe('a source that answers per pair', () => {
         ),
       },
       {
-        facets: ['credentials'],
+        facets: ['components'],
         chunks: (async function* (): AsyncGenerator<PairChunk> {
           await sleep(5)
-          yield { env: 'qa', facet: 'credentials', data: {} }
+          yield { app: 'a', facet: 'components', data: [] }
         })(),
       },
       {
@@ -68,7 +68,7 @@ describe('a source that answers per pair', () => {
     expect(chunks).toEqual([
       { app: 'a', env: 'qa', facet: 'deployment', error: 'source failed' },
       { facet: 'jumps', error: 'source failed' },
-      { env: 'qa', facet: 'credentials', data: {} },
+      { app: 'a', facet: 'components', data: [] },
     ])
   })
 })

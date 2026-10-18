@@ -7,8 +7,6 @@ export type { TRPCRouter } from './server/controller'
 export { createEhTrpcContext } from './server/ehTrpcContext'
 export { MAX_SLICE_SLUGS } from './server/pairDetails'
 export type {
-  EnvCredentials,
-  EnvFacet,
   PairChunk,
   PairFacet,
   PairJumps,

@@ -1,9 +1,5 @@
 import type { PairDeployment, PairDeployments } from '../catalog'
-import type {
-  EhAppFacility,
-  EhBackendAppInput,
-  ResourceJumpsData,
-} from '../types'
+import type { ResourceJumpsData } from '../types'
 import type { EhTrpcContext } from './ehTrpcContext'
 
 /** One `slices` call takes at most this many Apps and this many Environments. */
@@ -13,20 +9,11 @@ export const MAX_USERS = 100
 
 /** A facet of one pair (App, Environment). */
 export type PairFacet = 'jumps' | 'deployment' | 'changes' | 'workItems'
-/** A facet of one Environment, the same for every App the stream names there. */
-export type EnvFacet = 'credentials'
 /** Everything a stream carries: the facets, and what their chunks share. */
-export type StreamFacet = PairFacet | EnvFacet | 'components' | 'users' | 'meta'
+export type StreamFacet = PairFacet | 'components' | 'users' | 'meta'
 
 /** The pair's jumps, each URL template narrowed to the pair's Environment. */
 export type PairJumps = ResourceJumpsData
-
-/**
- * What an Environment lacks, by App: the in-scope Apps whose credentials or
- * data sources it marks unavailable, and which of the two. Only Apps that
- * have them in `bootstrap.apps`, where their templates come from.
- */
-export type EnvCredentials = Record<string, Array<EhAppFacility>>
 
 /**
  * A Component as streamed, once per App. `pipelineUrl` is the URL its rows'
@@ -74,8 +61,7 @@ export interface WirePairDeployment {
 
 /**
  * One chunk of a pair-details stream, sent as soon as its source answers.
- * Pair-level chunks name an App and an Environment, env-level ones only the
- * Environment. A `components` chunk precedes an App's first `deployment`
+ * Pair-level chunks name an App and an Environment. A `components` chunk precedes an App's first `deployment`
  * chunk, and comes again when a Component gains its `pipelineUrl`; a `users`
  * chunk precedes the first row naming a User. A source
  * that fails sends `{facet, error}` for each facet it owns.
@@ -85,8 +71,6 @@ export type PairChunk =
   | { app: string; env: string; facet: 'jumps'; data: PairJumps }
   // Reserved; not emitted yet.
   | { app: string; env: string; facet: 'changes' | 'workItems'; data: unknown }
-  // Only for an Environment that lacks some in-scope App's credentials.
-  | { env: string; facet: 'credentials'; data: EnvCredentials }
   | { app: string; facet: 'components'; data: Array<WireComponent> }
   | { facet: 'users'; data: PairDeployment['users'] }
   | { facet: 'meta'; data: StreamMeta }
@@ -225,28 +209,6 @@ function jumpsOf({ app, env }: Pair, jumps: ResourceJumpsData): PairChunk {
       lateResolvableParams: [...used].flatMap((s) => params.get(s) ?? []),
     },
   }
-}
-
-/**
- * A `credentials` chunk per Environment that lacks some of the pairs' Apps'
- * credentials or data sources; none where it lacks nothing they have.
- */
-function credentialChunks(
-  pairs: Array<Pair>,
-  apps: Record<string, EhBackendAppInput>,
-  unavailableOf: (env: string) => Array<EhAppFacility>,
-): Array<PairChunk> {
-  const has = (app: string, facility: EhAppFacility) =>
-    ((facility === 'credentials'
-      ? apps[app]?.ui?.credentials
-      : apps[app]?.dataSources
-    )?.length ?? 0) > 0
-  const byEnv = new Map<string, EnvCredentials>()
-  for (const { app, env } of pairs) {
-    const lacks = unavailableOf(env).filter((f) => has(app, f))
-    if (lacks.length > 0) byEnv.set(env, { ...byEnv.get(env), [app]: lacks })
-  }
-  return [...byEnv].map(([env, data]) => ({ env, facet: 'credentials', data }))
 }
 
 /** A URL ending in an id: the URL with `{{id}}` there, and the id. */
@@ -405,8 +367,9 @@ function deploymentChunks(
 const EMPTY: PairDeployments = { components: {}, pairs: [] }
 
 /**
- * The details of the pairs in scope: a chunk per pair-level facet per pair,
- * a `credentials` chunk per Environment that lacks some.
+ * The details of the pairs in scope: a chunk per pair-level facet per pair.
+ * Credentials are not among them: `bootstrap` carries each App's, and each
+ * Environment's `appOverride.unavailable`.
  *
  * `pair` names one pair, and also gets its jumps. Otherwise the scope is the
  * union of the slices: for each of `envSlugs`, every App that has a jump or a
@@ -421,17 +384,7 @@ export async function* pairDetails(
 ): AsyncGenerator<PairChunk> {
   const backend = ctx.companySpecificBackend
   const catalog = ctx.catalog
-  // Each on its own: the jumps answer long before the bootstrap data.
   const resourceJumps = backend.getResourceJumps()
-  const bootstrapData = backend.getBootstrapData()
-  const credentials = (pairs: Array<Pair>) =>
-    bootstrapData.then((bootstrap) =>
-      credentialChunks(
-        pairs,
-        bootstrap.apps as Record<string, EhBackendAppInput>,
-        (env) => bootstrap.envs[env]?.appOverride?.unavailable ?? [],
-      ),
-    )
   // `pair` names its own deployers; a slice sends usernames only, and the
   // client asks `users` for a profile when it shows one.
   const sent: Sent = {
@@ -453,7 +406,6 @@ export async function* pairDetails(
           resourceJumps.then((jumps) => [jumpsOf(scope.pair, jumps)]),
         ),
       },
-      { facets: ['credentials'], chunks: whole(credentials([scope.pair])) },
       {
         facets: ['deployment'],
         chunks: perPair([scope.pair], 'deployment', async (p) =>
@@ -511,18 +463,6 @@ export async function* pairDetails(
 
   yield* streamSources([
     {
-      // Each source fails alone: without the catalog, the scope is what the
-      // config knows.
-      facets: ['credentials'],
-      chunks: whole(
-        Promise.all(
-          slices.map(async (s) =>
-            pairsOf(s, await reads.get(s)!.catch(() => EMPTY)),
-          ),
-        ).then((all) => credentials(uniquePairs(all.flat()))),
-      ),
-    },
-    {
       facets: ['deployment'],
       chunks: asReady(slices, 'deployment', async (s) => {
         const found = await reads.get(s)!
@@ -530,8 +470,4 @@ export async function* pairDetails(
       }),
     },
   ])
-}
-
-function uniquePairs(pairs: Array<Pair>): Array<Pair> {
-  return [...new Map(pairs.map((p) => [keyOf(p), p])).values()]
 }

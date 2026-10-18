@@ -1,7 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
 import type {
-  EnvCredentials,
   PairDeployment,
   PairJumps,
   StreamMeta,
@@ -28,20 +27,12 @@ export const pairFacetKey = (app: string, env: string, facet: PairFacetName) =>
 /** A User's profile, per username, from a `pair` stream or `users`. */
 export const userKey = (username: string) => ['user', username] as const
 
-/**
- * What an Environment lacks, by App: credentials or data sources it marks
- * unavailable. The credentials themselves are templates in `bootstrap.apps`.
- */
-export const envCredentialsKey = (env: string) =>
-  ['pairEnv', env, 'credentials'] as const
-
 /** A chunk as it comes off the wire; only the fields this file reads. */
 type WireChunk =
   | { facet: string; error: string }
   | { facet: 'users'; data: PairDeployment['users'] }
   | { facet: 'meta'; data: StreamMeta }
   | { app: string; facet: 'components'; data: Array<WireComponent> }
-  | { env: string; facet: 'credentials'; data: EnvCredentials }
   | { app: string; env: string; facet: 'deployment'; data: WirePairDeployment }
   | {
       app: string
@@ -117,11 +108,7 @@ async function intoCache(
       }
     } else if (c.facet === 'meta') meta = c.data
     else if (c.facet === 'components') components.set(c.app, c.data)
-    else if (c.facet === 'credentials') {
-      client.setQueryData<EnvCredentials>(envCredentialsKey(c.env), (old) =>
-        keepCached ? { ...c.data, ...old } : { ...old, ...c.data },
-      )
-    } else if (c.facet === 'deployment') {
+    else if (c.facet === 'deployment') {
       put(
         pairFacetKey(c.app, c.env, 'deployment'),
         expandDeployment(c.data, components.get(c.app) ?? [], users, meta),

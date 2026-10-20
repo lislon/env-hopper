@@ -2,7 +2,18 @@
   "name": "@env-hopper/source-k8s",
   "version": "2.1.0-alpha-20261014235627",
   "description": "Read workloads and ingresses from a Kubernetes cluster",
+  "keywords": [
+    "env-hopper",
+    "kubernetes",
+    "k8s",
+    "workloads",
+    "ingress",
+    "health-check"
+  ],
   "homepage": "https://github.com/lislon/env-hopper",
+  "bugs": {
+    "url": "https://github.com/lislon/env-hopper/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lislon/env-hopper.git",
@@ -30,7 +41,9 @@
   "types": "dist/esm/index.d.ts",
   "files": [
     "dist",
-    "src"
+    "src",
+    "!**/__tests__",
+    "!**/*.test.*"
   ],
   "scripts": {
     "build": "vite build",

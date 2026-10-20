@@ -1,35 +1,37 @@
 # @env-hopper/source-gitlab
 
-Read deployments, environments and releases from a GitLab instance.
+Reads environments, deployments and releases from the GitLab REST API and
+returns them as plain records. It holds no mapping of its own: which projects to
+read, which deploy jobs count, and what a record means to your catalog are all
+passed in by the caller.
 
-## Installation
+No runtime dependencies; it uses the global `fetch` (or one you pass in).
+
+## Install
 
 ```bash
 npm install @env-hopper/source-gitlab
-# or
-pnpm add @env-hopper/source-gitlab
 ```
 
 ## Usage
 
-```typescript
+```ts
 import { createGitlabSource } from '@env-hopper/source-gitlab'
 
 const source = createGitlabSource({
   baseUrl: 'https://gitlab.example.com',
-  token: 'your-token',
+  token: process.env.GITLAB_TOKEN!,
 })
 
-// List environments for a project
-const envs = await source.listEnvironments(7)
+const projectId = 42
 
-// Get latest successful deployments
-const deploys = await source.latestDeployments(7, {
+const environments = await source.listEnvironments(projectId)
+
+const deployments = await source.latestDeployments(projectId, {
   jobNames: (name) => name.startsWith('deploy'),
 })
 
-// List releases
-const releases = await source.listReleases(7, { limit: 50 })
+const releases = await source.listReleases(projectId, { limit: 50 })
 ```
 
 ## License

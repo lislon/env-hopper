@@ -42,7 +42,9 @@
     "dist",
     "src",
     "prisma",
-    "prisma.config.ts"
+    "prisma.config.ts",
+    "!**/__tests__",
+    "!**/*.test.*"
   ],
   "scripts": {
     "build": "tsdown",
@@ -61,6 +63,7 @@
     "@kubernetes/client-node": "^1.2.0",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
+    "@types/express": "catalog:",
     "ai": "^6.0.37",
     "better-auth": "^1.4.18",
     "compression": "^1.8.1",
@@ -82,7 +85,6 @@
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.18",
     "@types/dotenv-defaults": "catalog:",
-    "@types/express": "catalog:",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/multer": "catalog:",
     "@types/node": "catalog:",

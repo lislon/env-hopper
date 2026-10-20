@@ -81,6 +81,11 @@ jobs:
         run: node scripts/dist-tag-guard.mjs assert --before "$RUNNER_TEMP/dist-tags-before.json"
         env:
           CHANGESETS_PUBLISHED: ${{ steps.release.outputs.published }}
+      - name: Verify every package is on the registry (main)
+        if: github.ref == 'refs/heads/main' && steps.release.outputs.published == 'true'
+        # Per package, new ones included: a publish step can report success for
+        # a package that never landed.
+        run: node scripts/check-registry-versions.mjs --published
 
   # push:
   #   needs: test-and-publish

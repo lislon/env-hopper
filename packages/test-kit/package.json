@@ -45,7 +45,9 @@
   "types": "dist/esm/index.d.ts",
   "files": [
     "dist",
-    "src"
+    "src",
+    "!**/__tests__",
+    "!**/*.test.*"
   ],
   "scripts": {
     "build": "vite build",

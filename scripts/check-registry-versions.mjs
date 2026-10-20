@@ -14,6 +14,10 @@
  * Registry lookups fail open (network/registry hiccups must not block PRs), but
  * a genuine version regression fails the job. Runs on pull requests and on
  * pushes to the stable branch, so a direct push is covered too.
+ *
+ * `--published` is the post-publish mode: every publishable package, a brand-new
+ * one included, must have its exact declared version on the registry. It is
+ * fail-CLOSED, because "cannot tell" after a publish must not read as "shipped".
  */
 import { execFileSync } from 'node:child_process'
 import { readdirSync, readFileSync } from 'node:fs'
@@ -51,6 +55,58 @@ function publishedLatest(name) {
     // Never published yet, or the registry is unreachable.
     return null
   }
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/** True when the registry serves exactly `name@version`; retried for CDN lag. */
+async function isPublished(name, version, attempts = 6) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      const out = execFileSync(
+        'npm',
+        ['view', '--prefer-online', `${name}@${version}`, 'version'],
+        {
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'ignore'],
+          timeout: LOOKUP_TIMEOUT_MS,
+          killSignal: 'SIGKILL',
+        },
+      ).trim()
+      if (out === version) return true
+    } catch {
+      // Not visible yet, or the lookup failed: retry either way.
+    }
+    if (i < attempts) await sleep(10_000)
+  }
+  return false
+}
+
+if (process.argv.includes('--published')) {
+  const missing = []
+  for (const dir of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
+    if (!dir.isDirectory()) continue
+    let pkg
+    try {
+      pkg = JSON.parse(
+        readFileSync(join(PACKAGES_DIR, dir.name, 'package.json'), 'utf8'),
+      )
+    } catch {
+      continue
+    }
+    if (pkg.private || !pkg.name || !pkg.version) continue
+    const ok = await isPublished(pkg.name, pkg.version)
+    console.log(`${ok ? '✓' : '✗'} ${pkg.name}@${pkg.version}`)
+    if (!ok) missing.push(`${pkg.name}@${pkg.version}`)
+  }
+  if (missing.length > 0) {
+    console.error(
+      `\nNot on the registry after publish:\n  ${missing.join('\n  ')}`,
+    )
+    process.exit(1)
+  }
+  console.log('\nEvery publishable package is on the registry.')
+  process.exit(0)
 }
 
 const problems = []

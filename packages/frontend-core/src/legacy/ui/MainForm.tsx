@@ -17,7 +17,7 @@ export function MainForm({ envAppSubState }: MainFormProps) {
   return (
     <MainFormContextProvider urlParams={envAppSubState}>
       <div className={'flex flex-col gap-3 w-full'}>
-        <div className="grid grid-areas-layout-sm md:grid-areas-layout-md grid-cols-layout-sm md:grid-cols-layout-md  2xl:grid-cols-layout-2xl grid-rows-layout w-full gap-4 p-4">
+        <div className="grid grid-areas-layout-sm md:grid-areas-layout-md grid-cols-layout-sm md:grid-cols-layout-md  2xl:grid-cols-layout-2xl w-full gap-4 p-4">
           <EnvList className={'grid-in-e-input'} />
           <EnvQuickBar className={'grid-in-e-bar'} />
           <AppList className={'grid-in-a-input mt-4'} />

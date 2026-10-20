@@ -130,8 +130,13 @@ export function pairFacetQuery<TFacet extends PairFacetName>(
 ) {
   return queryOptions({
     queryKey: pairFacetKey(app, env, facet),
-    // Never refetched: `pairsWatch` pushes every change (see `usePairsWatch`).
+    // Never refetched when successful: `pairsWatch` pushes every change (see `usePairsWatch`).
+    // Failed queries retry with backoff and on window focus.
     staleTime: Infinity,
+    gcTime: Infinity,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    refetchOnWindowFocus: 'always',
     queryFn: async (ctx): Promise<PairFacetData<TFacet> | null> => {
       const cached = () =>
         ctx.client.getQueryData<PairFacetData<TFacet>>(ctx.queryKey)

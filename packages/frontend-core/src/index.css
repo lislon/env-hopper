@@ -373,6 +373,29 @@
 .eh-deployed-ago {
   opacity: 0.45;
 }
+.eh-deployed-loading {
+  opacity: 0.45;
+  font-size: 12px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .eh-deployed-loading {
+    animation: eh-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+@keyframes eh-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.eh-deployed-error {
+  opacity: 0.55;
+  font-size: 12px;
+  cursor: help;
+}
 /* A superscript dot after the Version, like the 2 in x². */
 .eh-deployed-dot {
   position: absolute;
@@ -498,6 +521,12 @@
 .eh-deployed-links a {
   text-decoration: underline;
   margin-right: 10px;
+  cursor: pointer;
+}
+.eh-deployed-links a:hover,
+.eh-deployed-links a:focus-visible {
+  opacity: 0.8;
+  text-decoration-thickness: 2px;
 }
 /* Reserved for the Version's merge request, staleness and Work Items. */
 .eh-deployed-dialog-footer:empty {

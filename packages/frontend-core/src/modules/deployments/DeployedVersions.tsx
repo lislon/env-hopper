@@ -233,7 +233,7 @@ export function DeployedVersions({
   envSlug: string | undefined
 }) {
   const appSlug = jumpSlug ? appSlugFromJumpSlug(jumpSlug) : ''
-  const { data } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     ...pairFacetQuery(appSlug, envSlug ?? '', 'deployment'),
     enabled: appSlug !== '' && envSlug !== undefined,
   })
@@ -243,6 +243,32 @@ export function DeployedVersions({
   const users = useProfiles(data, opened)
   const leadComponent =
     data?.components.find((c) => c.lead) ?? data?.components[0]
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="eh-deployed">
+        <span className="eh-deployed-loading">loading version…</span>
+      </div>
+    )
+  }
+
+  // Error state
+  if (isError) {
+    const errorMsg = error instanceof Error ? error.message : 'unknown error'
+    return (
+      <div className="eh-deployed">
+        <span
+          className="eh-deployed-error"
+          title={`Failed to load version: ${errorMsg}`}
+        >
+          version unavailable · retrying
+        </span>
+      </div>
+    )
+  }
+
+  // No Components configured for this App
   if (!data || !envSlug || !leadComponent) return null
 
   const here = data.rows

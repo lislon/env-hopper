@@ -2,7 +2,17 @@
   "name": "@env-hopper/source-gitlab",
   "version": "2.1.0-alpha-20261014235627",
   "description": "Read deployments, environments and releases from a GitLab instance",
+  "keywords": [
+    "env-hopper",
+    "gitlab",
+    "deployments",
+    "environments",
+    "releases"
+  ],
   "homepage": "https://github.com/lislon/env-hopper",
+  "bugs": {
+    "url": "https://github.com/lislon/env-hopper/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lislon/env-hopper.git",
@@ -30,7 +40,9 @@
   "types": "dist/esm/index.d.ts",
   "files": [
     "dist",
-    "src"
+    "src",
+    "!**/__tests__",
+    "!**/*.test.*"
   ],
   "scripts": {
     "build": "vite build",

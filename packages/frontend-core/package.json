@@ -43,7 +43,9 @@
   "files": [
     "dist",
     "src",
-    "public"
+    "public",
+    "!**/__tests__",
+    "!**/*.test.*"
   ],
   "scripts": {
     "build": "vite build",

@@ -30,8 +30,13 @@ export interface GitlabDeploymentRecord {
   committedAt: string | null
   status: string
   finishedAt: string | null
-  /** Who triggered the deploy, as GitLab knows them. */
+  /**
+   * Whose action created the deployment record: for a manual deploy job, who
+   * started its pipeline, not who ran the job.
+   */
   user: GitlabUserRecord | null
+  /** Who ran the deploy job, e.g. played it when manual. */
+  jobUser: GitlabUserRecord | null
 }
 
 export interface GitlabUserRecord {
@@ -108,13 +113,16 @@ export interface RawDeployment {
       web_url?: string
     }
     finished_at?: string
+    user?: RawUser
   }
-  user?: {
-    username: string
-    name?: string
-    avatar_url?: string | null
-    public_email?: string | null
-  }
+  user?: RawUser
+}
+
+export interface RawUser {
+  username: string
+  name?: string
+  avatar_url?: string | null
+  public_email?: string | null
 }
 
 export interface RawRelease {

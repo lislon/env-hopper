@@ -255,6 +255,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             displayName: c.displayName,
             appSlug: c.appSlug ?? null,
             externalIds: c.externalIds ?? {},
+            commitUrl: c.commitUrl ?? null,
           })),
         )
       ).counts,
@@ -352,6 +353,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             aliases: a.aliases ?? [],
             releaseKey: a.releaseKey ?? null,
             buildUrl: a.buildUrl ?? null,
+            commitSha: a.commitSha ?? null,
             changeRequest: a.changeRequest ?? null,
             ...(a.builtAt
               ? {

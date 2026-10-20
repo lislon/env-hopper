@@ -109,6 +109,8 @@ model CatalogComponent {
   appSlug     String?
   app         CatalogApp? @relation(fields: [appSlug], references: [slug])
   externalIds Json    @default("{}")
+  /// The page of a commit of its code, with `{{sha}}` where the commit goes.
+  commitUrl   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   artifacts   CatalogArtifact[]
@@ -155,6 +157,8 @@ model CatalogArtifact {
   /// Where builtAt came from: `build` (the build itself) or `deploy` (its first deploy, when the build time is unknown).
   builtAtSource String?
   buildUrl      String?
+  /// The commit the build was made from.
+  commitSha     String?
   /// The merge or pull request the build was made from; null for a branch or tag build.
   changeRequest String?
   createdAt     DateTime  @default(now())

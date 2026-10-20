@@ -20,6 +20,8 @@ const successDeployments = [
         web_url: 'https://git.example.com/g/p/-/pipelines/30',
       },
       finished_at: '2026-01-03T00:00:00Z',
+      // A manual job: someone else played it than who started the pipeline.
+      user: { username: 'asmith', name: 'Al Smith' },
     },
     user: {
       username: 'jdoe',
@@ -194,6 +196,12 @@ describe('gitlab source', () => {
           avatarUrl: 'https://git.example.com/a/jdoe.png',
           email: null,
         },
+        jobUser: {
+          username: 'asmith',
+          name: 'Al Smith',
+          avatarUrl: null,
+          email: null,
+        },
       },
     ])
     expect(sawToken).toBe('t0k')
@@ -217,6 +225,7 @@ describe('gitlab source', () => {
         status: 'failed',
         finishedAt: null,
         user: null,
+        jobUser: null,
       },
     ])
   })
@@ -239,6 +248,7 @@ describe('gitlab source', () => {
         status: 'canceled',
         finishedAt: '2026-01-11T01:00:00Z',
         user: null,
+        jobUser: null,
       },
     ])
   })
@@ -404,6 +414,7 @@ describe('gitlab source single environment', () => {
         status: 'success',
         finishedAt: '2025-01-02T00:09:00Z',
         user: null,
+        jobUser: null,
       },
     })
   })

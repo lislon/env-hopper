@@ -2,9 +2,11 @@ import type {
   GitlabDeploymentRecord,
   GitlabEnvironmentRecord,
   GitlabSource,
+  GitlabUserRecord,
   RawDeployment,
   RawEnvironment,
   RawRelease,
+  RawUser,
 } from './gitlabTypes'
 
 function environmentRecord(
@@ -40,15 +42,20 @@ function deploymentRecord(
     committedAt: d.deployable?.commit?.committed_date ?? null,
     status: d.status,
     finishedAt: d.deployable?.finished_at ?? null,
-    user: d.user
-      ? {
-          username: d.user.username,
-          name: d.user.name ?? null,
-          avatarUrl: d.user.avatar_url ?? null,
-          email: d.user.public_email || null,
-        }
-      : null,
+    user: userRecord(d.user),
+    jobUser: userRecord(d.deployable?.user),
   }
+}
+
+function userRecord(u: RawUser | undefined): GitlabUserRecord | null {
+  return u
+    ? {
+        username: u.username,
+        name: u.name ?? null,
+        avatarUrl: u.avatar_url ?? null,
+        email: u.public_email || null,
+      }
+    : null
 }
 
 export function createGitlabSource({

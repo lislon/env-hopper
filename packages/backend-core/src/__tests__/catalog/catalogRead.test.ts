@@ -270,6 +270,31 @@ describe.skipIf(!prisma)('catalog reads', () => {
       })
     })
 
+    it("gives the row its build's commit and the Component its commit page", async () => {
+      await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
+      await catalog!.syncComponents('ci', [
+        {
+          slug: 'shop-api',
+          displayName: 'Shop API',
+          appSlug: 'shop',
+          commitUrl: 'https://git.example.com/shop/-/commit/{{sha}}',
+        },
+      ])
+      await catalog!.syncArtifacts('ci', [
+        {
+          componentSlug: 'shop-api',
+          version: 'main-10',
+          commitSha: '0123456789abcdef',
+        },
+      ])
+      const { pairs } = await catalog!.getPairDeployments({})
+      expect(pairs[0]!.rows[0]!.commitSha).toBe('0123456789abcdef')
+      expect(
+        (await catalog!.getComponents({ appSlugs: ['shop'] })).shop?.[0]
+          ?.commitUrl,
+      ).toBe('https://git.example.com/shop/-/commit/{{sha}}')
+    })
+
     it('a live Target wins over a retired one, even when the retired deploy is newer', async () => {
       await givenShopDeployedOn([
         { slug: 'k8s:prod/shop' },

@@ -20,6 +20,8 @@ export interface CatalogComponentInput {
   displayName: string
   appSlug?: string
   externalIds?: CatalogMeta
+  /** The page of a commit of its code, with `{{sha}}` where the commit goes. */
+  commitUrl?: string
 }
 export interface CatalogDeploymentTargetInput {
   slug: string
@@ -47,6 +49,8 @@ export interface CatalogArtifactInput {
   builtAtSource?: BuiltAtSource
   /** Where the build can be inspected, e.g. its CI pipeline. */
   buildUrl?: string
+  /** The commit the build was made from. */
+  commitSha?: string
   /** The merge or pull request the build was made from; absent for a branch or tag build. */
   changeRequest?: string
 }

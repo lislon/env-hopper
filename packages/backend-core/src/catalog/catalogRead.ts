@@ -115,7 +115,13 @@ export interface Catalog {
 
 /** JSON-ready (dates as ISO strings): it is served as is. */
 export interface PairDeployment {
-  components: Array<{ slug: string; displayName: string; lead?: true }>
+  components: Array<{
+    slug: string
+    displayName: string
+    lead?: true
+    /** The page of a commit, with `{{sha}}` where a row's `commitSha` goes. */
+    commitUrl?: string
+  }>
   /** The Users the rows name, by username. */
   users: Record<
     string,
@@ -136,6 +142,8 @@ export interface PairDeployment {
     version: string
     aliases: Array<string>
     buildUrl?: string
+    /** The commit the build was made from. */
+    commitSha?: string
     deployUrl?: string
     deployedAt?: string
     /** Username, a key of `users`. */
@@ -162,6 +170,8 @@ export interface AppComponent {
   displayName: string
   lead?: true
   pipelineUrl?: string
+  /** The page of a commit of its code, with `{{sha}}` where the commit goes. */
+  commitUrl?: string
 }
 
 /** A URL ending in an id: the URL with `{{id}}` there, and the id. */
@@ -209,6 +219,7 @@ export interface CatalogArtifactView {
   builtAt: Date | null
   builtAtSource: BuiltAtSource | null
   buildUrl: string | null
+  commitSha: string | null
   changeRequest: string | null
   release: CatalogReleaseInput | null
 }
@@ -379,6 +390,7 @@ export function createCatalogReads(prisma: PrismaClient) {
           version: d.artifact.version,
           aliases: d.artifact.aliases,
           ...(d.artifact.buildUrl && { buildUrl: d.artifact.buildUrl }),
+          ...(d.artifact.commitSha && { commitSha: d.artifact.commitSha }),
           ...(d.deployUrl && { deployUrl: d.deployUrl }),
           ...(d.deployedAt && { deployedAt: d.deployedAt.toISOString() }),
           ...(u && { deployedBy: u.username }),
@@ -404,7 +416,7 @@ export function createCatalogReads(prisma: PrismaClient) {
             slug: true,
             leadComponentSlug: true,
             components: {
-              select: { slug: true, displayName: true },
+              select: { slug: true, displayName: true, commitUrl: true },
               orderBy: { slug: 'asc' },
             },
           },
@@ -432,10 +444,11 @@ export function createCatalogReads(prisma: PrismaClient) {
       for (const a of apps) {
         if (a.components.length === 0) continue
         const lead = a.leadComponentSlug ?? a.components[0]!.slug
-        components[a.slug] = a.components.map((c) => {
+        components[a.slug] = a.components.map(({ commitUrl, ...c }) => {
           const pipelineUrl = urls.get(c.slug)
           return {
             ...c,
+            ...(commitUrl && { commitUrl }),
             ...(c.slug === lead && { lead: true as const }),
             ...(pipelineUrl && { pipelineUrl }),
           }
@@ -489,6 +502,7 @@ function toArtifactView(artifact: {
   builtAt: Date | null
   builtAtSource: string | null
   buildUrl: string | null
+  commitSha: string | null
   changeRequest: string | null
   release: {
     key: string
@@ -504,6 +518,7 @@ function toArtifactView(artifact: {
     builtAt: artifact.builtAt,
     builtAtSource: artifact.builtAtSource as BuiltAtSource | null,
     buildUrl: artifact.buildUrl,
+    commitSha: artifact.commitSha,
     changeRequest: artifact.changeRequest,
     release: artifact.release
       ? {

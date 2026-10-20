@@ -14,6 +14,11 @@ export interface K8sWorkloadRecord {
   annotations: Record<string, string>
   replicas: number
   readyReplicas: number
+  /**
+   * When the current rollout last progressed (the `Progressing` condition's
+   * `lastUpdateTime`), as ISO 8601; absent when the cluster reports none.
+   */
+  rolledOutAt?: string
 }
 
 export interface K8sIngressRecord {
@@ -50,6 +55,8 @@ export interface RawDeployment {
   }
   status?: {
     readyReplicas?: number
+    /** The client parses times into Dates; a watch event carries strings. */
+    conditions?: Array<{ type?: string; lastUpdateTime?: string | Date }>
   }
 }
 

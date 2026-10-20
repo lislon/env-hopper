@@ -48,6 +48,15 @@ async function listAll<T>(
   return out
 }
 
+/** When the Deployment's current rollout last progressed. */
+function rolloutTime(d: RawDeployment): string | undefined {
+  const at = d.status?.conditions?.find(
+    (c) => c.type === 'Progressing',
+  )?.lastUpdateTime
+  const ms = at ? new Date(at).getTime() : NaN
+  return Number.isNaN(ms) ? undefined : new Date(ms).toISOString()
+}
+
 /** A Deployment as the neutral record a Source returns. */
 export function toWorkloadRecord(
   cluster: string,
@@ -65,6 +74,7 @@ export function toWorkloadRecord(
     ),
     replicas: d.spec?.replicas ?? 0,
     readyReplicas: d.status?.readyReplicas ?? 0,
+    rolledOutAt: rolloutTime(d),
   }
 }
 

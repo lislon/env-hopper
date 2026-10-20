@@ -1,6 +1,10 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { createK8sSource, k8sReadinessChecker } from '../k8sSource'
+import {
+  createK8sSource,
+  k8sReadinessChecker,
+  toWorkloadRecord,
+} from '../k8sSource'
 import { runCheck } from '@env-hopper/backend-core'
 
 const dep = (
@@ -60,6 +64,30 @@ describe('k8s source', () => {
       ['b', 'ui', 'main-2', 0, {}],
     ])
   })
+  it('a workload carries when its rollout last progressed', () => {
+    const at = '2026-10-07T16:11:30Z'
+    const progressing = (lastUpdateTime: string | Date) => ({
+      ...dep('a', 'api', 'r.example.com/api:main-1', 1, 1),
+      status: {
+        readyReplicas: 1,
+        conditions: [
+          { type: 'Available', lastUpdateTime: '2026-01-01T00:00:00Z' },
+          { type: 'Progressing', lastUpdateTime },
+        ],
+      },
+    })
+    expect(toWorkloadRecord('stage', progressing(at)).rolledOutAt).toBe(
+      '2026-10-07T16:11:30.000Z',
+    )
+    // The client hands a list's times over as Dates.
+    expect(
+      toWorkloadRecord('stage', progressing(new Date(at))).rolledOutAt,
+    ).toBe('2026-10-07T16:11:30.000Z')
+    expect(
+      toWorkloadRecord('stage', dep('a', 'api', 'x', 1, 1)).rolledOutAt,
+    ).toBeUndefined()
+  })
+
   it('throws when exceeding maxPages limit', async () => {
     const src = createK8sSource({
       cluster: 'stage',

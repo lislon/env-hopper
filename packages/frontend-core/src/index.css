@@ -483,11 +483,12 @@
 .eh-deployed-row:focus-within .eh-deployed-tip {
   display: block;
 }
-/* The details opened by clicking the Version. */
+/* The details opened by clicking the Version: fields as rows, Components as columns. */
 .eh-deployed-dialog {
   margin: auto;
-  min-width: min(760px, 95vw);
-  max-width: 95vw;
+  width: max-content;
+  min-width: min(420px, 95vw);
+  max-width: min(960px, 95vw);
   padding: 20px 24px;
   border-radius: 10px;
   border: 1px solid color-mix(in oklab, currentColor 30%, transparent);
@@ -500,25 +501,65 @@
   background: rgb(0 0 0 / 0.55);
 }
 .eh-deployed-dialog h3 {
-  margin: 0 0 12px;
+  margin: 0 28px 12px 0;
   font-size: 15px;
   font-weight: 600;
 }
+/* Past three Components the columns scroll; the row labels stay. */
+.eh-deployed-dialog-scroll {
+  overflow-x: auto;
+}
 .eh-deployed-dialog table {
   border-collapse: collapse;
-  width: 100%;
+  min-width: 100%;
+}
+.eh-deployed-dialog th,
+.eh-deployed-dialog td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 10px;
+  border-bottom: 1px solid color-mix(in oklab, currentColor 15%, transparent);
 }
 .eh-deployed-dialog th {
-  text-align: left;
   font-weight: 600;
-  opacity: 0.7;
-  padding: 6px 10px;
-  border-bottom: 1px solid color-mix(in oklab, currentColor 30%, transparent);
+  font-size: 12px;
+  color: color-mix(in oklab, currentColor 70%, transparent);
+  white-space: nowrap;
+}
+.eh-deployed-dialog thead th {
+  border-bottom-color: color-mix(in oklab, currentColor 30%, transparent);
+  /* The `main` hint sits under the header from its left edge. */
+  position: relative;
 }
 .eh-deployed-dialog td {
-  padding: 8px 10px;
-  border-bottom: 1px solid color-mix(in oklab, currentColor 15%, transparent);
-  vertical-align: top;
+  min-width: 200px;
+  max-width: 320px;
+  overflow-wrap: anywhere;
+}
+.eh-deployed-dialog thead td {
+  min-width: 0;
+}
+.eh-deployed-dialog th[scope='row'],
+.eh-deployed-dialog thead td {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--popover);
+}
+.eh-legacy .eh-deployed-dialog th[scope='row'],
+.eh-legacy .eh-deployed-dialog thead td {
+  background: var(--fallback-b1, oklch(var(--b1) / 1));
+}
+/* A Version other than the lead's, as the line's `*` marks it. */
+.eh-deployed-dialog .eh-deployed-differs,
+.eh-deployed-dialog .eh-deployed-differs a,
+.eh-deployed-off {
+  color: oklch(0.8 0.15 85);
+}
+.eh-deployed-urls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
 }
 .eh-deployed-dialog-close {
   position: absolute;
@@ -534,10 +575,26 @@
 .eh-deployed-lead {
   margin-left: 6px;
   font-size: 11px;
+  font-weight: 400;
   padding: 0 4px;
   border-radius: 4px;
   border: 1px solid color-mix(in oklab, currentColor 50%, transparent);
-  opacity: 0.7;
+  cursor: help;
+}
+/*
+ * The `main` tag's hint: the version line's tooltip, wrapped, under the
+ * column's header from its left edge, so the scrolling table does not clip it.
+ */
+.eh-deployed-hint .eh-deployed-tip {
+  left: 10px;
+  transform: none;
+  width: 30ch;
+  white-space: normal;
+  font-weight: 400;
+}
+.eh-deployed-hint:hover .eh-deployed-tip,
+.eh-deployed-hint:focus-within .eh-deployed-tip {
+  display: block;
 }
 .eh-deployed-state {
   display: inline-block;

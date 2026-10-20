@@ -120,7 +120,72 @@ describe('deployed version under the jump card', () => {
     expect(line!.querySelector('.eh-deployed-dot-down')).not.toBeNull()
   })
 
-  test('clicking the Version opens the details, one row per Component, and closing returns focus', async () => {
+  /** Opens the details from the line; the dialog, and a cell by row label and Component. */
+  const openDetails = async (app: Awaited<ReturnType<typeof open>>) => {
+    await waitFor(() => expect(lines(app.container)).toHaveLength(1))
+    const opener = lines(app.container)[0]!.querySelector('button')!
+    await app.user.click(opener)
+    const dialog = app.container.querySelector('dialog')!
+    expect(dialog).toHaveAttribute('open')
+    const rowLabels = Array.from(
+      dialog.querySelectorAll('tbody th[scope="row"]'),
+    ).map((th) => th.textContent)
+    const cell = (label: string, component: string) => {
+      const tr = Array.from(dialog.querySelectorAll('tbody tr')).find(
+        (r) => r.querySelector('th')?.textContent === label,
+      )!
+      return tr.querySelector<HTMLElement>(`[data-component="${component}"]`)!
+    }
+    const columns = Array.from(
+      dialog.querySelectorAll('thead th[scope="col"]'),
+    ).map((th) => th.getAttribute('data-component'))
+    return { opener, dialog, rowLabels, cell, columns }
+  }
+  const links = (el: Element) =>
+    Array.from(el.querySelectorAll('a')).map((a) => [
+      a.textContent,
+      a.getAttribute('href'),
+    ])
+  const FIELD_ORDER = [
+    'Version',
+    'Aliases',
+    'Health',
+    'Deployed',
+    'By',
+    'Where',
+    'URL',
+    'Pipeline',
+    'Deploy job',
+    'Commit',
+  ]
+
+  test('one Component: the same fields as rows, in one value column, with no main tag', async () => {
+    const app = await open('/env/staging/app/shop', {
+      shop: {
+        components: [shopUi],
+        users,
+        rows: [row({ cluster: 'qa-1', namespace: 'shop', aliases: ['v1.4'] })],
+      },
+    })
+    const { dialog, rowLabels, cell, columns } = await openDetails(app)
+    expect(rowLabels).toEqual(FIELD_ORDER)
+    expect(columns).toEqual(['shop-ui'])
+    expect(dialog.querySelector('.eh-deployed-lead')).toBeNull()
+    expect(links(cell('Version', 'shop-ui'))).toEqual([
+      ['main-41', 'https://ci.example.com/pipelines/41'],
+    ])
+    expect(cell('Aliases', 'shop-ui')).toHaveTextContent('v1.4')
+    expect(cell('Health', 'shop-ui')).toHaveTextContent('n/a')
+    expect(cell('Deployed', 'shop-ui')).toHaveTextContent('15 min ago')
+    expect(cell('Deployed', 'shop-ui').firstElementChild).toHaveAttribute(
+      'title',
+    )
+    expect(cell('By', 'shop-ui')).toHaveTextContent('Jo Doe')
+    expect(cell('Where', 'shop-ui')).toHaveTextContent('qa-1/shop')
+    expect(cell('Commit', 'shop-ui')).toHaveTextContent('n/a')
+  })
+
+  test('two Components with different Versions: the lead first with a main tag and its hint, the other Version highlighted, closing returns focus', async () => {
     const app = await open('/env/staging/app/shop', {
       shop: {
         ...shopTwoComponents({ commitSha: '0123456789abcdef' }),
@@ -130,40 +195,84 @@ describe('deployed version under the jump card', () => {
         ],
       },
     })
-    await waitFor(() => expect(lines(app.container)).toHaveLength(1))
-    const opener = lines(app.container)[0]!.querySelector('button')!
-    await app.user.click(opener)
-    const dialog = app.container.querySelector('dialog')!
-    expect(dialog).toHaveAttribute('open')
-    const rows = Array.from(
-      dialog.querySelectorAll('[data-testid="deployed-component"]'),
-    ).map((r) => r.textContent)
-    // The lead first.
-    expect(rows[0]).toContain('UIlead')
-    expect(rows[1]).toContain('API')
-    expect(rows[1]).toContain('down · http: 503')
-    // The Version links its build; Pipeline and Deploy job by id; the commit
-    // by its short sha, plain text without the Component's commit page.
-    const links = (r: Element) =>
-      Array.from(r.querySelectorAll('a')).map((a) => [
-        a.textContent,
-        a.getAttribute('href'),
-      ])
-    const [ui, api] = dialog.querySelectorAll(
-      '[data-testid="deployed-component"]',
+    const { opener, dialog, cell, columns } = await openDetails(app)
+    expect(columns).toEqual(['shop-ui', 'shop-api'])
+    const tag = dialog.querySelector<HTMLElement>(
+      'thead [data-component="shop-ui"] .eh-deployed-lead',
+    )!
+    expect(tag).toHaveTextContent('main')
+    expect(tag.tabIndex).toBe(0)
+    const hint = document.getElementById(tag.getAttribute('aria-describedby')!)
+    expect(hint).toHaveAttribute('role', 'tooltip')
+    expect(hint).toHaveClass('eh-deployed-tip')
+    expect(hint).toHaveTextContent(
+      'Main component: its version is the one shown on the line under the card. A * there means another component runs a different version.',
     )
-    expect(links(ui!)).toEqual([
-      ['main-41', 'https://ci.example.com/pipelines/41'],
+    expect(cell('Version', 'shop-api')).toHaveClass('eh-deployed-differs')
+    expect(cell('Version', 'shop-ui')).not.toHaveClass('eh-deployed-differs')
+    expect(cell('Health', 'shop-api')).toHaveTextContent('down · 503')
+    expect(links(cell('Pipeline', 'shop-ui'))).toEqual([
       ['#41', 'https://ci.example.com/pipelines/41'],
+    ])
+    expect(links(cell('Deploy job', 'shop-ui'))).toEqual([
       ['#42', 'https://ci.example.com/pipelines/42'],
+    ])
+    expect(links(cell('Commit', 'shop-ui'))).toEqual([
       ['0123456', 'https://git.example.com/-/commit/0123456789abcdef'],
     ])
-    expect(links(api!).map(([text]) => text)).toEqual(['main-9', '#41', '#42'])
-    // A row with no commit says so.
-    expect(api!.textContent).toContain('n/a')
+    // A commit with no Component commit page: no commit at all here.
+    expect(cell('Commit', 'shop-api')).toHaveTextContent('n/a')
     await app.user.click(dialog.querySelector('button[aria-label="Close"]')!)
     expect(dialog).not.toHaveAttribute('open')
     expect(document.activeElement).toBe(opener)
+  })
+
+  test('a Component not deployed here says so in its Version cell, with a dash below', async () => {
+    const app = await open('/env/staging/app/shop', {
+      shop: { components: [shopApi, shopUi], users, rows: [row({})] },
+    })
+    const { cell } = await openDetails(app)
+    expect(cell('Version', 'shop-api')).toHaveTextContent('not deployed')
+    for (const label of FIELD_ORDER.slice(1)) {
+      expect(cell(label, 'shop-api')).toHaveTextContent('—')
+    }
+    expect(cell('Version', 'shop-ui')).toHaveTextContent('main-41')
+  })
+
+  test('URL: each Endpoint by its host, at most two then +N, n/a when none', async () => {
+    const worker = { slug: 'shop-worker', displayName: 'Worker' }
+    const ep = (host: string) => ({
+      kind: 'ui' as const,
+      url: `https://${host}/`,
+    })
+    const app = await open('/env/staging/app/shop', {
+      shop: {
+        components: [shopUi, shopApi, worker],
+        users,
+        rows: [
+          row({ endpoints: [ep('shop.example.com')] }),
+          row({ componentSlug: 'shop-api' }),
+          row({
+            componentSlug: 'shop-worker',
+            endpoints: [
+              ep('a.example.com'),
+              ep('b.example.com'),
+              ep('c.example.com'),
+            ],
+          }),
+        ],
+      },
+    })
+    const { cell } = await openDetails(app)
+    expect(links(cell('URL', 'shop-ui'))).toEqual([
+      ['shop.example.com', 'https://shop.example.com/'],
+    ])
+    expect(cell('URL', 'shop-api')).toHaveTextContent('n/a')
+    expect(links(cell('URL', 'shop-worker'))).toEqual([
+      ['a.example.com', 'https://a.example.com/'],
+      ['b.example.com', 'https://b.example.com/'],
+    ])
+    expect(cell('URL', 'shop-worker')).toHaveTextContent('+1')
   })
 
   test('the lead not deployed on this Environment says so, with a grey dot', async () => {

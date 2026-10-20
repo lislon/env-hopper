@@ -6,7 +6,7 @@ import { pairFacetKey } from '~/modules/pairDetails/pairDetails'
 import type { PairDeployment } from '@env-hopper/backend-core'
 
 describe('DeployedVersions details', () => {
-  it('lists the lead Component first, whatever order the Components came in', () => {
+  it("puts the lead Component's column first, whatever order the Components came in", () => {
     const client = new QueryClient()
     const row = (componentSlug: string, version: string) => ({
       componentSlug,
@@ -32,10 +32,10 @@ describe('DeployedVersions details', () => {
       </QueryClientProvider>,
     )
 
-    const rows = screen.getAllByTestId('deployed-component')
-    expect(rows.map((r) => r.textContent)).toEqual([
-      expect.stringMatching(/^Shop UIlead/),
-      expect.stringMatching(/^Shop API/),
+    const columns = screen.getAllByRole('columnheader', { hidden: true })
+    expect(columns.map((c) => c.textContent)).toEqual([
+      expect.stringMatching(/^Shop UImain/),
+      'Shop API',
     ])
   })
 })

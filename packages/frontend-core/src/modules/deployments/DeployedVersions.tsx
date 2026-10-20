@@ -1,6 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
-import type { RefObject } from 'react'
+import { useId, useRef, useState } from 'react'
+import type { ReactNode, RefObject } from 'react'
 import type { PairDeployment } from '@env-hopper/backend-core'
 import { pairFacetQuery, userQuery } from '~/modules/pairDetails/pairDetails'
 import { appSlugFromJumpSlug } from '~/util/route-utils'
@@ -50,6 +50,151 @@ const healthText = (d: Deployment) =>
     ? `${d.health.state} · ${d.health.checker}${d.health.detail ? `: ${d.health.detail}` : ''}`
     : 'no health check'
 
+/** A link's text: its host, or the URL when it does not parse. */
+const hostOf = (url: string) => {
+  try {
+    return new URL(url).host
+  } catch {
+    return url
+  }
+}
+
+const idOf = (url: string | undefined) => url?.match(/\/(\d+)\/?$/)?.[1]
+
+const ext = (href: string | undefined, text: string) =>
+  href ? (
+    <a href={href} target="_blank" rel="noreferrer">
+      {text}
+    </a>
+  ) : (
+    text
+  )
+
+/** At most this many Endpoints per cell, then "+N". */
+const MAX_URLS = 2
+
+/**
+ * The details' rows, top to bottom: a label and a Component's cell. A cell of
+ * a Component not deployed here is "—" below its Version.
+ */
+const FIELDS: Array<
+  [
+    label: string,
+    cell: (d: Deployment, c: Component, users: Users) => ReactNode,
+  ]
+> = [
+  ['Aliases', (d) => (d.aliases.length > 0 ? d.aliases.join(' · ') : 'n/a')],
+  [
+    'Health',
+    (d) =>
+      d.health ? (
+        <span title={d.health.checker}>
+          <span
+            className={`eh-deployed-state eh-deployed-state-${d.health.state}`}
+          />
+          {d.health.state}
+          {d.health.detail && ` · ${d.health.detail}`}
+        </span>
+      ) : (
+        'n/a'
+      ),
+  ],
+  [
+    'Deployed',
+    (d) =>
+      d.deployedAt ? (
+        <span title={fullDate(d.deployedAt)}>{timeAgo(d.deployedAt)}</span>
+      ) : (
+        'n/a'
+      ),
+  ],
+  ['By', (d, _, users) => deployerName(d, users) ?? 'n/a'],
+  [
+    'Where',
+    (d) => <span className="eh-deployed-mono">{placeOf(d) || 'n/a'}</span>,
+  ],
+  [
+    'URL',
+    (d) => {
+      const urls = d.endpoints ?? []
+      if (urls.length === 0) return 'n/a'
+      const rest = urls.slice(MAX_URLS)
+      return (
+        <span className="eh-deployed-urls">
+          {urls.slice(0, MAX_URLS).map((e) => (
+            <a key={e.url} href={e.url} target="_blank" rel="noreferrer">
+              {hostOf(e.url)}
+            </a>
+          ))}
+          {rest.length > 0 && (
+            <span
+              className="eh-deployed-muted"
+              title={rest.map((e) => e.url).join('\n')}
+            >
+              +{rest.length}
+            </span>
+          )}
+        </span>
+      )
+    },
+  ],
+  [
+    'Pipeline',
+    (d) => {
+      const id = idOf(d.buildUrl)
+      return (
+        <span className="eh-deployed-mono">
+          {id ? ext(d.buildUrl, `#${id}`) : 'n/a'}
+        </span>
+      )
+    },
+  ],
+  [
+    'Deploy job',
+    (d) => {
+      const id = idOf(d.deployUrl)
+      return (
+        <span className="eh-deployed-mono">
+          {id ? ext(d.deployUrl, `#${id}`) : 'n/a'}
+        </span>
+      )
+    },
+  ],
+  [
+    'Commit',
+    (d, c) => (
+      <span className="eh-deployed-mono">
+        {d.commitSha
+          ? ext(
+              c.commitUrl?.replace('{{sha}}', d.commitSha),
+              d.commitSha.slice(0, 7),
+            )
+          : 'n/a'}
+      </span>
+    ),
+  ],
+]
+
+/** The `main` tag on the lead Component, with what it means on hover and focus. */
+function MainTag() {
+  const tipId = useId()
+  return (
+    <span className="eh-deployed-hint">
+      <span className="eh-deployed-lead" tabIndex={0} aria-describedby={tipId}>
+        main
+      </span>
+      <span className="eh-deployed-tip" role="tooltip" id={tipId}>
+        Main component: its version is the one shown on the line under the card.
+        A * there means another component runs a different version.
+      </span>
+    </span>
+  )
+}
+
+/**
+ * Fields as rows, Components as columns, the lead first: a Version that
+ * differs from the lead's stands out, as the line's `*` says.
+ */
 function DetailsDialog({
   dialogRef,
   onClose,
@@ -67,6 +212,12 @@ function DetailsDialog({
   of: (slug: string) => Deployment | undefined
   users: Users
 }) {
+  // The lead first, the rest in the catalog's order.
+  const ordered = [
+    ...components.filter((c) => c.slug === leadSlug),
+    ...components.filter((c) => c.slug !== leadSlug),
+  ]
+  const leadVersion = of(leadSlug)?.version
   return (
     <dialog
       ref={dialogRef}
@@ -87,115 +238,61 @@ function DetailsDialog({
         ×
       </button>
       <h3>Deployed on {envSlug}</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Component</th>
-            <th>Version</th>
-            <th>Health</th>
-            <th>Deployed</th>
-            <th>By</th>
-            <th>Pipeline</th>
-            <th>Deploy job</th>
-            <th>Commit</th>
-            <th>Where</th>
-          </tr>
-        </thead>
-        <tbody>
-          {/* The lead first, the rest in the catalog's order. */}
-          {[
-            ...components.filter((c) => c.slug === leadSlug),
-            ...components.filter((c) => c.slug !== leadSlug),
-          ].map((c) => {
-            const d = of(c.slug)
-            const buildId = d?.buildUrl?.match(/\/(\d+)\/?$/)?.[1]
-            const deployId = d?.deployUrl?.match(/\/(\d+)\/?$/)?.[1]
-            const commitUrl =
-              d?.commitSha && c.commitUrl?.replace('{{sha}}', d.commitSha)
-            return (
-              <tr key={c.slug} data-testid="deployed-component">
-                <td>
+      <div className="eh-deployed-dialog-scroll">
+        <table>
+          <thead>
+            <tr>
+              <td />
+              {ordered.map((c) => (
+                <th key={c.slug} scope="col" data-component={c.slug}>
                   {c.displayName}
-                  {c.slug === leadSlug && components.length > 1 && (
-                    <span className="eh-deployed-lead">lead</span>
-                  )}
-                </td>
-                {d ? (
-                  <>
-                    <td className="eh-deployed-mono">
-                      {d.buildUrl ? (
-                        <a href={d.buildUrl} target="_blank" rel="noreferrer">
-                          {d.version}
-                        </a>
-                      ) : (
-                        d.version
-                      )}
-                      {d.aliases.length > 0 && (
-                        <span className="eh-deployed-muted">
-                          {' '}
-                          · {d.aliases.join(' · ')}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {d.health ? (
-                        <>
-                          <span
-                            className={`eh-deployed-state eh-deployed-state-${d.health.state}`}
-                          />
-                          {healthText(d)}
-                        </>
-                      ) : (
-                        'n/a'
-                      )}
-                    </td>
-                    <td
-                      title={d.deployedAt ? fullDate(d.deployedAt) : undefined}
-                    >
-                      {d.deployedAt ? timeAgo(d.deployedAt) : 'n/a'}
-                    </td>
-                    <td>{deployerName(d, users) ?? 'n/a'}</td>
-                    <td className="eh-deployed-mono">
-                      {buildId ? (
-                        <a href={d.buildUrl} target="_blank" rel="noreferrer">
-                          #{buildId}
-                        </a>
-                      ) : (
-                        'n/a'
-                      )}
-                    </td>
-                    <td className="eh-deployed-mono">
-                      {deployId ? (
-                        <a href={d.deployUrl} target="_blank" rel="noreferrer">
-                          #{deployId}
-                        </a>
-                      ) : (
-                        'n/a'
-                      )}
-                    </td>
-                    <td className="eh-deployed-mono">
-                      {!d.commitSha ? (
-                        'n/a'
-                      ) : commitUrl ? (
-                        <a href={commitUrl} target="_blank" rel="noreferrer">
-                          {d.commitSha.slice(0, 7)}
-                        </a>
-                      ) : (
-                        d.commitSha.slice(0, 7)
-                      )}
-                    </td>
-                    <td className="eh-deployed-mono">{placeOf(d) || 'n/a'}</td>
-                  </>
-                ) : (
-                  <td colSpan={8} className="eh-deployed-muted">
-                    not deployed on {envSlug}
+                  {c.slug === leadSlug && components.length > 1 && <MainTag />}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Version</th>
+              {ordered.map((c) => {
+                const d = of(c.slug)
+                return (
+                  <td
+                    key={c.slug}
+                    data-component={c.slug}
+                    className={
+                      !d
+                        ? 'eh-deployed-mono eh-deployed-off'
+                        : c.slug !== leadSlug && d.version !== leadVersion
+                          ? 'eh-deployed-mono eh-deployed-differs'
+                          : 'eh-deployed-mono'
+                    }
+                  >
+                    {d ? ext(d.buildUrl, d.version) : 'not deployed'}
                   </td>
-                )}
+                )
+              })}
+            </tr>
+            {FIELDS.map(([label, cell]) => (
+              <tr key={label}>
+                <th scope="row">{label}</th>
+                {ordered.map((c) => {
+                  const d = of(c.slug)
+                  return (
+                    <td key={c.slug} data-component={c.slug}>
+                      {d ? (
+                        cell(d, c, users)
+                      ) : (
+                        <span className="eh-deployed-muted">—</span>
+                      )}
+                    </td>
+                  )
+                })}
               </tr>
-            )
-          })}
-        </tbody>
-      </table>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {/* Reserved: the Version's merge request, staleness and Work Items. */}
       <footer className="eh-deployed-dialog-footer" />
     </dialog>

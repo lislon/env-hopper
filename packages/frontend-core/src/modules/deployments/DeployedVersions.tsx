@@ -41,6 +41,10 @@ function dotOf(lead: Deployment | undefined, all: Array<Deployment>) {
   return lead ? null : 'not-deployed'
 }
 
+/** Where a cluster runs it, `cluster/namespace`, when the Target says. */
+export const placeOf = (d: Deployment) =>
+  [d.cluster, d.namespace].filter(Boolean).join('/')
+
 const healthText = (d: Deployment) =>
   d.health
     ? `${d.health.state} · ${d.health.checker}${d.health.detail ? `: ${d.health.detail}` : ''}`
@@ -91,6 +95,7 @@ function DetailsDialog({
             <th>Health</th>
             <th>Deployed</th>
             <th>By</th>
+            <th>Where</th>
             <th>Links</th>
           </tr>
         </thead>
@@ -134,6 +139,7 @@ function DetailsDialog({
                       {d.deployedAt ? timeAgo(d.deployedAt) : ''}
                     </td>
                     <td>{deployerName(d, users) ?? ''}</td>
+                    <td className="eh-deployed-mono">{placeOf(d)}</td>
                     <td className="eh-deployed-links">
                       {d.buildUrl && (
                         <a href={d.buildUrl} target="_blank" rel="noreferrer">
@@ -158,7 +164,7 @@ function DetailsDialog({
                     </td>
                   </>
                 ) : (
-                  <td colSpan={5} className="eh-deployed-muted">
+                  <td colSpan={6} className="eh-deployed-muted">
                     not deployed on {envSlug}
                   </td>
                 )}
@@ -203,6 +209,20 @@ function useProfiles(data: PairDeployment | null | undefined, opened: boolean) {
     if (profile) users[u] = profile
   })
   return users
+}
+
+/** The Deployment of the pair's lead Component, from the pair cache the line reads too. */
+export function useLeadDeployment(
+  jumpSlug: string | undefined,
+  envSlug: string | undefined,
+): Deployment | undefined {
+  const appSlug = jumpSlug ? appSlugFromJumpSlug(jumpSlug) : ''
+  const { data } = useQuery({
+    ...pairFacetQuery(appSlug, envSlug ?? '', 'deployment'),
+    enabled: appSlug !== '' && envSlug !== undefined,
+  })
+  const lead = data?.components.find((c) => c.lead) ?? data?.components[0]
+  return lead && data?.rows.find((r) => r.componentSlug === lead.slug)
 }
 
 export function DeployedVersions({
@@ -274,6 +294,7 @@ export function DeployedVersions({
                 ? `deployed ${fullDate(lead.deployedAt)}`
                 : 'deployed'}
               {by ? ` by ${by}` : ''} · via {lead.source}
+              {placeOf(lead) && ` · on ${placeOf(lead)}`}
             </>
           ) : (
             `${leadComponent.displayName} is not deployed on ${envSlug}`

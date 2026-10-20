@@ -124,6 +124,15 @@ export interface PairDeployment {
   rows: Array<{
     componentSlug: string
     targetSlug: string
+    /**
+     * Where a cluster runs the Deployment, from its Target's `meta.cluster`,
+     * `meta.namespace` and `meta.kubeContext` (the kubeconfig context that
+     * reaches the cluster; absent: the cluster's name). Absent when the
+     * Target does not say.
+     */
+    cluster?: string
+    namespace?: string
+    kubeContext?: string
     version: string
     aliases: Array<string>
     buildUrl?: string
@@ -360,9 +369,13 @@ export function createCatalogReads(prisma: PrismaClient) {
         const u = d.deployedBy
         if (u) pair.users[u.username] = profileOf(u)
         const h = d.health
+        const { cluster, namespace, kubeContext } = d.target.meta
         pair.rows.push({
           componentSlug: d.component.slug,
           targetSlug: d.target.slug,
+          ...(cluster && { cluster }),
+          ...(namespace && { namespace }),
+          ...(kubeContext && { kubeContext }),
           version: d.artifact.version,
           aliases: d.artifact.aliases,
           ...(d.artifact.buildUrl && { buildUrl: d.artifact.buildUrl }),

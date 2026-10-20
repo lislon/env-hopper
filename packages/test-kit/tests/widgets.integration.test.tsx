@@ -14,11 +14,14 @@
  */
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
+import { waitFor } from '@testing-library/react'
 import { createBackend, renderApp } from '../src/index'
+import type { FixtureDeployments } from '../src/index'
 import type { AppHandle } from '../src/harness/renderApp'
 
-const backend = () =>
+const backend = (deployments?: Record<string, FixtureDeployments>) =>
   createBackend({
+    deployments,
     apps: [
       {
         slug: 'service-booking',
@@ -199,6 +202,43 @@ describe('the widgets beside the form', () => {
 
     expect(panelFields(app)).toContain(
       'text|kubectl get pods -o wide --context dev-cluster -n booking-dev',
+    )
+  })
+
+  /** An environment can span clusters: where the app runs wins over the env's own. */
+  test('writes the command for the cluster and namespace the app is deployed to', async () => {
+    const app = await renderApp({
+      server,
+      backend: backend({
+        'service-booking': {
+          components: [{ slug: 'booking-api', displayName: 'API', lead: true }],
+          rows: [
+            {
+              env: 'dev',
+              componentSlug: 'booking-api',
+              targetSlug: 'k8s:east/booking-dev',
+              cluster: 'east',
+              namespace: 'booking-east',
+              kubeContext: 'east-ctx',
+              version: 'main-41',
+              aliases: [],
+              source: 'k8s',
+            },
+          ],
+        },
+      }),
+    })
+
+    await choose(app, 'Environment', 'dev')
+    expect(panelFields(app)).toContain(
+      'text|kubectl get pods -o wide --context dev-cluster -n booking-dev',
+    )
+
+    await choose(app, 'Application', 'Service Booking')
+    await waitFor(() =>
+      expect(panelFields(app)).toContain(
+        'text|kubectl get pods -o wide --context east-ctx -n booking-east',
+      ),
     )
   })
 

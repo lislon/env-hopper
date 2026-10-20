@@ -186,7 +186,11 @@ describe.skipIf(!prisma)('catalog reads', () => {
 
   describe('pair deployments', () => {
     async function givenShopDeployedOn(
-      targets: Array<{ slug: string; retired?: boolean }>,
+      targets: Array<{
+        slug: string
+        retired?: boolean
+        meta?: Record<string, string>
+      }>,
     ) {
       await givenOneComponentOnTwoTargets()
       await catalog!.syncTargets(
@@ -195,7 +199,7 @@ describe.skipIf(!prisma)('catalog reads', () => {
           slug: t.slug,
           displayName: t.slug,
           environmentSlug: 'prod',
-          meta: t.retired ? { retired: 'true' } : undefined,
+          meta: t.retired ? { retired: 'true' } : t.meta,
         })),
       )
       await catalog!.syncUsers('ci', [
@@ -249,6 +253,21 @@ describe.skipIf(!prisma)('catalog reads', () => {
           ],
         },
       )
+    })
+
+    it("names the cluster, namespace and kube context the Target's meta gives", async () => {
+      await givenShopDeployedOn([
+        {
+          slug: 'k8s:east/shop',
+          meta: { cluster: 'east', namespace: 'shop-1', kubeContext: 'e1' },
+        },
+      ])
+      const { pairs } = await catalog!.getPairDeployments({})
+      expect(pairs[0]!.rows[0]).toMatchObject({
+        cluster: 'east',
+        namespace: 'shop-1',
+        kubeContext: 'e1',
+      })
     })
 
     it('a live Target wins over a retired one, even when the retired deploy is newer', async () => {

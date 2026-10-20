@@ -159,7 +159,7 @@ describe('deployed version under the jump card', () => {
     'Commit',
   ]
 
-  test('one Component: the same fields as rows, in one value column, with no main tag', async () => {
+  test('one Component: the same fields as rows, in one value column, with no main tag and no group header', async () => {
     const app = await open('/env/staging/app/shop', {
       shop: {
         components: [shopUi],
@@ -171,6 +171,7 @@ describe('deployed version under the jump card', () => {
     expect(rowLabels).toEqual(FIELD_ORDER)
     expect(columns).toEqual(['shop-ui'])
     expect(dialog.querySelector('.eh-deployed-lead')).toBeNull()
+    expect(dialog.querySelector('.eh-deployed-group-header')).toBeNull()
     expect(links(cell('Version', 'shop-ui'))).toEqual([
       ['main-41', 'https://ci.example.com/pipelines/41'],
     ])
@@ -185,7 +186,7 @@ describe('deployed version under the jump card', () => {
     expect(cell('Commit', 'shop-ui')).toHaveTextContent('n/a')
   })
 
-  test('two Components with different Versions: the lead first with a main tag and its hint, the other Version highlighted, closing returns focus', async () => {
+  test('two Components with different Versions: group header with app name and count, bracket, the lead first with a main tag and its hint, the other Version highlighted, closing returns focus', async () => {
     const app = await open('/env/staging/app/shop', {
       shop: {
         ...shopTwoComponents({ commitSha: '0123456789abcdef' }),
@@ -197,6 +198,15 @@ describe('deployed version under the jump card', () => {
     })
     const { opener, dialog, cell, columns } = await openDetails(app)
     expect(columns).toEqual(['shop-ui', 'shop-api'])
+    const groupHeader = dialog.querySelector('.eh-deployed-group-header')!
+    expect(groupHeader).not.toBeNull()
+    expect(
+      groupHeader.querySelector('.eh-deployed-app-name'),
+    ).toHaveTextContent('Shop')
+    expect(
+      groupHeader.querySelector('.eh-deployed-component-count'),
+    ).toHaveTextContent('2 components')
+    expect(groupHeader.querySelector('.eh-deployed-bracket')).not.toBeNull()
     const tag = dialog.querySelector<HTMLElement>(
       'thead [data-component="shop-ui"] .eh-deployed-lead',
     )!
@@ -225,6 +235,34 @@ describe('deployed version under the jump card', () => {
     await app.user.click(dialog.querySelector('button[aria-label="Close"]')!)
     expect(dialog).not.toHaveAttribute('open')
     expect(document.activeElement).toBe(opener)
+  })
+
+  test('six Components: group header with app name and count, bracket present', async () => {
+    const components = [
+      shopUi,
+      shopApi,
+      { slug: 'shop-worker', displayName: 'Worker' },
+      { slug: 'shop-cache', displayName: 'Cache' },
+      { slug: 'shop-db', displayName: 'DB' },
+      { slug: 'shop-queue', displayName: 'Queue' },
+    ]
+    const app = await open('/env/staging/app/shop', {
+      shop: {
+        components,
+        users,
+        rows: components.map((c) => row({ componentSlug: c.slug })),
+      },
+    })
+    const { dialog } = await openDetails(app)
+    const groupHeader = dialog.querySelector('.eh-deployed-group-header')!
+    expect(groupHeader).not.toBeNull()
+    expect(
+      groupHeader.querySelector('.eh-deployed-app-name'),
+    ).toHaveTextContent('Shop')
+    expect(
+      groupHeader.querySelector('.eh-deployed-component-count'),
+    ).toHaveTextContent('6 components')
+    expect(groupHeader.querySelector('.eh-deployed-bracket')).not.toBeNull()
   })
 
   test('a Component not deployed here says so in its Version cell, with a dash below', async () => {

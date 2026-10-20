@@ -4,6 +4,7 @@ import type { ReactNode, RefObject } from 'react'
 import type { PairDeployment } from '@env-hopper/backend-core'
 import { pairFacetQuery, userQuery } from '~/modules/pairDetails/pairDetails'
 import { appSlugFromJumpSlug } from '~/util/route-utils'
+import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 
 type Deployment = PairDeployment['rows'][number]
 type Component = PairDeployment['components'][number]
@@ -199,6 +200,7 @@ function DetailsDialog({
   dialogRef,
   onClose,
   envSlug,
+  appDisplayName,
   components,
   leadSlug,
   of,
@@ -207,6 +209,7 @@ function DetailsDialog({
   dialogRef: RefObject<HTMLDialogElement | null>
   onClose: () => void
   envSlug: string
+  appDisplayName: string
   components: Array<Component>
   leadSlug: string
   of: (slug: string) => Deployment | undefined
@@ -241,6 +244,22 @@ function DetailsDialog({
       <div className="eh-deployed-dialog-scroll">
         <table>
           <thead>
+            {components.length > 1 && (
+              <tr className="eh-deployed-group-header">
+                <td />
+                <th
+                  colSpan={components.length}
+                  scope="colgroup"
+                  className="eh-deployed-app-group"
+                >
+                  <span className="eh-deployed-app-name">{appDisplayName}</span>
+                  <span className="eh-deployed-component-count">
+                    {components.length} components
+                  </span>
+                  <div className="eh-deployed-bracket" />
+                </th>
+              </tr>
+            )}
             <tr>
               <td />
               {ordered.map((c) => (
@@ -353,6 +372,7 @@ export function DeployedVersions({
   envSlug: string | undefined
 }) {
   const appSlug = jumpSlug ? appSlugFromJumpSlug(jumpSlug) : ''
+  const bootstrap = useBootstrapConfig()
   const { data, error, failureCount, failureReason } = useQuery({
     ...pairFacetQuery(appSlug, envSlug ?? '', 'deployment'),
     enabled: appSlug !== '' && envSlug !== undefined,
@@ -363,6 +383,7 @@ export function DeployedVersions({
   const users = useProfiles(data, opened)
   const leadComponent =
     data?.components.find((c) => c.lead) ?? data?.components[0]
+  const appDisplayName = bootstrap.apps[appSlug]?.displayName ?? appSlug
 
   // The slot is always there, one line high: people aim at it by habit. A
   // key per state swaps its content without the browser counting a shift.
@@ -501,6 +522,7 @@ export function DeployedVersions({
         dialogRef={dialogRef}
         onClose={() => openerRef.current?.focus()}
         envSlug={envSlug}
+        appDisplayName={appDisplayName}
         components={data.components}
         leadSlug={leadComponent.slug}
         of={of}

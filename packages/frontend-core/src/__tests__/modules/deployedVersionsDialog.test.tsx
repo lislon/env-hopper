@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { DeployedVersions } from '~/modules/deployments/DeployedVersions'
 import { pairFacetKey } from '~/modules/pairDetails/pairDetails'
-import type { PairDeployment } from '@env-hopper/backend-core'
+import { BootstrapConfigProvider } from '~/modules/config/BootstrapConfigContext'
+import type { BootstrapPayload, PairDeployment } from '@env-hopper/backend-core'
 
 describe('DeployedVersions details', () => {
   it("puts the lead Component's column first, whatever order the Components came in", () => {
@@ -26,13 +27,26 @@ describe('DeployedVersions details', () => {
     }
     client.setQueryData(pairFacetKey('shop', 'qa', 'deployment'), data)
 
+    const bootstrap: BootstrapPayload = {
+      apps: { shop: { slug: 'shop', displayName: 'Shop' } },
+      envs: {},
+      envDefaults: {},
+      appsMeta: { tags: { descriptions: [] } },
+      contexts: [],
+      defaults: { envSlug: '', resourceJumpSlug: '' },
+    }
+
     render(
       <QueryClientProvider client={client}>
-        <DeployedVersions jumpSlug="shop" envSlug="qa" />
+        <BootstrapConfigProvider bootstrapConfig={bootstrap}>
+          <DeployedVersions jumpSlug="shop" envSlug="qa" />
+        </BootstrapConfigProvider>
       </QueryClientProvider>,
     )
 
-    const columns = screen.getAllByRole('columnheader', { hidden: true })
+    const columns = screen
+      .getAllByRole('columnheader', { hidden: true })
+      .filter((th) => th.getAttribute('scope') === 'col')
     expect(columns.map((c) => c.textContent)).toEqual([
       expect.stringMatching(/^Shop UImain/),
       'Shop API',

@@ -550,6 +550,37 @@
 .eh-legacy .eh-deployed-dialog thead td {
   background: var(--fallback-b1, oklch(var(--b1) / 1));
 }
+/* Group header spanning all Component columns. */
+.eh-deployed-group-header th {
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: none;
+}
+.eh-deployed-app-group {
+  position: relative;
+}
+.eh-deployed-app-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: color-mix(in oklab, currentColor 85%, transparent);
+}
+.eh-deployed-component-count {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 400;
+  color: color-mix(in oklab, currentColor 50%, transparent);
+}
+/* Bracket decoration under the group header. */
+.eh-deployed-bracket {
+  position: absolute;
+  bottom: -4px;
+  left: 10px;
+  right: 10px;
+  height: 8px;
+  border: 1px solid color-mix(in oklab, currentColor 20%, transparent);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+}
 /* A Version other than the lead's, as the line's `*` marks it. */
 .eh-deployed-dialog .eh-deployed-differs,
 .eh-deployed-dialog .eh-deployed-differs a,

@@ -118,10 +118,21 @@ async function intoCache(
   return failed
 }
 
+/** How long a `pair` load may wait for its facet before it counts as failed. */
+const PAIR_FACET_TIMEOUT_MS = 10_000
+/** While a pair facet stays failed, it is asked for again this often. */
+const FAILED_RETRY_MS = 30_000
+/** `value` for a failed query, `false` for any other. */
+const failedOnly =
+  <T>(value: T) =>
+  (q: { state: { status: string } }) =>
+    q.state.status === 'error' ? value : false
+
 /**
  * One facet of a pair. A pair already in the cache, from `pair` or from a
  * slice, is never fetched again; otherwise its `pair` stream fills every
- * facet, each as it arrives.
+ * facet, each as it arrives. A load whose facet has not arrived within
+ * `PAIR_FACET_TIMEOUT_MS` fails, and a failed facet keeps being retried.
  */
 export function pairFacetQuery<TFacet extends PairFacetName>(
   app: string,
@@ -131,24 +142,47 @@ export function pairFacetQuery<TFacet extends PairFacetName>(
   return queryOptions({
     queryKey: pairFacetKey(app, env, facet),
     // Never refetched when successful: `pairsWatch` pushes every change (see `usePairsWatch`).
-    // Failed queries retry with backoff and on window focus.
     staleTime: Infinity,
     gcTime: Infinity,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    refetchOnWindowFocus: 'always',
-    queryFn: async (ctx): Promise<PairFacetData<TFacet> | null> => {
+    refetchOnWindowFocus: failedOnly(true),
+    refetchInterval: failedOnly(FAILED_RETRY_MS),
+    queryFn: async (ctx): Promise<PairFacetData<TFacet>> => {
       const cached = () =>
         ctx.client.getQueryData<PairFacetData<TFacet>>(ctx.queryKey)
-      // No abort signal: an unmount then does not cancel the load, so
+      // No unmount signal: an unmount then does not cancel the load, so
       // StrictMode's remount reuses it instead of sending the pair again.
-      const stream = await getTrpcFromMeta(ctx).pair.query({
-        appSlug: app,
-        envSlug: env,
+      // Only the timeout aborts it, and only before its facet arrived.
+      const abort = new AbortController()
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const timedOut = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          if (cached() !== undefined) return
+          abort.abort()
+          reject(
+            new Error(`no ${facet} within ${PAIR_FACET_TIMEOUT_MS / 1000} s`),
+          )
+        }, PAIR_FACET_TIMEOUT_MS)
       })
-      const failed = await intoCache(ctx.client, stream)
-      if (failed.has(facet)) throw new Error(`pair ${facet} unavailable`)
-      return cached() ?? null
+      try {
+        const load = (async () => {
+          const stream = await getTrpcFromMeta(ctx).pair.query(
+            { appSlug: app, envSlug: env },
+            { signal: abort.signal },
+          )
+          return intoCache(ctx.client, stream, { signal: abort.signal })
+        })()
+        // Aborted by the timeout, it rejects after the race is decided.
+        load.catch(() => undefined)
+        const failed = await Promise.race([load, timedOut])
+        if (failed.has(facet)) throw new Error(`the ${facet} source failed`)
+      } finally {
+        clearTimeout(timer)
+      }
+      const data = cached()
+      if (data === undefined) throw new Error(`the stream sent no ${facet}`)
+      return data
     },
   })
 }

@@ -95,8 +95,10 @@ function DetailsDialog({
             <th>Health</th>
             <th>Deployed</th>
             <th>By</th>
+            <th>Pipeline</th>
+            <th>Deploy job</th>
+            <th>Commit</th>
             <th>Where</th>
-            <th>Links</th>
           </tr>
         </thead>
         <tbody>
@@ -106,6 +108,10 @@ function DetailsDialog({
             ...components.filter((c) => c.slug !== leadSlug),
           ].map((c) => {
             const d = of(c.slug)
+            const buildId = d?.buildUrl?.match(/\/(\d+)\/?$/)?.[1]
+            const deployId = d?.deployUrl?.match(/\/(\d+)\/?$/)?.[1]
+            const commitUrl =
+              d?.commitSha && c.commitUrl?.replace('{{sha}}', d.commitSha)
             return (
               <tr key={c.slug} data-testid="deployed-component">
                 <td>
@@ -117,7 +123,13 @@ function DetailsDialog({
                 {d ? (
                   <>
                     <td className="eh-deployed-mono">
-                      {d.version}
+                      {d.buildUrl ? (
+                        <a href={d.buildUrl} target="_blank" rel="noreferrer">
+                          {d.version}
+                        </a>
+                      ) : (
+                        d.version
+                      )}
                       {d.aliases.length > 0 && (
                         <span className="eh-deployed-muted">
                           {' '}
@@ -126,45 +138,56 @@ function DetailsDialog({
                       )}
                     </td>
                     <td>
-                      {d.health && (
-                        <span
-                          className={`eh-deployed-state eh-deployed-state-${d.health.state}`}
-                        />
+                      {d.health ? (
+                        <>
+                          <span
+                            className={`eh-deployed-state eh-deployed-state-${d.health.state}`}
+                          />
+                          {healthText(d)}
+                        </>
+                      ) : (
+                        'n/a'
                       )}
-                      {healthText(d)}
                     </td>
                     <td
                       title={d.deployedAt ? fullDate(d.deployedAt) : undefined}
                     >
-                      {d.deployedAt ? timeAgo(d.deployedAt) : ''}
+                      {d.deployedAt ? timeAgo(d.deployedAt) : 'n/a'}
                     </td>
-                    <td>{deployerName(d, users) ?? ''}</td>
-                    <td className="eh-deployed-mono">{placeOf(d)}</td>
-                    <td className="eh-deployed-links">
-                      {d.buildUrl && (
+                    <td>{deployerName(d, users) ?? 'n/a'}</td>
+                    <td className="eh-deployed-mono">
+                      {buildId ? (
                         <a href={d.buildUrl} target="_blank" rel="noreferrer">
-                          build pipeline
+                          #{buildId}
                         </a>
+                      ) : (
+                        'n/a'
                       )}
-                      {d.deployUrl && (
-                        <a href={d.deployUrl} target="_blank" rel="noreferrer">
-                          deploy job
-                        </a>
-                      )}
-                      {d.endpoints?.map((e) => (
-                        <a
-                          key={`${e.kind} ${e.url}`}
-                          href={e.url}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          {e.label ?? e.kind}
-                        </a>
-                      ))}
                     </td>
+                    <td className="eh-deployed-mono">
+                      {deployId ? (
+                        <a href={d.deployUrl} target="_blank" rel="noreferrer">
+                          #{deployId}
+                        </a>
+                      ) : (
+                        'n/a'
+                      )}
+                    </td>
+                    <td className="eh-deployed-mono">
+                      {!d.commitSha ? (
+                        'n/a'
+                      ) : commitUrl ? (
+                        <a href={commitUrl} target="_blank" rel="noreferrer">
+                          {d.commitSha.slice(0, 7)}
+                        </a>
+                      ) : (
+                        d.commitSha.slice(0, 7)
+                      )}
+                    </td>
+                    <td className="eh-deployed-mono">{placeOf(d) || 'n/a'}</td>
                   </>
                 ) : (
-                  <td colSpan={6} className="eh-deployed-muted">
+                  <td colSpan={8} className="eh-deployed-muted">
                     not deployed on {envSlug}
                   </td>
                 )}
@@ -182,8 +205,8 @@ function DetailsDialog({
 /**
  * The Version the App runs on the Environment, on one line: its lead
  * Component's, starred when a sibling runs another one. Clicking it opens the
- * per-Component details. Renders nothing while loading, on error, or for an
- * App the catalog does not know.
+ * per-Component details. While loading, on error, or for an App the catalog
+ * does not know, the same one-line slot says so instead.
  */
 /**
  * The profiles the line and, once opened, the details show. A pair from a
@@ -233,7 +256,7 @@ export function DeployedVersions({
   envSlug: string | undefined
 }) {
   const appSlug = jumpSlug ? appSlugFromJumpSlug(jumpSlug) : ''
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, error, failureCount, failureReason } = useQuery({
     ...pairFacetQuery(appSlug, envSlug ?? '', 'deployment'),
     enabled: appSlug !== '' && envSlug !== undefined,
   })
@@ -244,32 +267,63 @@ export function DeployedVersions({
   const leadComponent =
     data?.components.find((c) => c.lead) ?? data?.components[0]
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="eh-deployed">
-        <span className="eh-deployed-loading">loading version…</span>
-      </div>
-    )
-  }
-
-  // Error state
-  if (isError) {
-    const errorMsg = error instanceof Error ? error.message : 'unknown error'
-    return (
-      <div className="eh-deployed">
-        <span
-          className="eh-deployed-error"
-          title={`Failed to load version: ${errorMsg}`}
+  // The slot is always there, one line high: people aim at it by habit. A
+  // key per state swaps its content without the browser counting a shift.
+  if (!data) {
+    const failure = error ?? failureReason
+    if (!failure) {
+      return (
+        <div
+          key="loading"
+          className="eh-deployed"
+          data-testid="deployed-version-slot"
         >
-          version unavailable · retrying
+          <span
+            className="eh-deployed-loading"
+            role="status"
+            aria-label="loading version"
+          />
+        </div>
+      )
+    }
+    // A TRPCClientError: the response's status, or the one its body names.
+    const { meta, data: body } = failure as {
+      meta?: { response?: { status?: number } }
+      data?: { httpStatus?: number }
+    }
+    const status = meta?.response?.status ?? body?.httpStatus
+    return (
+      <div
+        key="error"
+        className="eh-deployed"
+        data-testid="deployed-version-slot"
+      >
+        <span className="eh-deployed-row">
+          <span className="eh-deployed-error" tabIndex={0}>
+            ⚠ version unavailable
+          </span>
+          <span className="eh-deployed-tip" role="tooltip">
+            `pair` failed{status ? ` (HTTP ${status})` : ''}: {failure.message}
+            <br />
+            retrying · {failureCount} failed{' '}
+            {failureCount === 1 ? 'attempt' : 'attempts'}
+          </span>
         </span>
       </div>
     )
   }
 
-  // No Components configured for this App
-  if (!data || !envSlug || !leadComponent) return null
+  if (!envSlug || !leadComponent) {
+    return (
+      <div
+        key="none"
+        className="eh-deployed"
+        data-testid="deployed-version-slot"
+      >
+        <span className="eh-deployed-muted">no version info</span>
+      </div>
+    )
+  }
 
   const here = data.rows
   const of = (slug: string) => here.find((d) => d.componentSlug === slug)
@@ -282,9 +336,19 @@ export function DeployedVersions({
   })
   const dot = dotOf(lead, here)
   const by = lead && deployerName(lead, users)
+  const versionText = lead
+    ? [lead.version, ...lead.aliases].join(' · ')
+    : 'not deployed'
+  const fullVersionText = lead
+    ? `${[lead.version, ...lead.aliases].join(' · ')}${lead.deployedAt ? ` · deployed ${timeAgo(lead.deployedAt)}` : ''}`
+    : 'not deployed'
 
   return (
-    <div className="eh-deployed">
+    <div
+      key="version"
+      className="eh-deployed"
+      data-testid="deployed-version-slot"
+    >
       <span className="eh-deployed-row" data-testid="deployed-version">
         <button
           ref={openerRef}
@@ -298,17 +362,21 @@ export function DeployedVersions({
             setOpened(true)
             dialogRef.current?.showModal()
           }}
+          title={fullVersionText}
         >
-          {lead ? lead.version : 'not deployed'}
+          <span className="eh-deployed-version-text">{versionText}</span>
+          {lead?.deployedAt && (
+            <span className="eh-deployed-ago">
+              {' '}
+              · deployed {timeAgo(lead.deployedAt)}
+            </span>
+          )}
           {dot && <span className={`eh-deployed-dot eh-deployed-dot-${dot}`} />}
         </button>
         {others.length > 0 && (
           <span className="eh-deployed-star" title={others.join('\n')}>
             *
           </span>
-        )}
-        {lead?.deployedAt && (
-          <span className="eh-deployed-ago">· {timeAgo(lead.deployedAt)}</span>
         )}
         <span className="eh-deployed-tip" role="tooltip">
           {lead ? (

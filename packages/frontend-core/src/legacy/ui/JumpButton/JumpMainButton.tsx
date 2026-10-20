@@ -65,9 +65,8 @@ export function JumpMainButton({ className }: JumpMainButtonProps) {
           <MainJumpButtonNotReady isHovered={isHovered} />
         </div>
       )}
-      {url !== undefined && (
-        <DeployedVersions jumpSlug={app?.id} envSlug={env?.id} />
-      )}
+      {/* Also before the URL is complete: the slot is always there. */}
+      {app && env && <DeployedVersions jumpSlug={app.id} envSlug={env.id} />}
     </div>
   )
 }

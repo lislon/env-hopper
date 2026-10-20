@@ -4,7 +4,15 @@
  */
 import { http } from 'msw'
 import { setupServer } from 'msw/node'
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from 'vitest'
 import { waitFor } from '@testing-library/react'
 import { createBackend, renderApp } from '../src/index'
 import type { FixtureDeployments } from '../src/index'
@@ -114,9 +122,13 @@ describe('deployed version under the jump card', () => {
 
   test('clicking the Version opens the details, one row per Component, and closing returns focus', async () => {
     const app = await open('/env/staging/app/shop', {
-      shop: shopTwoComponents({
-        endpoints: [{ kind: 'ui', url: 'https://shop.example.com' }],
-      }),
+      shop: {
+        ...shopTwoComponents({ commitSha: '0123456789abcdef' }),
+        components: [
+          shopApi,
+          { ...shopUi, commitUrl: 'https://git.example.com/-/commit/{{sha}}' },
+        ],
+      },
     })
     await waitFor(() => expect(lines(app.container)).toHaveLength(1))
     const opener = lines(app.container)[0]!.querySelector('button')!
@@ -130,15 +142,25 @@ describe('deployed version under the jump card', () => {
     expect(rows[0]).toContain('UIlead')
     expect(rows[1]).toContain('API')
     expect(rows[1]).toContain('down · http: 503')
-    expect(
-      Array.from(dialog.querySelectorAll('a')).map((a) => a.textContent),
-    ).toEqual([
-      'build pipeline',
-      'deploy job',
-      'ui',
-      'build pipeline',
-      'deploy job',
+    // The Version links its build; Pipeline and Deploy job by id; the commit
+    // by its short sha, plain text without the Component's commit page.
+    const links = (r: Element) =>
+      Array.from(r.querySelectorAll('a')).map((a) => [
+        a.textContent,
+        a.getAttribute('href'),
+      ])
+    const [ui, api] = dialog.querySelectorAll(
+      '[data-testid="deployed-component"]',
+    )
+    expect(links(ui!)).toEqual([
+      ['main-41', 'https://ci.example.com/pipelines/41'],
+      ['#41', 'https://ci.example.com/pipelines/41'],
+      ['#42', 'https://ci.example.com/pipelines/42'],
+      ['0123456', 'https://git.example.com/-/commit/0123456789abcdef'],
     ])
+    expect(links(api!).map(([text]) => text)).toEqual(['main-9', '#41', '#42'])
+    // A row with no commit says so.
+    expect(api!.textContent).toContain('n/a')
     await app.user.click(dialog.querySelector('button[aria-label="Close"]')!)
     expect(dialog).not.toHaveAttribute('open')
     expect(document.activeElement).toBe(opener)
@@ -154,12 +176,139 @@ describe('deployed version under the jump card', () => {
     expect(line!.querySelector('.eh-deployed-dot-not-deployed')).not.toBeNull()
   })
 
-  test('an App the catalog does not know renders nothing', async () => {
-    const app = await open('/env/staging/app/wiki', {})
-    expect(app.container.querySelector('#jump-main-button')).not.toBeNull()
-    // Give the query time to answer before asserting absence.
-    await new Promise((r) => setTimeout(r, 50))
-    expect(lines(app.container)).toHaveLength(0)
+  describe('the slot under the card is never empty', () => {
+    const slot = (container: HTMLElement) =>
+      container.querySelector<HTMLElement>(
+        '[data-testid="deployed-version-slot"]',
+      )
+    /** The kit's bootstrap, with `pair` answered by `pair` instead. */
+    const openWithPair = (
+      pair: Parameters<typeof http.get>[1],
+      waitForFullLoad = true,
+    ) =>
+      renderApp({
+        server,
+        backend: backend({
+          shop: { components: [shopUi], users, rows: [row({})] },
+        }),
+        initialLink: '/env/staging/app/shop',
+        throwOnError: false,
+        waitForFullLoad,
+        overrideBackendNetwork: (srv, mswTrpc, data) => {
+          srv.use(
+            mswTrpc.bootstrap.query(() => data.bootstrap),
+            mswTrpc.resourceJumps.query(() => data.resourceJumps),
+            http.get(/\/trpc\/[^?]*\bpair\b/, pair),
+          )
+        },
+      })
+    const errorTip = (container: HTMLElement) =>
+      slot(container)?.querySelector('[role="tooltip"]')?.textContent
+
+    test('an App the catalog does not know, or one with no Components, says no version info', async () => {
+      const app = await open('/env/staging/app/wiki', {
+        shop: { components: [], rows: [] },
+      })
+      await waitFor(() =>
+        expect(slot(app.container)).toHaveTextContent('no version info'),
+      )
+      app.unmount()
+      const shop = await open('/env/staging/app/shop', {
+        shop: { components: [], rows: [] },
+      })
+      await waitFor(() =>
+        expect(slot(shop.container)).toHaveTextContent('no version info'),
+      )
+    })
+
+    test('a page whose URL still needs a value has the slot too', async () => {
+      const app = await renderApp({
+        server,
+        backend: createBackend({
+          apps: [{ slug: 'shop', resourceJumps: '2-pager' }],
+          envs: [{ slug: 'staging' }],
+          deployments: {},
+        }),
+        initialLink: '/env/staging/app/shop-order',
+      })
+      expect(app.container.querySelector('#jump-main-button')).toBeNull()
+      await waitFor(() =>
+        expect(slot(app.container)).toHaveTextContent('no version info'),
+      )
+    })
+
+    test('a failing deployment source shows the error label, keyboard-focusable, with what failed', async () => {
+      const app = await renderApp({
+        server,
+        backend: backend({
+          shop: {
+            components: [shopUi],
+            get rows(): Array<Row> {
+              throw new Error('catalog down')
+            },
+          },
+        }),
+        initialLink: '/env/staging/app/shop',
+        throwOnError: false,
+        waitForFullLoad: false,
+      })
+      await waitFor(() =>
+        expect(slot(app.container)).toHaveTextContent('⚠ version unavailable'),
+      )
+      const label = slot(app.container)!.querySelector<HTMLElement>(
+        '.eh-deployed-error',
+      )!
+      expect(label.tabIndex).toBe(0)
+      expect(errorTip(app.container)).toContain(
+        '`pair` failed: the deployment source failed',
+      )
+      expect(errorTip(app.container)).toContain('retrying')
+    })
+
+    test('an unreachable backend shows the error label with the message, then the Version once it answers', async () => {
+      let calls = 0
+      const app = await openWithPair(() => {
+        calls++
+        // The next attempts fall through to the kit's real router.
+        return calls === 1 ? Response.error() : undefined
+      }, false)
+      await waitFor(() =>
+        expect(errorTip(app.container)).toMatch(
+          /^`pair` failed: \S.*retrying · 1 failed attempt$/,
+        ),
+      )
+      await waitFor(
+        () =>
+          expect(
+            lines(app.container)[0]?.querySelector('button'),
+          ).toHaveTextContent('main-41'),
+        { timeout: 3000 },
+      )
+    })
+
+    test('a stream that never answers shows the placeholder, then the error label at the timeout', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      try {
+        const app = await openWithPair(
+          () => new Promise<never>(() => {}),
+          false,
+        )
+        await waitFor(() =>
+          expect(
+            slot(app.container)?.querySelector('[role="status"]'),
+          ).not.toBeNull(),
+        )
+        // frontend-core's PAIR_FACET_TIMEOUT_MS
+        await vi.advanceTimersByTimeAsync(10_000)
+        await waitFor(() =>
+          expect(errorTip(app.container)).toContain(
+            'no deployment within 10 s',
+          ),
+        )
+      } finally {
+        vi.useRealTimers()
+      }
+    })
   })
 
   describe('pair details from the preloaded slices', () => {

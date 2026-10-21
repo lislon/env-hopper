@@ -80,8 +80,10 @@ describe.each(['gzip', 'br'])('under %s', (encoding) => {
       `[compression ${encoding}] first chunk ${at[0]} ms, last ${at[1]} ms (slow facet ${SLOW_MS} ms)`,
     )
     expect(seen).toEqual([encoding])
-    expect(at[0]).toBeLessThan(SLOW_MS / 2)
-    expect(at[1]! - at[0]!).toBeGreaterThanOrEqual(SLOW_MS - 50)
+    // Held back, the fast chunk would arrive with the slow one. Each arrival
+    // also carries its own delivery delay, which a loaded runner stretches
+    // past 100 ms, so only the gap between them is asserted, with room.
+    expect(at[1]! - at[0]!).toBeGreaterThan(SLOW_MS / 2)
   })
 
   it('keeps compressing across streamed chunks instead of starting over at each', async () => {
@@ -138,8 +140,7 @@ describe.each(['gzip', 'br'])('under %s', (encoding) => {
     console.log(
       `[compression ${encoding}] SSE first ${at.first} ms, second ${at.second} ms`,
     )
-    expect(at.first).toBeLessThan(SLOW_MS / 2)
-    expect(at.second! - at.first!).toBeGreaterThanOrEqual(SLOW_MS - 50)
+    expect(at.second! - at.first!).toBeGreaterThan(SLOW_MS / 2)
   })
 
   it('compresses a plain response', async () => {

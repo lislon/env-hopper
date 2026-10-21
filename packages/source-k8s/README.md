@@ -48,6 +48,24 @@ const watcher = createK8sWatcher({
 watcher.start()
 ```
 
+## Short-lived tokens
+
+When the API server takes a token that expires (one minted from your cloud
+identity, say), wrap the KubeConfig so each request asks for the current one:
+
+```ts
+import { cachedToken, withBearerToken } from '@env-hopper/source-k8s'
+
+const token = cachedToken(async () => ({ token: await mintToken(), expiresAt: new Date(Date.now() + 15 * 60_000) }), { refreshBeforeMs: 5 * 60_000 })
+const authed = withBearerToken(kc, token)
+const { apps, networking } = k8sClientsFromKubeConfig(authed)
+const watch = watchFromKubeConfig(authed)
+```
+
+`cachedToken` mints once and reuses the token until `refreshBeforeMs` before
+`expiresAt`; concurrent callers share one mint, and a failed mint is retried on
+the next call.
+
 ## Health check
 
 ```ts

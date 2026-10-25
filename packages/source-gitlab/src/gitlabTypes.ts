@@ -71,6 +71,11 @@ export interface GitlabSource {
       jobNames?: (name: string) => boolean
       /** Only deployments updated after this; older environments are left out. */
       updatedAfter?: Date
+      /**
+       * Read at most this many pages (newest first) and keep what they hold:
+       * for statuses so frequent that only the latest rows matter.
+       */
+      pageLimit?: number
     },
   ) => Promise<Array<GitlabDeploymentRecord>>
   /** One environment with its last deployment (the list endpoint has neither). */

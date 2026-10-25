@@ -76,11 +76,14 @@ export function createGitlabSource({
   async function* pages<T>(
     path: string,
     params: Record<string, string> = {},
+    /** Stop after this many pages, keeping what they held. */
+    limit = Infinity,
   ): AsyncGenerator<Array<T>> {
     let page = '1'
     let pageCount = 0
     while (page) {
       pageCount++
+      if (pageCount > limit) return
       if (pageCount > maxPages) {
         throw new Error(
           `GitLab ${path}: exceeded maxPages limit of ${maxPages}`,
@@ -100,9 +103,13 @@ export function createGitlabSource({
     }
   }
 
-  async function all<T>(path: string, params?: Record<string, string>) {
+  async function all<T>(
+    path: string,
+    params?: Record<string, string>,
+    limit?: number,
+  ) {
     const out: Array<T> = []
-    for await (const p of pages<T>(path, params)) out.push(...p)
+    for await (const p of pages<T>(path, params, limit)) out.push(...p)
     return out
   }
 
@@ -121,7 +128,12 @@ export function createGitlabSource({
     },
     async latestDeployments(
       projectId,
-      { status = 'success', jobNames = () => true, updatedAfter } = {},
+      {
+        status = 'success',
+        jobNames = () => true,
+        updatedAfter,
+        pageLimit,
+      } = {},
     ) {
       const latest = new Map<string, GitlabDeploymentRecord>()
       for (const d of await all<RawDeployment>(
@@ -135,6 +147,7 @@ export function createGitlabSource({
             ? { updated_after: updatedAfter.toISOString() }
             : {}),
         },
+        pageLimit,
       )) {
         const env = d.environment.name
         // The API's status filter is trusted but re-checked: a stale-status row

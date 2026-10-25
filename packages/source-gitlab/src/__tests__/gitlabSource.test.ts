@@ -352,6 +352,13 @@ describe('gitlab source', () => {
     expect(out.map((e) => e.state)).toEqual(['available', 'stopped'])
   })
 
+  it('pageLimit reads the newest pages only and keeps what they hold', async () => {
+    const src = createGitlabSource({ baseUrl: base, token: 't' })
+    // Project 999 pages forever, one deployment a page.
+    const out = await src.latestDeployments(999, { pageLimit: 3 })
+    expect(out.map((d) => d.sha)).toEqual(['s1'])
+  })
+
   it('throws when exceeding maxPages limit', async () => {
     const src = createGitlabSource({
       baseUrl: base,

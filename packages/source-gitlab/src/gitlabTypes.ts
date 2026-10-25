@@ -29,7 +29,11 @@ export interface GitlabDeploymentRecord {
   /** When the deployed commit was committed. */
   committedAt: string | null
   status: string
+  /** When the deploy job started; else when the deployment was created. */
+  startedAt: string | null
   finishedAt: string | null
+  /** The deploy job's page. */
+  jobUrl: string | null
   /**
    * Whose action created the deployment record: for a manual deploy job, who
    * started its pipeline, not who ran the job.
@@ -98,6 +102,7 @@ export interface RawDeployment {
   ref: string
   sha: string
   status: string
+  created_at?: string
   updated_at: string
   environment: {
     name: string
@@ -112,7 +117,9 @@ export interface RawDeployment {
       created_at?: string
       web_url?: string
     }
+    started_at?: string
     finished_at?: string
+    web_url?: string
     user?: RawUser
   }
   user?: RawUser

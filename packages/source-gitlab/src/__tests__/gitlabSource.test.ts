@@ -81,6 +81,36 @@ const canceledDeployments = [
   },
 ]
 
+const runningDeployments = [
+  {
+    id: 12,
+    ref: 'main',
+    sha: 'cr1',
+    status: 'running',
+    created_at: '2026-01-12T00:00:00Z',
+    updated_at: '2026-01-12T00:02:00Z',
+    environment: { name: 'qa' },
+    deployable: {
+      id: 1201,
+      name: 'deploy-qa',
+      pipeline: { id: 120 },
+      started_at: '2026-01-12T00:01:00Z',
+      web_url: 'https://git.example.com/g/p/-/jobs/1201',
+    },
+  },
+  {
+    // A job not picked up by a runner yet: no start of its own.
+    id: 13,
+    ref: 'main',
+    sha: 'cr2',
+    status: 'running',
+    created_at: '2026-01-12T01:00:00Z',
+    updated_at: '2026-01-12T01:00:00Z',
+    environment: { name: 'dev' },
+    deployable: { name: 'deploy-dev', pipeline: { id: 130 } },
+  },
+]
+
 // GitLab's environment list returns no `last_deployment` (verified against a
 // real instance); only the single-environment endpoint does.
 const environments = [
@@ -115,6 +145,7 @@ const server = createServer((req, res) => {
     let data: Array<unknown> = successDeployments
     if (status === 'failed') data = failedDeployments
     if (status === 'canceled') data = canceledDeployments
+    if (status === 'running') data = runningDeployments
 
     // two pages of size 2 to exercise pagination for success deployments
     const slice = data.slice((page - 1) * 2, page * 2)
@@ -190,6 +221,8 @@ describe('gitlab source', () => {
         committedAt: null,
         status: 'success',
         finishedAt: '2026-01-03T00:00:00Z',
+        startedAt: null,
+        jobUrl: null,
         user: {
           username: 'jdoe',
           name: 'Jo Doe',
@@ -224,6 +257,8 @@ describe('gitlab source', () => {
         committedAt: null,
         status: 'failed',
         finishedAt: null,
+        startedAt: null,
+        jobUrl: null,
         user: null,
         jobUser: null,
       },
@@ -247,10 +282,43 @@ describe('gitlab source', () => {
         committedAt: '2026-01-10T12:00:00Z',
         status: 'canceled',
         finishedAt: '2026-01-11T01:00:00Z',
+        startedAt: null,
+        jobUrl: null,
         user: null,
         jobUser: null,
       },
     ])
+  })
+
+  it('says when a running deploy started and links its job', async () => {
+    const src = createGitlabSource({ baseUrl: base, token: 't' })
+    const [qa, dev] = await src.latestDeployments(7, { status: 'running' })
+    expect({ qa, dev }).toEqual({
+      qa: {
+        projectId: 7,
+        environmentName: 'qa',
+        ref: 'main',
+        sha: 'cr1',
+        tag: false,
+        jobName: 'deploy-qa',
+        pipelineId: 120,
+        pipelineCreatedAt: null,
+        pipelineUrl: null,
+        committedAt: null,
+        status: 'running',
+        startedAt: '2026-01-12T00:01:00Z',
+        finishedAt: null,
+        jobUrl: 'https://git.example.com/g/p/-/jobs/1201',
+        user: null,
+        jobUser: null,
+      },
+      // Without a job start, the deployment's own creation.
+      dev: expect.objectContaining({
+        environmentName: 'dev',
+        startedAt: '2026-01-12T01:00:00Z',
+        jobUrl: null,
+      }),
+    })
   })
 
   it('preserves finishedAt: null for unfinished deployments', async () => {
@@ -413,6 +481,9 @@ describe('gitlab source single environment', () => {
         committedAt: null,
         status: 'success',
         finishedAt: '2025-01-02T00:09:00Z',
+        // The deployment's creation: the job has no start of its own.
+        startedAt: '2025-01-02T00:00:00Z',
+        jobUrl: null,
         user: null,
         jobUser: null,
       },

@@ -40,6 +40,9 @@ describe('k8s source', () => {
     const src = createK8sSource({
       cluster: 'stage',
       apps: {
+        listReplicaSetForAllNamespaces: async () => ({
+          body: { items: [] } as any,
+        }),
         listDeploymentForAllNamespaces: async () => ({
           body: pages[call++] as any,
         }),
@@ -92,6 +95,9 @@ describe('k8s source', () => {
     const src = createK8sSource({
       cluster: 'stage',
       apps: {
+        listReplicaSetForAllNamespaces: async () => ({
+          body: { items: [] } as any,
+        }),
         listDeploymentForAllNamespaces: async () => ({
           body: {
             items: [dep('a', 'x', 'img', 1, 1)],
@@ -114,6 +120,9 @@ describe('k8s source', () => {
     const src = createK8sSource({
       cluster: 'stage',
       apps: {
+        listReplicaSetForAllNamespaces: async () => ({
+          body: { items: [] } as any,
+        }),
         listDeploymentForAllNamespaces: async () => {
           throw new Error('API 500')
         },
@@ -130,6 +139,9 @@ describe('k8s source', () => {
     const src = createK8sSource({
       cluster: 'prod',
       apps: {
+        listReplicaSetForAllNamespaces: async () => ({
+          body: { items: [] } as any,
+        }),
         listDeploymentForAllNamespaces: async () => ({
           body: { items: [] } as any,
         }),

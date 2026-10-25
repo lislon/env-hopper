@@ -1,11 +1,18 @@
 import { Watch } from '@kubernetes/client-node'
 import type { KubeConfig } from '@kubernetes/client-node'
-import { toIngressRecord, toWorkloadRecord } from './k8sSource'
+import {
+  isRefused,
+  servingImagesOf,
+  toIngressRecord,
+  toReplicaSetRecord,
+  toWorkloadRecord,
+} from './k8sSource'
 import type {
   K8sAppsClient,
   K8sIngressRecord,
   K8sListMeta,
   K8sNetworkingClient,
+  K8sReplicaSetRecord,
   K8sWorkloadRecord,
 } from './k8sTypes'
 
@@ -101,7 +108,10 @@ const statusOf = (err: unknown) => {
 /**
  * Holds the cluster's Deployments and Ingresses as trimmed records, kept
  * current by one watch per kind: list (paginated), then watch from the list's
- * resourceVersion.
+ * resourceVersion. ReplicaSets with pods are watched too, only to say which
+ * images a workload's Ready pods run mid-rollout (`servingImages`); a change
+ * of one is reported as a change of its workload, when it changes that. A
+ * cluster that refuses ReplicaSets (403/404) leaves `servingImages` out.
  *
  * - An expired version (410, in the stream or as its end) relists and reports
  *   what changed meanwhile, deletions included.
@@ -140,19 +150,28 @@ export function createK8sWatcher(opts: CreateK8sWatcherOpts): K8sWatcher {
       wakers.add(done)
     })
 
-  function kind<TRecord extends K8sWorkloadRecord | K8sIngressRecord>(k: {
-    name: K8sWatchChange['kind']
+  function kind<TRecord extends { namespace: string; name: string }>(k: {
+    name: string
     path: string
     list: ListPage
     toRecord: (raw: never) => TRecord
     keep: (r: TRecord) => boolean
+    /** A kept record that appeared, changed or went away; never for the first list. */
+    emit?: (type: 'upsert' | 'delete', record: TRecord) => void
+    /** After the records changed: each changed record as it was and is now. */
+    changed?: (list: Array<{ was?: TRecord; now?: TRecord }>) => void
+    // ponytail: a first list refused stays refused until restart; retry
+    // hourly if permissions get granted to running pods.
+    /** A refused first list (403/404) holds nothing, synced, and watches no more. */
+    optional?: boolean
   }) {
     let records = new Map<string, TRecord>()
     let rv = ''
     let synced = false
+    let refused = false
     const keyOf = (r: TRecord) => `${r.namespace}/${r.name}`
     const emit = (type: 'upsert' | 'delete', record: TRecord) =>
-      opts.onChange?.({ kind: k.name, type, record } as K8sWatchChange)
+      k.emit?.(type, record)
 
     async function relist() {
       const fresh = new Map<string, TRecord>()
@@ -178,18 +197,26 @@ export function createK8sWatcher(opts: CreateK8sWatcherOpts): K8sWatcher {
         cont = body.metadata?._continue || undefined
         version = body.metadata?.resourceVersion ?? version
       } while (cont)
+      const diff: Array<{ was?: TRecord; now?: TRecord }> = []
       if (synced) {
-        for (const [key, r] of records) if (!fresh.has(key)) emit('delete', r)
+        for (const [key, r] of records)
+          if (!fresh.has(key)) {
+            emit('delete', r)
+            diff.push({ was: r })
+          }
         for (const [key, r] of fresh) {
           const was = records.get(key)
-          if (!was || JSON.stringify(was) !== JSON.stringify(r))
+          if (!was || JSON.stringify(was) !== JSON.stringify(r)) {
             emit('upsert', r)
+            diff.push({ was, now: r })
+          }
         }
       }
       records = fresh
       rv = version
       synced = true
       lastEventAt = new Date()
+      if (diff.length > 0) k.changed?.(diff)
     }
 
     /** One watch request, until it ends: how it ended. */
@@ -243,10 +270,12 @@ export function createK8sWatcher(opts: CreateK8sWatcherOpts): K8sWatcher {
                   if (was) {
                     records.delete(key)
                     emit('delete', was)
+                    k.changed?.([{ was }])
                   }
                 } else if (!was || JSON.stringify(was) !== JSON.stringify(r)) {
                   records.set(key, r)
                   emit('upsert', r)
+                  k.changed?.([{ was, now: r }])
                 }
               }
               if (version) rv = version
@@ -271,6 +300,7 @@ export function createK8sWatcher(opts: CreateK8sWatcherOpts): K8sWatcher {
       while (!stopped) {
         try {
           if (!rv) await relist()
+          if (refused) return
           const how = await watchOnce()
           // `stop()` may have run while it waited.
           if (isStopped()) return
@@ -288,6 +318,10 @@ export function createK8sWatcher(opts: CreateK8sWatcherOpts): K8sWatcher {
         } catch (e) {
           if (isStopped()) return
           opts.onError?.(e)
+          if (k.optional && !synced && isRefused(e)) {
+            refused = synced = true
+            return
+          }
         }
         failures++
         const delay = Math.min(maxMs, minMs * 2 ** (failures - 1))
@@ -302,8 +336,53 @@ export function createK8sWatcher(opts: CreateK8sWatcherOpts): K8sWatcher {
     }
   }
 
+  const replicaSets = kind<K8sReplicaSetRecord>({
+    name: 'replicaset',
+    path: '/apis/apps/v1/replicasets',
+    list: (cont, limit) =>
+      opts.apps.listReplicaSetForAllNamespaces(
+        undefined,
+        cont,
+        undefined,
+        undefined,
+        limit,
+      ),
+    toRecord: toReplicaSetRecord,
+    keep: (r) => r.replicas > 0,
+    optional: true,
+    changed(list) {
+      if (!workloads.synced()) return
+      const now = replicaSets.records()
+      const keyOf = (r: K8sReplicaSetRecord) => `${r.namespace}/${r.name}`
+      const touched = list.map((c) => (c.now ?? c.was)!)
+      const touchedKeys = new Set(touched.map(keyOf))
+      const before = [
+        ...now.filter((r) => !touchedKeys.has(keyOf(r))),
+        ...list.flatMap((c) => (c.was ? [c.was] : [])),
+      ]
+      const owners = new Set(touched.map((r) => `${r.namespace}/${r.owner}`))
+      for (const w of workloads.records()) {
+        if (!owners.has(`${w.namespace}/${w.name}`)) continue
+        const served = (sets: Array<K8sReplicaSetRecord>) =>
+          JSON.stringify(servingImagesOf(w, sets) ?? null)
+        if (served(before) !== served(now))
+          opts.onChange?.({ kind: 'workload', type: 'upsert', record: join(w) })
+      }
+    },
+  })
+  /** The workload with the images its Ready pods run, when not the spec's. */
+  const join = (w: K8sWorkloadRecord): K8sWorkloadRecord => {
+    const servingImages = servingImagesOf(w, replicaSets.records())
+    return servingImages ? { ...w, servingImages } : w
+  }
   const workloads = kind<K8sWorkloadRecord>({
     name: 'workload',
+    emit: (type, record) =>
+      opts.onChange?.({
+        kind: 'workload',
+        type,
+        record: type === 'upsert' ? join(record) : record,
+      }),
     path: '/apis/apps/v1/deployments',
     list: (cont, limit) =>
       opts.apps.listDeploymentForAllNamespaces(
@@ -329,6 +408,7 @@ export function createK8sWatcher(opts: CreateK8sWatcherOpts): K8sWatcher {
       ),
     toRecord: (raw) => toIngressRecord(cluster, raw),
     keep: opts.keepIngress ?? (() => true),
+    emit: (type, record) => opts.onChange?.({ kind: 'ingress', type, record }),
   })
 
   return {
@@ -337,6 +417,7 @@ export function createK8sWatcher(opts: CreateK8sWatcherOpts): K8sWatcher {
       stopped = false
       void workloads.loop()
       void ingresses.loop()
+      void replicaSets.loop()
     },
     stop() {
       stopped = true
@@ -344,11 +425,11 @@ export function createK8sWatcher(opts: CreateK8sWatcherOpts): K8sWatcher {
       for (const wake of [...wakers]) wake()
     },
     snapshot: () => ({
-      workloads: workloads.records(),
+      workloads: workloads.records().map(join),
       ingresses: ingresses.records(),
     }),
     status: () => ({
-      synced: workloads.synced() && ingresses.synced(),
+      synced: workloads.synced() && ingresses.synced() && replicaSets.synced(),
       lastEventAt,
       relists,
       reconnects,

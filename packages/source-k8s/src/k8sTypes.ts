@@ -19,6 +19,25 @@ export interface K8sWorkloadRecord {
    * `lastUpdateTime`), as ISO 8601; absent when the cluster reports none.
    */
   rolledOutAt?: string
+  /**
+   * While a rollout is under way, the images the Ready pods run: those of the
+   * newest older ReplicaSet with Ready pods. Absent when the spec serves, or
+   * when nothing tells (no ReplicaSets read, nothing Ready).
+   */
+  servingImages?: Array<ImageRef>
+}
+
+/** A ReplicaSet that has pods, trimmed to what says which images serve. */
+export interface K8sReplicaSetRecord {
+  namespace: string
+  name: string
+  /** The Deployment that owns it. */
+  owner: string
+  /** Its `deployment.kubernetes.io/revision`; 0 when absent. */
+  revision: number
+  images: Array<ImageRef>
+  replicas: number
+  readyReplicas: number
 }
 
 export interface K8sIngressRecord {
@@ -57,6 +76,28 @@ export interface RawDeployment {
     readyReplicas?: number
     /** The client parses times into Dates; a watch event carries strings. */
     conditions?: Array<{ type?: string; lastUpdateTime?: string | Date }>
+  }
+}
+
+export interface RawReplicaSet {
+  metadata?: {
+    namespace?: string
+    name?: string
+    annotations?: Record<string, string>
+    ownerReferences?: Array<{ kind?: string; name?: string }>
+    resourceVersion?: string
+  }
+  spec?: {
+    replicas?: number
+    template?: {
+      spec?: {
+        containers?: Array<{ image?: string }>
+      }
+    }
+  }
+  status?: {
+    replicas?: number
+    readyReplicas?: number
   }
 }
 
@@ -108,6 +149,21 @@ export interface K8sAppsClient {
     watch?: boolean,
   ) => Promise<{
     body: { items: Array<RawDeployment>; metadata?: K8sListMeta }
+  }>
+  listReplicaSetForAllNamespaces: (
+    allowWatchBookmarks?: boolean,
+    _continue?: string,
+    fieldSelector?: string,
+    labelSelector?: string,
+    limit?: number,
+    pretty?: string,
+    resourceVersion?: string,
+    resourceVersionMatch?: string,
+    sendInitialEvents?: boolean,
+    timeoutSeconds?: number,
+    watch?: boolean,
+  ) => Promise<{
+    body: { items: Array<RawReplicaSet>; metadata?: K8sListMeta }
   }>
   readNamespacedDeployment: (
     name: string,

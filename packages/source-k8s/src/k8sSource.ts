@@ -2,13 +2,16 @@ import type { HealthChecker } from '@env-hopper/backend-core'
 import type { KubeConfig } from '@kubernetes/client-node'
 import { AppsV1Api, NetworkingV1Api } from '@kubernetes/client-node'
 import type {
+  ImageRef,
   K8sAppsClient,
   K8sIngressRecord,
   K8sNetworkingClient,
+  K8sReplicaSetRecord,
   K8sSource,
   K8sWorkloadRecord,
   RawDeployment,
   RawIngress,
+  RawReplicaSet,
 } from './k8sTypes'
 import { parseImageRef } from './imageRef'
 
@@ -57,25 +60,78 @@ function rolloutTime(d: RawDeployment): string | undefined {
   return Number.isNaN(ms) ? undefined : new Date(ms).toISOString()
 }
 
-/** A Deployment as the neutral record a Source returns. */
+const REVISION = 'deployment.kubernetes.io/revision'
+
+const imagesOf = (containers: Array<{ image?: string }> | undefined) =>
+  (containers ?? []).map((c) => parseImageRef(c.image ?? ''))
+
+/** A ReplicaSet trimmed to what says which images serve. */
+export function toReplicaSetRecord(r: RawReplicaSet): K8sReplicaSetRecord {
+  return {
+    namespace: r.metadata?.namespace ?? '',
+    name: r.metadata?.name ?? '',
+    owner:
+      r.metadata?.ownerReferences?.find((o) => o.kind === 'Deployment')?.name ??
+      '',
+    revision: Number(r.metadata?.annotations?.[REVISION] ?? 0) || 0,
+    images: imagesOf(r.spec?.template?.spec?.containers),
+    replicas: r.status?.replicas ?? 0,
+    readyReplicas: r.status?.readyReplicas ?? 0,
+  }
+}
+
+/**
+ * The images the Ready pods run while the Deployment's own ReplicaSet is not
+ * fully Ready: those of the highest older revision with Ready pods. Undefined
+ * when the spec serves, nothing is wanted, or nothing older is Ready.
+ */
+export function servingImagesOf(
+  w: Pick<K8sWorkloadRecord, 'namespace' | 'name' | 'annotations' | 'replicas'>,
+  sets: Array<K8sReplicaSetRecord>,
+): Array<ImageRef> | undefined {
+  const revision = Number(w.annotations[REVISION] ?? 0) || 0
+  if (revision === 0 || w.replicas === 0) return undefined
+  const own = sets.filter(
+    (s) => s.namespace === w.namespace && s.owner === w.name,
+  )
+  const current = own.find((s) => s.revision === revision)
+  if ((current?.readyReplicas ?? 0) >= w.replicas) return undefined
+  return own
+    .filter((s) => s.revision < revision && s.readyReplicas > 0)
+    .sort((a, b) => b.revision - a.revision)[0]?.images
+}
+
+/**
+ * A Deployment as the neutral record a Source returns; with its ReplicaSets,
+ * the images its Ready pods run mid-rollout.
+ */
 export function toWorkloadRecord(
   cluster: string,
   d: RawDeployment,
+  sets: Array<K8sReplicaSetRecord> = [],
 ): K8sWorkloadRecord {
-  return {
+  const record: K8sWorkloadRecord = {
     cluster,
     kind: 'Deployment',
     namespace: d.metadata?.namespace ?? '',
     name: d.metadata?.name ?? '',
     labels: d.metadata?.labels ?? {},
     annotations: d.metadata?.annotations ?? {},
-    images: (d.spec?.template?.spec?.containers ?? []).map((c) =>
-      parseImageRef(c.image ?? ''),
-    ),
+    images: imagesOf(d.spec?.template?.spec?.containers),
     replicas: d.spec?.replicas ?? 0,
     readyReplicas: d.status?.readyReplicas ?? 0,
     rolledOutAt: rolloutTime(d),
   }
+  const servingImages = servingImagesOf(record, sets)
+  return servingImages ? { ...record, servingImages } : record
+}
+
+/** A refusal to list or watch a kind: the reader lacks the permission, or the cluster the kind. */
+export const isRefused = (e: unknown) => {
+  const err = e as { statusCode?: number; code?: unknown } | null
+  const status =
+    err?.statusCode ?? (typeof err?.code === 'number' ? err.code : undefined)
+  return status === 403 || status === 404
 }
 
 /** An Ingress as the neutral record a Source returns. */
@@ -112,9 +168,35 @@ export function createK8sSource({
   pageSize = 500,
   maxPages = 100,
 }: CreateK8sSourceOpts): K8sSource {
+  let warnedRefused = false
   return {
     async listWorkloads() {
-      const items = await listAll<RawDeployment>(
+      const sets = listAll<RawReplicaSet>(
+        'replicasets',
+        (cont, limit) =>
+          apps.listReplicaSetForAllNamespaces(
+            undefined,
+            cont,
+            undefined,
+            undefined,
+            limit,
+          ),
+        pageSize,
+        maxPages,
+      ).then(
+        (raw) => raw.map(toReplicaSetRecord).filter((r) => r.replicas > 0),
+        (e: unknown) => {
+          if (!isRefused(e)) throw e
+          if (!warnedRefused) {
+            warnedRefused = true
+            console.warn(
+              `[k8s ${cluster}] ReplicaSets refused; workloads show the spec's images only`,
+            )
+          }
+          return []
+        },
+      )
+      const deployments = listAll<RawDeployment>(
         'deployments',
         (cont, limit) =>
           apps.listDeploymentForAllNamespaces(
@@ -127,7 +209,8 @@ export function createK8sSource({
         pageSize,
         maxPages,
       )
-      return items.map((d) => toWorkloadRecord(cluster, d))
+      const [kept, items] = await Promise.all([sets, deployments])
+      return items.map((d) => toWorkloadRecord(cluster, d, kept))
     },
     async listIngresses() {
       const items = await listAll<RawIngress>(

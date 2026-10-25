@@ -6,7 +6,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createK8sWatcher } from '../k8sWatcher'
 import type { K8sWatchChange, K8sWatchFn, K8sWatcher } from '../k8sWatcher'
-import type { RawDeployment, RawIngress } from '../k8sTypes'
+import type { RawDeployment, RawIngress, RawReplicaSet } from '../k8sTypes'
 
 const dep = (
   name: string,
@@ -57,11 +57,18 @@ function cluster(lists: {
   ingresses?: Array<
     () => Promise<{ items: Array<RawIngress>; metadata?: object }>
   >
+  replicaSets?: Array<
+    () => Promise<{ items: Array<RawReplicaSet>; metadata?: object }>
+  >
 }) {
   const streams: Array<Stream> = []
   const opened: Array<() => void> = []
   let d = 0
   let i = 0
+  let rs = 0
+  const empty = [
+    () => Promise.resolve({ items: [], metadata: { resourceVersion: '1' } }),
+  ]
   const watch: K8sWatchFn = (path, query, onEvent, done) => {
     let ended = false
     const s: Stream = {
@@ -93,6 +100,11 @@ function cluster(lists: {
         cont?: string,
       ): Promise<{ body: { items: Array<RawDeployment> } }> =>
         page(lists.deployments, cont ? d++ : ((d = 0), d++)),
+      listReplicaSetForAllNamespaces: (
+        _b?: boolean,
+        cont?: string,
+      ): Promise<{ body: { items: Array<RawReplicaSet> } }> =>
+        page(lists.replicaSets ?? empty, cont ? rs++ : ((rs = 0), rs++)),
       readNamespacedDeployment: () => Promise.reject(new Error('unused')),
     },
     networking: {
@@ -114,7 +126,10 @@ function cluster(lists: {
     watch,
     streams,
     /** The stream of `kind` most recently opened, once it is. */
-    async stream(kind: 'deployments' | 'ingresses', nth?: number) {
+    async stream(
+      kind: 'deployments' | 'ingresses' | 'replicasets',
+      nth?: number,
+    ) {
       for (;;) {
         const of = streams.filter((s) => s.path.endsWith(kind))
         const s = nth === undefined ? of.at(-1) : of[nth]
@@ -373,5 +388,95 @@ describe('k8s watcher', () => {
 
     expect(s.aborted).toBe(true)
     expect(c.streams.length).toBe(opened)
+  })
+
+  describe('mid-rollout', () => {
+    /** `shop` at revision 2 wants one pod of main-42. */
+    const shop: RawDeployment = {
+      metadata: {
+        namespace: 'qa',
+        name: 'shop',
+        resourceVersion: '1',
+        annotations: { 'deployment.kubernetes.io/revision': '2' },
+      },
+      spec: {
+        replicas: 1,
+        template: {
+          spec: { containers: [{ image: 'r.example.com/shop:main-42' }] },
+        },
+      },
+      status: { readyReplicas: 1 },
+    }
+    const rs = (
+      revision: number,
+      tag: string,
+      ready: number,
+      rv = '1',
+    ): RawReplicaSet => ({
+      metadata: {
+        namespace: 'qa',
+        name: `shop-r${revision}`,
+        resourceVersion: rv,
+        annotations: { 'deployment.kubernetes.io/revision': String(revision) },
+        ownerReferences: [{ kind: 'Deployment', name: 'shop' }],
+      },
+      spec: {
+        template: {
+          spec: { containers: [{ image: `r.example.com/shop:${tag}` }] },
+        },
+      },
+      status: { replicas: 1, readyReplicas: ready },
+    })
+    const listOf = (items: Array<RawReplicaSet>) => () =>
+      Promise.resolve({ items, metadata: { resourceVersion: '5' } })
+    const servedBy = (w: K8sWatcher) =>
+      w.snapshot().workloads.map((r) => r.servingImages?.[0]?.tag)
+
+    it('the new ReplicaSet turning Ready says the workload changed, once, serving the spec', async () => {
+      const c = cluster({
+        deployments: [page([shop], '5')],
+        replicaSets: [listOf([rs(1, 'main-41', 1), rs(2, 'main-42', 0)])],
+      })
+      const { watcher: w, changes } = start(c)
+      await synced(w)
+      const before = servedBy(w)
+      const s = await c.stream('replicasets')
+
+      s.send('MODIFIED', rs(2, 'main-42', 1, '6'))
+
+      expect({
+        before,
+        changes: changes.map((ch) => ({
+          kind: ch.kind,
+          type: ch.type,
+          name: ch.record.name,
+          serving: 'servingImages' in ch.record,
+        })),
+        after: servedBy(w),
+      }).toEqual({
+        before: ['main-41'],
+        changes: [
+          { kind: 'workload', type: 'upsert', name: 'shop', serving: false },
+        ],
+        after: [undefined],
+      })
+    })
+
+    it('ReplicaSets refused: synced all the same, the spec serves', async () => {
+      const c = cluster({
+        deployments: [page([shop], '5')],
+        replicaSets: [
+          () =>
+            Promise.reject(
+              Object.assign(new Error('forbidden'), { statusCode: 403 }),
+            ),
+        ],
+      })
+      const { watcher: w } = start(c, { onError: () => {} })
+
+      await synced(w)
+
+      expect(servedBy(w)).toEqual([undefined])
+    })
   })
 })

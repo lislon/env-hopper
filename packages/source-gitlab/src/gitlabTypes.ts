@@ -29,7 +29,10 @@ export interface GitlabDeploymentRecord {
   /** When the deployed commit was committed. */
   committedAt: string | null
   status: string
-  /** When the deploy job started; else when the deployment was created. */
+  /**
+   * When the deploy job started; null when it never did (a job canceled or
+   * failed before a runner took it, or one still waiting).
+   */
   startedAt: string | null
   finishedAt: string | null
   /** The deploy job's page. */

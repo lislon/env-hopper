@@ -41,7 +41,7 @@ function deploymentRecord(
     pipelineUrl: d.deployable?.pipeline?.web_url ?? null,
     committedAt: d.deployable?.commit?.committed_date ?? null,
     status: d.status,
-    startedAt: d.deployable?.started_at ?? d.created_at ?? null,
+    startedAt: d.deployable?.started_at ?? null,
     finishedAt: d.deployable?.finished_at ?? null,
     jobUrl: d.deployable?.web_url ?? null,
     user: userRecord(d.user),

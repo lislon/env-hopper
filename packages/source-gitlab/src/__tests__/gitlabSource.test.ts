@@ -312,10 +312,10 @@ describe('gitlab source', () => {
         user: null,
         jobUser: null,
       },
-      // Without a job start, the deployment's own creation.
+      // A job no runner has started: no start, whenever the record was made.
       dev: expect.objectContaining({
         environmentName: 'dev',
-        startedAt: '2026-01-12T01:00:00Z',
+        startedAt: null,
         jobUrl: null,
       }),
     })
@@ -488,8 +488,7 @@ describe('gitlab source single environment', () => {
         committedAt: null,
         status: 'success',
         finishedAt: '2025-01-02T00:09:00Z',
-        // The deployment's creation: the job has no start of its own.
-        startedAt: '2025-01-02T00:00:00Z',
+        startedAt: null,
         jobUrl: null,
         user: null,
         jobUser: null,

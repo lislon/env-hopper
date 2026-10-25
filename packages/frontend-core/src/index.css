@@ -441,6 +441,19 @@
 .eh-deployed-row:has(.eh-deployed-chip:hover) .eh-deployed-tip {
   display: none;
 }
+/* A control the dialog will have, shown but not usable yet. */
+.eh-deployed-future {
+  font: inherit;
+  font-size: 12px;
+  margin-top: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in oklab, currentColor 30%, transparent);
+  background: none;
+  color: inherit;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 /* The Version that just succeeded takes the old one's place. */
 .eh-deployed-swap {
   position: relative;

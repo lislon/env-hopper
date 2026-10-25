@@ -130,6 +130,19 @@ const environments = [
   },
 ]
 
+const mergeRequest14 = {
+  id: 9014,
+  iid: 14,
+  title: 'SHOP-7: add the basket',
+  description: '## Why\nPeople asked.',
+  source_branch: 'feat/SHOP-7-basket',
+  target_branch: 'main',
+  state: 'merged',
+  web_url: 'https://git.example.com/g/p/-/merge_requests/14',
+  merge_commit_sha: 'cm14',
+  squash_commit_sha: null,
+}
+
 let base = ''
 let sawToken = ''
 
@@ -161,6 +174,30 @@ const server = createServer((req, res) => {
       ? environments.filter((e) => e.state === states)
       : environments
     res.end(JSON.stringify(filtered))
+    return
+  }
+
+  if (url.pathname === '/api/v4/projects/7/merge_requests/14') {
+    res.end(JSON.stringify(mergeRequest14))
+    return
+  }
+
+  if (url.pathname === '/api/v4/projects/7/merge_requests/14/commits') {
+    // A second page exists; only the first is read.
+    res.setHeader('x-next-page', '2')
+    res.end(
+      JSON.stringify([
+        { id: 'c14b', title: 'SHOP-9 totals', message: 'SHOP-9 totals\n' },
+        { id: 'c14a', title: 'basket', message: 'basket\n\nfor SHOP-7' },
+      ]),
+    )
+    return
+  }
+
+  if (
+    url.pathname === '/api/v4/projects/7/repository/commits/cm14/merge_requests'
+  ) {
+    res.end(JSON.stringify([mergeRequest14]))
     return
   }
 
@@ -514,5 +551,42 @@ describe('gitlab source single environment', () => {
     await expect(src.getEnvironment(7, 6)).rejects.toThrow(
       'GitLab /projects/7/environments/6: 404',
     )
+  })
+
+  describe('merge requests', () => {
+    const src = () => createGitlabSource({ baseUrl: base, token: 't0k' })
+    const record14 = {
+      projectId: 7,
+      iid: 14,
+      title: 'SHOP-7: add the basket',
+      description: '## Why\nPeople asked.',
+      sourceBranch: 'feat/SHOP-7-basket',
+      targetBranch: 'main',
+      state: 'merged',
+      webUrl: 'https://git.example.com/g/p/-/merge_requests/14',
+      mergeCommitSha: 'cm14',
+      squashCommitSha: null,
+    }
+
+    it('reads one merge request; one GitLab does not know is null', async () => {
+      expect({
+        known: await src().getMergeRequest(7, 14),
+        unknown: await src().getMergeRequest(7, 15),
+      }).toEqual({ known: record14, unknown: null })
+    })
+
+    it("reads a merge request's commits, the first page only", async () => {
+      expect(await src().mergeRequestCommits(7, 14)).toEqual([
+        { sha: 'c14b', message: 'SHOP-9 totals\n' },
+        { sha: 'c14a', message: 'basket\n\nfor SHOP-7' },
+      ])
+    })
+
+    it('reads the merge requests a commit belongs to', async () => {
+      expect({
+        merged: await src().commitMergeRequests(7, 'cm14'),
+        pushedDirectly: await src().commitMergeRequests(7, 'c99'),
+      }).toEqual({ merged: [record14], pushedDirectly: [] })
+    })
   })
 })

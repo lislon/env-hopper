@@ -62,6 +62,27 @@ export interface GitlabReleaseRecord {
   releasedAt: string | null
 }
 
+export interface GitlabMergeRequestRecord {
+  projectId: number
+  iid: number
+  title: string
+  /** Markdown, as its author wrote it; '' when none. */
+  description: string
+  sourceBranch: string
+  targetBranch: string
+  /** `opened`, `merged`, `closed` or `locked`. */
+  state: string
+  webUrl: string
+  /** The merge commit it made on the target branch; null when none (yet, or fast-forward). */
+  mergeCommitSha: string | null
+  squashCommitSha: string | null
+}
+
+export interface GitlabCommitRecord {
+  sha: string
+  message: string
+}
+
 export interface GitlabSource {
   listEnvironments: (
     projectId: number,
@@ -93,6 +114,25 @@ export interface GitlabSource {
     projectId: number,
     opts?: { limit?: number },
   ) => Promise<Array<GitlabReleaseRecord>>
+  /** One merge request by its number in the project; null when GitLab has none. */
+  getMergeRequest: (
+    projectId: number,
+    iid: number,
+  ) => Promise<GitlabMergeRequestRecord | null>
+  /** A merge request's commits, newest first: one page of at most `limit`. */
+  mergeRequestCommits: (
+    projectId: number,
+    iid: number,
+    opts?: { limit?: number },
+  ) => Promise<Array<GitlabCommitRecord>>
+  /**
+   * The merge requests a commit belongs to, including the one whose merge
+   * commit it is; none for a commit GitLab does not know.
+   */
+  commitMergeRequests: (
+    projectId: number,
+    sha: string,
+  ) => Promise<Array<GitlabMergeRequestRecord>>
 }
 
 // Raw GitLab API response types (minimal shapes)
@@ -131,6 +171,23 @@ export interface RawDeployment {
     user?: RawUser
   }
   user?: RawUser
+}
+
+export interface RawMergeRequest {
+  iid: number
+  title: string
+  description?: string | null
+  source_branch: string
+  target_branch: string
+  state: string
+  web_url: string
+  merge_commit_sha?: string | null
+  squash_commit_sha?: string | null
+}
+
+export interface RawCommit {
+  id: string
+  message: string
 }
 
 export interface RawUser {

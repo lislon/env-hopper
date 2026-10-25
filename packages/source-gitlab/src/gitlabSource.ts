@@ -1,13 +1,34 @@
 import type {
   GitlabDeploymentRecord,
   GitlabEnvironmentRecord,
+  GitlabMergeRequestRecord,
   GitlabSource,
   GitlabUserRecord,
+  RawCommit,
   RawDeployment,
   RawEnvironment,
+  RawMergeRequest,
   RawRelease,
   RawUser,
 } from './gitlabTypes'
+
+function mergeRequestRecord(
+  projectId: number,
+  m: RawMergeRequest,
+): GitlabMergeRequestRecord {
+  return {
+    projectId,
+    iid: m.iid,
+    title: m.title,
+    description: m.description ?? '',
+    sourceBranch: m.source_branch,
+    targetBranch: m.target_branch,
+    state: m.state,
+    webUrl: m.web_url,
+    mergeCommitSha: m.merge_commit_sha ?? null,
+    squashCommitSha: m.squash_commit_sha ?? null,
+  }
+}
 
 function environmentRecord(
   projectId: number,
@@ -113,7 +134,37 @@ export function createGitlabSource({
     return out
   }
 
+  /** One JSON GET; null on 404. */
+  async function one<T>(path: string): Promise<T | null> {
+    const res = await f(`${baseUrl}/api/v4${path}`, {
+      headers: { 'PRIVATE-TOKEN': token },
+    })
+    if (res.status === 404) return null
+    if (!res.ok) throw new Error(`GitLab ${path}: ${res.status}`)
+    return (await res.json()) as T
+  }
+
   return {
+    async getMergeRequest(projectId, iid) {
+      const m = await one<RawMergeRequest>(
+        `/projects/${projectId}/merge_requests/${iid}`,
+      )
+      return m ? mergeRequestRecord(projectId, m) : null
+    },
+    async mergeRequestCommits(projectId, iid, { limit = 100 } = {}) {
+      const commits =
+        (await one<Array<RawCommit>>(
+          `/projects/${projectId}/merge_requests/${iid}/commits?per_page=${limit}`,
+        )) ?? []
+      return commits.map((c) => ({ sha: c.id, message: c.message }))
+    },
+    async commitMergeRequests(projectId, sha) {
+      const list =
+        (await one<Array<RawMergeRequest>>(
+          `/projects/${projectId}/repository/commits/${encodeURIComponent(sha)}/merge_requests`,
+        )) ?? []
+      return list.map((m) => mergeRequestRecord(projectId, m))
+    },
     async listEnvironments(projectId, { states = ['available'] } = {}) {
       const out: Array<GitlabEnvironmentRecord> = []
       for (const state of states) {

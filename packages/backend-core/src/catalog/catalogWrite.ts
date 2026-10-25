@@ -11,6 +11,7 @@ import type {
   CatalogAppInput,
   CatalogArtifactInput,
   CatalogComponentInput,
+  CatalogDeployAttemptInput,
   CatalogDeploymentInput,
   CatalogDeploymentTargetInput,
   CatalogEnvironmentInput,
@@ -53,19 +54,25 @@ const touch = (tx: object, pairs: Array<Pair>) =>
 
 /**
  * Drops the Health of the Deployments these parent rows cascade-delete, and
- * counts those Deployments as changed.
+ * counts those Deployments, and the Deploy Attempts they cascade-delete, as
+ * changed.
  */
 const cascadeHealth =
-  (parentFilter: (row: Row) => Row) => async (tx: Tx, rows: Array<Row>) => {
-    for (const part of chunks(rows)) {
-      const pairs = await tx.catalogDeployment.findMany({
-        where: { OR: part.map(parentFilter) },
-        select: { componentSlug: true, targetSlug: true },
-      })
-      touch(tx, pairs)
-      await deleteHealthOf(tx, pairs)
+  // `run` is the Catalog's transaction, whose changes are reported: the
+  // client a sync hands `beforeDelete` is not the same object.
+  (run: CatalogTx, parentFilter: (row: Row) => Row) =>
+    async (tx: Tx, rows: Array<Row>) => {
+      for (const part of chunks(rows)) {
+        const where = { OR: part.map(parentFilter) }
+        const select = { componentSlug: true, targetSlug: true } as const
+        const [pairs, attempts] = await Promise.all([
+          tx.catalogDeployment.findMany({ where, select }),
+          tx.catalogDeployAttempt.findMany({ where, select }),
+        ])
+        touch(run, [...pairs, ...attempts])
+        await deleteHealthOf(tx, pairs)
+      }
     }
-  }
 
 // builtAt keeps the earliest time any run reported: a later sighting of the
 // same build never moves it, and a missing one never clears it. A build's own
@@ -248,7 +255,9 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           uniqColumns: ['slug'],
           scope,
           upsertOnly: opts.upsertOnly,
-          beforeDelete: cascadeHealth((r) => ({ componentSlug: r['slug'] })),
+          beforeDelete: cascadeHealth(tx, (r) => ({
+            componentSlug: r['slug'],
+          })),
         }).sync(
           list.map((c) => ({
             slug: c.slug,
@@ -273,7 +282,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           uniqColumns: ['slug'],
           scope,
           upsertOnly: opts.upsertOnly,
-          beforeDelete: cascadeHealth((r) => ({ targetSlug: r['slug'] })),
+          beforeDelete: cascadeHealth(tx, (r) => ({ targetSlug: r['slug'] })),
         }).sync(
           list.map((t) => ({
             slug: t.slug,
@@ -342,7 +351,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           scope,
           upsertOnly: opts.upsertOnly,
           prepare: earliestBuiltAt,
-          beforeDelete: cascadeHealth((r) => ({
+          beforeDelete: cascadeHealth(tx, (r) => ({
             componentSlug: r['componentSlug'],
             version: r['version'],
           })),
@@ -470,6 +479,36 @@ export function createCatalog(prisma: PrismaClient): Catalog {
       )
       touch(tx, pairsOf(health as Changed, sameHealth))
       return health.counts
+    },
+
+    async syncDeployAttempts(
+      tx,
+      scope,
+      list: Array<CatalogDeployAttemptInput>,
+      opts = {},
+    ) {
+      const attempts = await tableSyncPrisma({
+        prisma: txOf(tx),
+        prismaModelName: 'CatalogDeployAttempt',
+        uniqColumns: ['componentSlug', 'targetSlug'],
+        scope,
+        upsertOnly: opts.upsertOnly,
+      }).sync(
+        lastPerPair(list).map((a) => ({
+          componentSlug: a.componentSlug,
+          targetSlug: a.targetSlug,
+          version: a.version,
+          status: a.status,
+          startedAt: a.startedAt ?? null,
+          endedAt: a.endedAt ?? null,
+          startedBy: a.by ?? null,
+          deployUrl: a.deployUrl ?? null,
+          jobUrl: a.jobUrl ?? null,
+          ref: a.ref ?? null,
+        })),
+      )
+      touch(tx, pairsOf(attempts as Changed))
+      return attempts.counts
     },
 
     ...createCatalogReads(prisma),

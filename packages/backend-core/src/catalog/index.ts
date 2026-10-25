@@ -2,6 +2,7 @@ export * from './catalogTypes'
 export type {
   AppComponent,
   PairDeployment,
+  PairDeployAttempt,
   PairDeployments,
   Catalog,
   CatalogUserView,

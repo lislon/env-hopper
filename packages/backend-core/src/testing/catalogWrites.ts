@@ -10,6 +10,7 @@ const SYNCS = [
   'syncArtifacts',
   'syncDeployments',
   'syncHealth',
+  'syncDeployAttempts',
 ] as const
 type SyncName = (typeof SYNCS)[number]
 

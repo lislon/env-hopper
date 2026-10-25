@@ -637,4 +637,62 @@ describe.skipIf(!prisma)('pair over the real catalog', () => {
       ],
     })
   })
+
+  it("streams the row's Deploy Attempt as the catalog serves it", async () => {
+    const w = withOwnTransactions(createCatalog(prisma!))
+    await w.syncEnvironments('ci', [{ slug: 'prod', displayName: 'Prod' }])
+    await w.syncApps('ci', [{ slug: 'shop', displayName: 'Shop' }])
+    await w.syncComponents('ci', [
+      { slug: 'shop-api', displayName: 'Shop API', appSlug: 'shop' },
+    ])
+    await w.syncTargets('ci', [
+      { slug: 'k8s:prod/shop', displayName: 'shop', environmentSlug: 'prod' },
+    ])
+    await w.syncArtifacts('ci', [
+      { componentSlug: 'shop-api', version: 'main-7' },
+      {
+        componentSlug: 'shop-api',
+        version: 'main-8',
+        buildUrl: `${PIPELINES}108`,
+      },
+    ])
+    await w.syncDeployments('ci', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop',
+        version: 'main-7',
+        source: 'ci',
+      },
+    ])
+    await w.syncDeployAttempts('attempts:shop-api', [
+      {
+        componentSlug: 'shop-api',
+        targetSlug: 'k8s:prod/shop',
+        version: 'main-8',
+        status: 'failed',
+        startedAt: new Date('2026-01-05T10:00:00Z'),
+        endedAt: new Date('2026-01-05T10:06:00Z'),
+        deployUrl: `${PIPELINES}109`,
+      },
+    ])
+    catalog = createCatalog(prisma!)
+    const [served] = (await catalog.getPairDeployments({})).pairs
+
+    const chunks = await collect(
+      client.pair.query({ appSlug: 'shop', envSlug: 'prod' }),
+    )
+
+    expect(dataOf(chunks, 'shop/prod/deployment')).toEqual({
+      rows: served!.rows,
+    })
+    expect(served!.rows[0]!.attempt).toEqual({
+      version: 'main-8',
+      status: 'failed',
+      startedAt: '2026-01-05T10:00:00.000Z',
+      endedAt: '2026-01-05T10:06:00.000Z',
+      targetSlug: 'k8s:prod/shop',
+      buildUrl: `${PIPELINES}108`,
+      deployUrl: `${PIPELINES}109`,
+    })
+  })
 })

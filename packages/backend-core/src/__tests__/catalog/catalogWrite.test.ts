@@ -628,4 +628,63 @@ describe.skipIf(!prisma)('catalog writes', () => {
     })
     expect(endpoints).toEqual([{ targetSlug: us.targetSlug }])
   })
+
+  describe('Deploy Attempts', () => {
+    const failedOnEu = {
+      componentSlug: 'shop-api',
+      targetSlug: 'k8s:prod/shop-eu',
+      version: 'main-11',
+      status: 'failed' as const,
+      endedAt: new Date('2026-01-03T10:00:00Z'),
+    }
+    /** The pairs each committed change reported, in order. */
+    function changesHeard() {
+      const heard: Array<Array<{ app: string; env: string }>> = []
+      catalog!.onChange((c) => heard.push(c.pairs))
+      return heard
+    }
+
+    it('a sync that no longer reports an attempt deletes it, and the pair changed', async () => {
+      await givenOneComponentOnTwoTargets()
+      await catalog!.syncDeployAttempts('attempts:shop-api', [failedOnEu])
+      const heard = changesHeard()
+
+      await catalog!.syncDeployAttempts('attempts:shop-api', [])
+
+      expect({
+        attempts: await prisma!.catalogDeployAttempt.count(),
+        heard,
+      }).toEqual({ attempts: 0, heard: [[{ app: 'shop', env: 'prod' }]] })
+    })
+
+    it('the same attempts again change nothing', async () => {
+      await givenOneComponentOnTwoTargets()
+      await catalog!.syncDeployAttempts('attempts:shop-api', [failedOnEu])
+      const heard = changesHeard()
+
+      const counts = await catalog!.syncDeployAttempts('attempts:shop-api', [
+        failedOnEu,
+      ])
+
+      expect({ counts, heard }).toEqual({
+        counts: { created: 0, updated: 0, deleted: 0, unchanged: 1 },
+        heard: [],
+      })
+    })
+
+    it("deleting the attempt's Artifact deletes the attempt, and the pair changed", async () => {
+      await givenOneComponentOnTwoTargets()
+      await catalog!.syncDeployAttempts('attempts:shop-api', [failedOnEu])
+      const heard = changesHeard()
+
+      await catalog!.syncArtifacts('ci', [
+        { componentSlug: 'shop-api', version: 'main-10' },
+      ])
+
+      expect({
+        attempts: await prisma!.catalogDeployAttempt.count(),
+        heard,
+      }).toEqual({ attempts: 0, heard: [[{ app: 'shop', env: 'prod' }]] })
+    })
+  })
 })

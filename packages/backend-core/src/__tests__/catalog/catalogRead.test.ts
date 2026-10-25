@@ -371,6 +371,132 @@ describe.skipIf(!prisma)('catalog reads', () => {
       ).toBe('https://ci.example.com/d/{{id}}')
     })
 
+    describe('Deploy Attempts', () => {
+      /** main-11, a build of `main` by Ann, is being deployed: the Entity Provider wrote these. */
+      async function givenAttempts(
+        attempts: Array<{
+          targetSlug: string
+          status: 'running' | 'failed' | 'canceled'
+          startedAt?: string
+          endedAt?: string
+        }>,
+      ) {
+        await catalog!.syncUsers('gitlab', [
+          { username: 'ann', firstName: 'Ann', email: 'ann@example.com' },
+        ])
+        await catalog!.syncArtifacts(
+          'ci',
+          [
+            {
+              componentSlug: 'shop-api',
+              version: 'main-11',
+              aliases: ['spring'],
+              buildUrl: 'https://ci.example.com/p/11',
+              commitSha: 'abc123',
+            },
+          ],
+          { upsertOnly: true },
+        )
+        await catalog!.syncDeployAttempts(
+          'attempts:shop-api',
+          attempts.map((a, i) => ({
+            componentSlug: 'shop-api',
+            targetSlug: a.targetSlug,
+            version: 'main-11',
+            status: a.status,
+            ...(a.startedAt && { startedAt: new Date(a.startedAt) }),
+            ...(a.endedAt && { endedAt: new Date(a.endedAt) }),
+            by: 'ann',
+            deployUrl: `https://ci.example.com/d/1${i}`,
+            jobUrl: `https://ci.example.com/j/1${i}`,
+            ref: 'main',
+          })),
+        )
+      }
+
+      it('serves a running attempt beside the Deployment, with its Artifact and its starter', async () => {
+        await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
+        await givenAttempts([
+          {
+            targetSlug: 'k8s:prod/shop',
+            status: 'running',
+            startedAt: '2026-01-05T10:00:00Z',
+          },
+        ])
+        expect(await catalog!.getPairDeployments({})).toEqual({
+          pairs: [
+            {
+              app: 'shop',
+              env: 'prod',
+              users: {
+                jdoe: { firstName: 'Jo', lastName: 'Doe' },
+                ann: { firstName: 'Ann' },
+              },
+              rows: [
+                {
+                  componentSlug: 'shop-api',
+                  targetSlug: 'k8s:prod/shop',
+                  version: 'main-10',
+                  aliases: [],
+                  buildUrl: 'https://ci.example.com/p/10',
+                  deployedAt: '2026-01-01T10:00:00.000Z',
+                  deployedBy: 'jdoe',
+                  deployUrl: 'https://ci.example.com/d/0',
+                  source: 'ci',
+                  attempt: {
+                    version: 'main-11',
+                    aliases: ['spring'],
+                    status: 'running',
+                    startedAt: '2026-01-05T10:00:00.000Z',
+                    by: 'ann',
+                    targetSlug: 'k8s:prod/shop',
+                    buildUrl: 'https://ci.example.com/p/11',
+                    deployUrl: 'https://ci.example.com/d/10',
+                    jobUrl: 'https://ci.example.com/j/10',
+                    commitSha: 'abc123',
+                    ref: 'main',
+                  },
+                },
+              ],
+            },
+          ],
+        })
+      })
+
+      it("serves the newest attempt on the Environment's Targets, by start, else by end", async () => {
+        await givenShopDeployedOn([{ slug: 'k8s:prod/a' }])
+        await catalog!.syncTargets(
+          'ci',
+          [{ slug: 'k8s:prod/b', displayName: 'b', environmentSlug: 'prod' }],
+          { upsertOnly: true },
+        )
+        await givenAttempts([
+          {
+            targetSlug: 'k8s:prod/a',
+            status: 'running',
+            startedAt: '2026-01-05T10:00:00Z',
+          },
+          // Known only from the end of its job.
+          {
+            targetSlug: 'k8s:prod/b',
+            status: 'failed',
+            endedAt: '2026-01-05T11:00:00Z',
+          },
+        ])
+        const { pairs } = await catalog!.getPairDeployments({})
+        expect(
+          pairs[0]!.rows.map((r) => [
+            r.targetSlug,
+            r.attempt?.targetSlug,
+            r.attempt?.status,
+            r.attempt?.endedAt,
+          ]),
+        ).toEqual([
+          ['k8s:prod/a', 'k8s:prod/b', 'failed', '2026-01-05T11:00:00.000Z'],
+        ])
+      })
+    })
+
     it('deleting the User keeps the Deployment, without a deployer', async () => {
       await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
       await catalog!.syncUsers('ci', [])

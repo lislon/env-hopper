@@ -115,6 +115,7 @@ model CatalogComponent {
   updatedAt   DateTime @updatedAt
   artifacts   CatalogArtifact[]
   deployments CatalogDeployment[]
+  attempts    CatalogDeployAttempt[]
 
   @@index([scope])
 }
@@ -129,6 +130,7 @@ model CatalogDeploymentTarget {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   deployments     CatalogDeployment[]
+  attempts        CatalogDeployAttempt[]
 
   @@index([scope])
 }
@@ -166,6 +168,7 @@ model CatalogArtifact {
   component     CatalogComponent @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)
   release       CatalogRelease?  @relation(fields: [releaseKey], references: [key], onDelete: SetNull)
   deployments   CatalogDeployment[]
+  attempts      CatalogDeployAttempt[]
 
   @@id([componentSlug, version])
   @@index([componentSlug, builtAt])
@@ -193,6 +196,33 @@ model CatalogDeployment {
   @@index([scope])
 }
 
+// A deploy run of an Artifact to a Target that has not succeeded (yet): one
+// per (Component, Target), the one the Entity Provider chose to show.
+model CatalogDeployAttempt {
+  componentSlug String
+  targetSlug    String
+  version       String
+  scope         String
+  /// running, failed or canceled.
+  status        String
+  startedAt     DateTime?
+  endedAt       DateTime?
+  startedBy     String?
+  deployUrl     String?
+  jobUrl        String?
+  /// The branch, tag or merge-request ref deployed.
+  ref           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  starter       CatalogUser?            @relation(fields: [startedBy], references: [username], onDelete: SetNull)
+  component     CatalogComponent        @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)
+  target        CatalogDeploymentTarget @relation(fields: [targetSlug], references: [slug], onDelete: Cascade)
+  artifact      CatalogArtifact         @relation(fields: [componentSlug, version], references: [componentSlug, version], onDelete: Cascade)
+
+  @@id([componentSlug, targetSlug])
+  @@index([scope])
+}
+
 // A person a Source names, e.g. a deployer. Not a login account.
 model CatalogUser {
   username    String   @id
@@ -205,6 +235,7 @@ model CatalogUser {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deployments CatalogDeployment[]
+  attempts    CatalogDeployAttempt[]
 
   @@index([scope])
 }

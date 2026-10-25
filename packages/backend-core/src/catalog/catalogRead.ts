@@ -4,6 +4,7 @@ import type {
   CatalogAppInput,
   CatalogArtifactInput,
   CatalogComponentInput,
+  CatalogDeployAttemptInput,
   CatalogDeploymentInput,
   CatalogDeploymentTargetInput,
   CatalogEnvironmentInput,
@@ -11,6 +12,7 @@ import type {
   CatalogMeta,
   CatalogReleaseInput,
   CatalogUserInput,
+  DeployAttemptStatus,
   EndpointKind,
   HealthState,
 } from './catalogTypes'
@@ -77,6 +79,11 @@ export interface Catalog {
   /** Counts the Deployments; each Deployment's Endpoints are synced with it. */
   syncDeployments: Sync<CatalogDeploymentInput>
   syncHealth: Sync<CatalogHealthInput>
+  /**
+   * The Deploy Attempts the Entity Provider chose to show, at most one per
+   * (Component, Target). Their Artifacts and Users before them.
+   */
+  syncDeployAttempts: Sync<CatalogDeployAttemptInput>
   /**
    * Calls `listener` after each committed transaction that changed a pair's
    * Deployments. Returns the function that stops it.
@@ -157,7 +164,37 @@ export interface PairDeployment {
       detail?: string
     }
     endpoints?: Array<{ kind: EndpointKind; url: string; label?: string }>
+    /**
+     * The newest Deploy Attempt of this Component on the Environment, as the
+     * Entity Provider wrote it. Absent: none.
+     */
+    attempt?: PairDeployAttempt
   }>
+}
+
+/** A deploy run that has not succeeded (yet), as pair details show it. */
+export interface PairDeployAttempt {
+  version: string
+  /** Only when the Artifact has some. */
+  aliases?: Array<string>
+  status: DeployAttemptStatus
+  /** Absent when only the run's end was recorded. */
+  startedAt?: string
+  /** Absent while running. */
+  endedAt?: string
+  /** Username, a key of `users`. */
+  by?: string
+  /** May differ from the row's own Target when the Environment spans several. */
+  targetSlug: string
+  /** The Artifact's build pipeline. */
+  buildUrl?: string
+  /** The deploy pipeline. */
+  deployUrl?: string
+  /** The deploy job itself. */
+  jobUrl?: string
+  commitSha?: string
+  /** Branch, tag or merge-request ref deployed. */
+  ref?: string
 }
 
 /**
@@ -370,6 +407,10 @@ export function createCatalogReads(prisma: PrismaClient) {
         const [b0, b1] = held ? rank(held) : [-1, -1]
         if (a0 > b0 || (a0 === b0 && a1 > b1)) best.set(key, d)
       }
+      const attempts = await reads.newestAttempts(
+        [...best.values()].map((d) => d.component.slug),
+        envSlugs,
+      )
       const pairs = new Map<string, PairDeployments['pairs'][number]>()
       for (const d of best.values()) {
         const app = d.component.appSlug!
@@ -405,8 +446,71 @@ export function createCatalogReads(prisma: PrismaClient) {
           }),
           ...(d.endpoints.length > 0 && { endpoints: d.endpoints }),
         })
+        const a = attempts.get(
+          `${d.target.environmentSlug}\u0000${d.component.slug}`,
+        )
+        if (a) {
+          pair.rows.at(-1)!.attempt = a.attempt
+          if (a.starter) pair.users[a.starter.username] = profileOf(a.starter)
+        }
       }
       return { pairs: [...pairs.values()] }
+    },
+    /** Per Environment and Component, the newest attempt on the Environment's Targets. */
+    async newestAttempts(
+      componentSlugs: Array<string>,
+      envSlugs?: Array<string>,
+    ) {
+      const rows =
+        componentSlugs.length === 0
+          ? []
+          : await prisma.catalogDeployAttempt.findMany({
+              where: {
+                componentSlug: { in: [...new Set(componentSlugs)] },
+                target: {
+                  environmentSlug: envSlugs ? { in: envSlugs } : { not: null },
+                },
+              },
+              include: {
+                target: { select: { environmentSlug: true } },
+                artifact: {
+                  select: { aliases: true, buildUrl: true, commitSha: true },
+                },
+                starter: true,
+              },
+            })
+      const at = (r: (typeof rows)[number]) =>
+        (r.startedAt ?? r.endedAt)?.getTime() ?? 0
+      const newest = new Map<string, (typeof rows)[number]>()
+      for (const r of rows) {
+        const key = `${r.target.environmentSlug}\u0000${r.componentSlug}`
+        const held = newest.get(key)
+        if (!held || at(r) > at(held)) newest.set(key, r)
+      }
+      return new Map(
+        [...newest].map(([key, r]) => [
+          key,
+          {
+            starter: r.starter,
+            attempt: {
+              version: r.version,
+              ...(r.artifact.aliases.length > 0 && {
+                aliases: r.artifact.aliases,
+              }),
+              status: r.status as DeployAttemptStatus,
+              ...(r.startedAt && { startedAt: r.startedAt.toISOString() }),
+              ...(r.endedAt && { endedAt: r.endedAt.toISOString() }),
+              ...(r.startedBy && { by: r.startedBy }),
+              targetSlug: r.targetSlug,
+              ...(r.artifact.buildUrl && { buildUrl: r.artifact.buildUrl }),
+              ...(r.deployUrl && { deployUrl: r.deployUrl }),
+              ...(r.jobUrl && { jobUrl: r.jobUrl }),
+              ...(r.artifact.commitSha && { commitSha: r.artifact.commitSha }),
+              ...(r.ref && { ref: r.ref }),
+            } satisfies PairDeployAttempt,
+          },
+        ]),
+      )
     },
     async getComponents({ appSlugs }: { appSlugs?: Array<string> }) {
       const [apps, links] = await Promise.all([

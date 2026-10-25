@@ -39,6 +39,6 @@ export async function resetCatalog(prisma: PrismaClient): Promise<void> {
     ) ?? 'public'
   await prisma.$executeRawUnsafe(`SET search_path TO "${schema}"`)
   await prisma.$executeRawUnsafe(
-    'TRUNCATE "CatalogEndpoint","CatalogHealth","CatalogDeployment","CatalogArtifact","CatalogRelease","CatalogDeploymentTarget","CatalogComponent","CatalogApp","CatalogEnvironment","CatalogUser" CASCADE',
+    'TRUNCATE "CatalogEndpoint","CatalogHealth","CatalogDeployAttempt","CatalogDeployment","CatalogArtifact","CatalogRelease","CatalogDeploymentTarget","CatalogComponent","CatalogApp","CatalogEnvironment","CatalogUser" CASCADE',
   )
 }

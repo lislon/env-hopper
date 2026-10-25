@@ -58,8 +58,8 @@ export function expandDeployment(
         : pipelineUrl.get(row.componentSlug)?.replace('{{id}}', id)
     const buildUrl = rest.buildUrl ?? url(buildPipelineId)
     const deployUrl = rest.deployUrl ?? url(deployPipelineId)
-    if (row.deployedBy && users[row.deployedBy]) {
-      named[row.deployedBy] = users[row.deployedBy]!
+    for (const u of [row.deployedBy, row.attempt?.by]) {
+      if (u && users[u]) named[u] = users[u]
     }
     const observedAt = health?.observedAt ?? meta.observedAt
     return {

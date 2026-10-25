@@ -363,6 +363,8 @@
   align-items: baseline;
   gap: 6px;
   position: relative;
+  max-width: 100%;
+  white-space: nowrap;
 }
 .eh-deployed-version {
   font: inherit;
@@ -397,6 +399,142 @@
 }
 .eh-deployed-ago {
   opacity: 0.45;
+}
+/* A deploy that has not succeeded, after the Version on its line. */
+.eh-deployed-chip-wrap {
+  display: inline-flex;
+  min-width: 0;
+}
+.eh-deployed-chip {
+  font: inherit;
+  font-size: 11px;
+  line-height: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: none;
+  color: oklch(0.75 0.12 240);
+  opacity: 0.7;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40ch;
+}
+.eh-deployed-chip:hover,
+.eh-deployed-chip:focus-visible {
+  opacity: 1;
+}
+.eh-deployed-chip-failed {
+  color: oklch(0.72 0.18 25);
+}
+.eh-deployed-chip-canceled {
+  color: color-mix(in oklab, currentColor 70%, transparent);
+}
+.eh-deployed-chip-glyph {
+  display: inline-block;
+}
+/* The Version's tooltip is not the chip's. */
+.eh-deployed-row:has(.eh-deployed-chip:hover) .eh-deployed-tip {
+  display: none;
+}
+/* The Version that just succeeded takes the old one's place. */
+.eh-deployed-swap {
+  position: relative;
+  display: inline-block;
+}
+.eh-deployed-swap-out {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .eh-deployed-chip-running .eh-deployed-chip-glyph {
+    animation: eh-spin 1.2s linear infinite;
+  }
+  .eh-deployed-swap-out {
+    animation: eh-version-out 1.2s ease-out forwards;
+  }
+  .eh-deployed-swap-in {
+    display: inline-block;
+    animation: eh-version-in 1.2s ease-out forwards;
+  }
+  .eh-deployed-row:has(.eh-deployed-swap) {
+    border-radius: 4px;
+    animation: eh-success-highlight 2s ease-out 1.2s both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eh-deployed-swap-out {
+    animation: eh-fade-out 1.2s ease-out forwards;
+  }
+  .eh-deployed-swap-in {
+    animation: eh-fade-in 1.2s ease-out forwards;
+  }
+}
+@keyframes eh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* An odometer: the old Version rolls up and out, the new one up and in. */
+@keyframes eh-version-out {
+  0%,
+  30% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  60% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+@keyframes eh-version-in {
+  0%,
+  30% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  60%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes eh-success-highlight {
+  0% {
+    background-color: oklch(0.72 0.17 145 / 0.2);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+@keyframes eh-fade-out {
+  0%,
+  30% {
+    opacity: 1;
+  }
+  60%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes eh-fade-in {
+  0%,
+  30% {
+    opacity: 0;
+  }
+  60%,
+  100% {
+    opacity: 1;
+  }
 }
 /* A pale bar the width of a typical Version line. */
 .eh-deployed-loading {

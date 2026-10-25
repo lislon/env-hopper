@@ -1,10 +1,13 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import type { PairDeployment } from '@env-hopper/backend-core'
 import { pairFacetQuery, userQuery } from '~/modules/pairDetails/pairDetails'
 import { appSlugFromJumpSlug } from '~/util/route-utils'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
+import { useNow } from '~/util/useNow'
+import { AttemptChip, AttemptDialog } from './DeployAttempt'
+import type { Attempt } from './DeployAttempt'
 
 type Deployment = PairDeployment['rows'][number]
 type Component = PairDeployment['components'][number]
@@ -338,7 +341,9 @@ function useProfiles(data: PairDeployment | null | undefined, opened: boolean) {
     ...new Set(
       rows
         .filter((r) => opened || r.componentSlug === lead)
-        .flatMap((r) => (r.deployedBy ? [r.deployedBy] : [])),
+        .flatMap((r) =>
+          [r.deployedBy, r.attempt?.by].flatMap((u) => (u ? [u] : [])),
+        ),
     ),
   ].filter((u) => !(u in known))
   const fetched = useQueries({ queries: wanted.map((u) => userQuery(u)) })
@@ -380,10 +385,17 @@ export function DeployedVersions({
   const dialogRef = useRef<HTMLDialogElement>(null)
   const openerRef = useRef<HTMLButtonElement>(null)
   const [opened, setOpened] = useState(false)
+  const attemptDialogRef = useRef<HTMLDialogElement>(null)
+  const chipRef = useRef<HTMLButtonElement>(null)
   const users = useProfiles(data, opened)
+  const now = useNow()
   const leadComponent =
     data?.components.find((c) => c.lead) ?? data?.components[0]
   const appDisplayName = bootstrap.apps[appSlug]?.displayName ?? appSlug
+  const swap = useSwap(
+    leadComponent &&
+      data?.rows.find((r) => r.componentSlug === leadComponent.slug),
+  )
 
   // The slot is always there, one line high: people aim at it by habit. A
   // key per state swaps its content without the browser counting a shift.
@@ -458,8 +470,9 @@ export function DeployedVersions({
     ? [lead.version, ...lead.aliases].join(' · ')
     : 'not deployed'
   const fullVersionText = lead
-    ? `${[lead.version, ...lead.aliases].join(' · ')}${lead.deployedAt ? ` · deployed ${timeAgo(lead.deployedAt)}` : ''}`
+    ? `${[lead.version, ...lead.aliases].join(' · ')}${lead.deployedAt ? ` · deployed ${timeAgo(lead.deployedAt, now)}` : ''}`
     : 'not deployed'
+  const attempt = lead?.attempt
 
   return (
     <div
@@ -482,11 +495,23 @@ export function DeployedVersions({
           }}
           title={fullVersionText}
         >
-          <span className="eh-deployed-version-text">{versionText}</span>
+          {swap ? (
+            <span
+              key={`swap-${swap.to}`}
+              className="eh-deployed-version-text eh-deployed-swap"
+            >
+              <span className="eh-deployed-swap-out" aria-hidden="true">
+                {swap.from}
+              </span>
+              <span className="eh-deployed-swap-in">{versionText}</span>
+            </span>
+          ) : (
+            <span className="eh-deployed-version-text">{versionText}</span>
+          )}
           {lead?.deployedAt && (
             <span className="eh-deployed-ago">
               {' '}
-              · deployed {timeAgo(lead.deployedAt)}
+              · deployed {timeAgo(lead.deployedAt, now)}
             </span>
           )}
           {dot && <span className={`eh-deployed-dot eh-deployed-dot-${dot}`} />}
@@ -495,6 +520,21 @@ export function DeployedVersions({
           <span className="eh-deployed-star" title={others.join('\n')}>
             *
           </span>
+        )}
+        {attempt && (
+          <>
+            {' '}
+            <AttemptChip
+              attempt={attempt}
+              now={now}
+              timeAgo={timeAgo}
+              openerRef={chipRef}
+              onOpen={() => {
+                setOpened(true)
+                attemptDialogRef.current?.showModal()
+              }}
+            />
+          </>
         )}
         <span className="eh-deployed-tip" role="tooltip">
           {lead ? (
@@ -528,6 +568,51 @@ export function DeployedVersions({
         of={of}
         users={users}
       />
+      {lead && attempt && (
+        <AttemptDialog
+          dialogRef={attemptDialogRef}
+          onClose={() => chipRef.current?.focus()}
+          envSlug={envSlug}
+          stable={{ ...lead, attempt }}
+          component={leadComponent}
+          users={users}
+          where={placeOf}
+        />
+      )}
     </div>
   )
+}
+
+/** How long the Version that just succeeded takes the old one's place. */
+const SWAP_MS = 3200
+
+/**
+ * The old and new Version while a running attempt turns into the
+ * Deployment: the lead's attempt was running, and now its Version is the
+ * attempt's and no attempt is left.
+ */
+function useSwap(lead: Deployment | undefined) {
+  const [swap, setSwap] = useState<{ from: string; to: string } | null>(null)
+  const was = useRef<{ version?: string; attempt?: Attempt }>({})
+  const version = lead?.version
+  const attempt = lead?.attempt
+  // Before paint: the new Version never shows without its entrance.
+  useLayoutEffect(() => {
+    const before = was.current
+    was.current = { version, attempt }
+    if (
+      before.attempt?.status === 'running' &&
+      !attempt &&
+      version === before.attempt.version &&
+      before.version !== undefined &&
+      before.version !== version
+    )
+      setSwap({ from: before.version, to: version })
+  }, [version, attempt])
+  useEffect(() => {
+    if (!swap) return
+    const t = setTimeout(() => setSwap(null), SWAP_MS)
+    return () => clearTimeout(t)
+  }, [swap])
+  return swap
 }

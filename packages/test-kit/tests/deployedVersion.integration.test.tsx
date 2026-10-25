@@ -323,6 +323,114 @@ describe('deployed version under the jump card', () => {
     expect(line!.querySelector('.eh-deployed-dot-not-deployed')).not.toBeNull()
   })
 
+  describe('a Deploy Attempt beside the Version', () => {
+    const minAgo = (m: number) =>
+      new Date(Date.now() - m * 60_000).toISOString()
+    const withAttempt = (attempt: NonNullable<Row['attempt']>) => ({
+      shop: {
+        components: [
+          { ...shopUi, commitUrl: 'https://git.example.com/-/commit/{{sha}}' },
+        ],
+        users: { ...users, ann: { firstName: 'Ann' } },
+        rows: [row({ commitSha: '0123456789abcdef', attempt })],
+      },
+    })
+    const failed = () => ({
+      version: 'main-42',
+      status: 'failed' as const,
+      startedAt: minAgo(11),
+      endedAt: minAgo(5),
+      by: 'ann',
+      targetSlug: 'k8s:staging/shop',
+      buildUrl: 'https://ci.example.com/pipelines/43',
+      deployUrl: 'https://ci.example.com/pipelines/44',
+      jobUrl: 'https://ci.example.com/jobs/45',
+      commitSha: 'fedcba9876543210',
+      ref: 'main',
+    })
+    /** What the line shows, as one string: its tooltip is not on screen. */
+    const lineText = async (container: HTMLElement) => {
+      await waitFor(() => expect(lines(container)).toHaveLength(1))
+      const line = lines(container)[0]!.cloneNode(true) as HTMLElement
+      line.querySelectorAll('[role="tooltip"]').forEach((t) => t.remove())
+      return line.textContent.replace(/\s+/g, ' ').trim()
+    }
+
+    test('a running attempt follows the Version as a chip', async () => {
+      const app = await open(
+        '/env/staging/app/shop',
+        withAttempt({
+          version: 'main-42',
+          status: 'running',
+          startedAt: minAgo(1),
+          targetSlug: 'k8s:staging/shop',
+        }),
+      )
+
+      expect(await lineText(app.container)).toBe(
+        'main-41 · deployed 15 min ago ↻ deploying main-42',
+      )
+    })
+
+    test("a failed attempt's time moves with the Version's, on one clock", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      try {
+        const app = await open('/env/staging/app/shop', withAttempt(failed()))
+        const before = await lineText(app.container)
+
+        await vi.advanceTimersByTimeAsync(60_000)
+
+        expect({ before, after: await lineText(app.container) }).toEqual({
+          before: 'main-41 · deployed 15 min ago ✕ main-42 failed · 5 min ago',
+          after: 'main-41 · deployed 16 min ago ✕ main-42 failed · 6 min ago',
+        })
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
+    test('the chip opens the attempt beside the current stable Version', async () => {
+      const app = await open('/env/staging/app/shop', withAttempt(failed()))
+      await waitFor(() => expect(lines(app.container)).toHaveLength(1))
+
+      await app.user.click(
+        lines(app.container)[0]!.querySelector('.eh-deployed-chip')!,
+      )
+
+      const dialog = app.container.querySelector<HTMLElement>(
+        'dialog.eh-deployed-attempt-dialog',
+      )!
+      expect(dialog).toHaveAttribute('open')
+      const table = Array.from(dialog.querySelectorAll('tr')).map((tr) =>
+        Array.from(tr.children).map((c) =>
+          c.textContent.replace(/\s+/g, ' ').trim(),
+        ),
+      )
+      expect({
+        table,
+        jobErrors: dialog.querySelector('footer button')?.matches(':disabled'),
+      }).toEqual({
+        table: [
+          ['', 'Failed attempt', 'Current stable'],
+          ['Version', 'main-42', 'main-41'],
+          ['Status', 'failed', 'deployed'],
+          ['Started', expect.stringMatching(/\d/), 'n/a'],
+          [
+            'Ended · Duration',
+            expect.stringMatching(/ · 6 min$/),
+            expect.stringMatching(/\d/),
+          ],
+          ['By', 'Ann', 'Jo Doe'],
+          ['Where', 'k8s:staging/shop', 'k8s:staging/shop'],
+          ['Pipeline', '#43', '#41'],
+          ['Deploy job', '#45', '#42'],
+          ['Commit', 'fedcba9', '0123456'],
+        ],
+        jobErrors: true,
+      })
+    })
+  })
+
   describe('the slot under the card is never empty', () => {
     const slot = (container: HTMLElement) =>
       container.querySelector<HTMLElement>(

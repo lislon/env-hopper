@@ -105,7 +105,7 @@
     "downshift": "^9.0.6",
     "embla-carousel-react": "^8.6.0",
     "flexsearch": "^0.8.204",
-    "framer-motion": "^12.23.0",
+    "motion": "^12.23.0",
     "http-errors": "^2.0.0",
     "lucide-react": "^0.523.0",
     "match-sorter": "^8.2.0",

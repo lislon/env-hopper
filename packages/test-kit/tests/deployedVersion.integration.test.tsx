@@ -157,6 +157,7 @@ describe('deployed version under the jump card', () => {
     'Pipeline',
     'Deploy job',
     'Commit',
+    'Change request',
   ]
 
   test('one Component: the same fields as rows, in one value column, with no main tag and no group header', async () => {
@@ -184,6 +185,89 @@ describe('deployed version under the jump card', () => {
     expect(cell('By', 'shop-ui')).toHaveTextContent('Jo Doe')
     expect(cell('Where', 'shop-ui')).toHaveTextContent('qa-1/shop')
     expect(cell('Commit', 'shop-ui')).toHaveTextContent('n/a')
+    expect(cell('Change request', 'shop-ui')).toHaveTextContent('n/a')
+  })
+
+  describe('the change request of a Version', () => {
+    const basket = {
+      id: '14',
+      url: 'https://git.example.com/shop/-/merge_requests/14',
+      title: 'Add the basket',
+      workItems: ['SHOP-7', 'SHOP-9'],
+      direct: true,
+    }
+    /** What `changeRequestDetails` was asked, in order. */
+    const asked: Array<string> = []
+    const record = ({ request }: { request: Request }) => {
+      if (request.url.includes('changeRequestDetails')) asked.push(request.url)
+    }
+    beforeAll(() => server.events.on('request:start', record))
+    afterAll(() => server.events.removeListener('request:start', record))
+    afterEach(() => (asked.length = 0))
+    const text = (el: Element) => el.textContent.replace(/\s+/g, ' ').trim()
+
+    test('its number links to it, then its work items and title; its description is asked for only once the details open', async () => {
+      const app = await open('/env/staging/app/shop', {
+        shop: {
+          components: [shopUi],
+          users,
+          rows: [row({ changeRequest: basket })],
+          changeRequestDescriptions: {
+            'shop-ui/14': 'People asked\nfor a basket.',
+          },
+        },
+      })
+      await waitFor(() => expect(lines(app.container)).toHaveLength(1))
+      const askedBeforeOpening = asked.length
+
+      const { cell } = await openDetails(app)
+      const crCell = cell('Change request', 'shop-ui')
+      await waitFor(() =>
+        expect(crCell.querySelector('.eh-deployed-cr-desc')).not.toBeNull(),
+      )
+
+      expect({
+        askedBeforeOpening,
+        asked: asked.length,
+        links: links(crCell),
+        text: text(crCell),
+      }).toEqual({
+        askedBeforeOpening: 0,
+        asked: 1,
+        links: [['!14', basket.url]],
+        text: '!14 SHOP-7 SHOP-9 Add the basket People asked for a basket.',
+      })
+    })
+
+    test('a build of the branch it merged into says "merged via"; no description, no description line', async () => {
+      const app = await open('/env/staging/app/shop', {
+        shop: {
+          components: [shopUi],
+          users,
+          rows: [
+            row({
+              changeRequest: {
+                id: '12',
+                url: 'https://git.example.com/shop/-/merge_requests/12',
+                title: 'Fix totals',
+                direct: false,
+              },
+            }),
+          ],
+        },
+      })
+
+      const { cell } = await openDetails(app)
+      const crCell = cell('Change request', 'shop-ui')
+      await waitFor(() =>
+        expect(crCell.querySelector('[role="status"]')).toBeNull(),
+      )
+
+      expect({
+        text: text(crCell),
+        description: crCell.querySelector('.eh-deployed-cr-desc'),
+      }).toEqual({ text: 'merged via !12 Fix totals', description: null })
+    })
   })
 
   test('two Components with different Versions: group header with app name and count, bracket, the lead first with a main tag and its hint, the other Version highlighted, closing returns focus', async () => {
@@ -336,6 +420,13 @@ describe('deployed version under the jump card', () => {
       },
     })
     const failed = () => ({
+      changeRequest: {
+        id: '15',
+        url: 'https://git.example.com/shop/-/merge_requests/15',
+        title: 'Faster checkout',
+        workItems: ['SHOP-11'],
+        direct: true,
+      },
       version: 'main-42',
       status: 'failed' as const,
       startedAt: minAgo(11),
@@ -401,6 +492,11 @@ describe('deployed version under the jump card', () => {
         'dialog.eh-deployed-attempt-dialog',
       )!
       expect(dialog).toHaveAttribute('open')
+      await waitFor(() =>
+        expect(
+          dialog.querySelector('.eh-deployed-cr [role="status"]'),
+        ).toBeNull(),
+      )
       const table = Array.from(dialog.querySelectorAll('tr')).map((tr) =>
         Array.from(tr.children).map((c) =>
           c.textContent.replace(/\s+/g, ' ').trim(),
@@ -425,6 +521,7 @@ describe('deployed version under the jump card', () => {
           ['Pipeline', '#43', '#41'],
           ['Deploy job', '#45', '#42'],
           ['Commit', 'fedcba9', '0123456'],
+          ['Change request', '!15 SHOP-11 Faster checkout', 'n/a'],
         ],
         jobErrors: true,
       })

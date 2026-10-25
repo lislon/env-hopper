@@ -7,6 +7,7 @@ import { appSlugFromJumpSlug } from '~/util/route-utils'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { useNow } from '~/util/useNow'
 import { AttemptChip, AttemptDialog } from './DeployAttempt'
+import { ChangeRequestCell } from './ChangeRequest'
 import type { Attempt } from './DeployAttempt'
 
 type Deployment = PairDeployment['rows'][number]
@@ -81,10 +82,21 @@ const MAX_URLS = 2
  * The details' rows, top to bottom: a label and a Component's cell. A cell of
  * a Component not deployed here is "—" below its Version.
  */
+/** What a cell may need besides its row: which App, and whether its dialog is open. */
+interface CellContext {
+  appSlug: string
+  open: boolean
+}
+
 const FIELDS: Array<
   [
     label: string,
-    cell: (d: Deployment, c: Component, users: Users) => ReactNode,
+    cell: (
+      d: Deployment,
+      c: Component,
+      users: Users,
+      ctx: CellContext,
+    ) => ReactNode,
   ]
 > = [
   ['Aliases', (d) => (d.aliases.length > 0 ? d.aliases.join(' · ') : 'n/a')],
@@ -177,6 +189,20 @@ const FIELDS: Array<
       </span>
     ),
   ],
+  [
+    'Change request',
+    (d, c, _, { appSlug, open }) =>
+      d.changeRequest ? (
+        <ChangeRequestCell
+          appSlug={appSlug}
+          componentSlug={c.slug}
+          changeRequest={d.changeRequest}
+          open={open}
+        />
+      ) : (
+        'n/a'
+      ),
+  ],
 ]
 
 /** The `main` tag on the lead Component, with what it means on hover and focus. */
@@ -203,6 +229,8 @@ function DetailsDialog({
   dialogRef,
   onClose,
   envSlug,
+  appSlug,
+  open,
   appDisplayName,
   components,
   leadSlug,
@@ -212,6 +240,9 @@ function DetailsDialog({
   dialogRef: RefObject<HTMLDialogElement | null>
   onClose: () => void
   envSlug: string
+  appSlug: string
+  /** It has been opened: what it loads on open may load. */
+  open: boolean
   appDisplayName: string
   components: Array<Component>
   leadSlug: string
@@ -303,7 +334,7 @@ function DetailsDialog({
                   return (
                     <td key={c.slug} data-component={c.slug}>
                       {d ? (
-                        cell(d, c, users)
+                        cell(d, c, users, { appSlug, open })
                       ) : (
                         <span className="eh-deployed-muted">—</span>
                       )}
@@ -315,7 +346,7 @@ function DetailsDialog({
           </tbody>
         </table>
       </div>
-      {/* Reserved: the Version's merge request, staleness and Work Items. */}
+      {/* Reserved: the Version's staleness. */}
       <footer className="eh-deployed-dialog-footer" />
     </dialog>
   )
@@ -384,7 +415,10 @@ export function DeployedVersions({
   })
   const dialogRef = useRef<HTMLDialogElement>(null)
   const openerRef = useRef<HTMLButtonElement>(null)
-  const [opened, setOpened] = useState(false)
+  // Each dialog loads what it shows on open the first time it opens.
+  const [detailsOpened, setDetailsOpened] = useState(false)
+  const [attemptOpened, setAttemptOpened] = useState(false)
+  const opened = detailsOpened || attemptOpened
   const attemptDialogRef = useRef<HTMLDialogElement>(null)
   const chipRef = useRef<HTMLButtonElement>(null)
   const users = useProfiles(data, opened)
@@ -490,7 +524,7 @@ export function DeployedVersions({
               : 'eh-deployed-version eh-deployed-muted'
           }
           onClick={() => {
-            setOpened(true)
+            setDetailsOpened(true)
             dialogRef.current?.showModal()
           }}
           title={fullVersionText}
@@ -530,7 +564,7 @@ export function DeployedVersions({
               timeAgo={timeAgo}
               openerRef={chipRef}
               onOpen={() => {
-                setOpened(true)
+                setAttemptOpened(true)
                 attemptDialogRef.current?.showModal()
               }}
             />
@@ -562,6 +596,8 @@ export function DeployedVersions({
         dialogRef={dialogRef}
         onClose={() => openerRef.current?.focus()}
         envSlug={envSlug}
+        appSlug={appSlug}
+        open={detailsOpened}
         appDisplayName={appDisplayName}
         components={data.components}
         leadSlug={leadComponent.slug}
@@ -573,6 +609,8 @@ export function DeployedVersions({
           dialogRef={attemptDialogRef}
           onClose={() => chipRef.current?.focus()}
           envSlug={envSlug}
+          appSlug={appSlug}
+          open={attemptOpened}
           stable={{ ...lead, attempt }}
           component={leadComponent}
           users={users}

@@ -24,6 +24,12 @@ export type PairFacetData<TFacet extends PairFacetName> = PairFacets[TFacet]
 /** The cache holds pair details per (App, Environment, facet). */
 export const pairFacetKey = (app: string, env: string, facet: PairFacetName) =>
   ['pair', app, env, facet] as const
+/** A change request's details, per App, Component and id. */
+export const changeRequestKey = (
+  appSlug: string,
+  componentSlug: string,
+  id: string,
+) => ['changeRequest', appSlug, componentSlug, id] as const
 /** A User's profile, per username, from a `pair` stream or `users`. */
 export const userKey = (username: string) => ['user', username] as const
 
@@ -273,5 +279,27 @@ export function userQuery(username: string) {
     staleTime: Infinity,
     queryFn: (ctx): Promise<Profile | null> =>
       askProfile(getTrpcFromMeta(ctx), username),
+  })
+}
+
+/**
+ * A change request's description, asked of `changeRequestDetails` the first
+ * time a dialog showing it opens, and kept: it rarely changes.
+ */
+export function changeRequestDetailsQuery(
+  appSlug: string,
+  componentSlug: string,
+  id: string,
+) {
+  return queryOptions({
+    queryKey: changeRequestKey(appSlug, componentSlug, id),
+    staleTime: Infinity,
+    retry: 1,
+    queryFn: (ctx) =>
+      getTrpcFromMeta(ctx).changeRequestDetails.query({
+        appSlug,
+        componentSlug,
+        id,
+      }),
   })
 }

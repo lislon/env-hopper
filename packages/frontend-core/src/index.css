@@ -794,7 +794,27 @@
   opacity: 0.8;
   text-decoration-thickness: 2px;
 }
-/* Reserved for the Version's merge request, staleness and Work Items. */
+/* A change request: `!id`, Work Items, title, then the description it loads on open. */
+.eh-deployed-cr-title {
+  margin-top: 2px;
+}
+.eh-deployed-cr-loading,
+.eh-deployed-cr-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.7;
+}
+.eh-deployed-cr-loading {
+  opacity: 0.45;
+}
+/* Markdown read as plain text: its line breaks kept, long ones scroll. */
+.eh-deployed-cr-desc {
+  white-space: pre-line;
+  max-height: 9.8em;
+  overflow-y: auto;
+}
+/* Reserved for the Version's staleness. */
 .eh-deployed-dialog-footer:empty {
   display: none;
 }

@@ -42,11 +42,16 @@ type ProcedureKeys<T> = {
 }[keyof T]
 
 /**
- * The pair-details queries are left out: the real router serves them. So is
- * the `pairsWatch` subscription: the test DOM has no EventSource, so the app
- * never opens it in a scenario.
+ * The pair-details queries and `changeRequestDetails` are left out: the real
+ * router serves them. So is the `pairsWatch` subscription: the test DOM has
+ * no EventSource, so the app never opens it in a scenario.
  */
-type StreamedKeys = 'pair' | 'slices' | 'users' | 'pairsWatch'
+type StreamedKeys =
+  | 'pair'
+  | 'slices'
+  | 'users'
+  | 'changeRequestDetails'
+  | 'pairsWatch'
 
 export type BackendData = {
   [K in Exclude<
@@ -126,6 +131,8 @@ export interface FixtureDeployments {
   components: PairDeployment['components']
   rows: Array<PairDeployment['rows'][number] & { env: string }>
   users?: PairDeployment['users']
+  /** Change request descriptions, by `<componentSlug>/<id>`; absent: none. */
+  changeRequestDescriptions?: Record<string, string>
 }
 
 export type OverrideBackendNetworkFn = (
@@ -287,6 +294,9 @@ export function createBackend(fixture: Fixture): MockBackend {
  * config, and a catalog holding the fixture's Deployments. A batch of them is
  * one path, `pair,slices`.
  */
+/** The procedures the real router answers here; a batch joins them with `,`. */
+const STREAMED = 'pair|slices|users|changeRequestDetails'
+
 function streamedQueries(
   config: { bootstrap: BootstrapConfigData; resourceJumps: ResourceJumpsData },
   deployments: Record<string, FixtureDeployments>,
@@ -341,13 +351,18 @@ function streamedQueries(
   const companySpecificBackend = {
     getBootstrapData: () => Promise.resolve(config.bootstrap),
     getResourceJumps: () => Promise.resolve(config.resourceJumps),
+    getChangeRequestDetails: ({ appSlug, componentSlug, id }) => {
+      const description =
+        deployments[appSlug]?.changeRequestDescriptions?.[
+          `${componentSlug}/${id}`
+        ]
+      return Promise.resolve(description === undefined ? null : { description })
+    },
   } as EhBackendCompanySpecificBackend
   const router = createTrpcRouter()
   const endpoint = new URL(TRPC_URL).pathname
   return {
-    path: new RegExp(
-      `^${TRPC_URL}/(pair|slices|users)(,(pair|slices|users))*(\\?|$)`,
-    ),
+    path: new RegExp(`^${TRPC_URL}/(${STREAMED})(,(${STREAMED}))*(\\?|$)`),
     handle: (req: Request) =>
       fetchRequestHandler({
         endpoint,

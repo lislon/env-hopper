@@ -40,7 +40,7 @@ describe('k8s source', () => {
     const src = createK8sSource({
       cluster: 'stage',
       apps: {
-        listReplicaSetForAllNamespaces: async () => ({
+        listNamespacedReplicaSet: async () => ({
           body: { items: [] } as any,
         }),
         listDeploymentForAllNamespaces: async () => ({
@@ -95,7 +95,7 @@ describe('k8s source', () => {
     const src = createK8sSource({
       cluster: 'stage',
       apps: {
-        listReplicaSetForAllNamespaces: async () => ({
+        listNamespacedReplicaSet: async () => ({
           body: { items: [] } as any,
         }),
         listDeploymentForAllNamespaces: async () => ({
@@ -120,7 +120,7 @@ describe('k8s source', () => {
     const src = createK8sSource({
       cluster: 'stage',
       apps: {
-        listReplicaSetForAllNamespaces: async () => ({
+        listNamespacedReplicaSet: async () => ({
           body: { items: [] } as any,
         }),
         listDeploymentForAllNamespaces: async () => {
@@ -139,7 +139,7 @@ describe('k8s source', () => {
     const src = createK8sSource({
       cluster: 'prod',
       apps: {
-        listReplicaSetForAllNamespaces: async () => ({
+        listNamespacedReplicaSet: async () => ({
           body: { items: [] } as any,
         }),
         listDeploymentForAllNamespaces: async () => ({

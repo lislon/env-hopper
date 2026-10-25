@@ -66,6 +66,8 @@ export interface RawDeployment {
   }
   spec?: {
     replicas?: number
+    /** Which pods, and so which ReplicaSets, are its own. */
+    selector?: { matchLabels?: Record<string, string> }
     template?: {
       spec?: {
         containers?: Array<{ image?: string }>
@@ -73,6 +75,10 @@ export interface RawDeployment {
     }
   }
   status?: {
+    /** Pods of every revision. */
+    replicas?: number
+    /** Pods of the current revision. */
+    updatedReplicas?: number
     readyReplicas?: number
     /** The client parses times into Dates; a watch event carries strings. */
     conditions?: Array<{ type?: string; lastUpdateTime?: string | Date }>
@@ -150,18 +156,14 @@ export interface K8sAppsClient {
   ) => Promise<{
     body: { items: Array<RawDeployment>; metadata?: K8sListMeta }
   }>
-  listReplicaSetForAllNamespaces: (
+  /** A Deployment's own ReplicaSets, by its selector; read only mid-rollout. */
+  listNamespacedReplicaSet: (
+    namespace: string,
+    pretty?: string,
     allowWatchBookmarks?: boolean,
     _continue?: string,
     fieldSelector?: string,
     labelSelector?: string,
-    limit?: number,
-    pretty?: string,
-    resourceVersion?: string,
-    resourceVersionMatch?: string,
-    sendInitialEvents?: boolean,
-    timeoutSeconds?: number,
-    watch?: boolean,
   ) => Promise<{
     body: { items: Array<RawReplicaSet>; metadata?: K8sListMeta }
   }>

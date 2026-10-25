@@ -126,12 +126,56 @@ export function toWorkloadRecord(
   return servingImages ? { ...record, servingImages } : record
 }
 
-/** A refusal to list or watch a kind: the reader lacks the permission, or the cluster the kind. */
-export const isRefused = (e: unknown) => {
-  const err = e as { statusCode?: number; code?: unknown } | null
-  const status =
-    err?.statusCode ?? (typeof err?.code === 'number' ? err.code : undefined)
-  return status === 403 || status === 404
+/**
+ * A rollout under way: the Deployment wants pods, and not all of them are
+ * its current revision's and Ready, or older pods are still there.
+ */
+export function rollingOut(d: RawDeployment): boolean {
+  const want = d.spec?.replicas ?? 0
+  const s = d.status ?? {}
+  return (
+    want > 0 &&
+    ((s.updatedReplicas ?? want) < want ||
+      (s.readyReplicas ?? 0) < want ||
+      (s.replicas ?? want) > want)
+  )
+}
+
+/**
+ * Reads a Deployment's own ReplicaSets with pods, only while it rolls out:
+ * otherwise its spec serves and none is read. A refused or failed read
+ * (e.g. no permission on ReplicaSets) warns once and reads as none, so the
+ * workload shows its spec's images as before; it never fails the k8s read.
+ */
+export function replicaSetReader(cluster: string, apps: K8sAppsClient) {
+  let warned = false
+  return async (d: RawDeployment): Promise<Array<K8sReplicaSetRecord>> => {
+    const labels = d.spec?.selector?.matchLabels
+    const namespace = d.metadata?.namespace
+    if (!rollingOut(d) || !labels || !namespace) return []
+    const selector = Object.entries(labels)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(',')
+    try {
+      const { body } = await apps.listNamespacedReplicaSet(
+        namespace,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        selector,
+      )
+      return body.items.map(toReplicaSetRecord).filter((r) => r.replicas > 0)
+    } catch (e) {
+      if (!warned) {
+        warned = true
+        console.warn(
+          `[k8s ${cluster}] ReplicaSets unreadable (${(e as { statusCode?: number }).statusCode ?? 'error'}); workloads show the spec's images only`,
+        )
+      }
+      return []
+    }
+  }
 }
 
 /** An Ingress as the neutral record a Source returns. */
@@ -168,35 +212,9 @@ export function createK8sSource({
   pageSize = 500,
   maxPages = 100,
 }: CreateK8sSourceOpts): K8sSource {
-  let warnedRefused = false
   return {
     async listWorkloads() {
-      const sets = listAll<RawReplicaSet>(
-        'replicasets',
-        (cont, limit) =>
-          apps.listReplicaSetForAllNamespaces(
-            undefined,
-            cont,
-            undefined,
-            undefined,
-            limit,
-          ),
-        pageSize,
-        maxPages,
-      ).then(
-        (raw) => raw.map(toReplicaSetRecord).filter((r) => r.replicas > 0),
-        (e: unknown) => {
-          if (!isRefused(e)) throw e
-          if (!warnedRefused) {
-            warnedRefused = true
-            console.warn(
-              `[k8s ${cluster}] ReplicaSets refused; workloads show the spec's images only`,
-            )
-          }
-          return []
-        },
-      )
-      const deployments = listAll<RawDeployment>(
+      const items = await listAll<RawDeployment>(
         'deployments',
         (cont, limit) =>
           apps.listDeploymentForAllNamespaces(
@@ -209,8 +227,15 @@ export function createK8sSource({
         pageSize,
         maxPages,
       )
-      const [kept, items] = await Promise.all([sets, deployments])
-      return items.map((d) => toWorkloadRecord(cluster, d, kept))
+      const read = replicaSetReader(cluster, apps)
+      const out: Array<K8sWorkloadRecord> = []
+      // ponytail: 10 namespaced reads at a time; only Deployments mid-rollout read any.
+      for (let i = 0; i < items.length; i += 10) {
+        const part = items.slice(i, i + 10)
+        const sets = await Promise.all(part.map((d) => read(d)))
+        part.forEach((d, j) => out.push(toWorkloadRecord(cluster, d, sets[j])))
+      }
+      return out
     },
     async listIngresses() {
       const items = await listAll<RawIngress>(

@@ -57,18 +57,16 @@ function cluster(lists: {
   ingresses?: Array<
     () => Promise<{ items: Array<RawIngress>; metadata?: object }>
   >
-  replicaSets?: Array<
-    () => Promise<{ items: Array<RawReplicaSet>; metadata?: object }>
-  >
+  /** A namespace's ReplicaSets by label selector, as the API server lists them now. */
+  replicaSets?: (
+    namespace: string,
+    selector?: string,
+  ) => Promise<Array<RawReplicaSet>>
 }) {
   const streams: Array<Stream> = []
   const opened: Array<() => void> = []
   let d = 0
   let i = 0
-  let rs = 0
-  const empty = [
-    () => Promise.resolve({ items: [], metadata: { resourceVersion: '1' } }),
-  ]
   const watch: K8sWatchFn = (path, query, onEvent, done) => {
     let ended = false
     const s: Stream = {
@@ -100,11 +98,16 @@ function cluster(lists: {
         cont?: string,
       ): Promise<{ body: { items: Array<RawDeployment> } }> =>
         page(lists.deployments, cont ? d++ : ((d = 0), d++)),
-      listReplicaSetForAllNamespaces: (
-        _b?: boolean,
-        cont?: string,
-      ): Promise<{ body: { items: Array<RawReplicaSet> } }> =>
-        page(lists.replicaSets ?? empty, cont ? rs++ : ((rs = 0), rs++)),
+      listNamespacedReplicaSet: async (
+        namespace: string,
+        _p?: string,
+        _w?: boolean,
+        _c?: string,
+        _f?: string,
+        selector?: string,
+      ) => ({
+        body: { items: (await lists.replicaSets?.(namespace, selector)) ?? [] },
+      }),
       readNamespacedDeployment: () => Promise.reject(new Error('unused')),
     },
     networking: {
@@ -126,10 +129,7 @@ function cluster(lists: {
     watch,
     streams,
     /** The stream of `kind` most recently opened, once it is. */
-    async stream(
-      kind: 'deployments' | 'ingresses' | 'replicasets',
-      nth?: number,
-    ) {
+    async stream(kind: 'deployments' | 'ingresses', nth?: number) {
       for (;;) {
         const of = streams.filter((s) => s.path.endsWith(kind))
         const s = nth === undefined ? of.at(-1) : of[nth]
@@ -391,32 +391,33 @@ describe('k8s watcher', () => {
   })
 
   describe('mid-rollout', () => {
-    /** `shop` at revision 2 wants one pod of main-42. */
-    const shop: RawDeployment = {
+    /** `shop` at revision 2 wants one pod of main-42; `done` once it is Ready. */
+    const shop = (done: boolean, rv: string): RawDeployment => ({
       metadata: {
         namespace: 'qa',
         name: 'shop',
-        resourceVersion: '1',
+        resourceVersion: rv,
         annotations: { 'deployment.kubernetes.io/revision': '2' },
       },
       spec: {
         replicas: 1,
+        selector: { matchLabels: { app: 'shop' } },
         template: {
           spec: { containers: [{ image: 'r.example.com/shop:main-42' }] },
         },
       },
-      status: { readyReplicas: 1 },
-    }
+      status: done
+        ? { replicas: 1, updatedReplicas: 1, readyReplicas: 1 }
+        : { replicas: 2, updatedReplicas: 1, readyReplicas: 1 },
+    })
     const rs = (
       revision: number,
       tag: string,
       ready: number,
-      rv = '1',
     ): RawReplicaSet => ({
       metadata: {
         namespace: 'qa',
         name: `shop-r${revision}`,
-        resourceVersion: rv,
         annotations: { 'deployment.kubernetes.io/revision': String(revision) },
         ownerReferences: [{ kind: 'Deployment', name: 'shop' }],
       },
@@ -427,25 +428,30 @@ describe('k8s watcher', () => {
       },
       status: { replicas: 1, readyReplicas: ready },
     })
-    const listOf = (items: Array<RawReplicaSet>) => () =>
-      Promise.resolve({ items, metadata: { resourceVersion: '5' } })
     const servedBy = (w: K8sWatcher) =>
       w.snapshot().workloads.map((r) => r.servingImages?.[0]?.tag)
 
-    it('the new ReplicaSet turning Ready says the workload changed, once, serving the spec', async () => {
+    it('the new pods turning Ready says the workload changed, once, serving the spec', async () => {
+      let sets = [rs(1, 'main-41', 1), rs(2, 'main-42', 0)]
+      const asked: Array<string> = []
       const c = cluster({
-        deployments: [page([shop], '5')],
-        replicaSets: [listOf([rs(1, 'main-41', 1), rs(2, 'main-42', 0)])],
+        deployments: [page([shop(false, '1')], '5')],
+        replicaSets: async (ns, selector) => {
+          asked.push(`${ns} ${selector}`)
+          return sets
+        },
       })
       const { watcher: w, changes } = start(c)
       await synced(w)
-      const before = servedBy(w)
-      const s = await c.stream('replicasets')
+      await vi.waitUntil(() => servedBy(w)[0] === 'main-41')
+      const s = await c.stream('deployments')
 
-      s.send('MODIFIED', rs(2, 'main-42', 1, '6'))
+      sets = [rs(2, 'main-42', 1)]
+      s.send('MODIFIED', shop(true, '6'))
+      await vi.waitUntil(() => changes.length > 0)
 
       expect({
-        before,
+        asked,
         changes: changes.map((ch) => ({
           kind: ch.kind,
           type: ch.type,
@@ -454,7 +460,8 @@ describe('k8s watcher', () => {
         })),
         after: servedBy(w),
       }).toEqual({
-        before: ['main-41'],
+        // Read while it rolled out, not once it was done.
+        asked: ['qa app=shop'],
         changes: [
           { kind: 'workload', type: 'upsert', name: 'shop', serving: false },
         ],
@@ -462,21 +469,23 @@ describe('k8s watcher', () => {
       })
     })
 
-    it('ReplicaSets refused: synced all the same, the spec serves', async () => {
+    it('ReplicaSets refused: the spec serves, and the watch goes on', async () => {
       const c = cluster({
-        deployments: [page([shop], '5')],
-        replicaSets: [
-          () =>
-            Promise.reject(
-              Object.assign(new Error('forbidden'), { statusCode: 403 }),
-            ),
-        ],
+        deployments: [page([shop(false, '1')], '5')],
+        replicaSets: () =>
+          Promise.reject(
+            Object.assign(new Error('forbidden'), { statusCode: 403 }),
+          ),
       })
-      const { watcher: w } = start(c, { onError: () => {} })
+      const { watcher: w } = start(c)
 
       await synced(w)
+      await new Promise((r) => setTimeout(r, 20))
 
-      expect(servedBy(w)).toEqual([undefined])
+      expect({ served: servedBy(w), status: w.status().synced }).toEqual({
+        served: [undefined],
+        status: true,
+      })
     })
   })
 })

@@ -124,10 +124,37 @@ export function createTrpcRouter(auth?: BetterAuth) {
         ctx.catalog ? await ctx.catalog.getUsers(input.usernames) : {},
       ),
 
+    /**
+     * A change request's description, asked when its dialog opens: the
+     * first `CHANGE_REQUEST_DESCRIPTION_MAX` characters, `''` when unknown.
+     */
+    changeRequestDetails: publicProcedure
+      .input(
+        z.object({
+          appSlug: z.string(),
+          componentSlug: z.string(),
+          id: z.string().regex(/^\d+$/),
+        }),
+      )
+      .query(async ({ input, ctx }) => {
+        const details =
+          await ctx.companySpecificBackend.getChangeRequestDetails?.(input)
+        const description = details?.description ?? ''
+        return {
+          description:
+            description.length > CHANGE_REQUEST_DESCRIPTION_MAX
+              ? `${description.slice(0, CHANGE_REQUEST_DESCRIPTION_MAX)}…`
+              : description,
+        }
+      }),
+
     // Auth routes (requires auth instance)
     auth: createAuthRouter(t, auth),
   })
 }
+
+/** A change request's description is sent up to this many characters. */
+export const CHANGE_REQUEST_DESCRIPTION_MAX = 2048
 
 const packed = new WeakMap<BootstrapConfigData, BootstrapPayload>()
 

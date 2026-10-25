@@ -161,8 +161,8 @@ model CatalogArtifact {
   buildUrl      String?
   /// The commit the build was made from.
   commitSha     String?
-  /// The merge or pull request the build was made from; null for a branch or tag build.
-  changeRequest String?
+  /// The change request the build was made from (`direct`) or merged by: a ChangeRequestRef.
+  changeRequest Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   component     CatalogComponent @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)

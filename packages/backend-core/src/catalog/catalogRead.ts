@@ -12,6 +12,7 @@ import type {
   CatalogMeta,
   CatalogReleaseInput,
   CatalogUserInput,
+  ChangeRequestRef,
   DeployAttemptStatus,
   EndpointKind,
   HealthState,
@@ -151,6 +152,8 @@ export interface PairDeployment {
     buildUrl?: string
     /** The commit the build was made from. */
     commitSha?: string
+    /** The change request the build was made from or merged by. */
+    changeRequest?: ChangeRequestRef
     deployUrl?: string
     deployedAt?: string
     /** Username, a key of `users`. */
@@ -193,6 +196,8 @@ export interface PairDeployAttempt {
   /** The deploy job itself. */
   jobUrl?: string
   commitSha?: string
+  /** The change request the attempt's build was made from or merged by. */
+  changeRequest?: ChangeRequestRef
   /** Branch, tag or merge-request ref deployed. */
   ref?: string
 }
@@ -257,7 +262,7 @@ export interface CatalogArtifactView {
   builtAtSource: BuiltAtSource | null
   buildUrl: string | null
   commitSha: string | null
-  changeRequest: string | null
+  changeRequest: ChangeRequestRef | null
   release: CatalogReleaseInput | null
 }
 
@@ -432,6 +437,9 @@ export function createCatalogReads(prisma: PrismaClient) {
           aliases: d.artifact.aliases,
           ...(d.artifact.buildUrl && { buildUrl: d.artifact.buildUrl }),
           ...(d.artifact.commitSha && { commitSha: d.artifact.commitSha }),
+          ...(d.artifact.changeRequest && {
+            changeRequest: d.artifact.changeRequest,
+          }),
           ...(d.deployUrl && { deployUrl: d.deployUrl }),
           ...(d.deployedAt && { deployedAt: d.deployedAt.toISOString() }),
           ...(u && { deployedBy: u.username }),
@@ -474,7 +482,12 @@ export function createCatalogReads(prisma: PrismaClient) {
               include: {
                 target: { select: { environmentSlug: true } },
                 artifact: {
-                  select: { aliases: true, buildUrl: true, commitSha: true },
+                  select: {
+                    aliases: true,
+                    buildUrl: true,
+                    commitSha: true,
+                    changeRequest: true,
+                  },
                 },
                 starter: true,
               },
@@ -506,6 +519,12 @@ export function createCatalogReads(prisma: PrismaClient) {
               ...(r.deployUrl && { deployUrl: r.deployUrl }),
               ...(r.jobUrl && { jobUrl: r.jobUrl }),
               ...(r.artifact.commitSha && { commitSha: r.artifact.commitSha }),
+              ...(r.artifact.changeRequest
+                ? {
+                    changeRequest: r.artifact
+                      .changeRequest as unknown as ChangeRequestRef,
+                  }
+                : {}),
               ...(r.ref && { ref: r.ref }),
             } satisfies PairDeployAttempt,
           },
@@ -607,7 +626,7 @@ function toArtifactView(artifact: {
   builtAtSource: string | null
   buildUrl: string | null
   commitSha: string | null
-  changeRequest: string | null
+  changeRequest: unknown
   release: {
     key: string
     tag: string | null
@@ -623,7 +642,7 @@ function toArtifactView(artifact: {
     builtAtSource: artifact.builtAtSource as BuiltAtSource | null,
     buildUrl: artifact.buildUrl,
     commitSha: artifact.commitSha,
-    changeRequest: artifact.changeRequest,
+    changeRequest: (artifact.changeRequest ?? null) as ChangeRequestRef | null,
     release: artifact.release
       ? {
           key: artifact.release.key,

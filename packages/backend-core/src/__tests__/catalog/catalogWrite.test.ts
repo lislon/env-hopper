@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createCatalog } from '../../catalog'
+import type { ChangeRequestRef } from '../../catalog'
 import {
   getTestCatalogClient,
   resetCatalog,
@@ -9,6 +10,14 @@ import {
 
 const prisma = getTestCatalogClient()
 const catalog = prisma ? withOwnTransactions(createCatalog(prisma)) : undefined
+
+const mr42: ChangeRequestRef = {
+  id: '42',
+  url: 'https://git.example.com/shop/-/merge_requests/42',
+  title: 'Add the basket',
+  workItems: ['SHOP-7'],
+  direct: true,
+}
 
 async function givenOneComponentOnTwoTargets() {
   if (!catalog) throw new Error('catalog not ready')
@@ -250,7 +259,7 @@ describe.skipIf(!prisma)('catalog writes', () => {
     const sync = (a: {
       builtAt?: Date
       builtAtSource?: 'build' | 'deploy'
-      changeRequest?: string
+      changeRequest?: ChangeRequestRef
     }) =>
       catalog!.syncArtifacts('ci', [
         { componentSlug: 'shop-api', version: 'v9', ...a },
@@ -258,12 +267,12 @@ describe.skipIf(!prisma)('catalog writes', () => {
     await sync({
       builtAt: new Date('2026-02-01'),
       builtAtSource: 'deploy',
-      changeRequest: '42',
+      changeRequest: mr42,
     })
     expect(await stored()).toEqual({
       builtAt: new Date('2026-02-01'),
       builtAtSource: 'deploy',
-      changeRequest: '42',
+      changeRequest: mr42,
     })
     await sync({ builtAt: new Date('2026-03-01') })
     expect(await stored()).toMatchObject({
@@ -275,6 +284,25 @@ describe.skipIf(!prisma)('catalog writes', () => {
       builtAt: new Date('2026-03-01'),
       builtAtSource: 'build',
     })
+  })
+
+  it('the same change request again, its keys in another order, is no change', async () => {
+    await givenOneComponentOnTwoTargets()
+    const sync = (changeRequest: ChangeRequestRef) =>
+      catalog!.syncArtifacts('ci', [
+        { componentSlug: 'shop-api', version: 'v9', changeRequest },
+      ])
+    await sync(mr42)
+
+    const again = await sync({
+      direct: true,
+      workItems: ['SHOP-7'],
+      title: 'Add the basket',
+      url: mr42.url,
+      id: '42',
+    })
+
+    expect(again).toEqual({ created: 0, updated: 0, deleted: 0, unchanged: 1 })
   })
 
   it('an artifact first seen without a build time takes the first one reported', async () => {

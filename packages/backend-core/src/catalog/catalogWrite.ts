@@ -363,7 +363,10 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             releaseKey: a.releaseKey ?? null,
             buildUrl: a.buildUrl ?? null,
             commitSha: a.commitSha ?? null,
-            changeRequest: a.changeRequest ?? null,
+            // Only defined keys: the stored JSON compares equal to the next run's.
+            changeRequest: a.changeRequest
+              ? JSON.parse(JSON.stringify(a.changeRequest))
+              : null,
             ...(a.builtAt
               ? {
                   builtAt: a.builtAt,

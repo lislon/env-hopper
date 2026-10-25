@@ -463,6 +463,69 @@ describe.skipIf(!prisma)('catalog reads', () => {
         })
       })
 
+      it('gives the row and the attempt the change request each build came from or was merged by', async () => {
+        await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
+        const built = {
+          id: '14',
+          url: 'https://git.example.com/shop/-/merge_requests/14',
+          title: 'Add the basket',
+          workItems: ['SHOP-7', 'SHOP-9'],
+          direct: true,
+        }
+        const merged = {
+          id: '12',
+          url: 'https://git.example.com/shop/-/merge_requests/12',
+          title: 'Fix totals',
+          direct: false,
+        }
+        await givenAttempts([
+          {
+            targetSlug: 'k8s:prod/shop',
+            status: 'failed',
+            endedAt: '2026-01-05T10:00:00Z',
+          },
+        ])
+        await catalog!.syncArtifacts(
+          'ci',
+          [
+            {
+              componentSlug: 'shop-api',
+              version: 'main-10',
+              buildUrl: 'https://ci.example.com/p/10',
+              changeRequest: built,
+            },
+            {
+              componentSlug: 'shop-api',
+              version: 'main-11',
+              aliases: ['spring'],
+              buildUrl: 'https://ci.example.com/p/11',
+              commitSha: 'abc123',
+              changeRequest: merged,
+            },
+          ],
+          { upsertOnly: true },
+        )
+
+        const { pairs } = await catalog!.getPairDeployments({})
+
+        expect(
+          pairs[0]!.rows.map((r) => ({
+            version: r.version,
+            changeRequest: r.changeRequest,
+            attempt: r.attempt && {
+              version: r.attempt.version,
+              changeRequest: r.attempt.changeRequest,
+            },
+          })),
+        ).toEqual([
+          {
+            version: 'main-10',
+            changeRequest: built,
+            attempt: { version: 'main-11', changeRequest: merged },
+          },
+        ])
+      })
+
       it("serves the newest attempt on the Environment's Targets, by start, else by end", async () => {
         await givenShopDeployedOn([{ slug: 'k8s:prod/a' }])
         await catalog!.syncTargets(

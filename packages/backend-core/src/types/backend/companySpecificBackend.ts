@@ -15,4 +15,13 @@ export interface EhBackendCompanySpecificBackend {
   getNameMigrations: (params: RenameRuleParams) => Promise<RenameRule | false>
   getResourceJumps: () => Promise<ResourceJumpsData>
   getResourceJumpsExtended: () => Promise<ResourceJumpsExtendedData>
+  /**
+   * What a change request says about itself, asked when a person opens it:
+   * its description (markdown). Null: not known. Absent: none kept.
+   */
+  getChangeRequestDetails?: (input: {
+    appSlug: string
+    componentSlug: string
+    id: string
+  }) => Promise<{ description: string } | null>
 }

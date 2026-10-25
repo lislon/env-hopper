@@ -36,6 +36,21 @@ export interface CatalogReleaseInput {
   author?: string
   releasedAt?: Date
 }
+/**
+ * The change request (a merge or pull request) an Artifact was built from,
+ * or, for a build of the branch it merged into, the one that merged it.
+ */
+export interface ChangeRequestRef {
+  /** Its number in its project, e.g. `14`. */
+  id: string
+  url: string
+  title?: string
+  /** The Work Items it names, e.g. issue keys. */
+  workItems?: Array<string>
+  /** true: built from the change request itself; false: from the branch it merged into. */
+  direct: boolean
+}
+
 export interface CatalogArtifactInput {
   componentSlug: string
   version: string
@@ -51,8 +66,8 @@ export interface CatalogArtifactInput {
   buildUrl?: string
   /** The commit the build was made from. */
   commitSha?: string
-  /** The merge or pull request the build was made from; absent for a branch or tag build. */
-  changeRequest?: string
+  /** The change request the build was made from or merged by. */
+  changeRequest?: ChangeRequestRef
 }
 export interface CatalogEndpointInput {
   kind: EndpointKind

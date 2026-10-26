@@ -294,12 +294,14 @@ model AppEnvFreshness {
 // and the login id once known.
 model EhUser {
   id          String      @id
-  loginId     String?
+  // The signed-in account this browser belongs to: set at its first sign-in,
+  // never changed or cleared. One account may own several EhUsers (browsers).
+  userId      String?
   firstSeenAt DateTime    @default(now())
   lastSeenAt  DateTime    @default(now())
   events      UserEvent[]
 
-  @@index([loginId])
+  @@index([userId])
 }
 
 // One thing a user did: opened an App on an Environment, or jumped from it.

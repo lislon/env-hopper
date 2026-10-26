@@ -10,7 +10,7 @@ import { EhDatabaseManager } from './database'
 import { createBackendResolver } from './backendResolver'
 import { registerFeatures } from './featureRegistry'
 import { createTrpcRouter } from '../server/controller'
-import { createEhTrpcContext, ehUserIdOf } from '../server/ehTrpcContext'
+import { createEhTrpcContext, ehUserOf } from '../server/ehTrpcContext'
 import { createAuth } from '../modules/auth/auth'
 import { createMockUserFromDevConfig } from '../modules/auth/devMockUserUtils'
 
@@ -108,7 +108,7 @@ export async function createEhMiddleware(
       user: userWithGroups,
       adminGroups,
       catalog: options.catalog,
-      ehUserId: ehUserIdOf(req, res),
+      ehUser: ehUserOf(req, res),
     })
   }
 

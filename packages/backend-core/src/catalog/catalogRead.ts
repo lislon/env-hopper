@@ -131,7 +131,14 @@ export interface Catalog {
   /** Keeps what a User did, forever (ADR 0006): who uses what, and when. */
   recordUserEvent: (event: UserEventInput) => Promise<void>
   /** Every User's events since `since`, oldest first. */
-  getUserEvents: (since: Date) => Promise<Array<UserEventView>>
+  /**
+   * Events since `since`, oldest first; with `userId` (an account or an
+   * EhUser id), only that User's: every EhUser linked to the same account.
+   */
+  getUserEvents: (
+    since: Date,
+    filter?: { userId?: string },
+  ) => Promise<Array<UserEventView>>
 }
 
 /** JSON-ready (dates as ISO strings): it is served as is. */
@@ -633,23 +640,41 @@ export function createCatalogReads(prisma: PrismaClient) {
       }
       return components
     },
-    async recordUserEvent({ userId, loginId, ...event }: UserEventInput) {
+    async recordUserEvent({ ehUserId, userId, ...event }: UserEventInput) {
       const at = new Date()
       await prisma.ehUser.upsert({
-        where: { id: userId },
+        where: { id: ehUserId },
         create: {
-          id: userId,
-          loginId: loginId ?? null,
+          id: ehUserId,
+          userId: userId ?? null,
           firstSeenAt: at,
           lastSeenAt: at,
         },
-        update: { lastSeenAt: at, ...(loginId && { loginId }) },
+        update: { lastSeenAt: at },
       })
-      await prisma.userEvent.create({ data: { userId, ...event, at } })
+      // Linked at its first sign-in, and never moved: `userId: null` only.
+      if (userId) {
+        await prisma.ehUser.updateMany({
+          where: { id: ehUserId, userId: null },
+          data: { userId },
+        })
+      }
+      await prisma.userEvent.create({
+        data: { userId: ehUserId, ...event, at },
+      })
     },
-    async getUserEvents(since: Date) {
+    async getUserEvents(since: Date, filter: { userId?: string } = {}) {
+      let users: Array<{ id?: string; userId?: string }> | undefined
+      if (filter.userId) {
+        const own = await prisma.ehUser.findUnique({
+          where: { id: filter.userId },
+          select: { userId: true },
+        })
+        const account = own?.userId ?? filter.userId
+        users = [{ id: filter.userId }, { userId: account }]
+      }
       const events = await prisma.userEvent.findMany({
-        where: { at: { gte: since } },
+        where: { at: { gte: since }, ...(users && { user: { OR: users } }) },
         orderBy: [{ at: 'asc' }, { id: 'asc' }],
         select: {
           userId: true,
@@ -659,14 +684,19 @@ export function createCatalogReads(prisma: PrismaClient) {
           resourceJump: true,
           url: true,
           at: true,
+          user: { select: { userId: true } },
         },
       })
-      return events.map(({ resourceJump, url, kind, ...e }) => ({
-        ...e,
-        kind: kind as UserEventView['kind'],
-        ...(resourceJump && { resourceJump }),
-        ...(url && { url }),
-      }))
+      return events.map(
+        ({ userId: ehUserId, user, resourceJump, url, kind, ...e }) => ({
+          ehUserId,
+          ...(user.userId && { userId: user.userId }),
+          ...e,
+          kind: kind as UserEventView['kind'],
+          ...(resourceJump && { resourceJump }),
+          ...(url && { url }),
+        }),
+      )
     },
     async getUsers(usernames: Array<string>) {
       const users = await prisma.catalogUser.findMany({

@@ -153,9 +153,9 @@ export interface AppEnvFreshnessInput {
 /** One thing a User did: opened an App on an Environment, or jumped from it. */
 export interface UserEventInput {
   /** The EhUser: the id its cookie carries. */
-  userId: string
-  /** The login, once signed in. */
-  loginId?: string
+  ehUserId: string
+  /** The signed-in account: links the EhUser to it at its first sign-in, for good. */
+  userId?: string
   kind: 'open' | 'jump'
   appSlug: string
   envSlug: string
@@ -163,5 +163,5 @@ export interface UserEventInput {
   url?: string
 }
 
-/** A User's event as kept. */
-export type UserEventView = Omit<UserEventInput, 'loginId'> & { at: Date }
+/** A User's event as kept; `userId`: the account its EhUser is linked to, if any. */
+export type UserEventView = UserEventInput & { at: Date }

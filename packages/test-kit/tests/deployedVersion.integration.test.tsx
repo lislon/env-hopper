@@ -92,6 +92,33 @@ describe('deployed version under the jump card', () => {
       ),
     )
 
+  test('opening a pair records an open, carrying the id the previous UI kept for this browser', async () => {
+    localStorage.setItem('userId', '2b8e0b42-5d0e-4f6c-9a3e-6a1f0c7d9e11')
+    const bodies: Array<unknown> = []
+    const record = async ({ request }: { request: Request }) => {
+      if (request.url.includes('usage.record'))
+        bodies.push(await request.clone().json())
+    }
+    server.events.on('request:start', record)
+    try {
+      const app = await open('/env/staging/app/shop', {
+        shop: { components: [shopUi], users, rows: [row({})] },
+      })
+      await waitFor(() => expect(lines(app.container)).toHaveLength(1))
+      await waitFor(() => expect(bodies.length).toBeGreaterThan(0))
+
+      expect(bodies[0]).toEqual({
+        kind: 'open',
+        appSlug: 'shop',
+        envSlug: 'staging',
+        legacyUserId: '2b8e0b42-5d0e-4f6c-9a3e-6a1f0c7d9e11',
+      })
+    } finally {
+      server.events.removeListener('request:start', record)
+      localStorage.removeItem('userId')
+    }
+  })
+
   test('a healthy deploy shows its Version and time, with no dot', async () => {
     const app = await open('/env/staging/app/shop', {
       shop: { components: [shopUi], users, rows: [row({})] },

@@ -163,17 +163,19 @@ export function createTrpcRouter(auth?: BetterAuth) {
             envSlug: z.string().max(200),
             resourceJump: z.string().max(200).optional(),
             url: z.string().max(2000).optional(),
+            /** The id the previous UI kept for this browser: the first record names the browser by it. */
+            legacyUserId: z.string().max(64).optional(),
           }),
         )
         .mutation(async ({ input, ctx }) => {
-          if (input.kind === 'jump') warm(ctx, input, 'jump')
-          if (ctx.ehUserId && ctx.catalog) {
-            await ctx.catalog.recordUserEvent({
-              userId: ctx.ehUserId,
-              ...(ctx.user?.email && { loginId: ctx.user.email }),
-              ...input,
-            })
-          }
+          const { legacyUserId, ...event } = input
+          if (event.kind === 'jump') warm(ctx, event, 'jump')
+          if (!ctx.ehUser || !ctx.catalog) return
+          await ctx.catalog.recordUserEvent({
+            ehUserId: ctx.ehUser.name(legacyUserId),
+            ...(ctx.user && { userId: ctx.user.id }),
+            ...event,
+          })
         }),
     }),
 

@@ -4,7 +4,7 @@ export { createTrpcRouter, packBootstrap } from './server/controller'
 /** Rebuilds one Environment of a packed `bootstrap`. */
 export { expandEnv } from '@env-hopper/shared-core'
 export type { PairsWatchEvent, TRPCRouter } from './server/controller'
-export { createEhTrpcContext, ehUserIdOf } from './server/ehTrpcContext'
+export { createEhTrpcContext, ehUserOf } from './server/ehTrpcContext'
 export { MAX_SLICE_SLUGS } from './server/pairDetails'
 export type {
   PairChunk,

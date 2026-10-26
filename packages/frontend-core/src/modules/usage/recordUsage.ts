@@ -1,5 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect } from 'react'
+import { LOCAL_STORAGE_KEY_USER_ID } from '~/legacy/lib/local-storage-constants'
+
+/** The id the previous UI kept for this browser; the backend adopts it on the first record. */
+function legacyUserId(): string | undefined {
+  try {
+    return localStorage.getItem(LOCAL_STORAGE_KEY_USER_ID) ?? undefined
+  } catch {
+    return undefined
+  }
+}
 
 interface UsageInput {
   kind: 'open' | 'jump'
@@ -18,7 +28,10 @@ export function useRecordUsage() {
   return useCallback(
     (input: UsageInput) => {
       const meta = client.getDefaultOptions().mutations?.meta
-      meta?.trpcClient.usage.record.mutate(input).catch(() => undefined)
+      const legacy = legacyUserId()
+      meta?.trpcClient.usage.record
+        .mutate({ ...input, ...(legacy && { legacyUserId: legacy }) })
+        .catch(() => undefined)
     },
     [client],
   )

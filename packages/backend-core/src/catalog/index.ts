@@ -3,6 +3,7 @@ export type {
   AppComponent,
   PairDeployment,
   PairDeployAttempt,
+  AppEnvFreshness,
   PairDeployments,
   Catalog,
   CatalogUserView,

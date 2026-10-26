@@ -695,4 +695,34 @@ describe.skipIf(!prisma)('pair over the real catalog', () => {
       deployUrl: `${PIPELINES}109`,
     })
   })
+
+  it("streams an AppEnv's freshness in its deployment chunk, also when nothing is deployed there", async () => {
+    const w = withOwnTransactions(createCatalog(prisma!))
+    await w.syncEnvironments('ci', [{ slug: 'prod', displayName: 'Prod' }])
+    await w.syncApps('ci', [{ slug: 'shop', displayName: 'Shop' }])
+    await w.syncComponents('ci', [
+      { slug: 'shop-api', displayName: 'Shop API', appSlug: 'shop' },
+    ])
+    await w.syncAppEnvFreshness('provider', [
+      {
+        appSlug: 'shop',
+        envSlug: 'prod',
+        checkedAt: new Date('2026-01-05T10:00:00Z'),
+        reading: ['k8s', 'audit'],
+      },
+    ])
+    catalog = createCatalog(prisma!)
+
+    const chunks = await collect(
+      client.pair.query({ appSlug: 'shop', envSlug: 'prod' }),
+    )
+
+    expect(dataOf(chunks, 'shop/prod/deployment')).toEqual({
+      rows: [],
+      freshness: {
+        checkedAt: '2026-01-05T10:00:00.000Z',
+        reading: ['k8s', 'audit'],
+      },
+    })
+  })
 })

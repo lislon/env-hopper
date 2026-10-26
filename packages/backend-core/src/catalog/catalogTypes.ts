@@ -126,3 +126,18 @@ export interface CatalogDeployAttemptInput {
   /** The branch, tag or merge-request ref deployed. */
   ref?: string
 }
+
+/**
+ * How fresh what an App shows on an Environment is, as the Entity Provider
+ * last read it (ADR 0006).
+ */
+export interface AppEnvFreshnessInput {
+  appSlug: string
+  envSlug: string
+  /** The oldest time any read that serves it was confirmed. */
+  checkedAt: Date
+  /** The Sources being read for it now. */
+  reading?: Array<string>
+  /** The last read that failed and has not succeeded since. */
+  failed?: { source: string; at: Date }
+}

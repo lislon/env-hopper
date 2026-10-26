@@ -1,5 +1,10 @@
 import { splitId } from '../catalog/catalogRead'
-import type { AppComponent, PairDeployment, PairDeployments } from '../catalog'
+import type {
+  AppComponent,
+  AppEnvFreshness,
+  PairDeployment,
+  PairDeployments,
+} from '../catalog'
 import type { ResourceJumpsData } from '../types'
 import type { EhTrpcContext } from './ehTrpcContext'
 
@@ -54,6 +59,8 @@ export interface StreamMeta {
 /** A pair's deployment as streamed; Components and Users come in their own chunks. */
 export interface WirePairDeployment {
   rows: Array<WireDeploymentRow>
+  /** How fresh this AppEnv is; absent when the Entity Provider wrote none. */
+  freshness?: AppEnvFreshness
 }
 
 /**
@@ -239,6 +246,12 @@ function deploymentChunks(
   sent: Sent,
 ): Array<Array<PairChunk>> {
   const byKey = new Map(found.pairs.map((p) => [keyOf(p), p]))
+  const freshnessOf = new Map(
+    (found.freshness ?? []).map(({ app, env, ...f }) => [
+      keyOf({ app, env }),
+      f,
+    ]),
+  )
   const observedAt = mostCommon(
     found.pairs.flatMap((p) =>
       p.rows.flatMap((r) => (r.health ? [r.health.observedAt] : [])),
@@ -308,6 +321,9 @@ function deploymentChunks(
               },
             }),
           }
+        }),
+        ...(freshnessOf.has(keyOf({ app, env })) && {
+          freshness: freshnessOf.get(keyOf({ app, env })),
         }),
       },
     })

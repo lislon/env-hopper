@@ -1,5 +1,6 @@
 import type { PrismaClient } from '../generated/prisma/client'
 import type {
+  AppEnvFreshnessInput,
   BuiltAtSource,
   CatalogAppInput,
   CatalogArtifactInput,
@@ -85,6 +86,11 @@ export interface Catalog {
    * (Component, Target). Their Artifacts and Users before them.
    */
   syncDeployAttempts: Sync<CatalogDeployAttemptInput>
+  /**
+   * How fresh each AppEnv is, as the Entity Provider last read it. Not a
+   * change a reader is told about: a freshness only moves time.
+   */
+  syncAppEnvFreshness: Sync<AppEnvFreshnessInput>
   /**
    * Calls `listener` after each committed transaction that changed a pair's
    * Deployments. Returns the function that stops it.
@@ -253,6 +259,15 @@ export interface PairDeployments {
     rows: PairDeployment['rows']
     users: PairDeployment['users']
   }>
+  /** Each AppEnv's freshness the Entity Provider wrote, deployed there or not. */
+  freshness?: Array<{ app: string; env: string } & AppEnvFreshness>
+}
+
+/** How fresh what an AppEnv shows is; ISO dates. */
+export interface AppEnvFreshness {
+  checkedAt: string
+  reading?: Array<string>
+  failed?: { source: string; at: string }
 }
 
 export interface CatalogArtifactView {
@@ -462,7 +477,31 @@ export function createCatalogReads(prisma: PrismaClient) {
           if (a.starter) pair.users[a.starter.username] = profileOf(a.starter)
         }
       }
-      return { pairs: [...pairs.values()] }
+      const fresh = await prisma.appEnvFreshness.findMany({
+        where: {
+          ...(appSlugs && { appSlug: { in: appSlugs } }),
+          ...(envSlugs && { envSlug: { in: envSlugs } }),
+        },
+        orderBy: [{ appSlug: 'asc' }, { envSlug: 'asc' }],
+      })
+      return {
+        pairs: [...pairs.values()],
+        ...(fresh.length > 0 && {
+          freshness: fresh.map((f) => ({
+            app: f.appSlug,
+            env: f.envSlug,
+            checkedAt: f.checkedAt.toISOString(),
+            ...(f.reading.length > 0 && { reading: f.reading }),
+            ...(f.failedSource &&
+              f.failedAt && {
+                failed: {
+                  source: f.failedSource,
+                  at: f.failedAt.toISOString(),
+                },
+              }),
+          })),
+        }),
+      }
     },
     /** Per Environment and Component, the newest attempt on the Environment's Targets. */
     async newestAttempts(

@@ -8,6 +8,7 @@ import type {
 } from './catalogRead'
 import { chunks, createCatalogReads } from './catalogRead'
 import type {
+  AppEnvFreshnessInput,
   CatalogAppInput,
   CatalogArtifactInput,
   CatalogComponentInput,
@@ -483,6 +484,35 @@ export function createCatalog(prisma: PrismaClient): Catalog {
       touch(tx, pairsOf(health as Changed, sameHealth))
       return health.counts
     },
+
+    syncAppEnvFreshness: async (
+      tx,
+      scope,
+      list: Array<AppEnvFreshnessInput>,
+      opts = {},
+    ) =>
+      (
+        await tableSyncPrisma({
+          prisma: txOf(tx),
+          prismaModelName: 'AppEnvFreshness',
+          uniqColumns: ['appSlug', 'envSlug'],
+          scope,
+          upsertOnly: opts.upsertOnly,
+        }).sync(
+          [
+            ...new Map(
+              list.map((f) => [`${f.appSlug}\0${f.envSlug}`, f]),
+            ).values(),
+          ].map((f) => ({
+            appSlug: f.appSlug,
+            envSlug: f.envSlug,
+            checkedAt: f.checkedAt,
+            reading: f.reading ?? [],
+            failedSource: f.failed?.source ?? null,
+            failedAt: f.failed?.at ?? null,
+          })),
+        )
+      ).counts,
 
     async syncDeployAttempts(
       tx,

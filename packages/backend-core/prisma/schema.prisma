@@ -270,3 +270,49 @@ model CatalogHealth {
   @@id([componentSlug, targetSlug])
   @@index([scope])
 }
+
+// How fresh what an App shows on an Environment is: when the Entity Provider
+// last confirmed it, what it is reading for it now, and a read that failed.
+model AppEnvFreshness {
+  appSlug      String
+  envSlug      String
+  scope        String
+  checkedAt    DateTime
+  reading      String[]  @default([])
+  failedSource String?
+  failedAt     DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@id([appSlug, envSlug])
+  @@index([scope])
+}
+
+// Anyone using env-hopper, signed in or not: a random id kept in a cookie,
+// and the login id once known.
+model EhUser {
+  id          String      @id
+  loginId     String?
+  firstSeenAt DateTime    @default(now())
+  lastSeenAt  DateTime    @default(now())
+  events      UserEvent[]
+
+  @@index([loginId])
+}
+
+// One thing a user did: opened an App on an Environment, or jumped from it.
+model UserEvent {
+  id           Int      @id @default(autoincrement())
+  userId       String
+  /// open | jump
+  kind         String
+  appSlug      String
+  envSlug      String
+  resourceJump String?
+  url          String?
+  at           DateTime @default(now())
+  user         EhUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, at])
+  @@index([at])
+}

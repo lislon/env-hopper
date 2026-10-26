@@ -11,6 +11,7 @@ const SYNCS = [
   'syncDeployments',
   'syncHealth',
   'syncDeployAttempts',
+  'syncAppEnvFreshness',
 ] as const
 type SyncName = (typeof SYNCS)[number]
 

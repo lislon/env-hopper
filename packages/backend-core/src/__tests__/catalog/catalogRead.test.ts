@@ -560,6 +560,39 @@ describe.skipIf(!prisma)('catalog reads', () => {
       })
     })
 
+    it('serves each AppEnv the Entity Provider wrote freshness for, whether anything is deployed there or not', async () => {
+      await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
+      await catalog!.syncAppEnvFreshness('provider', [
+        {
+          appSlug: 'shop',
+          envSlug: 'prod',
+          checkedAt: new Date('2026-01-05T10:00:00Z'),
+        },
+        {
+          appSlug: 'shop',
+          envSlug: 'qa',
+          checkedAt: new Date('2026-01-05T09:00:00Z'),
+          reading: ['audit'],
+          failed: { source: 'gitlab', at: new Date('2026-01-05T09:30:00Z') },
+        },
+      ])
+
+      const { freshness } = await catalog!.getPairDeployments({
+        appSlugs: ['shop'],
+      })
+
+      expect(freshness).toEqual([
+        { app: 'shop', env: 'prod', checkedAt: '2026-01-05T10:00:00.000Z' },
+        {
+          app: 'shop',
+          env: 'qa',
+          checkedAt: '2026-01-05T09:00:00.000Z',
+          reading: ['audit'],
+          failed: { source: 'gitlab', at: '2026-01-05T09:30:00.000Z' },
+        },
+      ])
+    })
+
     it('deleting the User keeps the Deployment, without a deployer', async () => {
       await givenShopDeployedOn([{ slug: 'k8s:prod/shop' }])
       await catalog!.syncUsers('ci', [])

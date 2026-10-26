@@ -128,6 +128,18 @@ export interface Catalog {
   }) => Promise<Record<string, Array<AppComponent>>>
   /** The profiles of the Users named, by username; unknown ones are absent. */
   getUsers: (usernames: Array<string>) => Promise<PairDeployment['users']>
+  /**
+   * What AppEnvs showed, each time it changed, newest first: "what ran on
+   * qa last Tuesday at 14:00", "when did this version reach prod". At most
+   * `HISTORY_LIMIT` rows; narrow by App, Environment, Component and time.
+   */
+  getDeploymentHistory: (filter: {
+    app?: string
+    env?: string
+    component?: string
+    from?: Date
+    to?: Date
+  }) => Promise<Array<DeploymentHistoryEntry>>
   /** Keeps what a User did, forever (ADR 0006): who uses what, and when. */
   recordUserEvent: (event: UserEventInput) => Promise<void>
   /** Every User's events since `since`, oldest first. */
@@ -139,6 +151,25 @@ export interface Catalog {
     since: Date,
     filter?: { userId?: string },
   ) => Promise<Array<UserEventView>>
+}
+
+/** At most this many DeploymentHistory rows per read. */
+export const HISTORY_LIMIT = 1000
+
+/** One change of what an AppEnv showed; JSON-ready. */
+export interface DeploymentHistoryEntry {
+  componentSlug: string
+  targetSlug: string
+  appSlug?: string
+  envSlug?: string
+  kind: 'deployed' | 'removed' | 'attempt'
+  version?: string
+  previous?: string
+  status?: string
+  deployedAt?: string
+  deployedBy?: string
+  source?: string
+  observedAt: string
 }
 
 /** JSON-ready (dates as ISO strings): it is served as is. */
@@ -639,6 +670,34 @@ export function createCatalogReads(prisma: PrismaClient) {
         })
       }
       return components
+    },
+    async getDeploymentHistory({
+      app,
+      env,
+      component,
+      from,
+      to,
+    }: Parameters<Catalog['getDeploymentHistory']>[0]) {
+      const rows = await prisma.deploymentHistory.findMany({
+        where: {
+          ...(app && { appSlug: app }),
+          ...(env && { envSlug: env }),
+          ...(component && { componentSlug: component }),
+          ...((from || to) && {
+            observedAt: { ...(from && { gte: from }), ...(to && { lte: to }) },
+          }),
+        },
+        orderBy: { id: 'desc' },
+        take: HISTORY_LIMIT,
+      })
+      return rows.map(({ id: _, observedAt, deployedAt, kind, ...r }) => ({
+        ...(Object.fromEntries(
+          Object.entries(r).filter(([, v]) => v !== null),
+        ) as Pick<DeploymentHistoryEntry, 'componentSlug' | 'targetSlug'>),
+        kind: kind as DeploymentHistoryEntry['kind'],
+        ...(deployedAt && { deployedAt: deployedAt.toISOString() }),
+        observedAt: observedAt.toISOString(),
+      }))
     },
     async recordUserEvent({ ehUserId, userId, ...event }: UserEventInput) {
       const at = new Date()

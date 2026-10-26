@@ -320,3 +320,30 @@ model UserEvent {
   @@index([userId, at])
   @@index([at])
 }
+
+// What an AppEnv showed, each time it changed: a Deployment appeared, changed
+// or went, or an attempt started or ended. Written in the transaction that
+// changed it; never updated or deleted.
+model DeploymentHistory {
+  id            Int       @id @default(autoincrement())
+  componentSlug String
+  targetSlug    String
+  // The App and Environment as they were then, for queries by AppEnv.
+  appSlug       String?
+  envSlug       String?
+  /// deployed | removed | attempt
+  kind          String
+  version       String?
+  // The version shown before.
+  previous      String?
+  // An attempt's status: running | failed | canceled.
+  status        String?
+  deployedAt    DateTime?
+  deployedBy    String?
+  // The Source that decided it; none for an attempt.
+  source        String?
+  observedAt    DateTime  @default(now())
+
+  @@index([appSlug, envSlug, observedAt])
+  @@index([componentSlug, observedAt])
+}

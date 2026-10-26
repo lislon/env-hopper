@@ -109,6 +109,100 @@ interface Changed {
   deleted: Array<Row>
 }
 
+const str = (v: unknown) => (typeof v === 'string' ? v : null)
+const date = (v: unknown) => (v instanceof Date ? v : null)
+const sameTime = (a: unknown, b: unknown) =>
+  (date(a)?.getTime() ?? null) === (date(b)?.getTime() ?? null)
+
+/** A DeploymentHistory row before its App and Environment are known. */
+type HistoryRow = Omit<
+  Prisma.DeploymentHistoryCreateManyInput,
+  'appSlug' | 'envSlug'
+> & { componentSlug: string; targetSlug: string }
+
+const deployedRow = (r: Row, previous?: unknown): HistoryRow => ({
+  componentSlug: r['componentSlug'] as string,
+  targetSlug: r['targetSlug'] as string,
+  kind: 'deployed',
+  version: str(r['version']),
+  previous: str(previous),
+  deployedAt: date(r['deployedAt']),
+  deployedBy: str(r['deployedBy']),
+  source: str(r['source']),
+})
+
+/**
+ * The history of what a Deployments sync changed: a Deployment that
+ * appeared, one whose version or deploy time changed (a redeploy), one gone.
+ */
+function deploymentChanges({ created, updated, deleted }: Changed) {
+  return [
+    ...created.map((r) => deployedRow(r)),
+    ...updated
+      .filter(
+        ({ row, was }) =>
+          row['version'] !== was['version'] ||
+          !sameTime(row['deployedAt'], was['deployedAt']),
+      )
+      .map(({ row, was }) => deployedRow(row, was['version'])),
+    ...deleted.map(
+      (r): HistoryRow => ({
+        componentSlug: r['componentSlug'] as string,
+        targetSlug: r['targetSlug'] as string,
+        kind: 'removed',
+        previous: str(r['version']),
+        source: str(r['source']),
+      }),
+    ),
+  ]
+}
+
+/** The history of what an attempts sync changed: one started, or its status moved. */
+function attemptChanges({ created, updated }: Changed) {
+  return [
+    ...created,
+    ...updated
+      .filter(
+        ({ row, was }) =>
+          row['status'] !== was['status'] || row['version'] !== was['version'],
+      )
+      .map(({ row }) => row),
+  ].map(
+    (r): HistoryRow => ({
+      componentSlug: r['componentSlug'] as string,
+      targetSlug: r['targetSlug'] as string,
+      kind: 'attempt',
+      version: str(r['version']),
+      status: str(r['status']),
+      deployedBy: str(r['startedBy']),
+    }),
+  )
+}
+
+/** Appends `rows` to DeploymentHistory, each with its App and Environment as they are now. */
+async function recordHistory(db: Tx, rows: Array<HistoryRow>) {
+  if (rows.length === 0) return
+  const [components, targets] = await Promise.all([
+    db.catalogComponent.findMany({
+      where: { slug: { in: [...new Set(rows.map((r) => r.componentSlug))] } },
+      select: { slug: true, appSlug: true },
+    }),
+    db.catalogDeploymentTarget.findMany({
+      where: { slug: { in: [...new Set(rows.map((r) => r.targetSlug))] } },
+      select: { slug: true, environmentSlug: true },
+    }),
+  ])
+  const appOf = new Map(components.map((c) => [c.slug, c.appSlug]))
+  const envOf = new Map(targets.map((t) => [t.slug, t.environmentSlug]))
+  await db.deploymentHistory.createMany({
+    data: rows.map((r) => ({
+      ...r,
+      appSlug: appOf.get(r.componentSlug) ?? null,
+      envSlug: envOf.get(r.targetSlug) ?? null,
+    })),
+  })
+}
+
 /** The (Component, Target) of every row created, updated or deleted. */
 function pairsOf(
   { created, updated, deleted }: Changed,
@@ -457,6 +551,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             }
           : { deployment: { scope } },
       }).sync(endpoints)
+      await recordHistory(db, deploymentChanges(deployments as Changed))
       touch(tx, [
         ...pairsOf(deployments as Changed),
         ...pairsOf(endpointRows as Changed),
@@ -546,6 +641,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           ref: a.ref ?? null,
         })),
       )
+      await recordHistory(txOf(tx), attemptChanges(attempts as Changed))
       touch(tx, pairsOf(attempts as Changed))
       return attempts.counts
     },

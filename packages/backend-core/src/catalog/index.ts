@@ -4,6 +4,7 @@ export type {
   PairDeployment,
   PairDeployAttempt,
   AppEnvFreshness,
+  DeploymentHistoryEntry,
   PairDeployments,
   Catalog,
   CatalogUserView,

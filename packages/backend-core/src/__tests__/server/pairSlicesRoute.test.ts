@@ -725,4 +725,44 @@ describe.skipIf(!prisma)('pair over the real catalog', () => {
       },
     })
   })
+
+  it("serves an App-wide freshness to each of the App's Environments that has none of its own", async () => {
+    const w = withOwnTransactions(createCatalog(prisma!))
+    await w.syncEnvironments('ci', [
+      { slug: 'prod', displayName: 'Prod' },
+      { slug: 'qa', displayName: 'QA' },
+    ])
+    await w.syncApps('ci', [{ slug: 'shop', displayName: 'Shop' }])
+    await w.syncComponents('ci', [
+      { slug: 'shop-api', displayName: 'Shop API', appSlug: 'shop' },
+    ])
+    await w.syncAppEnvFreshness('provider', [
+      {
+        appSlug: 'shop',
+        envSlug: '*',
+        checkedAt: new Date('2026-01-05T10:00:00Z'),
+      },
+      {
+        appSlug: 'shop',
+        envSlug: 'qa',
+        checkedAt: new Date('2026-01-05T11:00:00Z'),
+      },
+    ])
+    catalog = createCatalog(prisma!)
+
+    const prod = await collect(
+      client.pair.query({ appSlug: 'shop', envSlug: 'prod' }),
+    )
+    const qa = await collect(
+      client.pair.query({ appSlug: 'shop', envSlug: 'qa' }),
+    )
+
+    expect([
+      dataOf(prod, 'shop/prod/deployment'),
+      dataOf(qa, 'shop/qa/deployment'),
+    ]).toEqual([
+      { rows: [], freshness: { checkedAt: '2026-01-05T10:00:00.000Z' } },
+      { rows: [], freshness: { checkedAt: '2026-01-05T11:00:00.000Z' } },
+    ])
+  })
 })

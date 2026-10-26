@@ -127,12 +127,16 @@ export interface CatalogDeployAttemptInput {
   ref?: string
 }
 
+/** An `envSlug` that writes one freshness for all of an App's Environments; an Environment's own row wins. */
+export const ALL_ENVS = '*'
+
 /**
  * How fresh what an App shows on an Environment is, as the Entity Provider
  * last read it (ADR 0006).
  */
 export interface AppEnvFreshnessInput {
   appSlug: string
+  /** An Environment, or `ALL_ENVS` for each of the App's Environments without a row of its own. */
   envSlug: string
   /** The oldest time any read that serves it was confirmed. */
   checkedAt: Date

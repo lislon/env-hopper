@@ -1,4 +1,5 @@
 import { splitId } from '../catalog/catalogRead'
+import { ALL_ENVS } from '../catalog/catalogTypes'
 import type {
   AppComponent,
   AppEnvFreshness,
@@ -325,6 +326,10 @@ function deploymentChunks(
         ...(freshnessOf.has(keyOf({ app, env })) && {
           freshness: freshnessOf.get(keyOf({ app, env })),
         }),
+        ...(!freshnessOf.has(keyOf({ app, env })) &&
+          freshnessOf.has(keyOf({ app, env: ALL_ENVS })) && {
+            freshness: freshnessOf.get(keyOf({ app, env: ALL_ENVS })),
+          }),
       },
     })
     return out

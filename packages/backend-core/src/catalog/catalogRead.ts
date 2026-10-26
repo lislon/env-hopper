@@ -1,4 +1,5 @@
 import type { PrismaClient } from '../generated/prisma/client'
+import { ALL_ENVS } from './catalogTypes'
 import type {
   AppEnvFreshnessInput,
   BuiltAtSource,
@@ -480,7 +481,7 @@ export function createCatalogReads(prisma: PrismaClient) {
       const fresh = await prisma.appEnvFreshness.findMany({
         where: {
           ...(appSlugs && { appSlug: { in: appSlugs } }),
-          ...(envSlugs && { envSlug: { in: envSlugs } }),
+          ...(envSlugs && { envSlug: { in: [...envSlugs, ALL_ENVS] } }),
         },
         orderBy: [{ appSlug: 'asc' }, { envSlug: 'asc' }],
       })

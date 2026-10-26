@@ -236,6 +236,29 @@ describe('deployed version under the jump card', () => {
       }
     })
 
+    test('a title that starts with its Work Item says the key once', async () => {
+      const app = await open('/env/staging/app/shop', {
+        shop: {
+          components: [shopUi],
+          users,
+          rows: [
+            row({
+              changeRequest: {
+                ...basket,
+                title: 'SHOP-7: Add the basket',
+                workItems: ['SHOP-7'],
+              },
+            }),
+          ],
+        },
+      })
+      const { cell } = await openDetails(app)
+
+      expect(text(cell('Change request', 'shop-ui'))).toBe(
+        'SHOP-7 Add the basket',
+      )
+    })
+
     test('a build of the branch it merged into says "merged via"', async () => {
       const app = await open('/env/staging/app/shop', {
         shop: {

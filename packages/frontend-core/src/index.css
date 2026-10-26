@@ -353,8 +353,9 @@
 .eh-legacy .eh-deployed {
   position: absolute;
   top: 100%;
-  left: 0;
-  right: 0;
+  /* The card's edges: its wrapper pads it 2rem on each side (px-8). */
+  left: 2rem;
+  right: 2rem;
   /* The 18px gap: the card's wrapper already pads 16px below it (py-4). */
   margin-top: 2px;
 }

@@ -12,6 +12,12 @@ export function ChangeRequestCell({
   changeRequest: ChangeRequestRef
 }) {
   const workItemUrl = useBootstrapConfig().ui?.workItemUrl
+  // A title that starts with its Work Items (`SHOP-1 Fix x`) says them once.
+  let title = cr.title
+  for (const w of cr.workItems ?? []) {
+    if (title?.startsWith(w))
+      title = title.slice(w.length).replace(/^[\s:\-–]+/, '')
+  }
   return (
     <span className="eh-deployed-cr">
       {!cr.direct && <span className="eh-deployed-muted">merged via </span>}
@@ -32,7 +38,7 @@ export function ChangeRequestCell({
         </span>
       ))}
       <a href={cr.url} target="_blank" rel="noreferrer">
-        {cr.title ?? `!${cr.id}`}
+        {title || `!${cr.id}`}
       </a>
     </span>
   )

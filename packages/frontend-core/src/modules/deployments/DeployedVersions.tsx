@@ -1,4 +1,9 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
+import {
+  RESTARTING_TEXT,
+  errorText,
+  isServerRestarting,
+} from '~/util/error-utils'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import type { PairDeployment } from '@env-hopper/backend-core'
@@ -558,10 +563,13 @@ export function DeployedVersions({
         {LABEL}
         <span className="eh-deployed-row">
           <span className="eh-deployed-error" tabIndex={0}>
-            ⚠ version unavailable
+            {isServerRestarting(failure)
+              ? RESTARTING_TEXT
+              : '⚠ version unavailable'}
           </span>
           <span className="eh-deployed-tip" role="tooltip">
-            `pair` failed{status ? ` (HTTP ${status})` : ''}: {failure.message}
+            `pair` failed{status ? ` (HTTP ${status})` : ''}:{' '}
+            {errorText(failure)}
             <br />
             retrying · {failureCount} failed{' '}
             {failureCount === 1 ? 'attempt' : 'attempts'}

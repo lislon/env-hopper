@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { errorText } from '../../../util/error-utils'
 import type { ErrorComponentProps } from '@tanstack/react-router'
 import { useEhServerSync, useLegacyConfig } from '../../adapter/legacyApi'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
@@ -120,7 +121,7 @@ export function DefaultErrorPage({ error }: ErrorComponentProps) {
             <h1>Oops!</h1>
             <p>Sorry, an unexpected error has occurred. :( </p>
             <pre className={'text-left mt-8 text-sm'}>
-              {<i>{error.message}</i>}
+              {<i>{errorText(error)}</i>}
             </pre>
             <pre className={'text-left mt-8 text-sm'}>
               {<i>{error.stack}</i>}

@@ -696,6 +696,33 @@ describe('deployed version under the jump card', () => {
       )
     })
 
+    test("a load balancer's 503 page while a pod is replaced says env-hopper is restarting, then the Version once it answers", async () => {
+      let calls = 0
+      const app = await openWithPair(() => {
+        calls++
+        return calls === 1
+          ? new Response('<html><body>503 Service Unavailable</body></html>', {
+              status: 503,
+              headers: { 'content-type': 'text/html' },
+            })
+          : undefined
+      }, false)
+      await waitFor(() =>
+        expect(slot(app.container)).toHaveTextContent(
+          'env-hopper is restarting · retrying',
+        ),
+      )
+      const restarting = errorTip(app.container)
+      await waitFor(
+        () =>
+          expect(
+            lines(app.container)[0]?.querySelector('button'),
+          ).toHaveTextContent('main-41'),
+        { timeout: 3000 },
+      )
+      expect(restarting).not.toContain('Unexpected token')
+    })
+
     test('a stream that never answers shows the placeholder, then the error label at the timeout', async () => {
       vi.useFakeTimers({ shouldAdvanceTime: true })
       try {

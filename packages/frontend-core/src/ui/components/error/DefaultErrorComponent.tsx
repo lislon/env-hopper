@@ -1,4 +1,10 @@
 import type { ErrorComponentProps } from '@tanstack/react-router'
+import {
+  RESTARTING_TEXT,
+  isDexieError,
+  isDexieMigrationError,
+  isServerRestarting,
+} from '~/util/error-utils'
 import { BugIcon, RefreshCcwIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '~/ui/button'
@@ -11,7 +17,6 @@ import {
   EmptyTitle,
 } from '~/ui/empty'
 import { useDb } from '~/userDb/DbContext'
-import { isDexieError, isDexieMigrationError } from '~/util/error-utils'
 import { BaseErrorPage } from './BaseErrorPage'
 
 export function Treatment({ error, reset }: ErrorComponentProps) {
@@ -85,7 +90,13 @@ export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
           </EmptyMedia>
           <EmptyTitle>Ooops!</EmptyTitle>
           <EmptyDescription>
-            Error inside env-hopper occured: {<i>{error.message}</i>}
+            {isServerRestarting(error) ? (
+              RESTARTING_TEXT
+            ) : (
+              <>
+                Error inside env-hopper occured: <i>{error.message}</i>
+              </>
+            )}
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>

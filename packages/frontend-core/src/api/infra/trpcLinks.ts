@@ -6,6 +6,7 @@ import {
 } from '@trpc/client'
 import type { TRPCRouter } from '@env-hopper/backend-core'
 import type { TRPCLink } from '@trpc/client'
+import { apiFetch } from '~/util/error-utils'
 
 /** The queries that answer with a stream of chunks. */
 const STREAMED = new Set(['pair', 'slices'])
@@ -23,8 +24,8 @@ export function createEhTrpcLinks(url: string): Array<TRPCLink<TRPCRouter>> {
       true: httpSubscriptionLink({ url }),
       false: splitLink({
         condition: (op) => STREAMED.has(op.path),
-        true: httpBatchStreamLink({ url }),
-        false: httpLink({ url }),
+        true: httpBatchStreamLink({ url, fetch: apiFetch }),
+        false: httpLink({ url, fetch: apiFetch }),
       }),
     }),
   ]

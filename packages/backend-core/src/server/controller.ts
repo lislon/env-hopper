@@ -15,6 +15,7 @@ import { pairsWatch } from './pairsWatch'
 import type { TrackedData } from '@trpc/server/unstable-core-do-not-import'
 import type { PairChunk } from './pairDetails'
 import { publicProcedure, router, t } from './trpcSetup'
+import type { EhTrpcContext } from './ehTrpcContext'
 
 /**
  * Create the main tRPC router with optional auth instance
@@ -66,10 +67,14 @@ export function createTrpcRouter(auth?: BetterAuth) {
         )
       }),
 
-    /** One pair's details, a chunk per facet as each source answers. */
+    /**
+     * One pair's details, a chunk per facet as each source answers. Someone
+     * looks at it: the deployment's backend is told to warm it.
+     */
     pair: publicProcedure
       .input(z.object({ appSlug: z.string(), envSlug: z.string() }))
       .query(async function* ({ input, ctx }) {
+        warm(ctx, input, 'view')
         yield* pairDetails(ctx, {
           pair: { app: input.appSlug, env: input.envSlug },
         })
@@ -161,15 +166,7 @@ export function createTrpcRouter(auth?: BetterAuth) {
           }),
         )
         .mutation(async ({ input, ctx }) => {
-          const { appSlug, envSlug } = input
-          try {
-            ctx.companySpecificBackend.warm?.(
-              [{ appSlug, envSlug }],
-              input.kind,
-            )
-          } catch (e) {
-            console.error('[usage] warm failed', e)
-          }
+          if (input.kind === 'jump') warm(ctx, input, 'jump')
           if (ctx.ehUserId && ctx.catalog) {
             await ctx.catalog.recordUserEvent({
               userId: ctx.ehUserId,
@@ -183,6 +180,19 @@ export function createTrpcRouter(auth?: BetterAuth) {
     // Auth routes (requires auth instance)
     auth: createAuthRouter(t, auth),
   })
+}
+
+/** Tells the deployment's backend someone looks at the AppEnv; never fails the call. */
+function warm(
+  ctx: EhTrpcContext,
+  { appSlug, envSlug }: { appSlug: string; envSlug: string },
+  reason: string,
+) {
+  try {
+    ctx.companySpecificBackend.warm?.([{ appSlug, envSlug }], reason)
+  } catch (e) {
+    console.error('[warm] failed', e)
+  }
 }
 
 /** A change request's description is sent up to this many characters. */

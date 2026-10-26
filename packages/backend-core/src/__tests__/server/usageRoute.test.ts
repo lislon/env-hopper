@@ -50,7 +50,7 @@ describe.skipIf(!prisma)('usage.record', () => {
     warmed.length = 0
   })
 
-  it('names a new visitor by an httpOnly cookie, keeps each thing they do under it, and tells the Entity Provider what to warm', async () => {
+  it('names a new visitor by an httpOnly cookie, keeps each thing they do under it, and warms what a User jumps to', async () => {
     const first = await record({ kind: 'open', appSlug: 'shop', envSlug: 'qa' })
     const cookie = first.headers.get('set-cookie') ?? ''
     const id = /eh_uid=([^;]+)/.exec(cookie)?.[1]
@@ -99,10 +99,24 @@ describe.skipIf(!prisma)('usage.record', () => {
           recent: true,
         },
       ],
+      // `open` comes with the `pair` it opened, which warms it.
       warmed: [
-        { appEnvs: [{ appSlug: 'shop', envSlug: 'qa' }], reason: 'open' },
         { appEnvs: [{ appSlug: 'shop', envSlug: 'qa' }], reason: 'jump' },
       ],
     })
+  })
+
+  it('a pair asked for is warmed: someone looks at it', async () => {
+    // As `httpBatchStreamLink` asks for it.
+    const input = { 0: { appSlug: 'shop', envSlug: 'qa' } }
+    const res = await fetch(
+      `${url}/pair?batch=1&input=${encodeURIComponent(JSON.stringify(input))}`,
+      { headers: { 'trpc-accept': 'application/jsonl' } },
+    )
+    await res.text()
+
+    expect(warmed).toEqual([
+      { appEnvs: [{ appSlug: 'shop', envSlug: 'qa' }], reason: 'view' },
+    ])
   })
 })

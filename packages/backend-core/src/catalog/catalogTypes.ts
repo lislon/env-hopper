@@ -47,6 +47,8 @@ export interface ChangeRequestRef {
   title?: string
   /** The Work Items it names, e.g. issue keys. */
   workItems?: Array<string>
+  /** The branch it merged from, e.g. a release branch that names a version. */
+  sourceBranch?: string
   /** true: built from the change request itself; false: from the branch it merged into. */
   direct: boolean
 }

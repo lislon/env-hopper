@@ -18,6 +18,8 @@ import type {
   DeployAttemptStatus,
   EndpointKind,
   HealthState,
+  UserEventInput,
+  UserEventView,
 } from './catalogTypes'
 
 /** A write transaction the Catalog opened; pass it to every sync of the run. */
@@ -126,6 +128,10 @@ export interface Catalog {
   }) => Promise<Record<string, Array<AppComponent>>>
   /** The profiles of the Users named, by username; unknown ones are absent. */
   getUsers: (usernames: Array<string>) => Promise<PairDeployment['users']>
+  /** Keeps what a User did, forever (ADR 0006): who uses what, and when. */
+  recordUserEvent: (event: UserEventInput) => Promise<void>
+  /** Every User's events since `since`, oldest first. */
+  getUserEvents: (since: Date) => Promise<Array<UserEventView>>
 }
 
 /** JSON-ready (dates as ISO strings): it is served as is. */
@@ -620,6 +626,41 @@ export function createCatalogReads(prisma: PrismaClient) {
         })
       }
       return components
+    },
+    async recordUserEvent({ userId, loginId, ...event }: UserEventInput) {
+      const at = new Date()
+      await prisma.ehUser.upsert({
+        where: { id: userId },
+        create: {
+          id: userId,
+          loginId: loginId ?? null,
+          firstSeenAt: at,
+          lastSeenAt: at,
+        },
+        update: { lastSeenAt: at, ...(loginId && { loginId }) },
+      })
+      await prisma.userEvent.create({ data: { userId, ...event, at } })
+    },
+    async getUserEvents(since: Date) {
+      const events = await prisma.userEvent.findMany({
+        where: { at: { gte: since } },
+        orderBy: [{ at: 'asc' }, { id: 'asc' }],
+        select: {
+          userId: true,
+          kind: true,
+          appSlug: true,
+          envSlug: true,
+          resourceJump: true,
+          url: true,
+          at: true,
+        },
+      })
+      return events.map(({ resourceJump, url, kind, ...e }) => ({
+        ...e,
+        kind: kind as UserEventView['kind'],
+        ...(resourceJump && { resourceJump }),
+        ...(url && { url }),
+      }))
     },
     async getUsers(usernames: Array<string>) {
       const users = await prisma.catalogUser.findMany({

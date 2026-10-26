@@ -145,3 +145,19 @@ export interface AppEnvFreshnessInput {
   /** The last read that failed and has not succeeded since. */
   failed?: { source: string; at: Date }
 }
+
+/** One thing a User did: opened an App on an Environment, or jumped from it. */
+export interface UserEventInput {
+  /** The EhUser: the id its cookie carries. */
+  userId: string
+  /** The login, once signed in. */
+  loginId?: string
+  kind: 'open' | 'jump'
+  appSlug: string
+  envSlug: string
+  resourceJump?: string
+  url?: string
+}
+
+/** A User's event as kept. */
+export type UserEventView = Omit<UserEventInput, 'loginId'> & { at: Date }

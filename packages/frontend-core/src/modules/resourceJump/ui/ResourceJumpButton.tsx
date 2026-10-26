@@ -6,6 +6,8 @@ import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJ
 import type { ResourceJumpUI } from '~/modules/resourceJump/types'
 import { isFlagshipResource } from '~/modules/resourceJump/utils/helpers'
 import { LinkExternal } from '~/ui/linkExternal'
+import { useRecordUsage } from '~/modules/usage/recordUsage'
+import { appSlugFromJumpSlug } from '~/util/route-utils'
 
 const linkVariants = cva('flex items-center group-hover:underline', {
   variants: {
@@ -44,12 +46,28 @@ export function ResourceJumpButton({
   onClick?: () => void
 } & VariantProps<typeof linkVariants>) {
   const { getJumpUrl } = useResourceJumpContext()
+  const recordUsage = useRecordUsage()
+  const url = getJumpUrl(resouceJump.slug, env?.slug)
 
   return (
-    <div className={className} onClick={onClick}>
+    <div
+      className={className}
+      onClick={() => {
+        if (env) {
+          recordUsage({
+            kind: 'jump',
+            appSlug: appSlugFromJumpSlug(resouceJump.slug),
+            envSlug: env.slug,
+            resourceJump: resouceJump.slug,
+            ...(url && { url }),
+          })
+        }
+        onClick?.()
+      }}
+    >
       <div className="p-2 flex flex-col gap-2 hover:bg-accent/30 duration-100 rounded-lg group">
         <LinkExternal
-          href={getJumpUrl(resouceJump.slug, env?.slug)}
+          href={url}
           className="flex justify-between active:hover:scale-(--btn-focus-scale) active:focus:scale-(--btn-focus-scale) motion-safe:duration-200 ease-out transition-all gap-2"
         >
           <div className="flex flex-col">

@@ -148,6 +148,38 @@ export function createTrpcRouter(auth?: BetterAuth) {
         }
       }),
 
+    /** What a User does, kept, and the AppEnv it shows warmed (ADR 0006). */
+    usage: router({
+      record: publicProcedure
+        .input(
+          z.object({
+            kind: z.enum(['open', 'jump']),
+            appSlug: z.string().max(200),
+            envSlug: z.string().max(200),
+            resourceJump: z.string().max(200).optional(),
+            url: z.string().max(2000).optional(),
+          }),
+        )
+        .mutation(async ({ input, ctx }) => {
+          const { appSlug, envSlug } = input
+          try {
+            ctx.companySpecificBackend.warm?.(
+              [{ appSlug, envSlug }],
+              input.kind,
+            )
+          } catch (e) {
+            console.error('[usage] warm failed', e)
+          }
+          if (ctx.ehUserId && ctx.catalog) {
+            await ctx.catalog.recordUserEvent({
+              userId: ctx.ehUserId,
+              ...(ctx.user?.email && { loginId: ctx.user.email }),
+              ...input,
+            })
+          }
+        }),
+    }),
+
     // Auth routes (requires auth instance)
     auth: createAuthRouter(t, auth),
   })

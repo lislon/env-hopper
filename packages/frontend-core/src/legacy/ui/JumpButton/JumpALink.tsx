@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 import { getJumpUrl } from '../../lib/utils'
 import type { EhApp, EhEnv, EhSubstitutionValue } from '../../types'
 import { useMainAppFormContext } from '../../context/MainFormContextProvider'
+import { useRecordUsage } from '../../../modules/usage/recordUsage'
+import { appSlugFromJumpSlug } from '../../../util/route-utils'
 
 export interface JumpUrlParams {
   children: ReactNode
@@ -26,11 +28,20 @@ export function JumpALink({
   testId,
 }: JumpUrlParams) {
   const { recordJump } = useMainAppFormContext()
+  const recordUsage = useRecordUsage()
+  const jumpUrl = getJumpUrl({ app, env, substitution })
 
   const onClick = () => {
     if (!app || !env) {
       return
     }
+    recordUsage({
+      kind: 'jump',
+      appSlug: appSlugFromJumpSlug(app.id),
+      envSlug: env.id,
+      resourceJump: app.id,
+      ...(jumpUrl && { url: jumpUrl }),
+    })
     recordJump({
       app: app,
       env: env,
@@ -38,7 +49,6 @@ export function JumpALink({
     })
   }
 
-  const jumpUrl = getJumpUrl({ app, env, substitution })
   if (!jumpUrl) {
     return undefined
   }

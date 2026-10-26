@@ -266,6 +266,8 @@ export function createBackend(fixture: Fixture): MockBackend {
     server.use(
       http.get('*/api/auth/session', () => new Response(null, { status: 401 })),
       http.get(streamed.path, ({ request }) => streamed.handle(request)),
+      // What a User does is told to the backend and never answered with data.
+      mswTrpc.usage.record.mutation(() => undefined),
     )
 
     if (overrideBackendNetworkFn) {

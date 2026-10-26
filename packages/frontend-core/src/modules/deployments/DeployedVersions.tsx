@@ -10,6 +10,7 @@ import {
 import { appSlugFromJumpSlug } from '~/util/route-utils'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { useNow } from '~/util/useNow'
+import { useRecordOpen } from '~/modules/usage/recordUsage'
 import { AttemptDialog, AttemptLine } from './DeployAttempt'
 import { ChangeRequestCell } from './ChangeRequest'
 import type { Attempt } from './DeployAttempt'
@@ -455,6 +456,7 @@ export function DeployedVersions({
 }) {
   const appSlug = jumpSlug ? appSlugFromJumpSlug(jumpSlug) : ''
   const bootstrap = useBootstrapConfig()
+  useRecordOpen(appSlug || undefined, envSlug)
   const upToDateMs = bootstrap.ui?.upToDateFreshnessMs ?? UP_TO_DATE_MS
   const { data, error, failureCount, failureReason } = useQuery({
     ...pairFacetQuery(appSlug, envSlug ?? '', 'deployment'),

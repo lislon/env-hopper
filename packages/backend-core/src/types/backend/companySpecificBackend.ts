@@ -24,4 +24,12 @@ export interface EhBackendCompanySpecificBackend {
     componentSlug: string
     id: string
   }) => Promise<{ description: string } | null>
+  /**
+   * Someone looks at these AppEnvs now (`reason`: what they did): read what
+   * they show again, if it is older than current. Never awaited.
+   */
+  warm?: (
+    appEnvs: Array<{ appSlug: string; envSlug: string }>,
+    reason: string,
+  ) => void
 }

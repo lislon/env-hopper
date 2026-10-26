@@ -446,8 +446,16 @@ describe('deployed version under the jump card', () => {
       line.querySelectorAll('[role="tooltip"]').forEach((t) => t.remove())
       return line.textContent.replace(/\s+/g, ' ').trim()
     }
+    /** The attempt's own line under the Version's. */
+    const attemptText = (container: HTMLElement) =>
+      Array.from(
+        container.querySelector('.eh-deployed-attempt')?.children ?? [],
+      )
+        .map((part) => part.textContent.replace(/\s+/g, ' ').trim())
+        .filter(Boolean)
+        .join(' ')
 
-    test('a running attempt follows the Version as a chip', async () => {
+    test('a running attempt has a line of its own under the Version', async () => {
       const app = await open(
         '/env/staging/app/shop',
         withAttempt({
@@ -458,34 +466,42 @@ describe('deployed version under the jump card', () => {
         }),
       )
 
-      expect(await lineText(app.container)).toBe(
-        'main-41 · deployed 15 min ago ↻ deploying main-42',
-      )
+      expect({
+        line: await lineText(app.container),
+        attempt: attemptText(app.container),
+      }).toEqual({
+        line: 'main-41 · deployed 15 min ago',
+        attempt: 'New deployment main-42 is running · started 1 min ago',
+      })
     })
 
     test("a failed attempt's time moves with the Version's, on one clock", async () => {
       vi.useFakeTimers({ shouldAdvanceTime: true })
       try {
         const app = await open('/env/staging/app/shop', withAttempt(failed()))
-        const before = await lineText(app.container)
+        const seen = async () =>
+          `${await lineText(app.container)} | ${attemptText(app.container)}`
+        const before = await seen()
 
         await vi.advanceTimersByTimeAsync(60_000)
 
-        expect({ before, after: await lineText(app.container) }).toEqual({
-          before: 'main-41 · deployed 15 min ago ✕ main-42 failed · 5 min ago',
-          after: 'main-41 · deployed 16 min ago ✕ main-42 failed · 6 min ago',
+        expect({ before, after: await seen() }).toEqual({
+          before:
+            'main-41 · deployed 15 min ago | ✕ New deployment main-42 failed 5 min ago · started by Ann job #45 ↗',
+          after:
+            'main-41 · deployed 16 min ago | ✕ New deployment main-42 failed 6 min ago · started by Ann job #45 ↗',
         })
       } finally {
         vi.useRealTimers()
       }
     })
 
-    test('the chip opens the attempt beside the current stable Version', async () => {
+    test('the attempt line opens the attempt beside the current stable Version', async () => {
       const app = await open('/env/staging/app/shop', withAttempt(failed()))
       await waitFor(() => expect(lines(app.container)).toHaveLength(1))
 
       await app.user.click(
-        lines(app.container)[0]!.querySelector('.eh-deployed-chip')!,
+        app.container.querySelector('.eh-deployed-attempt-text')!,
       )
 
       const dialog = app.container.querySelector<HTMLElement>(

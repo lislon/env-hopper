@@ -76,6 +76,7 @@ export function expandDeployment(
     }
   })
   return {
+    ...(wire.freshness && { freshness: wire.freshness }),
     components: components.map(({ pipelineUrl: _, ...c }) => c),
     users: named,
     rows,
@@ -127,7 +128,7 @@ async function intoCache(
 /** How long a `pair` load may wait for its facet before it counts as failed. */
 const PAIR_FACET_TIMEOUT_MS = 10_000
 /** While a pair facet stays failed, it is asked for again this often. */
-const FAILED_RETRY_MS = 30_000
+export const FAILED_RETRY_MS = 30_000
 /** `value` for a failed query, `false` for any other. */
 const failedOnly =
   <T>(value: T) =>

@@ -324,17 +324,24 @@
  * theme's own `--destructive`, so it reads on both themes and both skins.
  */
 /*
- * One line high in every state (loading, error, no info, the Version), so
- * nothing moves when the answer lands.
+ * Its label, then one line in every state (loading, error, no info, the
+ * Version), so nothing moves when the answer lands. A Deploy Attempt adds a
+ * second line; without one, no room is kept for it.
  */
 .eh-deployed {
-  margin-top: 18px;
+  margin-top: 12px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   font-size: 12px;
   line-height: 18px;
-  height: 18px;
+}
+.eh-deployed-label {
+  font-size: 10px;
+  line-height: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.5;
 }
 /*
  * Under the previous UI's jump card the line sits out of flow: the card's grid
@@ -400,46 +407,99 @@
 .eh-deployed-ago {
   opacity: 0.45;
 }
-/* A deploy that has not succeeded, after the Version on its line. */
-.eh-deployed-chip-wrap {
-  display: inline-flex;
-  min-width: 0;
+/* Older than its freshness: the Version greys; up to date, it is white. */
+.eh-deployed-version.eh-deployed-dimmed {
+  opacity: 0.45;
 }
-.eh-deployed-chip {
-  font: inherit;
+.eh-deployed-version {
+  transition: opacity 0.9s ease;
+}
+/* A read of it under way: a faint ring after the line. */
+.eh-deployed-verify {
+  display: inline-flex;
+  align-self: center;
+  width: 11px;
+  height: 11px;
+  margin-left: 6px;
+  opacity: 0.6;
+}
+.eh-deployed-verify svg {
+  width: 11px;
+  height: 11px;
+}
+/* A check that failed since the Version was read. */
+.eh-deployed-warn {
+  margin-left: 8px;
+  font-family: system-ui, sans-serif;
   font-size: 11px;
-  line-height: 14px;
+  color: oklch(0.8 0.15 85);
+}
+/* The newest deploy that has not succeeded, on its own line. */
+.eh-deployed-attempt {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  border: 1px solid currentColor;
-  background: none;
-  color: oklch(0.75 0.12 240);
-  opacity: 0.7;
-  cursor: pointer;
+  gap: 8px;
+  max-width: 100%;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 40ch;
+  color: oklch(0.75 0.12 240);
 }
-.eh-deployed-chip:hover,
-.eh-deployed-chip:focus-visible {
-  opacity: 1;
-}
-.eh-deployed-chip-failed {
+.eh-deployed-attempt-failed {
   color: oklch(0.72 0.18 25);
 }
-.eh-deployed-chip-canceled {
-  color: color-mix(in oklab, currentColor 70%, transparent);
+.eh-deployed-attempt-canceled {
+  opacity: 0.6;
 }
-.eh-deployed-chip-glyph {
+.eh-deployed-attempt-succeeded {
+  color: oklch(0.72 0.17 145);
+}
+.eh-deployed-attempt-text {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.eh-deployed-attempt-text:hover,
+.eh-deployed-attempt-text:focus-visible {
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.eh-deployed-attempt-slot {
+  width: 22px;
+  text-align: center;
+  font-size: 11px;
+}
+.eh-deployed-attempt-progress {
   display: inline-block;
+  width: 22px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  background: color-mix(in oklab, currentColor 25%, transparent);
 }
-/* The Version's tooltip is not the chip's. */
-.eh-deployed-row:has(.eh-deployed-chip:hover) .eh-deployed-tip {
-  display: none;
+.eh-deployed-attempt-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 30%;
+  width: 40%;
+  border-radius: 3px;
+  background: currentColor;
+}
+.eh-deployed-attempt-job {
+  flex: none;
+  font-size: 11.5px;
+  color: oklch(0.78 0.11 240);
+  text-decoration: none;
+}
+.eh-deployed-attempt-job:hover {
+  text-decoration: underline;
 }
 /* A control the dialog will have, shown but not usable yet. */
 .eh-deployed-future {
@@ -465,8 +525,12 @@
   top: 0;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .eh-deployed-chip-running .eh-deployed-chip-glyph {
-    animation: eh-spin 1.2s linear infinite;
+  .eh-deployed-verify svg {
+    animation: eh-spin 2.4s linear infinite;
+  }
+  .eh-deployed-attempt-progress::after {
+    left: -40%;
+    animation: eh-progress 1.4s ease-in-out infinite;
   }
   .eh-deployed-swap-out {
     animation: eh-version-out 1.2s ease-out forwards;
@@ -486,6 +550,11 @@
   }
   .eh-deployed-swap-in {
     animation: eh-fade-in 1.2s ease-out forwards;
+  }
+}
+@keyframes eh-progress {
+  to {
+    left: 100%;
   }
 }
 @keyframes eh-spin {

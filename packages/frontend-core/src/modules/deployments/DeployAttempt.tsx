@@ -7,62 +7,98 @@ type Component = PairDeployment['components'][number]
 type Users = PairDeployment['users']
 export type Attempt = NonNullable<Deployment['attempt']>
 
-const GLYPH: Record<Attempt['status'], string> = {
-  running: '↻',
+/** What the attempt line shows: an attempt, or the one that just succeeded. */
+export type AttemptState = Attempt['status'] | 'succeeded'
+
+const SLOT: Record<Exclude<AttemptState, 'running'>, string> = {
+  succeeded: '✓',
   failed: '✕',
   canceled: '⊘',
 }
+
 const TITLE: Record<Attempt['status'], string> = {
   running: 'Running',
   failed: 'Failed',
   canceled: 'Canceled',
 }
 
-/** What the chip says after its glyph. */
-function chipText(a: Attempt, now: number, ago: AgoFn): string {
-  if (a.status === 'running') return `deploying ${a.version}`
-  const at = a.endedAt ?? a.startedAt
-  return `${a.version} ${a.status}${at ? ` · ${ago(at, now)}` : ''}`
-}
-
 type AgoFn = (iso: string, now: number) => string
 
+/** The line's words after the Version: what happened, when, by whom. */
+function attemptWords(
+  a: Attempt,
+  state: AttemptState,
+  now: number,
+  ago: AgoFn,
+  by: string | undefined,
+): string {
+  if (state === 'succeeded') return ' succeeded'
+  if (state === 'running') {
+    return ` is running${a.startedAt ? ` · started ${ago(a.startedAt, now)}` : ''}${by ? ` by ${by}` : ''}`
+  }
+  const at = a.endedAt ?? a.startedAt
+  const verb = state === 'failed' ? 'failed' : 'was canceled'
+  return ` ${verb}${at ? ` ${ago(at, now)}` : ''}${by ? ` · started by ${by}` : ''}`
+}
+
 /**
- * The newest deploy that has not succeeded, after the Version on its line:
- * `↻ deploying v`, `✕ v failed · 5 min ago`, `⊘ v canceled · 5 min ago`.
+ * The newest deploy that has not succeeded, on its own line under the
+ * Version: a progress bar while it runs, then ✓, ✕ or ⊘, and its job.
+ * Absent when there is none: the line takes no room.
  */
-export function AttemptChip({
+export function AttemptLine({
   attempt,
+  state = attempt.status,
   now,
   timeAgo,
+  users,
   onOpen,
   openerRef,
 }: {
   attempt: Attempt
+  state?: AttemptState
   now: number
   timeAgo: AgoFn
+  users: Users
   onOpen: () => void
   openerRef: RefObject<HTMLButtonElement | null>
 }) {
-  const text = chipText(attempt, now, timeAgo)
+  const by = attempt.by ? nameOf(attempt.by, users) : undefined
+  const job = idOf(attempt.jobUrl)
   return (
-    <span
-      className="eh-deployed-chip-wrap"
-      role={attempt.status === 'running' ? 'status' : undefined}
+    <div
+      className={`eh-deployed-attempt eh-deployed-attempt-${state}`}
+      role="status"
     >
+      {state === 'running' ? (
+        <span className="eh-deployed-attempt-progress" aria-hidden="true" />
+      ) : (
+        <span className="eh-deployed-attempt-slot" aria-hidden="true">
+          {SLOT[state]}
+        </span>
+      )}
       <button
         ref={openerRef}
         type="button"
-        className={`eh-deployed-chip eh-deployed-chip-${attempt.status}`}
-        aria-label={`${text}: open the attempt`}
+        className="eh-deployed-attempt-text"
+        aria-haspopup="dialog"
         onClick={onOpen}
       >
-        <span className="eh-deployed-chip-glyph" aria-hidden="true">
-          {GLYPH[attempt.status]}
-        </span>{' '}
-        {text}
+        New deployment{' '}
+        <span className="eh-deployed-mono">{attempt.version}</span>
+        {attemptWords(attempt, state, now, timeAgo, by)}
       </button>
-    </span>
+      {job && attempt.jobUrl && (
+        <a
+          className="eh-deployed-attempt-job"
+          href={attempt.jobUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          job #{job} ↗
+        </a>
+      )}
+    </div>
   )
 }
 
@@ -84,7 +120,7 @@ const mono = (content: ReactNode) => (
   <span className="eh-deployed-mono">{content}</span>
 )
 const statusOf = (status: Attempt['status']) => (
-  <span className={`eh-deployed-chip-${status}`}>{status}</span>
+  <span className={`eh-deployed-attempt-${status}`}>{status}</span>
 )
 
 const idOf = (url: string | undefined) => url?.match(/\/(\d+)\/?$/)?.[1]

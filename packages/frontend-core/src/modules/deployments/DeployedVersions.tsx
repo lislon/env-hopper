@@ -2,11 +2,15 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import type { PairDeployment } from '@env-hopper/backend-core'
-import { pairFacetQuery, userQuery } from '~/modules/pairDetails/pairDetails'
+import {
+  FAILED_RETRY_MS,
+  pairFacetQuery,
+  userQuery,
+} from '~/modules/pairDetails/pairDetails'
 import { appSlugFromJumpSlug } from '~/util/route-utils'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { useNow } from '~/util/useNow'
-import { AttemptChip, AttemptDialog } from './DeployAttempt'
+import { AttemptDialog, AttemptLine } from './DeployAttempt'
 import { ChangeRequestCell } from './ChangeRequest'
 import type { Attempt } from './DeployAttempt'
 
@@ -21,6 +25,48 @@ export function timeAgo(iso: string, now = Date.now()): string {
   if (h < 24) return `${h} h ago`
   const days = Math.floor(h / 24)
   return days === 1 ? '1 day ago' : `${days} days ago`
+}
+
+/** `4 s ago` under a minute, `timeAgo` after. */
+const checkedAgo = (iso: string, now: number) => {
+  const s = Math.max(0, Math.floor((now - Date.parse(iso)) / 1000))
+  return s < 60 ? `${s} s ago` : timeAgo(iso, now)
+}
+
+type Freshness = NonNullable<PairDeployment['freshness']>
+
+/** How long a Version counts as up to date without `ui.upToDateFreshnessMs`. */
+const UP_TO_DATE_MS = 30_000
+
+/**
+ * What the line says of its freshness (ADR 0006), quietly: older than
+ * `upToDateMs` greys, a read under way rings, a check that failed since
+ * says so. Untracked (no freshness): as up to date.
+ */
+function freshnessOf(
+  f: Freshness | undefined,
+  now: number,
+  upToDateMs: number,
+) {
+  if (!f) return { grey: false, reading: [], tip: null, failedSince: undefined }
+  const failedSince =
+    f.failed && Date.parse(f.failed.at) > Date.parse(f.checkedAt)
+      ? f.failed
+      : undefined
+  const reading = f.reading ?? []
+  return {
+    grey: now - Date.parse(f.checkedAt) >= upToDateMs,
+    reading,
+    failedSince,
+    tip: [
+      `checked ${checkedAgo(f.checkedAt, now)}`,
+      reading.length > 0 && `checking ${reading.join(', ')} now…`,
+      failedSince &&
+        `couldn't check: ${failedSince.source} failed ${checkedAgo(failedSince.at, now)}`,
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  }
 }
 
 const fullDate = (iso: string) =>
@@ -409,9 +455,18 @@ export function DeployedVersions({
 }) {
   const appSlug = jumpSlug ? appSlugFromJumpSlug(jumpSlug) : ''
   const bootstrap = useBootstrapConfig()
+  const upToDateMs = bootstrap.ui?.upToDateFreshnessMs ?? UP_TO_DATE_MS
   const { data, error, failureCount, failureReason } = useQuery({
     ...pairFacetQuery(appSlug, envSlug ?? '', 'deployment'),
     enabled: appSlug !== '' && envSlug !== undefined,
+    // The pair on screen is read again while its Entity Provider tracks
+    // freshness: freshness alone is no change `pairsWatch` pushes.
+    refetchInterval: (q) =>
+      q.state.status === 'error'
+        ? FAILED_RETRY_MS
+        : q.state.data?.freshness
+          ? upToDateMs
+          : false,
   })
   const dialogRef = useRef<HTMLDialogElement>(null)
   const openerRef = useRef<HTMLButtonElement>(null)
@@ -420,7 +475,7 @@ export function DeployedVersions({
   const [attemptOpened, setAttemptOpened] = useState(false)
   const opened = detailsOpened || attemptOpened
   const attemptDialogRef = useRef<HTMLDialogElement>(null)
-  const chipRef = useRef<HTMLButtonElement>(null)
+  const attemptRef = useRef<HTMLButtonElement>(null)
   const users = useProfiles(data, opened)
   const now = useNow()
   const leadComponent =
@@ -442,6 +497,7 @@ export function DeployedVersions({
           className="eh-deployed"
           data-testid="deployed-version-slot"
         >
+          {LABEL}
           <span
             className="eh-deployed-loading"
             role="status"
@@ -462,6 +518,7 @@ export function DeployedVersions({
         className="eh-deployed"
         data-testid="deployed-version-slot"
       >
+        {LABEL}
         <span className="eh-deployed-row">
           <span className="eh-deployed-error" tabIndex={0}>
             ⚠ version unavailable
@@ -484,6 +541,7 @@ export function DeployedVersions({
         className="eh-deployed"
         data-testid="deployed-version-slot"
       >
+        {LABEL}
         <span className="eh-deployed-muted">no version info</span>
       </div>
     )
@@ -507,6 +565,9 @@ export function DeployedVersions({
     ? `${[lead.version, ...lead.aliases].join(' · ')}${lead.deployedAt ? ` · deployed ${timeAgo(lead.deployedAt, now)}` : ''}`
     : 'not deployed'
   const attempt = lead?.attempt
+  const fresh = freshnessOf(data.freshness, now, upToDateMs)
+  // The attempt that just succeeded stays, green, while the Versions swap.
+  const shownAttempt = attempt ?? swap?.attempt
 
   return (
     <div
@@ -514,15 +575,18 @@ export function DeployedVersions({
       className="eh-deployed"
       data-testid="deployed-version-slot"
     >
+      {LABEL}
       <span className="eh-deployed-row" data-testid="deployed-version">
         <button
           ref={openerRef}
           type="button"
-          className={
-            lead
-              ? 'eh-deployed-version'
-              : 'eh-deployed-version eh-deployed-muted'
-          }
+          className={[
+            'eh-deployed-version',
+            !lead && 'eh-deployed-muted',
+            fresh.grey && 'eh-deployed-dimmed',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           onClick={() => {
             setDetailsOpened(true)
             dialogRef.current?.showModal()
@@ -548,27 +612,33 @@ export function DeployedVersions({
               · deployed {timeAgo(lead.deployedAt, now)}
             </span>
           )}
+          {fresh.reading.length > 0 && (
+            <span className="eh-deployed-verify" aria-label="checking">
+              <svg viewBox="0 0 12 12" aria-hidden="true">
+                <circle
+                  cx="6"
+                  cy="6"
+                  r="4.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1"
+                  strokeDasharray="7 21.3"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+          )}
           {dot && <span className={`eh-deployed-dot eh-deployed-dot-${dot}`} />}
+          {fresh.failedSince && data.freshness && (
+            <span className="eh-deployed-warn">
+              couldn't check · from {timeAgo(data.freshness.checkedAt, now)}
+            </span>
+          )}
         </button>
         {others.length > 0 && (
           <span className="eh-deployed-star" title={others.join('\n')}>
             *
           </span>
-        )}
-        {attempt && (
-          <>
-            {' '}
-            <AttemptChip
-              attempt={attempt}
-              now={now}
-              timeAgo={timeAgo}
-              openerRef={chipRef}
-              onOpen={() => {
-                setAttemptOpened(true)
-                attemptDialogRef.current?.showModal()
-              }}
-            />
-          </>
         )}
         <span className="eh-deployed-tip" role="tooltip">
           {lead ? (
@@ -590,8 +660,28 @@ export function DeployedVersions({
               <br />* {o}
             </span>
           ))}
+          {fresh.tip && (
+            <>
+              <br />
+              {fresh.tip}
+            </>
+          )}
         </span>
       </span>
+      {shownAttempt && (
+        <AttemptLine
+          attempt={shownAttempt}
+          state={attempt ? attempt.status : 'succeeded'}
+          now={now}
+          timeAgo={timeAgo}
+          users={users}
+          openerRef={attemptRef}
+          onOpen={() => {
+            setAttemptOpened(true)
+            attemptDialogRef.current?.showModal()
+          }}
+        />
+      )}
       <DetailsDialog
         dialogRef={dialogRef}
         onClose={() => openerRef.current?.focus()}
@@ -607,7 +697,7 @@ export function DeployedVersions({
       {lead && attempt && (
         <AttemptDialog
           dialogRef={attemptDialogRef}
-          onClose={() => chipRef.current?.focus()}
+          onClose={() => attemptRef.current?.focus()}
           envSlug={envSlug}
           appSlug={appSlug}
           open={attemptOpened}
@@ -621,6 +711,9 @@ export function DeployedVersions({
   )
 }
 
+/** The slot's label, above its line in every state. */
+const LABEL = <span className="eh-deployed-label">Deployed version</span>
+
 /** How long the Version that just succeeded takes the old one's place. */
 const SWAP_MS = 3200
 
@@ -630,7 +723,11 @@ const SWAP_MS = 3200
  * attempt's and no attempt is left.
  */
 function useSwap(lead: Deployment | undefined) {
-  const [swap, setSwap] = useState<{ from: string; to: string } | null>(null)
+  const [swap, setSwap] = useState<{
+    from: string
+    to: string
+    attempt: Attempt
+  } | null>(null)
   const was = useRef<{ version?: string; attempt?: Attempt }>({})
   const version = lead?.version
   const attempt = lead?.attempt
@@ -645,7 +742,7 @@ function useSwap(lead: Deployment | undefined) {
       before.version !== undefined &&
       before.version !== version
     )
-      setSwap({ from: before.version, to: version })
+      setSwap({ from: before.version, to: version, attempt: before.attempt })
   }, [version, attempt])
   useEffect(() => {
     if (!swap) return

@@ -130,6 +130,8 @@ export interface Catalog {
 
 /** JSON-ready (dates as ISO strings): it is served as is. */
 export interface PairDeployment {
+  /** How fresh what the AppEnv shows is; absent when the Entity Provider writes none. */
+  freshness?: AppEnvFreshness
   components: Array<{
     slug: string
     displayName: string

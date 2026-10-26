@@ -31,6 +31,11 @@ export interface BootstrapConfigData {
    * deployed version matters.
    */
   appVersion?: string
+  /** How the UI shows what it reads; each key is optional. */
+  ui?: {
+    /** How long a Version counts as up to date after its check; older, the line greys. */
+    upToDateFreshnessMs?: number
+  }
 }
 
 /**

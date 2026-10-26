@@ -96,7 +96,9 @@ describe('DeployedVersions details', () => {
         </QueryClientProvider>,
       )
       const seen = () => ({
-        chip: container.querySelector('.eh-deployed-chip')?.textContent ?? null,
+        attempt:
+          container.querySelector('.eh-deployed-attempt-text')?.textContent ??
+          null,
         swapIn:
           container.querySelector('.eh-deployed-swap-in')?.textContent ?? null,
         swapOut:
@@ -111,9 +113,93 @@ describe('DeployedVersions details', () => {
       await act(() => vi.advanceTimersByTimeAsync(3200))
 
       expect({ running, swapping, after: seen() }).toEqual({
-        running: { chip: '↻ deploying main-42', swapIn: null, swapOut: null },
-        swapping: { chip: null, swapIn: 'main-42', swapOut: 'main-41' },
-        after: { chip: null, swapIn: null, swapOut: null },
+        running: {
+          attempt: 'New deployment main-42 is running',
+          swapIn: null,
+          swapOut: null,
+        },
+        swapping: {
+          attempt: 'New deployment main-42 succeeded',
+          swapIn: 'main-42',
+          swapOut: 'main-41',
+        },
+        after: { attempt: null, swapIn: null, swapOut: null },
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('greys a Version older than its freshness, rings while it is read again, and says when a check failed', () => {
+    const now = Date.parse('2026-10-26T10:00:00Z')
+    vi.useFakeTimers({ now, shouldAdvanceTime: true })
+    try {
+      const ago = (s: number) => new Date(now - s * 1000).toISOString()
+      const seen = (freshness: PairDeployment['freshness']) => {
+        const client = new QueryClient()
+        client.setQueryData(pairFacetKey('shop', 'qa', 'deployment'), {
+          ...(freshness && { freshness }),
+          components: [{ slug: 'shop-ui', displayName: 'Shop UI', lead: true }],
+          users: {},
+          rows: [
+            {
+              componentSlug: 'shop-ui',
+              targetSlug: 'k8s:qa/shop-ui',
+              version: 'main-41',
+              aliases: [],
+              source: 'k8s',
+            },
+          ],
+        } satisfies PairDeployment)
+        const { container, unmount } = render(
+          <QueryClientProvider client={client}>
+            <BootstrapConfigProvider
+              bootstrapConfig={
+                {
+                  apps: { shop: { slug: 'shop', displayName: 'Shop' } },
+                  envs: {},
+                  envDefaults: {},
+                  appsMeta: { tags: { descriptions: [] } },
+                  contexts: [],
+                  defaults: { envSlug: '', resourceJumpSlug: '' },
+                  ui: { upToDateFreshnessMs: 30_000 },
+                } as BootstrapPayload
+              }
+            >
+              <DeployedVersions jumpSlug="shop" envSlug="qa" />
+            </BootstrapConfigProvider>
+          </QueryClientProvider>,
+        )
+        const line = container.querySelector('.eh-deployed-version')
+        const out = {
+          grey: !!line?.classList.contains('eh-deployed-dimmed'),
+          verifying: !!container.querySelector('.eh-deployed-verify'),
+          warn:
+            container.querySelector('.eh-deployed-warn')?.textContent ?? null,
+        }
+        unmount()
+        return out
+      }
+
+      expect({
+        untracked: seen(undefined),
+        upToDate: seen({ checkedAt: ago(5) }),
+        stale: seen({ checkedAt: ago(41 * 60) }),
+        checking: seen({ checkedAt: ago(41 * 60), reading: ['audit'] }),
+        failed: seen({
+          checkedAt: ago(41 * 60),
+          failed: { source: 'audit', at: ago(10) },
+        }),
+      }).toEqual({
+        untracked: { grey: false, verifying: false, warn: null },
+        upToDate: { grey: false, verifying: false, warn: null },
+        stale: { grey: true, verifying: false, warn: null },
+        checking: { grey: true, verifying: true, warn: null },
+        failed: {
+          grey: true,
+          verifying: false,
+          warn: "couldn't check · from 41 min ago",
+        },
       })
     } finally {
       vi.useRealTimers()

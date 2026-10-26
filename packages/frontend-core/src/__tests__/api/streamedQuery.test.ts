@@ -48,11 +48,12 @@ test('chunks reach the query cache as they are yielded, not at the end', async (
     }),
   })
   expect(data.map((d) => d.facet)).toEqual(['fast', 'slow'])
-  const [first, last] = seen
-  console.log(
-    `[streamedQuery] first chunk ${first!.ms} ms, last chunk ${last!.ms} ms (slow facet ${SLOW_MS} ms)`,
-  )
-  expect(first!.chunks).toBe(1)
-  expect(last!.ms - first!.ms).toBeGreaterThanOrEqual(SLOW_MS - 50)
-  expect(first!.ms).toBeLessThan(SLOW_MS / 2)
+  const [first] = seen
+  const slowYieldedAt = (data[1] as { at: number }).at
+  // Same process, same clock: the first chunk was in the cache before the
+  // server even yielded the second, whatever the machine's speed.
+  expect({
+    firstAlone: first?.chunks,
+    firstBeforeSlowWasYielded: start + (first?.ms ?? Infinity) < slowYieldedAt,
+  }).toEqual({ firstAlone: 1, firstBeforeSlowWasYielded: true })
 })

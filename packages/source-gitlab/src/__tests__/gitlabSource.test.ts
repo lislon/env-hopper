@@ -168,6 +168,21 @@ const server = createServer((req, res) => {
     return
   }
 
+  if (url.pathname === '/api/v4/projects/7/pipelines/3553947') {
+    res.end(
+      JSON.stringify({
+        id: 3553947,
+        ref: 'develop-3497764',
+        tag: true,
+        sha: '6230d905aa',
+        source: 'api',
+        created_at: '2026-10-12T12:09:00Z',
+        web_url: 'https://git.example.com/g/p/-/pipelines/3553947',
+      }),
+    )
+    return
+  }
+
   if (url.pathname === '/api/v4/projects/7/environments') {
     const states = url.searchParams.get('states')
     const filtered = states
@@ -587,6 +602,28 @@ describe('gitlab source single environment', () => {
         merged: await src().commitMergeRequests(7, 'cm14'),
         pushedDirectly: await src().commitMergeRequests(7, 'c99'),
       }).toEqual({ merged: [record14], pushedDirectly: [] })
+    })
+  })
+})
+
+describe('gitlab source pipeline', () => {
+  it('describes one pipeline by id: ref, commit, whether the ref is a tag, and what started it', async () => {
+    const src = createGitlabSource({ baseUrl: base, token: 't' })
+    expect({
+      found: await src.getPipeline(7, 3553947),
+      missing: await src.getPipeline(7, 1),
+    }).toEqual({
+      found: {
+        projectId: 7,
+        id: 3553947,
+        ref: 'develop-3497764',
+        tag: true,
+        sha: '6230d905aa',
+        source: 'api',
+        createdAt: '2026-10-12T12:09:00Z',
+        webUrl: 'https://git.example.com/g/p/-/pipelines/3553947',
+      },
+      missing: null,
     })
   })
 })

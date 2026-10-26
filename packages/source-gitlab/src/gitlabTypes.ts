@@ -83,6 +83,30 @@ export interface GitlabCommitRecord {
   message: string
 }
 
+export interface GitlabPipelineRecord {
+  projectId: number
+  id: number
+  /** The branch or tag it ran for. */
+  ref: string
+  /** True when `ref` is a tag. */
+  tag: boolean
+  sha: string
+  /** What started it: `push`, `merge_request_event`, `api`, `parent_pipeline`, … */
+  source: string
+  createdAt: string | null
+  webUrl: string | null
+}
+
+export interface RawPipeline {
+  id: number
+  ref: string
+  tag?: boolean
+  sha: string
+  source?: string
+  created_at?: string
+  web_url?: string
+}
+
 export interface GitlabSource {
   listEnvironments: (
     projectId: number,
@@ -114,6 +138,14 @@ export interface GitlabSource {
     projectId: number,
     opts?: { limit?: number },
   ) => Promise<Array<GitlabReleaseRecord>>
+  /**
+   * One pipeline by id; null when GitLab has none. A pipeline's ref and
+   * commit never change, so a caller may keep the answer forever.
+   */
+  getPipeline: (
+    projectId: number,
+    id: number,
+  ) => Promise<GitlabPipelineRecord | null>
   /** One merge request by its number in the project; null when GitLab has none. */
   getMergeRequest: (
     projectId: number,

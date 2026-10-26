@@ -8,6 +8,7 @@ import type {
   RawDeployment,
   RawEnvironment,
   RawMergeRequest,
+  RawPipeline,
   RawRelease,
   RawUser,
 } from './gitlabTypes'
@@ -145,6 +146,21 @@ export function createGitlabSource({
   }
 
   return {
+    async getPipeline(projectId, id) {
+      const p = await one<RawPipeline>(`/projects/${projectId}/pipelines/${id}`)
+      return p
+        ? {
+            projectId,
+            id: p.id,
+            ref: p.ref,
+            tag: p.tag ?? false,
+            sha: p.sha,
+            source: p.source ?? '',
+            createdAt: p.created_at ?? null,
+            webUrl: p.web_url ?? null,
+          }
+        : null
+    },
     async getMergeRequest(projectId, iid) {
       const m = await one<RawMergeRequest>(
         `/projects/${projectId}/merge_requests/${iid}`,

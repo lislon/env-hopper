@@ -462,12 +462,14 @@ export function DeployedVersions({
     ...pairFacetQuery(appSlug, envSlug ?? '', 'deployment'),
     enabled: appSlug !== '' && envSlug !== undefined,
     // The pair on screen is read again while its Entity Provider tracks
-    // freshness: freshness alone is no change `pairsWatch` pushes.
+    // freshness: freshness alone is no change `pairsWatch` pushes. Twice per
+    // `upToDateMs`: each read asks for the next check, and what it shows was
+    // checked up to one interval and one run earlier.
     refetchInterval: (q) =>
       q.state.status === 'error'
         ? FAILED_RETRY_MS
         : q.state.data?.freshness
-          ? upToDateMs
+          ? upToDateMs / 2
           : false,
   })
   const dialogRef = useRef<HTMLDialogElement>(null)

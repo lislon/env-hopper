@@ -360,13 +360,15 @@
   margin-top: 2px;
 }
 /*
- * In the one-column layout the side panel is the next row, one 16px gap
- * below: room for the line, so it does not sit on the panel.
+ * The slot sits out of flow under the card: its row keeps room for it (the
+ * label and the line, 34px, then 16px before what comes next), and for the
+ * attempt's second line while there is one.
  */
-@media (width < 48rem) {
-  .eh-legacy .grid-in-jump {
-    margin-bottom: 20px;
-  }
+.eh-legacy .grid-in-jump {
+  margin-bottom: 50px;
+}
+.eh-legacy .grid-in-jump:has(.eh-deployed-attempt) {
+  margin-bottom: 72px;
 }
 .eh-deployed-row {
   display: inline-flex;

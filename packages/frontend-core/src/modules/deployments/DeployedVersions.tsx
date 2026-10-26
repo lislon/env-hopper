@@ -673,7 +673,10 @@ export function DeployedVersions({
           )}
         </button>
         {others.length > 0 && (
-          <span className="eh-deployed-star" title={others.join('\n')}>
+          <span
+            className="eh-deployed-star"
+            title={[STAR_MEANS, ...others].join('\n')}
+          >
             *
           </span>
         )}
@@ -747,6 +750,9 @@ export function DeployedVersions({
     </div>
   )
 }
+
+/** The star's tooltip, first line: what it means. */
+export const STAR_MEANS = 'Not every component of this app runs this version:'
 
 /** The slot's label, above its line in every state. */
 const LABEL = <span className="eh-deployed-label">Deployed version</span>

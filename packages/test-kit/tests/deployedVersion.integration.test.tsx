@@ -116,7 +116,7 @@ describe('deployed version under the jump card', () => {
     expect(line!.querySelector('button')).toHaveTextContent('main-41')
     expect(line!.querySelector('.eh-deployed-star')).toHaveAttribute(
       'title',
-      'API runs main-9',
+      'Not every component of this app runs this version:\nAPI runs main-9',
     )
     expect(line!.querySelector('.eh-deployed-dot-down')).not.toBeNull()
   })

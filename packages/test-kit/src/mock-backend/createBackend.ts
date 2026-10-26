@@ -122,6 +122,8 @@ export interface Fixture {
    * by pre-seeding storage, which is the one case a fresh visitor is not.
    */
   appVersion?: string
+  /** How the UI shows what it reads, as the bootstrap's `ui`. */
+  ui?: BootstrapConfigData['ui']
   /** What the deployment catalog knows, per App slug; absent means nothing. */
   deployments?: Record<string, FixtureDeployments>
 }
@@ -218,6 +220,7 @@ export function createBackend(fixture: Fixture): MockBackend {
     },
     ...(fixture.customization && { customization: fixture.customization }),
     ...(fixture.appVersion && { appVersion: fixture.appVersion }),
+    ...(fixture.ui && { ui: fixture.ui }),
   }
 
   const resourceJumpsData: ResourceJumpsData = {

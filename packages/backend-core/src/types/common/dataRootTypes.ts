@@ -35,6 +35,8 @@ export interface BootstrapConfigData {
   ui?: {
     /** How long a Version counts as up to date after its check; older, the line greys. */
     upToDateFreshnessMs?: number
+    /** A Work Item's page, with `{{key}}` where its key goes (e.g. an issue tracker's). */
+    workItemUrl?: string
   }
 }
 

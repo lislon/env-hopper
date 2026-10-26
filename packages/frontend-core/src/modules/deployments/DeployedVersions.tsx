@@ -172,6 +172,7 @@ const FIELDS: Array<
       ),
   ],
   ['By', (d, _, users) => deployerName(d, users) ?? 'n/a'],
+  ['Read from', (d) => d.source],
   [
     'Where',
     (d) => <span className="eh-deployed-mono">{placeOf(d) || 'n/a'}</span>,
@@ -238,19 +239,46 @@ const FIELDS: Array<
   ],
   [
     'Change request',
-    (d, c, _, { appSlug, open }) =>
+    (d) =>
       d.changeRequest ? (
-        <ChangeRequestCell
-          appSlug={appSlug}
-          componentSlug={c.slug}
-          changeRequest={d.changeRequest}
-          open={open}
-        />
+        <ChangeRequestCell changeRequest={d.changeRequest} />
       ) : (
         'n/a'
       ),
   ],
 ]
+
+/**
+ * Where what the dialog shows was read, and when: each Source with the time
+ * of its last read, the ones being read now, and a check that failed since.
+ */
+function SourcesRead({
+  freshness: f,
+  now,
+}: {
+  freshness: Freshness
+  now: number
+}) {
+  const reading = new Set(f.reading ?? [])
+  return (
+    <div className="eh-deployed-sources">
+      Checked {checkedAgo(f.checkedAt, now)}
+      {f.sources?.map((s) => (
+        <span key={s.source} title={fullDate(s.at)}>
+          {' · '}
+          {s.source} {checkedAgo(s.at, now)}
+          {reading.has(s.source) && ', reading now…'}
+        </span>
+      ))}
+      {f.failed && Date.parse(f.failed.at) > Date.parse(f.checkedAt) && (
+        <span className="eh-deployed-warn">
+          {' '}
+          {f.failed.source} failed {checkedAgo(f.failed.at, now)}
+        </span>
+      )}
+    </div>
+  )
+}
 
 /** The `main` tag on the lead Component, with what it means on hover and focus. */
 function MainTag() {
@@ -283,6 +311,8 @@ function DetailsDialog({
   leadSlug,
   of,
   users,
+  freshness,
+  now,
 }: {
   dialogRef: RefObject<HTMLDialogElement | null>
   onClose: () => void
@@ -295,6 +325,8 @@ function DetailsDialog({
   leadSlug: string
   of: (slug: string) => Deployment | undefined
   users: Users
+  freshness: Freshness | undefined
+  now: number
 }) {
   // The lead first, the rest in the catalog's order.
   const ordered = [
@@ -393,8 +425,9 @@ function DetailsDialog({
           </tbody>
         </table>
       </div>
-      {/* Reserved: the Version's staleness. */}
-      <footer className="eh-deployed-dialog-footer" />
+      <footer className="eh-deployed-dialog-footer">
+        {freshness && <SourcesRead freshness={freshness} now={now} />}
+      </footer>
     </dialog>
   )
 }
@@ -697,14 +730,14 @@ export function DeployedVersions({
         leadSlug={leadComponent.slug}
         of={of}
         users={users}
+        freshness={data.freshness}
+        now={now}
       />
       {lead && attempt && (
         <AttemptDialog
           dialogRef={attemptDialogRef}
           onClose={() => attemptRef.current?.focus()}
           envSlug={envSlug}
-          appSlug={appSlug}
-          open={attemptOpened}
           stable={{ ...lead, attempt }}
           component={leadComponent}
           users={users}

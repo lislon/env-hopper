@@ -161,8 +161,6 @@ export function AttemptDialog({
   dialogRef,
   onClose,
   envSlug,
-  appSlug,
-  open,
   stable,
   component,
   users,
@@ -171,9 +169,6 @@ export function AttemptDialog({
   dialogRef: RefObject<HTMLDialogElement | null>
   onClose: () => void
   envSlug: string
-  appSlug: string
-  /** It has been opened: what it loads on open may load. */
-  open: boolean
   stable: Deployment & { attempt: Attempt }
   component: Component
   users: Users
@@ -182,16 +177,7 @@ export function AttemptDialog({
 }) {
   const a = stable.attempt
   const changeRequest = (cr: ChangeRequestRef | undefined) =>
-    cr ? (
-      <ChangeRequestCell
-        appSlug={appSlug}
-        componentSlug={component.slug}
-        changeRequest={cr}
-        open={open}
-      />
-    ) : (
-      'n/a'
-    )
+    cr ? <ChangeRequestCell changeRequest={cr} /> : 'n/a'
   const place = where(stable) || stable.targetSlug
   const rows: Array<[label: string, attempt: ReactNode, stable: ReactNode]> = [
     [

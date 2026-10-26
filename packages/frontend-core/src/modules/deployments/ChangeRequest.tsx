@@ -1,61 +1,39 @@
-import { useQuery } from '@tanstack/react-query'
 import type { ChangeRequestRef } from '@env-hopper/backend-core'
-import { changeRequestDetailsQuery } from '~/modules/pairDetails/pairDetails'
+import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 
 /**
- * A build's change request: `!id` linking to it (after "merged via" when the
- * build is of the branch it merged into), its Work Items, its title, and,
- * once `open`, its description.
+ * A change request as one line: its Work Items, each linked to its page when
+ * the deployment says where Work Items live, then its title, linked to the
+ * change request. Without a title, its number stands in.
  */
 export function ChangeRequestCell({
-  appSlug,
-  componentSlug,
   changeRequest: cr,
-  open,
 }: {
-  appSlug: string
-  componentSlug: string
   changeRequest: ChangeRequestRef
-  /** Its dialog is open: the description is asked for then, not before. */
-  open: boolean
 }) {
-  const details = useQuery({
-    ...changeRequestDetailsQuery(appSlug, componentSlug, cr.id),
-    enabled: open,
-  })
+  const workItemUrl = useBootstrapConfig().ui?.workItemUrl
   return (
-    <div className="eh-deployed-cr">
+    <span className="eh-deployed-cr">
       {!cr.direct && <span className="eh-deployed-muted">merged via </span>}
-      <a
-        className="eh-deployed-mono"
-        href={cr.url}
-        target="_blank"
-        rel="noreferrer"
-      >
-        !{cr.id}
-      </a>
       {cr.workItems?.map((w) => (
-        <span key={w} className="eh-deployed-mono eh-deployed-muted">
-          {' '}
-          {w}
+        <span key={w}>
+          {workItemUrl ? (
+            <a
+              className="eh-deployed-mono"
+              href={workItemUrl.replace('{{key}}', w)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {w}
+            </a>
+          ) : (
+            <span className="eh-deployed-mono">{w}</span>
+          )}{' '}
         </span>
       ))}
-      {cr.title && <div className="eh-deployed-cr-title"> {cr.title}</div>}
-      {open &&
-        (details.isPending ? (
-          <div className="eh-deployed-cr-loading" role="status">
-            loading description…
-          </div>
-        ) : details.isError ? (
-          <div className="eh-deployed-muted"> description unavailable</div>
-        ) : (
-          details.data.description && (
-            <div className="eh-deployed-cr-desc">
-              {' '}
-              {details.data.description}
-            </div>
-          )
-        ))}
-    </div>
+      <a href={cr.url} target="_blank" rel="noreferrer">
+        {cr.title ?? `!${cr.id}`}
+      </a>
+    </span>
   )
 }

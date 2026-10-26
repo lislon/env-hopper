@@ -277,6 +277,8 @@ export interface AppEnvFreshness {
   checkedAt: string
   reading?: Array<string>
   failed?: { source: string; at: string }
+  /** Each Source it is read from, and when it was last read. */
+  sources?: Array<{ source: string; at: string }>
 }
 
 export interface CatalogArtifactView {
@@ -507,6 +509,10 @@ export function createCatalogReads(prisma: PrismaClient) {
                   source: f.failedSource,
                   at: f.failedAt.toISOString(),
                 },
+              }),
+            ...(Array.isArray(f.sources) &&
+              f.sources.length > 0 && {
+                sources: f.sources as AppEnvFreshness['sources'],
               }),
           })),
         }),

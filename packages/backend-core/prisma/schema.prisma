@@ -281,6 +281,8 @@ model AppEnvFreshness {
   reading      String[]  @default([])
   failedSource String?
   failedAt     DateTime?
+  // Each Source read for it, and when: [{ source, at }].
+  sources      Json?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

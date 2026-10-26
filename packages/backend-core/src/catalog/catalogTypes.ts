@@ -144,6 +144,8 @@ export interface AppEnvFreshnessInput {
   reading?: Array<string>
   /** The last read that failed and has not succeeded since. */
   failed?: { source: string; at: Date }
+  /** Each Source it is read from, and when it was last read. */
+  sources?: Array<{ source: string; at: Date }>
 }
 
 /** One thing a User did: opened an App on an Environment, or jumped from it. */

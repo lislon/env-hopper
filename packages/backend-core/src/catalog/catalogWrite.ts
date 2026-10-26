@@ -510,6 +510,12 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             reading: f.reading ?? [],
             failedSource: f.failed?.source ?? null,
             failedAt: f.failed?.at ?? null,
+            sources: f.sources?.length
+              ? f.sources.map((s) => ({
+                  source: s.source,
+                  at: s.at.toISOString(),
+                }))
+              : null,
           })),
         )
       ).counts,

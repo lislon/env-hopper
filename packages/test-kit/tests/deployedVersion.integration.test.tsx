@@ -53,6 +53,7 @@ const backend = (deployments: Record<string, FixtureDeployments>) =>
       { slug: 'wiki', resourceJumps: '1-pager' },
     ],
     envs: [{ slug: 'dev' }, { slug: 'staging' }],
+    ui: { workItemUrl: 'https://issues.example.com/browse/{{key}}' },
     deployments,
   })
 
@@ -152,6 +153,7 @@ describe('deployed version under the jump card', () => {
     'Health',
     'Deployed',
     'By',
+    'Read from',
     'Where',
     'URL',
     'Pipeline',
@@ -196,50 +198,45 @@ describe('deployed version under the jump card', () => {
       workItems: ['SHOP-7', 'SHOP-9'],
       direct: true,
     }
-    /** What `changeRequestDetails` was asked, in order. */
-    const asked: Array<string> = []
-    const record = ({ request }: { request: Request }) => {
-      if (request.url.includes('changeRequestDetails')) asked.push(request.url)
-    }
-    beforeAll(() => server.events.on('request:start', record))
-    afterAll(() => server.events.removeListener('request:start', record))
-    afterEach(() => (asked.length = 0))
     const text = (el: Element) => el.textContent.replace(/\s+/g, ' ').trim()
 
-    test('its number links to it, then its work items and title; its description is asked for only once the details open', async () => {
-      const app = await open('/env/staging/app/shop', {
-        shop: {
-          components: [shopUi],
-          users,
-          rows: [row({ changeRequest: basket })],
-          changeRequestDescriptions: {
-            'shop-ui/14': 'People asked\nfor a basket.',
+    test('its Work Items link to their pages and its title to it; no description is asked for', async () => {
+      const asked: Array<string> = []
+      const record = ({ request }: { request: Request }) => {
+        if (request.url.includes('changeRequestDetails'))
+          asked.push(request.url)
+      }
+      server.events.on('request:start', record)
+      try {
+        const app = await open('/env/staging/app/shop', {
+          shop: {
+            components: [shopUi],
+            users,
+            rows: [row({ changeRequest: basket })],
           },
-        },
-      })
-      await waitFor(() => expect(lines(app.container)).toHaveLength(1))
-      const askedBeforeOpening = asked.length
+        })
+        const { cell } = await openDetails(app)
+        const crCell = cell('Change request', 'shop-ui')
 
-      const { cell } = await openDetails(app)
-      const crCell = cell('Change request', 'shop-ui')
-      await waitFor(() =>
-        expect(crCell.querySelector('.eh-deployed-cr-desc')).not.toBeNull(),
-      )
-
-      expect({
-        askedBeforeOpening,
-        asked: asked.length,
-        links: links(crCell),
-        text: text(crCell),
-      }).toEqual({
-        askedBeforeOpening: 0,
-        asked: 1,
-        links: [['!14', basket.url]],
-        text: '!14 SHOP-7 SHOP-9 Add the basket People asked for a basket.',
-      })
+        expect({
+          asked: asked.length,
+          links: links(crCell),
+          text: text(crCell),
+        }).toEqual({
+          asked: 0,
+          links: [
+            ['SHOP-7', 'https://issues.example.com/browse/SHOP-7'],
+            ['SHOP-9', 'https://issues.example.com/browse/SHOP-9'],
+            ['Add the basket', basket.url],
+          ],
+          text: 'SHOP-7 SHOP-9 Add the basket',
+        })
+      } finally {
+        server.events.removeListener('request:start', record)
+      }
     })
 
-    test('a build of the branch it merged into says "merged via"; no description, no description line', async () => {
+    test('a build of the branch it merged into says "merged via"', async () => {
       const app = await open('/env/staging/app/shop', {
         shop: {
           components: [shopUi],
@@ -258,15 +255,10 @@ describe('deployed version under the jump card', () => {
       })
 
       const { cell } = await openDetails(app)
-      const crCell = cell('Change request', 'shop-ui')
-      await waitFor(() =>
-        expect(crCell.querySelector('[role="status"]')).toBeNull(),
-      )
 
-      expect({
-        text: text(crCell),
-        description: crCell.querySelector('.eh-deployed-cr-desc'),
-      }).toEqual({ text: 'merged via !12 Fix totals', description: null })
+      expect(text(cell('Change request', 'shop-ui'))).toBe(
+        'merged via Fix totals',
+      )
     })
   })
 
@@ -537,7 +529,7 @@ describe('deployed version under the jump card', () => {
           ['Pipeline', '#43', '#41'],
           ['Deploy job', '#45', '#42'],
           ['Commit', 'fedcba9', '0123456'],
-          ['Change request', '!15 SHOP-11 Faster checkout', 'n/a'],
+          ['Change request', 'SHOP-11 Faster checkout', 'n/a'],
         ],
         jobErrors: true,
       })

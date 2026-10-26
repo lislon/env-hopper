@@ -574,6 +574,10 @@ describe.skipIf(!prisma)('catalog reads', () => {
           checkedAt: new Date('2026-01-05T09:00:00Z'),
           reading: ['audit'],
           failed: { source: 'gitlab', at: new Date('2026-01-05T09:30:00Z') },
+          sources: [
+            { source: 'audit', at: new Date('2026-01-05T09:00:00Z') },
+            { source: 'gitlab', at: new Date('2026-01-05T08:00:00Z') },
+          ],
         },
       ])
 
@@ -589,6 +593,10 @@ describe.skipIf(!prisma)('catalog reads', () => {
           checkedAt: '2026-01-05T09:00:00.000Z',
           reading: ['audit'],
           failed: { source: 'gitlab', at: '2026-01-05T09:30:00.000Z' },
+          sources: [
+            { source: 'audit', at: '2026-01-05T09:00:00.000Z' },
+            { source: 'gitlab', at: '2026-01-05T08:00:00.000Z' },
+          ],
         },
       ])
     })

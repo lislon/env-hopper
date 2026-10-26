@@ -330,9 +330,11 @@
  */
 .eh-deployed {
   margin-top: 12px;
+  /* Left, under the card's edge, as the label's section is (layout A). */
+  padding-left: 14px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   font-size: 12px;
   line-height: 18px;
 }
@@ -660,9 +662,6 @@
 .eh-deployed-dot-degraded,
 .eh-deployed-state-degraded {
   background: oklch(0.8 0.15 85);
-}
-.eh-deployed-dot-not-deployed {
-  background: color-mix(in oklab, currentColor 55%, transparent);
 }
 .eh-deployed-state-healthy {
   background: oklch(0.72 0.17 145);

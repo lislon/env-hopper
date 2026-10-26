@@ -397,14 +397,14 @@ describe('deployed version under the jump card', () => {
     expect(cell('URL', 'shop-worker')).toHaveTextContent('+1')
   })
 
-  test('the lead not deployed on this Environment says so, with a grey dot', async () => {
+  test('the lead not deployed on this Environment says so, with no dot: not deployed is no problem', async () => {
     const app = await open('/env/dev/app/shop', {
       shop: { components: [shopUi], users, rows: [row({})] },
     })
     await waitFor(() => expect(lines(app.container)).toHaveLength(1))
     const [line] = lines(app.container)
     expect(line).toHaveTextContent('not deployed')
-    expect(line!.querySelector('.eh-deployed-dot-not-deployed')).not.toBeNull()
+    expect(line!.querySelector('.eh-deployed-dot')).toBeNull()
   })
 
   describe('a Deploy Attempt beside the Version', () => {

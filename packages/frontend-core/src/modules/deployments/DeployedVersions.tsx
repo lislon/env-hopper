@@ -87,10 +87,10 @@ function deployerName(d: Deployment, users: Users): string | null {
 }
 
 /** Only a problem draws a dot: the worst Health of the App's Components. */
-function dotOf(lead: Deployment | undefined, all: Array<Deployment>) {
+function dotOf(all: Array<Deployment>) {
   if (all.some((d) => d.health?.state === 'down')) return 'down'
   if (all.some((d) => d.health?.state === 'degraded')) return 'degraded'
-  return lead ? null : 'not-deployed'
+  return null
 }
 
 /** Where a cluster runs it, `cluster/namespace`, when the Target says. */
@@ -560,7 +560,7 @@ export function DeployedVersions({
       ? [`${c.displayName} runs ${d.version}`]
       : []
   })
-  const dot = dotOf(lead, here)
+  const dot = dotOf(here)
   const by = lead && deployerName(lead, users)
   const versionText = lead
     ? [lead.version, ...lead.aliases].join(' · ')

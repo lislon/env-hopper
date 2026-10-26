@@ -485,7 +485,7 @@ describe('deployed version under the jump card', () => {
         line: await lineText(app.container),
         attempt: attemptText(app.container),
       }).toEqual({
-        line: 'main-41 · deployed 15 min ago',
+        line: 'main-41 · deployed 15 min ago by Jo Doe',
         attempt: 'New deployment main-42 is running · started 1 min ago',
       })
     })
@@ -502,9 +502,9 @@ describe('deployed version under the jump card', () => {
 
         expect({ before, after: await seen() }).toEqual({
           before:
-            'main-41 · deployed 15 min ago | ✕ New deployment main-42 failed 5 min ago · started by Ann job #45 ↗',
+            'main-41 · deployed 15 min ago by Jo Doe | ✕ New deployment main-42 failed 5 min ago · started by Ann job #45 ↗',
           after:
-            'main-41 · deployed 16 min ago | ✕ New deployment main-42 failed 6 min ago · started by Ann job #45 ↗',
+            'main-41 · deployed 16 min ago by Jo Doe | ✕ New deployment main-42 failed 6 min ago · started by Ann job #45 ↗',
         })
       } finally {
         vi.useRealTimers()

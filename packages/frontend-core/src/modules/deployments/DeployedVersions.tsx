@@ -647,6 +647,7 @@ export function DeployedVersions({
             <span className="eh-deployed-ago">
               {' '}
               · deployed {timeAgo(lead.deployedAt, now)}
+              {by && ` by ${by}`}
             </span>
           )}
           {fresh.reading.length > 0 && (

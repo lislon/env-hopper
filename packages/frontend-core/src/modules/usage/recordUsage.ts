@@ -24,6 +24,9 @@ export function useRecordUsage() {
   )
 }
 
+/** The AppEnv last recorded as opened: a re-render or a remount is no new `open`. */
+let lastOpen = ''
+
 /** Records an `open` each time the page shows another AppEnv. */
 export function useRecordOpen(
   appSlug: string | undefined,
@@ -31,6 +34,8 @@ export function useRecordOpen(
 ) {
   const record = useRecordUsage()
   useEffect(() => {
-    if (appSlug && envSlug) record({ kind: 'open', appSlug, envSlug })
+    if (!appSlug || !envSlug || lastOpen === `${appSlug}/${envSlug}`) return
+    lastOpen = `${appSlug}/${envSlug}`
+    record({ kind: 'open', appSlug, envSlug })
   }, [appSlug, envSlug, record])
 }

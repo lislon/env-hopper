@@ -4,12 +4,13 @@ import type { EhBackendProvider } from './types'
 /**
  * Type guard to check if an object implements EhBackendCompanySpecificBackend.
  */
-function isBackendInstance(obj: unknown): obj is EhBackendCompanySpecificBackend {
+function isBackendInstance(
+  obj: unknown,
+): obj is EhBackendCompanySpecificBackend {
   return (
     typeof obj === 'object' &&
     obj !== null &&
-    typeof (obj as EhBackendCompanySpecificBackend).getBootstrapData === 'function' &&
-    typeof (obj as EhBackendCompanySpecificBackend).getAvailabilityMatrix ===
+    typeof (obj as EhBackendCompanySpecificBackend).getBootstrapData ===
       'function' &&
     typeof (obj as EhBackendCompanySpecificBackend).getNameMigrations ===
       'function' &&

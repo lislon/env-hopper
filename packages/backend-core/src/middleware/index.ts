@@ -25,6 +25,7 @@
 
 // Main middleware factory
 export { createEhMiddleware } from './createEhMiddleware'
+export { ehCompression } from './compression'
 
 // Types
 export type {

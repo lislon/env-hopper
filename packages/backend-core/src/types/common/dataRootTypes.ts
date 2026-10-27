@@ -1,4 +1,7 @@
-import type { DefaultWithOverridesAndTemplate } from '@env-hopper/shared-core'
+import type {
+  DefaultWithOverridesAndTemplate,
+  PackedEnvs,
+} from '@env-hopper/shared-core'
 import type { EhAppsMeta, EhContextIndexed } from '../backend/api.js'
 import type { EhAppIndexed } from './app/appTypes.js'
 import type { EhCustomizationData } from './customizationTypes.js'
@@ -28,20 +31,23 @@ export interface BootstrapConfigData {
    * deployed version matters.
    */
   appVersion?: string
+  /** How the UI shows what it reads; each key is optional. */
+  ui?: {
+    /** How long a Version counts as up to date after its check; older, the line greys. */
+    upToDateFreshnessMs?: number
+    /** A Work Item's page, with `{{key}}` where its key goes (e.g. an issue tracker's). */
+    workItemUrl?: string
+    /** A diagnostics panel may open (`?debug=1`, Ctrl+Shift+D); off unless the deployment turns it on. */
+    diagnostics?: boolean
+  }
 }
 
-export interface AvailabilityMatrixData {
-  envSlugs: Array<EnvSlug>
-  resourceJumpSlugs: Array<JumpResourceSlug>
-  availabilityVariants: Array<AvailabilityVariant>
-  matrix: Array<Array<number>>
-}
-
-export interface AvailabilityVariant {
-  isDeployed: boolean
-  isHealthy?: boolean
-  hasData?: boolean
-}
+/**
+ * `bootstrap` as it is sent: `envs` packed into per-field defaults plus each
+ * Environment's differences (`expandEnv` from shared-core rebuilds one).
+ * Every other key is `BootstrapConfigData`'s as it is.
+ */
+export type BootstrapPayload = Omit<BootstrapConfigData, 'envs'> & PackedEnvs
 
 export type ResourceJumpMetaInfo = Record<string, string>
 

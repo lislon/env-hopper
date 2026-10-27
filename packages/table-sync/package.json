@@ -26,7 +26,9 @@
   "types": "dist/esm/index.d.ts",
   "files": [
     "dist",
-    "src"
+    "src",
+    "!**/__tests__",
+    "!**/*.test.*"
   ],
   "scripts": {
     "build": "vite build",
@@ -34,8 +36,8 @@
     "compile": "tsc --build",
     "dev": "tsx watch src/index.ts",
     "test:eslint": "eslint ./src",
-    "test:unit": "echo \"skipped\"",
-    "test:unit:dev": "echo \"skipped\""
+    "test:unit": "vitest",
+    "test:unit:dev": "pnpm run test:unit --watch"
   },
   "dependencies": {
     "radashi": "catalog:"

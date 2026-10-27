@@ -5,11 +5,12 @@ import type {
   EhMiddlewareResult,
   MiddlewareContext,
 } from './types'
+import { ehCompression } from './compression'
 import { EhDatabaseManager } from './database'
 import { createBackendResolver } from './backendResolver'
 import { registerFeatures } from './featureRegistry'
 import { createTrpcRouter } from '../server/controller'
-import { createEhTrpcContext } from '../server/ehTrpcContext'
+import { createEhTrpcContext, ehUserOf } from '../server/ehTrpcContext'
 import { createAuth } from '../modules/auth/auth'
 import { createMockUserFromDevConfig } from '../modules/auth/devMockUserUtils'
 
@@ -48,6 +49,7 @@ export async function createEhMiddleware(
   // Create tRPC context factory
   const createContext = async ({
     req,
+    res,
   }: trpcExpress.CreateExpressContextOptions) => {
     const companySpecificBackend = await resolveBackend()
 
@@ -105,11 +107,14 @@ export async function createEhMiddleware(
       companySpecificBackend,
       user: userWithGroups,
       adminGroups,
+      catalog: options.catalog,
+      ehUser: ehUserOf(req, res),
     })
   }
 
   // Create Express router
   const router = Router()
+  router.use(ehCompression())
   router.use(express.json())
 
   // Build middleware context for feature registration
@@ -121,6 +126,7 @@ export async function createEhMiddleware(
       return createEhTrpcContext({
         companySpecificBackend,
         adminGroups,
+        catalog: options.catalog,
       })
     },
     authConfig: options.auth,

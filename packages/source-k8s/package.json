@@ -1,0 +1,75 @@
+{
+  "name": "@env-hopper/source-k8s",
+  "version": "2.1.0-alpha-20261014235627",
+  "description": "Read workloads and ingresses from a Kubernetes cluster",
+  "keywords": [
+    "env-hopper",
+    "kubernetes",
+    "k8s",
+    "workloads",
+    "ingress",
+    "health-check"
+  ],
+  "homepage": "https://github.com/lislon/env-hopper",
+  "bugs": {
+    "url": "https://github.com/lislon/env-hopper/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lislon/env-hopper.git",
+    "directory": "packages/source-k8s"
+  },
+  "license": "MIT",
+  "author": "Igor Golovin",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "my-custom-condition": "./src/index.ts",
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "!**/__tests__",
+    "!**/*.test.*"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "clean": "premove ./dist ./coverage ./dist-ts",
+    "compile": "tsc --build",
+    "dev": "tsx watch src/index.ts",
+    "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
+    "test:eslint": "eslint ./src",
+    "test:unit": "vitest --run",
+    "test:unit:dev": "vitest --watch"
+  },
+  "dependencies": {
+    "@kubernetes/client-node": "^0.22.3"
+  },
+  "devDependencies": {
+    "@tanstack/vite-config": "catalog:",
+    "@types/node": "catalog:",
+    "esbuild": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@env-hopper/backend-core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

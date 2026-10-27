@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type {
-  BootstrapConfigData,
+  BootstrapPayload,
   ResourceJumpsData,
 } from '@env-hopper/backend-core'
 import { mapToLegacyConfig } from '~/legacy/adapter/legacyApi'
@@ -52,8 +52,9 @@ const JUMPS: ResourceJumpsData = {
   ],
 }
 
-const BOOTSTRAP: BootstrapConfigData = {
+const BOOTSTRAP: BootstrapPayload = {
   envs: {},
+  envDefaults: {},
   apps: {},
   appsMeta: { tags: { descriptions: [] } },
   contexts: [

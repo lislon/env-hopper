@@ -44,6 +44,13 @@
     '   .    s-input   ui-widget'
     '   .    jump      ui-widget'
     'history history   history';
+  /*
+   * The side panel spans every row of the main column. Auto rows would share
+   * its extra height between them and push the jump card down, so the flexible
+   * jump row takes all of it; the card sits at the top of that row.
+   */
+  grid-template-rows: repeat(5, auto) 1fr auto;
+  align-items: start;
 }
 
 @utility grid-areas-layout-sm {

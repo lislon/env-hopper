@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react'
+import { RESTARTING_TEXT, isServerRestarting } from '../../util/error-utils'
 import { Analytics } from './Analytics'
 import { FaqButton } from './FaqButton'
 import { FaqModal } from './FaqModal'
@@ -64,12 +65,18 @@ function OtherMode() {
   if (isError) {
     return (
       <Layout>
-        {/* Was `error?.message`; inside the `isError` branch the error cannot be
-            null, and the lint rule rejects the dead guard. Same output. */}
-        <div>Sorry, something is wrong: {error.message}</div>
+        <div>
+          {isServerRestarting(error)
+            ? RESTARTING_TEXT
+            : `Sorry, something is wrong: ${error.message}`}
+        </div>
         <div className={'mt-4'}>
           Please try to{' '}
-          <button className={'btn'} onClick={() => window.location.reload()}>
+          <button
+            type="button"
+            className={'btn'}
+            onClick={() => window.location.reload()}
+          >
             refresh
           </button>{' '}
           the page

@@ -1,5 +1,5 @@
 export interface EhStaticControllerContract {
-  methods: { 
+  methods: {
     getIcon: { method: string; url: string }
     getScreenshot: { method: string; url: string }
   }

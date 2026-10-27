@@ -1,8 +1,22 @@
 // common
 
-export { createTrpcRouter } from './server/controller'
-export type { TRPCRouter } from './server/controller'
-export { createEhTrpcContext } from './server/ehTrpcContext'
+export { createTrpcRouter, packBootstrap } from './server/controller'
+/** Rebuilds one Environment of a packed `bootstrap`. */
+export { expandEnv } from '@env-hopper/shared-core'
+export type { PairsWatchEvent, TRPCRouter } from './server/controller'
+export { createEhTrpcContext, ehUserOf } from './server/ehTrpcContext'
+export { MAX_SLICE_SLUGS } from './server/pairDetails'
+export type {
+  PairChunk,
+  PairFacet,
+  PairJumps,
+  StreamFacet,
+  StreamMeta,
+  WireHealth,
+  WireComponent,
+  WireDeploymentRow,
+  WirePairDeployment,
+} from './server/pairDetails'
 export type {
   EhTrpcContext,
   EhTrpcContextOptions,
@@ -61,17 +75,20 @@ export {
   TABLE_SYNC_MAGAZINE,
   tableSyncPrisma,
   type MakeTFromPrismaModel,
+  type PrismaDb,
   type ObjectKeys,
   type ScalarFilter,
   type ScalarKeys,
   type TableSyncMagazine,
   type TableSyncMagazineModelNameKey,
   type TableSyncParamsPrisma,
+  type WhereFilter,
 } from './db'
 
 // Middleware (batteries-included backend setup)
 export {
   createEhMiddleware,
+  ehCompression,
   EhDatabaseManager,
   type EhDatabaseConfig,
   type EhAuthConfig,
@@ -83,3 +100,6 @@ export {
   type EhMiddlewareResult,
   type MiddlewareContext,
 } from './middleware'
+
+// Catalog
+export * from './catalog'

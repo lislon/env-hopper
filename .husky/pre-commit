@@ -49,6 +49,9 @@ if ! git diff --cached --quiet; then
     fi
   fi
 
+  # Export test database URL for catalog tests (use existing value or default to compose DB)
+  export EH_CORE_TEST_DATABASE_URL="${EH_CORE_TEST_DATABASE_URL:-postgres://env-hopper:env-hopper@localhost:5532/env-hopper?schema=eh_core_test}"
+
   # Run affected tests with explicit base branch
   # Using --parallel=3 to speed up the checks
   pnpm exec nx affected --base="$BASE_BRANCH" --targets=test:eslint,test:unit,test:types,compile --parallel=3 --exclude=examples/**,e2e/**

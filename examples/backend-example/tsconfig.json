@@ -2,8 +2,14 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "."
   },
-  "include": ["src/**/*", "prisma/**/*", "kill-all.js"],
+  "include": [
+    "src/**/*",
+    "tests/**/*",
+    "vite.config.ts",
+    "prisma/**/*",
+    "kill-all.js"
+  ],
   "exclude": ["node_modules", "dist"]
 }

@@ -2,6 +2,7 @@ import viteReact from '@vitejs/plugin-react'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as process from 'node:process'
+import { defaultClientConditions } from 'vite'
 import type { UserConfig } from 'vite'
 import type { ManifestOptions } from 'vite-plugin-pwa'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -169,8 +170,10 @@ export function frontendViteConfig(options?: {
     },
     resolve: {
       // Use 'my-custom-condition' to resolve @env-hopper/frontend-core to source files
-      // This enables HMR when developing the core library alongside the consuming app
-      conditions: ['my-custom-condition'],
+      // This enables HMR when developing the core library alongside the consuming app.
+      // Setting conditions replaces Vite's defaults, so keep them: without 'browser',
+      // packages with a browser build (e.g. @vercel/oidc under `ai`) resolve to Node code.
+      conditions: [...defaultClientConditions, 'my-custom-condition'],
     },
     publicDir: '.vite-merged-public',
     plugins,

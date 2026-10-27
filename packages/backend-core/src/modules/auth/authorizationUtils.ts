@@ -57,7 +57,7 @@ export function getUserGroups(
   // Check common locations for group information
   // Order of preference: custom env_hopper_groups first
   const groups =
-    (user as any).env_hopper_groups || // Custom env_hopper_groups claim (stores natera.env_hopper_ui.groups)
+    (user as any).env_hopper_groups || // Custom env_hopper_groups claim
     user.groups || // Standard "groups" claim
     (user as any).oktaGroups || // Okta-specific
     (user as any).roles || // Some providers use "roles"

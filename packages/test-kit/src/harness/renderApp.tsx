@@ -1,13 +1,15 @@
 import { createMemoryHistory } from '@tanstack/react-router'
 import { cleanup, render, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
-import { createTRPCClient, httpLink } from '@trpc/client'
+import { createTRPCClient } from '@trpc/client'
 import { vi } from 'vitest'
 import {
   App,
   EhDb,
   createEhRouter,
+  createEhTrpcLinks,
   createQueryClient,
+  startFirstLoad,
 } from '@env-hopper/frontend-core/internal'
 import { TRPC_URL } from '../mock-backend/createBackend'
 import { BackendMagazine, DbMagazine } from '../mock-backend/magazines'
@@ -129,10 +131,17 @@ export async function renderApp(options: RenderAppOptions): Promise<AppHandle> {
   backend.setupNetwork(options.server)
 
   const trpcClient = createTRPCClient<TRPCRouter>({
-    links: [httpLink({ url: TRPC_URL })],
+    links: createEhTrpcLinks(TRPC_URL),
   })
 
   const queryClient = createQueryClient({ trpcClient, db })
+  // As the browser entry does: bootstrap, and on a deep link its pair,
+  // start before rendering.
+  startFirstLoad(
+    queryClient,
+    trpcClient,
+    new URL(options.initialLink ?? '/', 'http://localhost').pathname,
+  )
   const user = userEvent.setup()
 
   // Memory history keeps one scenario's navigation out of the next one's.
@@ -175,7 +184,13 @@ export async function renderApp(options: RenderAppOptions): Promise<AppHandle> {
         // Deliberately not naming the keys: the previous harness waited on a
         // `['config']` query the app had stopped using, so it waited forever.
         const queries = queryClient.getQueryCache().getAll()
-        if (queries.length === 0) {
+        // Bootstrap, and a deep link's pair, start before rendering; those
+        // alone do not mean the app has started loading.
+        if (
+          queries.every((q) =>
+            ['pair', 'bootstrapConfig'].includes(String(q.queryKey[0])),
+          )
+        ) {
           throw new Error('No query started yet')
         }
         const inFlight = queries.filter((q) => q.state.fetchStatus !== 'idle')

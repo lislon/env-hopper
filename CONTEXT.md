@@ -22,6 +22,9 @@ _Avoid_: Virtual environment, env profile
 One physical place a Component runs, such as a specific account, cluster or namespace, with its own values (hosts, monitoring names) that links are built from. It is identified by the place itself, not by what a Source calls it, so two names for one namespace are one Deployment Target. Many Deployment Targets make up one Environment, and one Component may run on several of them, such as one instance per product line; the user picks the Environment, not the Target.
 _Avoid_: Location (a different thing in Backstage), physical environment
 
+**Retired Deployment Target**:
+A Deployment Target being moved away from, still reported while the move lasts. Where one Deployment per Component per Environment is shown, a live Deployment Target wins over a retired one.
+
 ## Deployments
 
 **Artifact**:
@@ -44,8 +47,12 @@ _Avoid_: Version (for this meaning)
 The Artifact a Component last deployed successfully to a Deployment Target, and so is running there now. Only the current state exists; there is one Deployment per Component per Deployment Target.
 _Avoid_: Rollout, install
 
+**User**:
+A person a Source names, such as whoever deployed a Deployment, identified by username. A User is not an account that signs in to Env Hopper.
+_Avoid_: Account, login, author
+
 **Endpoint**:
-A URL where one Deployment can be reached, with a kind (`ui`, `api`, `docs`, `health`) and an optional label. A Deployment has zero or more; a background worker has none.
+A URL where one Deployment can be reached, with a kind (`ui`, `api`, `docs`, `health`, `other`) and an optional label. A Deployment has zero or more; a background worker has none.
 _Avoid_: Link, page, jump (those are the hand-written URL templates)
 
 **Health**:
@@ -68,6 +75,7 @@ erDiagram
   DEPLOYMENT }o--|| COMPONENT : "of"
   DEPLOYMENT }o--|| DEPLOYMENT_TARGET : "on"
   DEPLOYMENT }o--|| ARTIFACT : "runs"
+  DEPLOYMENT }o--o| USER : "was deployed by"
   DEPLOYMENT ||--o{ ENDPOINT : "is reached at"
   DEPLOYMENT ||--o| HEALTH : "is observed as"
   COMPONENT ||--o{ HEALTH_CHECK : "is checked by"

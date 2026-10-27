@@ -37,9 +37,16 @@ export class EhDatabaseManager {
     if (!this.client) {
       const datasourceUrl = formatConnectionUrl(this.config)
 
-      // Prisma 7 with adapter: Create pg pool and wrap with adapter
+      // Prisma 7 with adapter: Create pg pool and wrap with adapter. The
+      // adapter, not the pg driver, decides which schema the queries name, so
+      // the url's `schema` must be handed to it or every query reads `public`.
       this.pool = new pg.Pool({ connectionString: datasourceUrl })
-      const adapter = new PrismaPg(this.pool)
+      const adapter = new PrismaPg(this.pool, {
+        schema:
+          ('schema' in this.config ? this.config.schema : undefined) ??
+          new URL(datasourceUrl).searchParams.get('schema') ??
+          'public',
+      })
 
       this.client = new PrismaClient({
         adapter,

@@ -7,6 +7,13 @@ import { isAdmin } from '../modules/auth/authorizationUtils'
  * Should be done only once per backend!
  */
 export const t = initTRPC.context<EhTrpcContext>().create({
+  // Subscriptions: a ping keeps a quiet stream open through proxies that cut
+  // idle connections, and a client that hears nothing, pings included, for
+  // twice that long reconnects instead of waiting on a dead one.
+  sse: {
+    ping: { enabled: true, intervalMs: 15_000 },
+    client: { reconnectAfterInactivityMs: 30_000 },
+  },
   errorFormatter({ error, shape }: { error: unknown; shape: unknown }) {
     // Log all tRPC errors to console
     console.error('[tRPC Error]', {

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import type { BootstrapConfigData } from '@env-hopper/backend-core'
+import type { BootstrapPayload } from '@env-hopper/backend-core'
 import type { EhUiSettings } from '~/types/uiSettings'
 import { BootstrapConfigProvider } from '~/modules/config/BootstrapConfigContext'
 import { AppLinksPanel } from '~/modules/uiSettings/AppLinksPanel'
@@ -26,7 +26,7 @@ vi.mock('~/modules/resourceJump/context/ResourceJumpContext', () => ({
   useResourceJumpContext: () => ({ currentResourceJump }),
 }))
 
-const bootstrap: BootstrapConfigData = {
+const bootstrap: BootstrapPayload = {
   // Keyed by app, which is the whole point: the jump slug is not this key.
   apps: {
     [APP_SLUG]: {
@@ -42,6 +42,7 @@ const bootstrap: BootstrapConfigData = {
       meta: { region: 'eu' },
     },
   },
+  envDefaults: {},
   appsMeta: { tags: { descriptions: [] } },
   contexts: [],
   defaults: { envSlug: 'staging', resourceJumpSlug: JUMP_SLUG },

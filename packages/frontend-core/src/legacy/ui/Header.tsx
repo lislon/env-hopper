@@ -1,4 +1,5 @@
 import cn from 'classnames'
+import { errorText } from '../../util/error-utils'
 import { Link } from '@tanstack/react-router'
 import { useEhServerSync, useLegacyCustomization } from '../adapter/legacyApi'
 import { useModal } from '../hooks/useModal'
@@ -81,7 +82,7 @@ export function Header({ className }: HeaderProps) {
       {isDegraded && (
         <div
           className="badge badge-warning badge-outline text-xs cursor-defaul tooltip"
-          data-tip={'Working in offline mode: ' + error?.message}
+          data-tip={'Working in offline mode: ' + errorText(error)}
         >
           degraded
         </div>
@@ -98,7 +99,7 @@ export function Header({ className }: HeaderProps) {
         />
       )}
       {needRefresh && (
-        <button className="btn btn-outline" onClick={refresh}>
+        <button type="button" className="btn btn-outline" onClick={refresh}>
           Update available, click to reload
         </button>
       )}

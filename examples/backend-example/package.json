@@ -11,10 +11,9 @@
     "db:reset": "prisma db push --force-reset --schema=../../packages/backend-core/prisma/schema.prisma --config=../../packages/backend-core/prisma.config.ts && pnpm run db:sync",
     "db:sync": "tsx src/local/sync.ts",
     "dev": "tsx watch --conditions=my-custom-condition src/index.ts",
-    "prisma:generate": "prisma generate --schema=../../packages/backend-core/prisma/schema.prisma",
     "prisma:push": "prisma db push --schema=../../packages/backend-core/prisma/schema.prisma --config=../../packages/backend-core/prisma.config.ts",
     "prisma:studio": "prisma studio --schema=../../packages/backend-core/prisma/schema.prisma --config=../../packages/backend-core/prisma.config.ts",
-    "setup": "pnpm run prisma:generate && pnpm run db:reset",
+    "setup": "pnpm --filter @env-hopper/backend-core run prisma:generate && pnpm run db:reset",
     "start": "node dist/index.js",
     "test:eslint": "eslint ./src",
     "test:unit": "vitest run"
@@ -29,15 +28,18 @@
     "cross-env": "catalog:",
     "dotenv-defaults": "catalog:",
     "express": "catalog:",
-    "radashi": "catalog:",
-    "rand-seed": "^3.0.0"
+    "radashi": "catalog:"
   },
   "devDependencies": {
+    "@prisma/adapter-pg": "catalog:",
     "@types/express": "catalog:",
     "@types/node": "catalog:",
+    "@types/pg": "catalog:",
     "esbuild": "catalog:",
+    "pg": "catalog:",
     "prisma": "catalog:",
     "prisma-json-types-generator": "catalog:",
+    "quickpickle": "^1.11.2",
     "tsdown": "^0.15.7",
     "tsup": "^8.5.0",
     "tsx": "catalog:",

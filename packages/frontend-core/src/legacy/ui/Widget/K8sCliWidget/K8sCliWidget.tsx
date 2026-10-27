@@ -11,6 +11,7 @@ import {
 import { useMainAppFormContext } from '../../../context/MainFormContextProvider'
 import { interpolateWidgetStr } from '../../../lib/utils'
 import { WidgetLeftBorder } from '../WidgetLeftBorder'
+import { useLeadDeployment } from '../../../../modules/deployments/DeployedVersions'
 import type { K8SClientStyle } from './SettingsModal'
 import { SettingsModal } from './SettingsModal'
 
@@ -21,6 +22,9 @@ import { SettingsModal } from './SettingsModal'
  * an environment is selected. The context and namespace come from the
  * environment's own parameters (`env.meta.k8sCtx`, `env.meta.k8sNs`); an
  * environment that declares no namespace falls back to `--all-namespaces`.
+ * Where the catalog knows the cluster and namespace the selected app's lead
+ * Component runs in on this environment, those win: an environment can span
+ * clusters.
  */
 export function K8sCliWidget() {
   const { app, env } = useMainAppFormContext()
@@ -35,13 +39,16 @@ export function K8sCliWidget() {
   >(LOCAL_STORAGE_KEY_UI_K8S_CLIENT_STYLE, () => undefined)
   const k8sClientStyle = k8sClientStyleRaw ?? 'kubectl'
 
+  const deployment = useLeadDeployment(app?.id, env?.id)
+  const deployedCtx = deployment?.kubeContext ?? deployment?.cluster
+  const deployedNs = deployment?.namespace
+
   const tabs = useMemo(() => {
-    const ctx = interpolateWidgetStr('{{env.meta.k8sCtx}}', env, app)
-    const ns = interpolateWidgetStr(
-      '{{env.meta.k8sNs ?? --all-namespaces}}',
-      env,
-      app,
-    )
+    const ctx =
+      deployedCtx ?? interpolateWidgetStr('{{env.meta.k8sCtx}}', env, app)
+    const ns =
+      deployedNs ??
+      interpolateWidgetStr('{{env.meta.k8sNs ?? --all-namespaces}}', env, app)
     const kubectlNs =
       ns === '--all-namespaces' ? '--all-namespaces' : `-n ${ns}`
     const k9sNs = ns === '--all-namespaces' ? '' : `-n ${ns}`
@@ -68,7 +75,7 @@ export function K8sCliWidget() {
       ...v,
       cmd: typeof v.cmd === 'string' ? v.cmd : v.cmd[k8sClientStyle] || '-',
     }))
-  }, [env, app, k8sClientStyle])
+  }, [env, app, k8sClientStyle, deployedCtx, deployedNs])
 
   const settingsDialog = useRef<HTMLDialogElement>(null)
   const openSettingsDialog = () => settingsDialog.current?.showModal()

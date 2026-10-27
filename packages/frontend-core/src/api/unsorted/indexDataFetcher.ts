@@ -1,5 +1,5 @@
 import { createCachingFetcher } from './createCachingFetcher'
-import type { BootstrapConfigData, TRPCRouter } from '@env-hopper/backend-core'
+import type { BootstrapPayload, TRPCRouter } from '@env-hopper/backend-core'
 import type { QueryFunctionContext, QueryKey } from '@tanstack/react-query'
 import type { TRPCClient } from '@trpc/client'
 import { dbCacheDbKeys } from '~/userDb/EhDb'
@@ -15,8 +15,8 @@ export function indexDataFetcher({
   trpcClient,
 }: IndexDataFetcherParams): (
   ctx: QueryFunctionContext,
-) => Promise<BootstrapConfigData | undefined> {
-  return createCachingFetcher<BootstrapConfigData>({
+) => Promise<BootstrapPayload | undefined> {
+  return createCachingFetcher<BootstrapPayload>({
     cacheKey: dbCacheDbKeys.Bootstrap,
     networkFetchFn: () => trpcClient.bootstrap.query(),
     getDbTable: (ctx) => getDbFromMeta(ctx).bootstrap,

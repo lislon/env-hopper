@@ -1,8 +1,10 @@
-import type { QueryFunctionContext } from '@tanstack/react-query'
+import { redirect } from '@tanstack/react-router'
+import type { ResourceJumpsData } from '@env-hopper/backend-core'
 import type { EhRouterContext } from '~/types/types'
 import type { ResourceJumpLoaderReturn } from './types'
 import { resourceJumpsFetcher } from '~/api/unsorted/resourceJumpsFetcher'
 import { routeLoaderMapper } from '~/modules/crossCuttingParams/utils/routeLoaderMapper'
+import { getEhToOptions } from '~/util/route-utils'
 
 export interface RouteLoaderCtx {
   params: {
@@ -17,22 +19,15 @@ export async function routeLoader({
   params,
   context,
 }: RouteLoaderCtx): Promise<ResourceJumpLoaderReturn> {
-  // Try to load cached data from IndexedDB to pre-populate React Query cache
-  const queryFn = resourceJumpsFetcher({
-    db: context.db,
-    trpcClient: context.trpcClient,
-  })
-
-  // Create a minimal context object for the query function
-  const ctx: QueryFunctionContext = {
+  // Through the query cache, so the jumps load once however many routes and
+  // components ask, and IndexedDB's copy answers first when there is one.
+  const resourceJumpsData = await context.queryClient.fetchQuery({
     queryKey: ['resourceJumps'],
-    meta: { db: context.db, trpcClient: context.trpcClient },
-    client: context.queryClient,
-    signal: new AbortController().signal,
-  }
-
-  // Call the query function to pre-populate cache
-  const resourceJumpsData = await queryFn(ctx)
+    queryFn: resourceJumpsFetcher({
+      db: context.db,
+      trpcClient: context.trpcClient,
+    }),
+  })
 
   const resourceSlug = params.appSlug
     ? decodeURIComponent(params.appSlug)
@@ -40,6 +35,27 @@ export async function routeLoader({
   const subValue = params.subValue
     ? decodeURIComponent(params.subValue)
     : undefined
+
+  // A slug no jump has may be an old name the backend still knows: send the
+  // link on to the new one, so old bookmarks keep working.
+  if (
+    resourceSlug !== undefined &&
+    !isKnownJump(resourceSlug, resourceJumpsData)
+  ) {
+    const rule = await context.trpcClient.tryFindRenameRule.query({
+      resourceSlug,
+    })
+    if (rule && rule.type === 'resourceRename') {
+      throw redirect({
+        ...getEhToOptions({
+          appId: rule.targetSlug,
+          envId: params.envSlug,
+          subValue,
+        }),
+        replace: true,
+      })
+    }
+  }
 
   return {
     envSlug: params.envSlug,
@@ -51,4 +67,13 @@ export async function routeLoader({
       resourceJumpsData,
     ),
   }
+}
+
+function isKnownJump(slug: string, data: ResourceJumpsData | undefined) {
+  // Without the jumps nothing can be judged unknown.
+  if (!data) return true
+  return (
+    data.resourceJumps.some((j) => j.slug === slug) ||
+    (data.groups ?? []).some((g) => g.slug === slug)
+  )
 }

@@ -72,3 +72,292 @@ model verification {
 
 // ========== EnvHopper Models ==========
 // No additional models needed for core resource jumping functionality
+
+// ========== Catalog (see CONTEXT.md) ==========
+// Each row belongs to the scope that last synced it; a sync deletes the rows
+// of its scope it no longer reports.
+model CatalogEnvironment {
+  slug        String  @id
+  scope       String
+  displayName String
+  description String?
+  meta        Json    @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  targets     CatalogDeploymentTarget[]
+
+  @@index([scope])
+}
+
+model CatalogApp {
+  slug        String             @id
+  scope       String
+  displayName String
+  /// The Component that stands for the App where one Version is shown.
+  leadComponentSlug String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  components  CatalogComponent[]
+
+  @@index([scope])
+}
+
+model CatalogComponent {
+  slug        String  @id
+  scope       String
+  displayName String
+  appSlug     String?
+  app         CatalogApp? @relation(fields: [appSlug], references: [slug])
+  externalIds Json    @default("{}")
+  /// The page of a commit of its code, with `{{sha}}` where the commit goes.
+  commitUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  artifacts   CatalogArtifact[]
+  deployments CatalogDeployment[]
+  attempts    CatalogDeployAttempt[]
+
+  @@index([scope])
+}
+
+model CatalogDeploymentTarget {
+  slug            String  @id
+  scope           String
+  displayName     String
+  environmentSlug String?
+  environment     CatalogEnvironment? @relation(fields: [environmentSlug], references: [slug])
+  meta            Json    @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deployments     CatalogDeployment[]
+  attempts        CatalogDeployAttempt[]
+
+  @@index([scope])
+}
+
+model CatalogRelease {
+  key        String    @id
+  scope      String
+  tag        String?
+  commitSha  String?
+  author     String?
+  releasedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  artifacts  CatalogArtifact[]
+
+  @@index([scope])
+}
+
+model CatalogArtifact {
+  componentSlug String
+  version       String
+  scope         String
+  aliases       String[]  @default([])
+  releaseKey    String?
+  builtAt       DateTime?
+  /// Where builtAt came from: `build` (the build itself) or `deploy` (its first deploy, when the build time is unknown).
+  builtAtSource String?
+  buildUrl      String?
+  /// The commit the build was made from.
+  commitSha     String?
+  /// The change request the build was made from (`direct`) or merged by: a ChangeRequestRef.
+  changeRequest Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  component     CatalogComponent @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)
+  release       CatalogRelease?  @relation(fields: [releaseKey], references: [key], onDelete: SetNull)
+  deployments   CatalogDeployment[]
+  attempts      CatalogDeployAttempt[]
+
+  @@id([componentSlug, version])
+  @@index([componentSlug, builtAt])
+  @@index([scope])
+}
+
+model CatalogDeployment {
+  componentSlug String
+  targetSlug    String
+  version       String
+  scope         String
+  source        String
+  deployedAt    DateTime?
+  deployedBy    String?
+  deployUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deployer      CatalogUser?            @relation(fields: [deployedBy], references: [username], onDelete: SetNull)
+  component     CatalogComponent        @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)
+  target        CatalogDeploymentTarget @relation(fields: [targetSlug], references: [slug], onDelete: Cascade)
+  artifact      CatalogArtifact         @relation(fields: [componentSlug, version], references: [componentSlug, version], onDelete: Cascade)
+  endpoints     CatalogEndpoint[]
+
+  @@id([componentSlug, targetSlug])
+  @@index([scope])
+}
+
+// A deploy run of an Artifact to a Target that has not succeeded (yet): one
+// per (Component, Target), the one the Entity Provider chose to show.
+model CatalogDeployAttempt {
+  componentSlug String
+  targetSlug    String
+  version       String
+  scope         String
+  /// running, failed or canceled.
+  status        String
+  startedAt     DateTime?
+  endedAt       DateTime?
+  startedBy     String?
+  deployUrl     String?
+  jobUrl        String?
+  /// The branch, tag or merge-request ref deployed.
+  ref           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  starter       CatalogUser?            @relation(fields: [startedBy], references: [username], onDelete: SetNull)
+  component     CatalogComponent        @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)
+  target        CatalogDeploymentTarget @relation(fields: [targetSlug], references: [slug], onDelete: Cascade)
+  artifact      CatalogArtifact         @relation(fields: [componentSlug, version], references: [componentSlug, version], onDelete: Cascade)
+
+  @@id([componentSlug, targetSlug])
+  @@index([scope])
+}
+
+// A person a Source names, e.g. a deployer. Not a login account.
+model CatalogUser {
+  username    String   @id
+  scope       String
+  email       String?
+  provider    String?
+  firstName   String?
+  lastName    String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deployments CatalogDeployment[]
+  attempts    CatalogDeployAttempt[]
+
+  @@index([scope])
+}
+
+model CatalogEndpoint {
+  id            Int     @id @default(autoincrement())
+  componentSlug String
+  targetSlug    String
+  kind          String
+  label         String?
+  url           String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deployment    CatalogDeployment @relation(fields: [componentSlug, targetSlug], references: [componentSlug, targetSlug], onDelete: Cascade)
+
+  @@unique([componentSlug, targetSlug, kind, url])
+}
+
+// Health is written independently of Deployments (any Source, any time), so it
+// is keyed like a Deployment but not owned by one.
+model CatalogHealth {
+  componentSlug String
+  targetSlug    String
+  scope         String
+  state         String
+  observedAt    DateTime
+  checker       String
+  detail        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@id([componentSlug, targetSlug])
+  @@index([scope])
+}
+
+// How fresh what an App shows on an Environment is: when the Entity Provider
+// last confirmed it, what it is reading for it now, and a read that failed.
+model AppEnvFreshness {
+  appSlug      String
+  envSlug      String
+  scope        String
+  checkedAt    DateTime
+  reading      String[]  @default([])
+  failedSource String?
+  failedAt     DateTime?
+  // Why it failed: timeout | unauthorized | unreachable | bad-response, and
+  // the error made safe for a browser (publicMessage).
+  failedReason  String?
+  failedMessage String?
+  // Each Source read for it, and when: [{ source, at }].
+  sources      Json?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@id([appSlug, envSlug])
+  @@index([scope])
+}
+
+// Anyone using env-hopper, signed in or not: a random id kept in a cookie,
+// and the login id once known.
+model EhUser {
+  id          String      @id
+  // The signed-in account this browser belongs to: set at its first sign-in,
+  // never changed or cleared. One account may own several EhUsers (browsers).
+  userId      String?
+  firstSeenAt DateTime    @default(now())
+  lastSeenAt  DateTime    @default(now())
+  events      UserEvent[]
+
+  @@index([userId])
+}
+
+// One thing a user did: opened an App on an Environment, or jumped from it.
+model UserEvent {
+  id           Int      @id @default(autoincrement())
+  userId       String
+  /// open | jump
+  kind         String
+  appSlug      String
+  envSlug      String
+  resourceJump String?
+  url          String?
+  // When the User did it, by the browser; `receivedAt` is the server's.
+  at           DateTime @default(now())
+  // The browser's id for the event: sent twice, it is kept once.
+  eventId      String?  @unique
+  receivedAt   DateTime @default(now())
+  user         EhUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, at])
+  @@index([at])
+}
+
+// What an AppEnv showed, each time it changed: a Deployment appeared, changed
+// or went, or an attempt started or ended. Written in the transaction that
+// changed it; never updated or deleted.
+model DeploymentHistory {
+  id            Int       @id @default(autoincrement())
+  componentSlug String
+  targetSlug    String
+  // The App and Environment as they were then, for queries by AppEnv.
+  appSlug       String?
+  envSlug       String?
+  /// deployed | removed | attempt
+  kind          String
+  version       String?
+  // The version shown before.
+  previous      String?
+  // An attempt's status: running | failed | canceled.
+  status        String?
+  deployedAt    DateTime?
+  deployedBy    String?
+  // The Source that decided it; none for an attempt.
+  source        String?
+  // When it happened, by the Source's clock: a deploy's or removed
+  // Deployment's deployedAt, an attempt's start or end. Never a pod's clock:
+  // with it, two pods writing one change write one row. Unique with
+  // (componentSlug, targetSlug, kind, version) through an expression index
+  // in the migration (NULLs folded), which Prisma cannot declare.
+  eventAt       DateTime?
+  observedAt    DateTime  @default(now())
+
+  @@index([appSlug, envSlug, observedAt])
+  @@index([componentSlug, observedAt])
+}

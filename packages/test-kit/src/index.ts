@@ -30,6 +30,7 @@ export type {
   BackendData,
   Fixture,
   FixtureApp,
+  FixtureDeployments,
   FixtureEnv,
   MockBackend,
   OverrideBackendNetworkFn,

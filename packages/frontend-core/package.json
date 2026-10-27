@@ -43,7 +43,9 @@
   "files": [
     "dist",
     "src",
-    "public"
+    "public",
+    "!**/__tests__",
+    "!**/*.test.*"
   ],
   "scripts": {
     "build": "vite build",
@@ -148,7 +150,7 @@
     "@vitest/ui": "catalog:",
     "eslint-plugin-react-hooks": "catalog:",
     "fake-indexeddb": "^6.2.4",
-    "msw": "^2.11.6",
+    "msw": "^2.12.14",
     "msw-trpc": "^2.0.1",
     "sass-embedded": "^1.93.3",
     "tsc-alias": "^1.8.16",

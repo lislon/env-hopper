@@ -11,26 +11,53 @@ export type ScalarFilter<TPrismaModelName extends Prisma.ModelName> = Partial<
   Prisma.TypeMap['model'][TPrismaModelName]['payload']['scalars']
 >
 
+/** Any `where` the model's findMany takes, relation filters included. */
+export type WhereFilter<TPrismaModelName extends Prisma.ModelName> =
+  NonNullable<
+    Prisma.TypeMap['model'][TPrismaModelName]['operations']['findMany']['args']['where']
+  >
+
 export type GetOperationFns<TModel extends Prisma.ModelName> = {
   [TOperation in keyof Prisma.TypeMap['model'][TModel]['operations']]: (
     args: any,
   ) => Promise<any>
 }
 
+/** The root client, or the client of a transaction already open. */
+export type PrismaDb = PrismaClient | Prisma.TransactionClient
+
 export interface TableSyncParamsPrisma<
-  TPrismaClient extends PrismaClient,
+  TPrismaClient extends PrismaDb,
   TPrismaModelName extends Prisma.ModelName,
   TUniqColumns extends ReadonlyArray<ScalarKeys<TPrismaModelName>>,
   TRelationColumns extends ReadonlyArray<ObjectKeys<TPrismaModelName>>,
 > {
   id?: ScalarKeys<TPrismaModelName>
+  /**
+   * Reads and writes all run on this client. Given the root client, the sync
+   * opens its own transaction; given a transaction's client, it joins it.
+   */
   prisma: TPrismaClient
   prismaModelName: TPrismaModelName
   uniqColumns: TUniqColumns
   relationColumns?: TRelationColumns
-  where?: ScalarFilter<TPrismaModelName>
+  where?: WhereFilter<TPrismaModelName>
   upsertOnly?: boolean
+  /**
+   * The rows this scope owns, kept in the `scope` column. A sync covers this
+   * scope's rows, and takes over rows of the same key another scope holds.
+   */
+  scope?: string
+  /** Adjusts an incoming row against the stored one before comparing. */
+  prepare?: (row: Row, stored: Row | undefined) => Row
+  /** Runs in the sync's transaction before the deleted rows are deleted. */
+  beforeDelete?: (
+    db: Prisma.TransactionClient,
+    rows: Array<Row>,
+  ) => Promise<void>
 }
+
+type Row = Record<string, unknown>
 
 function getPrismaModelOperations<
   TPrismaClient,
@@ -46,8 +73,25 @@ export type MakeTFromPrismaModel<TPrismaModelName extends Prisma.ModelName> =
     Prisma.TypeMap['model'][TPrismaModelName]['operations']['findUnique']['result']
   >
 
+const CHUNK = 1000
+function chunks<T>(list: Array<T>): Array<Array<T>> {
+  const out: Array<Array<T>> = []
+  for (let i = 0; i < list.length; i += CHUNK)
+    out.push(list.slice(i, i + CHUNK))
+  return out
+}
+
+function inTransaction<T>(
+  db: PrismaDb,
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+): Promise<T> {
+  return '$transaction' in db
+    ? (db as PrismaClient).$transaction(fn)
+    : fn(db as Prisma.TransactionClient)
+}
+
 export function tableSyncPrisma<
-  TPrismaClient extends PrismaClient,
+  TPrismaClient extends PrismaDb,
   TPrismaModelName extends Prisma.ModelName,
   TUniqColumns extends ReadonlyArray<ScalarKeys<TPrismaModelName>>,
   TRelationColumns extends ReadonlyArray<ObjectKeys<TPrismaModelName>>,
@@ -61,137 +105,146 @@ export function tableSyncPrisma<
   >,
 ) {
   const {
-    prisma,
     prismaModelName,
     uniqColumns,
-    where: whereGlobal,
+    where: whereGlobal = {},
     upsertOnly,
+    scope,
   } = params
-  const prismOperations = getPrismaModelOperations(prisma, prismaModelName)
+  const uniq = uniqColumns as unknown as ReadonlyArray<string>
+  const keyOf = (r: Row) => JSON.stringify(uniq.map((c) => r[c]))
+  const idColumn = params.id as TId | undefined
+  const relationColumnList = (params.relationColumns ?? []) as ReadonlyArray<
+    keyof Row
+  >
+  const uniqWhere = (where: Row) =>
+    uniq.length > 1
+      ? { [uniq.join('_')]: pick(where, uniq) }
+      : pick(where, uniq)
 
-  const idColumn = (params.id ?? 'id') as TId
-  // @ts-ignore maybe someday later (never)
-  return tableSync<MakeTFromPrismaModel<TPrismaModelName>, TUniqColumns, TId>({
-    id: idColumn,
-    uniqColumns,
-    readAll: async () => {
-      const findManyArgs = whereGlobal
-        ? {
-            where: whereGlobal,
-          }
-        : {}
-      return (await prismOperations.findMany(findManyArgs)) as Array<
-        MakeTFromPrismaModel<TPrismaModelName>
-      >
-    },
-    writeAll: async (createData, update, deleteIds) => {
-      const prismaUniqKey = params.uniqColumns.join('_')
-      const relationColumnList =
-        params.relationColumns ?? ([] as Array<ObjectKeys<TPrismaModelName>>)
+  /** The stored rows of the incoming keys, those of `filter` only. */
+  async function readKeys(
+    ops: GetOperationFns<TPrismaModelName>,
+    rows: Array<Row>,
+    filter: Row,
+  ): Promise<Array<Row>> {
+    const wanted = new Set(rows.map(keyOf))
+    const first = uniq[0]!
+    const out: Array<Row> = []
+    for (const part of chunks([...new Set(rows.map((r) => r[first]))])) {
+      const found = (await ops.findMany({
+        where: { ...whereGlobal, ...filter, [first]: { in: part } },
+      })) as Array<Row>
+      out.push(...found.filter((r) => wanted.has(keyOf(r))))
+    }
+    return out
+  }
 
-      return prisma.$transaction(async (tx) => {
+  /**
+   * This scope's rows, plus rows of the incoming keys another scope holds.
+   * `upsertOnly` reads the incoming keys alone: nothing else can be deleted.
+   */
+  async function readExisting(
+    ops: GetOperationFns<TPrismaModelName>,
+    rows: Array<Row>,
+  ): Promise<Array<Row>> {
+    if (upsertOnly === true) return readKeys(ops, rows, {})
+    if (scope === undefined) {
+      return (await ops.findMany({ where: whereGlobal })) as Array<Row>
+    }
+    const own = (await ops.findMany({
+      where: { ...whereGlobal, scope },
+    })) as Array<Row>
+    return [...own, ...(await readKeys(ops, rows, { scope: { not: scope } }))]
+  }
+
+  return {
+    sync(rows: Array<Partial<MakeTFromPrismaModel<TPrismaModelName>>>) {
+      return inTransaction(params.prisma, async (tx) => {
         const txOps = getPrismaModelOperations(tx, prismaModelName)
-        for (const { data, where } of update) {
-          const uniqKeyWhere =
-            Object.keys(where).length > 1
-              ? {
-                  [prismaUniqKey]: where,
-                }
-              : where
-
-          const dataScalar = omit(data, relationColumnList)
-          const dataRelations = mapValues(
-            pick(data, relationColumnList),
-            (value) => {
-              return {
-                set: value,
-              }
-            },
+        const scoped = (rows as Array<Row>).map((r) =>
+          scope === undefined ? r : { ...r, scope },
+        )
+        const incoming = scoped
+        const seen = new Set<string>()
+        const duplicateKeys = incoming
+          .map(keyOf)
+          .filter((k) => seen.size === seen.add(k).size)
+        if (duplicateKeys.length > 0) {
+          throw new Error(
+            `Duplicate unique key values found in data to be synced. ` +
+              `Model: ${prismaModelName}, Unique columns: [${uniq.join(', ')}], ` +
+              `Duplicate keys: [${duplicateKeys.join(', ')}]`,
           )
-
-          await txOps.update({
-            data: { ...dataScalar, ...dataRelations },
-            where: { ...uniqKeyWhere },
-          })
         }
+        const existing = await readExisting(txOps, incoming)
+        const stored = new Map(existing.map((r) => [keyOf(r), r]))
+        const prepared = params.prepare
+          ? incoming.map((r) => params.prepare!(r, stored.get(keyOf(r))))
+          : incoming
 
-        if (upsertOnly !== true) {
-          await txOps.deleteMany({
-            where: {
-              [idColumn]: {
-                in: deleteIds,
-              },
-            },
-          })
-        }
-
-        // Validate uniqueness of uniqColumns before creating records
-        const createDataMapped = createData.map((data) => {
-          // @ts-expect-error This is too difficult for me to come up with right types
-          const dataScalar = omit(data, relationColumnList)
-
-          // @ts-expect-error This is too difficult for me to come up with right types
-          const onlyRelationColumns = pick(data, relationColumnList)
-          const dataRelations = mapValues(onlyRelationColumns, (value) => {
-            return {
-              connect: value,
+        // @ts-ignore maybe someday later (never)
+        return tableSync<Row, ReadonlyArray<string>, string>({
+          id: idColumn as string | undefined,
+          uniqColumns: uniq,
+          readAll: () => Promise.resolve(existing),
+          writeAll: async (createData, update, deleteIds, deleteRows) => {
+            // ponytail: one UPDATE per changed row; switch to a bulk
+            // UPDATE ... FROM (VALUES ...) when a run changes most rows.
+            for (const { data } of update) {
+              const dataScalar = omit(data, relationColumnList)
+              const dataRelations = mapValues(
+                pick(data, relationColumnList),
+                (value) => ({ set: value }),
+              )
+              await txOps.update({
+                data: { ...dataScalar, ...dataRelations },
+                where: uniqWhere(data),
+              })
             }
-          })
 
-          return { ...dataScalar, ...dataRelations }
-        })
+            if (upsertOnly !== true && deleteRows.length > 0) {
+              await params.beforeDelete?.(tx, deleteRows)
+              if (idColumn !== undefined) {
+                for (const part of chunks(deleteIds)) {
+                  await txOps.deleteMany({
+                    where: { [idColumn]: { in: part } },
+                  })
+                }
+              } else {
+                for (const part of chunks(deleteRows)) {
+                  await txOps.deleteMany({
+                    where: { OR: part.map((r) => pick(r, uniq)) },
+                  })
+                }
+              }
+            }
 
-        // Check for duplicates in the data to be created
-        if (createDataMapped.length > 0) {
-          const uniqKeysInCreate = new Set<string>()
-          const duplicateKeys: Array<string> = []
+            const createDataMapped = (createData as Array<Row>).map((data) => ({
+              ...omit(data, relationColumnList),
+              ...mapValues(pick(data, relationColumnList), (value) => ({
+                connect: value,
+              })),
+            }))
 
-          for (const data of createDataMapped) {
-            const keyParts = params.uniqColumns.map((col) => {
-              const value = data[col as keyof typeof data]
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- defensive: unique columns may be nullable in schemas
-              return value === null || value === undefined
-                ? 'null'
-                : String(value)
-            })
-            const key = keyParts.join(':')
-
-            if (uniqKeysInCreate.has(key)) {
-              duplicateKeys.push(key)
+            const results: Array<Row> = []
+            if (relationColumnList.length === 0) {
+              for (const part of chunks(createDataMapped)) {
+                results.push(
+                  ...((await txOps.createManyAndReturn({
+                    data: part,
+                  })) as Array<Row>),
+                )
+              }
             } else {
-              uniqKeysInCreate.add(key)
+              for (const data of createDataMapped) {
+                results.push((await txOps.create({ data })) as Row)
+              }
             }
-          }
-
-          if (duplicateKeys.length > 0) {
-            const uniqColumnsStr = params.uniqColumns.join(', ')
-            throw new Error(
-              `Duplicate unique key values found in data to be created. ` +
-                `Model: ${prismaModelName}, Unique columns: [${uniqColumnsStr}], ` +
-                `Duplicate keys: [${duplicateKeys.join(', ')}]`,
-            )
-          }
-        }
-
-        const results: Array<MakeTFromPrismaModel<TPrismaModelName>> = []
-
-        if (relationColumnList.length === 0) {
-          const batchResult = await txOps.createManyAndReturn({
-            data: createDataMapped,
-          })
-
-          results.push(...batchResult)
-        } else {
-          for (const dataMappedElement of createDataMapped) {
-            const newVar = await txOps.create({
-              data: dataMappedElement,
-            })
-            results.push(newVar as MakeTFromPrismaModel<TPrismaModelName>)
-          }
-        }
-
-        return results
+            return results
+          },
+        }).sync(prepared)
       })
     },
-  })
+  }
 }

@@ -255,11 +255,32 @@ export function createGitlabSource({
         throw new Error(`GitLab releases ${projectId}: ${res.status}`)
       return ((await res.json()) as Array<RawRelease>).map((r) => ({
         projectId,
+        name: r.name || r.tag_name,
         tagName: r.tag_name,
         commitSha: r.commit?.id ?? null,
         author: r.author?.username ?? null,
         releasedAt: r.released_at ?? null,
       }))
+    },
+    async searchTags(projectId, search) {
+      const res = await f(
+        `${baseUrl}/api/v4/projects/${projectId}/repository/tags?search=${encodeURIComponent(search)}&per_page=20`,
+        { headers: { 'PRIVATE-TOKEN': token } },
+      )
+      if (!res.ok) throw new Error(`GitLab tags ${projectId}: ${res.status}`)
+      return (
+        (await res.json()) as Array<{ name: string; commit?: { id: string } }>
+      ).map((t) => ({ name: t.name, commitSha: t.commit?.id ?? null }))
+    },
+    async rawFile(projectId, path, ref) {
+      const res = await f(
+        `${baseUrl}/api/v4/projects/${projectId}/repository/files/${encodeURIComponent(path)}/raw?ref=${encodeURIComponent(ref)}`,
+        { headers: { 'PRIVATE-TOKEN': token } },
+      )
+      if (res.status === 404) return null
+      if (!res.ok)
+        throw new Error(`GitLab file ${projectId} ${path}: ${res.status}`)
+      return res.text()
     },
   }
 }

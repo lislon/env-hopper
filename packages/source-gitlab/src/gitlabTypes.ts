@@ -56,6 +56,8 @@ export interface GitlabUserRecord {
 
 export interface GitlabReleaseRecord {
   projectId: number
+  /** The release's own name, e.g. `Shop API 1.2.1 - RC1`; its tag's name when it has none. */
+  name: string
   tagName: string
   commitSha: string | null
   author: string | null
@@ -138,6 +140,20 @@ export interface GitlabSource {
     projectId: number,
     opts?: { limit?: number },
   ) => Promise<Array<GitlabReleaseRecord>>
+  /**
+   * The tags whose name matches `search` (GitLab's syntax: `^x` begins,
+   * `x$` ends), newest first.
+   */
+  searchTags: (
+    projectId: number,
+    search: string,
+  ) => Promise<Array<{ name: string; commitSha: string | null }>>
+  /** A file's text at a ref or commit; null when it does not exist there. */
+  rawFile: (
+    projectId: number,
+    path: string,
+    ref: string,
+  ) => Promise<string | null>
   /**
    * One pipeline by id; null when GitLab has none. A pipeline's ref and
    * commit never change, so a caller may keep the answer forever.
@@ -230,6 +246,7 @@ export interface RawUser {
 }
 
 export interface RawRelease {
+  name?: string | null
   tag_name: string
   commit?: {
     id: string

@@ -168,6 +168,28 @@ const server = createServer((req, res) => {
     return
   }
 
+  if (url.pathname === '/api/v4/projects/7/repository/tags') {
+    // GitLab's `x$` search: names ending in x.
+    const end = (url.searchParams.get('search') ?? '').replace(/\$$/, '')
+    res.end(
+      JSON.stringify(
+        [
+          { name: 'release-shop-1.68.0-1234567', commit: { id: 'c9' } },
+          { name: 'v1.0', commit: { id: 'c1' } },
+        ].filter((t) => t.name.endsWith(end)),
+      ),
+    )
+    return
+  }
+  if (url.pathname === '/api/v4/projects/7/repository/files/pom.xml/raw') {
+    if (url.searchParams.get('ref') === 'c9') {
+      res.end('<project><version>1.68.0</version></project>')
+    } else {
+      res.statusCode = 404
+      res.end('{"message":"404 File Not Found"}')
+    }
+    return
+  }
   if (url.pathname === '/api/v4/projects/7/pipelines/3553947') {
     res.end(
       JSON.stringify({
@@ -623,6 +645,20 @@ describe('gitlab source pipeline', () => {
         createdAt: '2026-10-12T12:09:00Z',
         webUrl: 'https://git.example.com/g/p/-/pipelines/3553947',
       },
+      missing: null,
+    })
+  })
+
+  it("finds tags by GitLab's search and reads a file at a commit, null where it is not", async () => {
+    const src = createGitlabSource({ baseUrl: base, token: 't' })
+
+    expect({
+      tags: await src.searchTags(7, '1234567$'),
+      file: await src.rawFile(7, 'pom.xml', 'c9'),
+      missing: await src.rawFile(7, 'pom.xml', 'c1'),
+    }).toEqual({
+      tags: [{ name: 'release-shop-1.68.0-1234567', commitSha: 'c9' }],
+      file: '<project><version>1.68.0</version></project>',
       missing: null,
     })
   })

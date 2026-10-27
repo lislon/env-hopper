@@ -70,6 +70,8 @@ export interface CatalogArtifactInput {
   commitSha?: string
   /** The change request the build was made from or merged by. */
   changeRequest?: ChangeRequestRef
+  /** The Build that made it, a delivery fact (`writeFacts`), written before or after. */
+  build?: { repositoryKey: string; buildId: string }
 }
 export interface CatalogEndpointInput {
   kind: EndpointKind
@@ -183,4 +185,98 @@ export interface UserEventInput {
 /** A User's event as kept; `userId`: the account its EhUser is linked to, if any. */
 export type UserEventView = Omit<UserEventInput, 'eventId' | 'at'> & {
   at: Date
+}
+
+// Delivery facts (ADR 0007): written once by an Entity Provider (`writeFacts`).
+
+/** A code host's repository; `key` is the Source's id, e.g. `gitlab:42`. */
+export interface CatalogRepositoryInput {
+  key: string
+  name?: string
+  url?: string
+}
+export interface CatalogCommitInput {
+  repositoryKey: string
+  sha: string
+  committedAt?: Date
+  /** A CatalogUser's username. */
+  author?: string
+  /** The Change Request that merged it. */
+  changeRequestNumber?: string
+}
+export type BuildOutcome = 'succeeded' | 'failed' | 'canceled'
+/** One CI run that may produce Artifacts. */
+export interface CatalogBuildInput {
+  repositoryKey: string
+  buildId: string
+  sha: string
+  ref?: string
+  refType?: 'branch' | 'tag' | 'change-request'
+  /** What started it, in the Source's words. */
+  trigger?: string
+  parentBuildId?: string
+  /** Absent while it runs. */
+  outcome?: BuildOutcome
+  finishedAt?: Date
+  url?: string
+  /** A CatalogUser's username. */
+  triggeredBy?: string
+}
+/** A name on a Commit, maybe published as a release with a title. */
+export interface CatalogTagInput {
+  repositoryKey: string
+  name: string
+  sha: string
+  releaseTitle?: string
+  createdAt?: Date
+  createdBy?: string
+}
+export interface CatalogChangeRequestInput {
+  repositoryKey: string
+  number: string
+  title: string
+  url?: string
+  sourceBranch?: string
+  targetBranch?: string
+  /** Its own merge or squash commit. */
+  mergeSha?: string
+  mergedAt?: Date
+  author?: string
+  mergedBy?: string
+  /** Work Item keys in the order named. */
+  workItems?: Array<string>
+}
+/** A version a Commit declares about itself, one per type. */
+export interface CatalogDeclaredVersionInput {
+  repositoryKey: string
+  sha: string
+  /** e.g. maven, npm. */
+  type: string
+  /** null: the commit declares none of this type. */
+  value: string | null
+}
+/** A tracker ticket, as last read: a snapshot, replaced by a newer read. */
+export interface CatalogWorkItemInput {
+  key: string
+  title?: string
+  type?: string
+  url?: string
+  readAt: Date
+}
+export interface DeliveryFactsInput {
+  repositories?: Array<CatalogRepositoryInput>
+  commits?: Array<CatalogCommitInput>
+  builds?: Array<CatalogBuildInput>
+  tags?: Array<CatalogTagInput>
+  changeRequests?: Array<CatalogChangeRequestInput>
+  declaredVersions?: Array<CatalogDeclaredVersionInput>
+  workItems?: Array<CatalogWorkItemInput>
+}
+/** Facts as read back; a column never written is absent. */
+export interface DeliveryFactsView {
+  commits: Array<CatalogCommitInput>
+  builds: Array<CatalogBuildInput>
+  tags: Array<CatalogTagInput>
+  changeRequests: Array<CatalogChangeRequestInput>
+  declaredVersions: Array<CatalogDeclaredVersionInput>
 }

@@ -156,6 +156,28 @@ describe.skipIf(!prisma)('catalog writes', () => {
     expect(await prisma!.catalogArtifact.count()).toBe(2)
   })
 
+  it('an artifact keeps the build it was made by', async () => {
+    await givenOneComponentOnTwoTargets()
+    await catalog!.syncArtifacts('ci', [
+      {
+        componentSlug: 'shop-api',
+        version: 'main-10',
+        build: { repositoryKey: 'gitlab:1', buildId: '10' },
+      },
+    ])
+    expect(
+      await prisma!.catalogArtifact.findUnique({
+        where: {
+          componentSlug_version: {
+            componentSlug: 'shop-api',
+            version: 'main-10',
+          },
+        },
+        select: { buildRepositoryKey: true, buildId: true },
+      }),
+    ).toEqual({ buildRepositoryKey: 'gitlab:1', buildId: '10' })
+  })
+
   it('an unchanged row keeps its updatedAt and a changed row moves it', async () => {
     await givenOneComponentOnTwoTargets()
     const stamps = async () =>

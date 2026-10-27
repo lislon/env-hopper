@@ -163,6 +163,9 @@ model CatalogArtifact {
   commitSha     String?
   /// The change request the build was made from (`direct`) or merged by: a ChangeRequestRef.
   changeRequest Json?
+  /// The Build that made it (a delivery fact); no foreign key: the Build may be written later.
+  buildRepositoryKey String?
+  buildId            String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   component     CatalogComponent @relation(fields: [componentSlug], references: [slug], onDelete: Cascade)
@@ -360,4 +363,100 @@ model DeploymentHistory {
 
   @@index([appSlug, envSlug, observedAt])
   @@index([componentSlug, observedAt])
+}
+
+// Delivery facts (ADR 0007): what a Source said about how software was made.
+// Written by an Entity Provider; no sync updates or deletes them. A NULL
+// column may be filled once, a stored value never changes. No foreign keys:
+// never deleted, so nothing cascades, and any write order works.
+model CatalogRepository {
+  key       String   @id // the Source's id, e.g. `gitlab:42`
+  name      String?
+  url       String?
+  createdAt DateTime @default(now())
+}
+
+model CatalogCommit {
+  repositoryKey       String
+  sha                 String
+  committedAt         DateTime?
+  author              String? // a CatalogUser's username
+  changeRequestNumber String? // the Change Request that merged it
+  createdAt           DateTime  @default(now())
+
+  @@id([repositoryKey, sha])
+}
+
+model CatalogBuild {
+  repositoryKey String
+  buildId       String
+  sha           String
+  ref           String?
+  refType       String? // branch | tag | change-request
+  trigger       String? // what started it, in the Source's words
+  parentBuildId String?
+  outcome       String? // succeeded | failed | canceled; null when read unfinished
+  finishedAt    DateTime?
+  url           String?
+  triggeredBy   String?
+  createdAt     DateTime  @default(now())
+
+  @@id([repositoryKey, buildId])
+  @@index([repositoryKey, sha])
+}
+
+model CatalogTag {
+  repositoryKey String
+  name          String
+  sha           String
+  releaseTitle  String?
+  createdAt     DateTime?
+  createdBy     String?
+
+  @@id([repositoryKey, name])
+  @@index([repositoryKey, sha])
+  @@index([repositoryKey, createdAt])
+}
+
+model CatalogChangeRequest {
+  repositoryKey String
+  number        String
+  title         String
+  url           String?
+  sourceBranch  String?
+  targetBranch  String?
+  mergeSha      String?
+  mergedAt      DateTime?
+  author        String?
+  mergedBy      String?
+  createdAt     DateTime  @default(now())
+
+  @@id([repositoryKey, number])
+}
+
+model CatalogChangeRequestWorkItem {
+  repositoryKey String
+  number        String
+  workItemKey   String
+  position      Int
+
+  @@id([repositoryKey, number, workItemKey])
+}
+
+model CatalogWorkItem {
+  key    String   @id // the tracker's id, e.g. `jira:SHOP-7`
+  title  String?
+  type   String?
+  url    String?
+  readAt DateTime
+}
+
+model CatalogDeclaredVersion {
+  repositoryKey String
+  sha           String
+  type          String // e.g. maven, npm, release-train
+  value         String?
+  createdAt     DateTime @default(now())
+
+  @@id([repositoryKey, sha, type])
 }

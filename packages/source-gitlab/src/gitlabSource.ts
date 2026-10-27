@@ -2,6 +2,7 @@ import type {
   GitlabDeploymentRecord,
   GitlabEnvironmentRecord,
   GitlabMergeRequestRecord,
+  GitlabReleaseRecord,
   GitlabSource,
   GitlabUserRecord,
   RawCommit,
@@ -10,6 +11,7 @@ import type {
   RawMergeRequest,
   RawPipeline,
   RawRelease,
+  RawTag,
   RawUser,
 } from './gitlabTypes'
 
@@ -28,6 +30,20 @@ function mergeRequestRecord(
     webUrl: m.web_url,
     mergeCommitSha: m.merge_commit_sha ?? null,
     squashCommitSha: m.squash_commit_sha ?? null,
+    mergedAt: m.merged_at ?? null,
+    author: m.author?.username ?? null,
+    mergedBy: m.merged_by?.username ?? null,
+  }
+}
+
+function releaseRecord(projectId: number, r: RawRelease): GitlabReleaseRecord {
+  return {
+    projectId,
+    name: r.name || r.tag_name,
+    tagName: r.tag_name,
+    commitSha: r.commit?.id ?? null,
+    author: r.author?.username ?? null,
+    releasedAt: r.released_at ?? null,
   }
 }
 
@@ -135,6 +151,22 @@ export function createGitlabSource({
     return out
   }
 
+  /** A paged list, newest first, up to the first item `isStop` names; at most `limit` pages. */
+  async function until<T>(
+    path: string,
+    params: Record<string, string>,
+    isStop: (item: T) => boolean,
+    limit: number,
+  ) {
+    const out: Array<T> = []
+    for await (const page of pages<T>(path, params, limit)) {
+      const stop = page.findIndex(isStop)
+      if (stop >= 0) return [...out, ...page.slice(0, stop)]
+      out.push(...page)
+    }
+    return out
+  }
+
   /** One JSON GET; null on 404. */
   async function one<T>(path: string): Promise<T | null> {
     const res = await f(`${baseUrl}/api/v4${path}`, {
@@ -156,8 +188,11 @@ export function createGitlabSource({
             tag: p.tag ?? false,
             sha: p.sha,
             source: p.source ?? '',
+            status: p.status ?? '',
             createdAt: p.created_at ?? null,
+            finishedAt: p.finished_at ?? null,
             webUrl: p.web_url ?? null,
+            user: p.user?.username ?? null,
           }
         : null
     },
@@ -246,21 +281,49 @@ export function createGitlabSource({
           : null,
       }
     },
-    async listReleases(projectId, { limit = 50 } = {}) {
+    async listTags(projectId, { stopAt, maxPages: limit = 3 } = {}) {
+      const tags = await until<RawTag>(
+        `/projects/${projectId}/repository/tags`,
+        { order_by: 'updated', sort: 'desc' },
+        (t) => t.name === stopAt,
+        limit,
+      )
+      return tags.flatMap((t) =>
+        t.commit
+          ? [
+              {
+                projectId,
+                name: t.name,
+                commitSha: t.commit.id,
+                createdAt: t.created_at ?? t.commit.created_at ?? null,
+              },
+            ]
+          : [],
+      )
+    },
+    async listReleases(
+      projectId,
+      { limit = 50, stopAt, maxPages: pageLimit = 3 } = {},
+    ) {
+      if (stopAt !== undefined) {
+        return (
+          await until<RawRelease>(
+            `/projects/${projectId}/releases`,
+            { order_by: 'released_at', sort: 'desc' },
+            (r) => r.tag_name === stopAt,
+            pageLimit,
+          )
+        ).map((r) => releaseRecord(projectId, r))
+      }
       const res = await f(
         `${baseUrl}/api/v4/projects/${projectId}/releases?per_page=${limit}`,
         { headers: { 'PRIVATE-TOKEN': token } },
       )
       if (!res.ok)
         throw new Error(`GitLab releases ${projectId}: ${res.status}`)
-      return ((await res.json()) as Array<RawRelease>).map((r) => ({
-        projectId,
-        name: r.name || r.tag_name,
-        tagName: r.tag_name,
-        commitSha: r.commit?.id ?? null,
-        author: r.author?.username ?? null,
-        releasedAt: r.released_at ?? null,
-      }))
+      return ((await res.json()) as Array<RawRelease>).map((r) =>
+        releaseRecord(projectId, r),
+      )
     },
     async searchTags(projectId, search) {
       const res = await f(

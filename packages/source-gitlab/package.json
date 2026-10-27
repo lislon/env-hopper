@@ -56,12 +56,16 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "@env-hopper/backend-core": "workspace:^",
     "@tanstack/vite-config": "catalog:",
     "@types/node": "catalog:",
     "esbuild": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@env-hopper/backend-core": "workspace:^"
   },
   "engines": {
     "node": ">=16"

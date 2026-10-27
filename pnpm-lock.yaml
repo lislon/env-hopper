@@ -347,7 +347,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/backend-core
       '@env-hopper/shared-core':
-        specifier: 2.1.0
+        specifier: 2.2.0
         version: link:../../packages/shared-core
       '@prisma/client':
         specifier: 'catalog:'
@@ -426,10 +426,10 @@ importers:
   examples/frontend-example:
     dependencies:
       '@env-hopper/frontend-build-vite':
-        specifier: 2.1.0
+        specifier: 2.2.0
         version: link:../../packages/frontend-build-vite
       '@env-hopper/frontend-core':
-        specifier: 2.1.0
+        specifier: 2.2.0
         version: link:../../packages/frontend-core
       cross-env:
         specifier: 'catalog:'

@@ -1,5 +1,12 @@
 # @env-hopper/source-k8s
 
+## 2.2.0
+
+### Patch Changes
+
+- Updated dependencies [[`a5de764`](https://github.com/lislon/env-hopper/commit/a5de76454119799b9317c37fa1eef0e4c105aa50)]:
+  - @env-hopper/backend-core@2.2.0
+
 ## 2.1.0
 
 ### Minor Changes

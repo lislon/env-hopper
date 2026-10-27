@@ -1,5 +1,19 @@
 # @env-hopper/backend-core
 
+## 2.2.0
+
+### Minor Changes
+
+- [#414](https://github.com/lislon/env-hopper/pull/414) [`a5de764`](https://github.com/lislon/env-hopper/commit/a5de76454119799b9317c37fa1eef0e4c105aa50) Thanks [@lislon](https://github.com/lislon)! - Add opt-in guard to prevent mass deletions during catalog sync
+
+  Catalog syncs can now set `maxDeleteShare` (0..1) to refuse a run that would delete most of a table. When set and existing >= 5 and toDelete/existing > maxDeleteShare, no deletes happen (creates and updates still do), and the result includes `refusedDeletes` with the count it would have deleted. Protects against broken sources that suddenly return far fewer rows than normal.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @env-hopper/shared-core@2.2.0
+  - @env-hopper/table-sync@2.2.0
+
 ## 2.1.0
 
 ### Minor Changes

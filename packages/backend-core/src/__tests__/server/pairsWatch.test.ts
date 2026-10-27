@@ -132,6 +132,58 @@ describe.skipIf(!prisma)('pairsWatch', () => {
     expect(pushed.chunks[0]).toMatchObject({ app: 'shop', facet: 'components' })
   })
 
+  it('a freshness change pushes the open pair: its reading ends on the page without a refetch', async () => {
+    await givenTwoApps(catalog!)
+    await deploy(catalog!, 'shop', [deployment('shop-api', 't-prod', 'v1')])
+    const next = await watch({ appSlugs: ['shop'], envSlugs: ['prod'] })
+    await next()
+    const write = (reading: Array<string>) =>
+      catalog!.transaction((tx) =>
+        catalog!.syncAppEnvFreshness(
+          tx,
+          'freshness',
+          [
+            {
+              appSlug: 'shop',
+              envSlug: '*',
+              checkedAt: new Date('2026-01-05T10:00:00Z'),
+              ...(reading.length > 0 && { reading }),
+            },
+          ],
+          { upsertOnly: true },
+        ),
+      )
+
+    await write(['gitlab'])
+    const reading = await next()
+    await write([])
+    const done = await next()
+
+    const freshnessOf = (chunks: Array<PairChunk>) =>
+      chunks.flatMap((c) =>
+        c.facet === 'deployment' && 'data' in c
+          ? [{ pair: `${c.app}/${c.env}`, freshness: c.data.freshness }]
+          : [],
+      )
+    expect([freshnessOf(reading.chunks), freshnessOf(done.chunks)]).toEqual([
+      [
+        {
+          pair: 'shop/prod',
+          freshness: {
+            checkedAt: '2026-01-05T10:00:00.000Z',
+            reading: ['gitlab'],
+          },
+        },
+      ],
+      [
+        {
+          pair: 'shop/prod',
+          freshness: { checkedAt: '2026-01-05T10:00:00.000Z' },
+        },
+      ],
+    ])
+  })
+
   it('a horizontal slice hears every App on its Environment, and a removal arrives as no rows', async () => {
     await givenTwoApps(catalog!)
     await deploy(catalog!, 'ci', [deployment('wiki-ui', 't-qa', 'w1')])

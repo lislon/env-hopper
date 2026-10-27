@@ -194,6 +194,15 @@ describe('DeployedVersions details', () => {
           checkedAt: ago(41 * 60),
           failed: { source: 'audit', at: ago(10) },
         }),
+        failedWithReason: seen({
+          checkedAt: ago(41 * 60),
+          failed: {
+            source: 'audit',
+            at: ago(10),
+            reason: 'timeout',
+            message: 'GET <url> timed out',
+          },
+        }),
       }).toEqual({
         untracked: {
           grey: false,
@@ -224,6 +233,12 @@ describe('DeployedVersions details', () => {
           verifying: false,
           warn: "couldn't check · from 41 min ago",
           tip: "Couldn't check audit · showing the value from 41 min ago",
+        },
+        failedWithReason: {
+          grey: true,
+          verifying: false,
+          warn: "couldn't check · from 41 min ago",
+          tip: "Couldn't check audit (timed out: GET <url> timed out) · showing the value from 41 min ago",
         },
       })
     } finally {

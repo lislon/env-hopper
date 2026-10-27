@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from '../generated/prisma/client'
 import { tableSyncPrisma } from '../db/tableSyncPrismaAdapter'
+import { publicMessage } from './publicMessage'
 import type {
   Catalog,
   CatalogChange,
@@ -52,6 +53,8 @@ async function deleteHealthOf(tx: Tx, pairs: Array<Pair>) {
 const touchedIn = new WeakMap<object, Array<Pair>>()
 const touch = (tx: object, pairs: Array<Pair>) =>
   touchedIn.get(tx)?.push(...pairs)
+/** Per open transaction, the AppEnvs whose freshness changed (`env` may be `ALL_ENVS`). */
+const freshenedIn = new WeakMap<object, CatalogChange['pairs']>()
 
 /**
  * Drops the Health of the Deployments these parent rows cascade-delete, and
@@ -279,9 +282,18 @@ export function createCatalog(prisma: PrismaClient): Catalog {
       const result = await prisma.$transaction(
         async (tx) => {
           const touched: Array<Pair> = []
+          const freshened: CatalogChange['pairs'] = []
           touchedIn.set(tx, touched)
+          freshenedIn.set(tx, freshened)
           const out = await fn(tx as unknown as CatalogTx)
-          pairs = await changedPairs(tx, touched)
+          pairs = [
+            ...new Map(
+              [...(await changedPairs(tx, touched)), ...freshened].map((p) => [
+                `${p.app}\0${p.env}`,
+                p,
+              ]),
+            ).values(),
+          ]
           return out
         },
         { timeout: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS, maxWait: 10_000 },
@@ -596,35 +608,48 @@ export function createCatalog(prisma: PrismaClient): Catalog {
       scope,
       list: Array<AppEnvFreshnessInput>,
       opts = {},
-    ) =>
-      (
-        await tableSyncPrisma({
-          prisma: txOf(tx),
-          prismaModelName: 'AppEnvFreshness',
-          uniqColumns: ['appSlug', 'envSlug'],
-          scope,
-          upsertOnly: opts.upsertOnly,
-        }).sync(
-          [
-            ...new Map(
-              list.map((f) => [`${f.appSlug}\0${f.envSlug}`, f]),
-            ).values(),
-          ].map((f) => ({
-            appSlug: f.appSlug,
-            envSlug: f.envSlug,
-            checkedAt: f.checkedAt,
-            reading: f.reading ?? [],
-            failedSource: f.failed?.source ?? null,
-            failedAt: f.failed?.at ?? null,
-            sources: f.sources?.length
-              ? f.sources.map((s) => ({
-                  source: s.source,
-                  at: s.at.toISOString(),
-                }))
-              : null,
-          })),
-        )
-      ).counts,
+    ) => {
+      const synced = await tableSyncPrisma({
+        prisma: txOf(tx),
+        prismaModelName: 'AppEnvFreshness',
+        uniqColumns: ['appSlug', 'envSlug'],
+        scope,
+        upsertOnly: opts.upsertOnly,
+      }).sync(
+        [
+          ...new Map(
+            list.map((f) => [`${f.appSlug}\0${f.envSlug}`, f]),
+          ).values(),
+        ].map((f) => ({
+          appSlug: f.appSlug,
+          envSlug: f.envSlug,
+          checkedAt: f.checkedAt,
+          reading: f.reading ?? [],
+          failedSource: f.failed?.source ?? null,
+          failedAt: f.failed?.at ?? null,
+          failedReason: f.failed?.reason ?? null,
+          failedMessage: f.failed?.message
+            ? publicMessage(f.failed.message)
+            : null,
+          sources: f.sources?.length
+            ? f.sources.map((s) => ({
+                source: s.source,
+                at: s.at.toISOString(),
+              }))
+            : null,
+        })),
+      )
+      // A freshness changes no Deployment, but an open page shows it: its
+      // readers are told, as for any change (pairsWatch).
+      const { created, updated, deleted } = synced as unknown as Changed
+      freshenedIn.get(tx)?.push(
+        ...[...created, ...updated.map((u) => u.row), ...deleted].map((r) => ({
+          app: r['appSlug'] as string,
+          env: r['envSlug'] as string,
+        })),
+      )
+      return synced.counts
+    },
 
     async syncDeployAttempts(
       tx,

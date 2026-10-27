@@ -573,7 +573,12 @@ describe.skipIf(!prisma)('catalog reads', () => {
           envSlug: 'qa',
           checkedAt: new Date('2026-01-05T09:00:00Z'),
           reading: ['audit'],
-          failed: { source: 'gitlab', at: new Date('2026-01-05T09:30:00Z') },
+          failed: {
+            source: 'gitlab',
+            at: new Date('2026-01-05T09:30:00Z'),
+            reason: 'timeout',
+            message: 'GET https://git.example.com/api/v4/projects/1 timed out',
+          },
           sources: [
             { source: 'audit', at: new Date('2026-01-05T09:00:00Z') },
             { source: 'gitlab', at: new Date('2026-01-05T08:00:00Z') },
@@ -592,7 +597,13 @@ describe.skipIf(!prisma)('catalog reads', () => {
           env: 'qa',
           checkedAt: '2026-01-05T09:00:00.000Z',
           reading: ['audit'],
-          failed: { source: 'gitlab', at: '2026-01-05T09:30:00.000Z' },
+          // The message as a browser may see it.
+          failed: {
+            source: 'gitlab',
+            at: '2026-01-05T09:30:00.000Z',
+            reason: 'timeout',
+            message: 'GET <url> timed out',
+          },
           sources: [
             { source: 'audit', at: '2026-01-05T09:00:00.000Z' },
             { source: 'gitlab', at: '2026-01-05T08:00:00.000Z' },

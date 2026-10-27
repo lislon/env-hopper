@@ -129,6 +129,13 @@ export interface CatalogDeployAttemptInput {
   ref?: string
 }
 
+/** Why a Source read failed. */
+export type FailureReason =
+  | 'timeout'
+  | 'unauthorized'
+  | 'unreachable'
+  | 'bad-response'
+
 /** An `envSlug` that writes one freshness for all of an App's Environments; an Environment's own row wins. */
 export const ALL_ENVS = '*'
 
@@ -145,7 +152,13 @@ export interface AppEnvFreshnessInput {
   /** The Sources being read for it now. */
   reading?: Array<string>
   /** The last read that failed and has not succeeded since. */
-  failed?: { source: string; at: Date }
+  failed?: {
+    source: string
+    at: Date
+    reason?: FailureReason
+    /** Stored made safe for a browser (`publicMessage`). */
+    message?: string
+  }
   /** Each Source it is read from, and when it was last read. */
   sources?: Array<{ source: string; at: Date }>
 }

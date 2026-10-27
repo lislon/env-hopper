@@ -41,6 +41,26 @@ const checkedAgo = (iso: string, now: number) => {
 
 type Freshness = NonNullable<PairDeployment['freshness']>
 
+const REASON_WORDS: Record<
+  NonNullable<NonNullable<Freshness['failed']>['reason']>,
+  string
+> = {
+  timeout: 'timed out',
+  unauthorized: 'not authorized',
+  unreachable: 'unreachable',
+  'bad-response': 'bad response',
+}
+
+/** ` (timed out: <message>)`, or nothing when the failure says no reason. */
+const failureWords = ({ reason, message }: NonNullable<Freshness['failed']>) =>
+  reason ? ` (${REASON_WORDS[reason]}${message ? `: ${message}` : ''})` : ''
+
+/**
+ * A `reading` the page has held this long without the push that ends it is
+ * asked for again: what the line shows never waits on a lost push.
+ */
+const READING_RECHECK_MS = 20_000
+
 /** How long a Version counts as up to date without `ui.upToDateFreshnessMs`. */
 const UP_TO_DATE_MS = 30_000
 
@@ -66,7 +86,7 @@ function freshnessOf(
     failedSince,
     // The tooltip's first line, in plain words: is what the line shows confirmed?
     tip: failedSince
-      ? `Couldn't check ${failedSince.source} · showing the value from ${checkedAgo(f.checkedAt, now)}`
+      ? `Couldn't check ${failedSince.source}${failureWords(failedSince)} · showing the value from ${checkedAgo(f.checkedAt, now)}`
       : reading.length > 0
         ? `May be out of date (last confirmed ${checkedAgo(f.checkedAt, now)}) · checking ${reading.join(', ')} now…`
         : now - Date.parse(f.checkedAt) >= upToDateMs
@@ -496,7 +516,7 @@ export function DeployedVersions({
   const bootstrap = useBootstrapConfig()
   useRecordOpen(appSlug || undefined, envSlug)
   const upToDateMs = bootstrap.ui?.upToDateFreshnessMs ?? UP_TO_DATE_MS
-  const { data, error, failureCount, failureReason } = useQuery({
+  const { data, error, failureCount, failureReason, refetch } = useQuery({
     ...pairFacetQuery(appSlug, envSlug ?? '', 'deployment'),
     enabled: appSlug !== '' && envSlug !== undefined,
     // The pair on screen is read again while its Entity Provider tracks
@@ -510,6 +530,12 @@ export function DeployedVersions({
           ? upToDateMs / 2
           : false,
   })
+  const readingKey = data?.freshness?.reading?.join(',') ?? ''
+  useEffect(() => {
+    if (!readingKey) return
+    const t = setTimeout(() => void refetch(), READING_RECHECK_MS)
+    return () => clearTimeout(t)
+  }, [readingKey, data?.freshness?.checkedAt, refetch])
   const dialogRef = useRef<HTMLDialogElement>(null)
   const openerRef = useRef<HTMLButtonElement>(null)
   // Each dialog loads what it shows on open the first time it opens.

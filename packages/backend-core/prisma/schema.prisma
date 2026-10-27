@@ -281,6 +281,10 @@ model AppEnvFreshness {
   reading      String[]  @default([])
   failedSource String?
   failedAt     DateTime?
+  // Why it failed: timeout | unauthorized | unreachable | bad-response, and
+  // the error made safe for a browser (publicMessage).
+  failedReason  String?
+  failedMessage String?
   // Each Source read for it, and when: [{ source, at }].
   sources      Json?
   createdAt    DateTime  @default(now())

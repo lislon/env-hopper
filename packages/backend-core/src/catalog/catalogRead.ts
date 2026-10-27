@@ -17,6 +17,7 @@ import type {
   ChangeRequestRef,
   DeployAttemptStatus,
   EndpointKind,
+  FailureReason,
   HealthState,
   UserEventInput,
   UserEventView,
@@ -316,7 +317,12 @@ export interface PairDeployments {
 export interface AppEnvFreshness {
   checkedAt: string
   reading?: Array<string>
-  failed?: { source: string; at: string }
+  failed?: {
+    source: string
+    at: string
+    reason?: FailureReason
+    message?: string
+  }
   /** Each Source it is read from, and when it was last read. */
   sources?: Array<{ source: string; at: string }>
 }
@@ -548,6 +554,10 @@ export function createCatalogReads(prisma: PrismaClient) {
                 failed: {
                   source: f.failedSource,
                   at: f.failedAt.toISOString(),
+                  ...(f.failedReason && {
+                    reason: f.failedReason as FailureReason,
+                  }),
+                  ...(f.failedMessage && { message: f.failedMessage }),
                 },
               }),
             ...(Array.isArray(f.sources) &&

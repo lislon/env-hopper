@@ -1,6 +1,7 @@
 import { tracked } from '@trpc/server'
 import type { TrackedEnvelope } from '@trpc/server'
 import { pairDetails } from './pairDetails'
+import { ALL_ENVS } from '../catalog/catalogTypes'
 import type { CatalogChange } from '../catalog'
 import type { PairChunk } from './pairDetails'
 import type { EhTrpcContext } from './ehTrpcContext'
@@ -74,8 +75,12 @@ export async function* pairsWatch(
   )
   const inScope = (p: CatalogChange['pairs'][number]) =>
     appSlugs.includes(p.app) || envSlugs.includes(p.env)
+  // An App-wide change (a freshness for all its Environments) is the pairs
+  // of that App on the Environments this client watches.
+  const concrete = (p: CatalogChange['pairs'][number]) =>
+    p.env === ALL_ENVS ? envSlugs.map((env) => ({ app: p.app, env })) : [p]
   for (let r = await pending; !r.done; r = await changes.next()) {
-    const changed = r.value.pairs.filter(inScope)
+    const changed = r.value.pairs.flatMap(concrete).filter(inScope)
     if (changed.length === 0) continue
     yield tracked(r.value.id, await collect(pairDetails(ctx, { changed })))
   }

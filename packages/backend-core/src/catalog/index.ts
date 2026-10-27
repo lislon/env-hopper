@@ -16,6 +16,7 @@ export type {
   CatalogDeploymentView,
 } from './catalogRead'
 export { createCatalog } from './catalogWrite'
+export { publicMessage, PUBLIC_MESSAGE_MAX } from './publicMessage'
 export type {
   HealthCheckResult,
   HealthChecker,

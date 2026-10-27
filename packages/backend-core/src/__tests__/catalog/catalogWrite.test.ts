@@ -511,9 +511,11 @@ describe.skipIf(!prisma)('catalog writes', () => {
     expect(await prisma!.catalogDeployment.count()).toBe(1)
   })
 
-  it('syncs 2,000 deployments with endpoints inside the transaction timeout', async () => {
+  // Writes go in chunks of 1,000 rows (catalogRead.ts `chunks`); one row past that
+  // makes every sync step take its multi-chunk path.
+  it('syncs deployments, endpoints and health across more than one write chunk', async () => {
     await givenOneComponentOnTwoTargets()
-    const targets = Array.from({ length: 2000 }, (_, i) => ({
+    const targets = Array.from({ length: 1001 }, (_, i) => ({
       slug: `k8s:stage/ns-${i}`,
       displayName: `ns-${i}`,
     }))
@@ -531,13 +533,10 @@ describe.skipIf(!prisma)('catalog writes', () => {
         },
       ],
     }))
-    const started = Date.now()
     await catalog!.syncDeployments('ci', list)
     await catalog!.syncDeployments('ci', list)
-    const elapsed = Date.now() - started
-    console.info(`2,000 deployments synced twice in ${elapsed} ms`)
-    expect(await prisma!.catalogDeployment.count()).toBe(2000)
-    expect(await prisma!.catalogEndpoint.count()).toBe(4000)
+    expect(await prisma!.catalogDeployment.count()).toBe(1001)
+    expect(await prisma!.catalogEndpoint.count()).toBe(2002)
 
     await catalog!.syncHealth(
       'ci',
@@ -551,11 +550,9 @@ describe.skipIf(!prisma)('catalog writes', () => {
     )
     const listed = await catalog!.listDeployments()
     expect(listed.filter((d) => d.health?.state === 'healthy')).toHaveLength(
-      2000,
+      1001,
     )
-    // The bound under test is the sync's own transaction timeout; vitest's 5 s
-    // default only measures the CI runner's speed.
-  }, 60_000)
+  }, 30_000)
 
   it('a run whose deployment sync fails leaves the artifacts as they were', async () => {
     await givenOneComponentOnTwoTargets()

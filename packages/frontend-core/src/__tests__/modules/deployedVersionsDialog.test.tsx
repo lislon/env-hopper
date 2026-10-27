@@ -176,6 +176,10 @@ describe('DeployedVersions details', () => {
           verifying: !!container.querySelector('.eh-deployed-verify'),
           warn:
             container.querySelector('.eh-deployed-warn')?.textContent ?? null,
+          // The tooltip's first line.
+          tip:
+            container.querySelector('.eh-deployed-row [role="tooltip"]')
+              ?.firstChild?.textContent ?? null,
         }
         unmount()
         return out
@@ -191,14 +195,35 @@ describe('DeployedVersions details', () => {
           failed: { source: 'audit', at: ago(10) },
         }),
       }).toEqual({
-        untracked: { grey: false, verifying: false, warn: null },
-        upToDate: { grey: false, verifying: false, warn: null },
-        stale: { grey: true, verifying: false, warn: null },
-        checking: { grey: true, verifying: true, warn: null },
+        untracked: {
+          grey: false,
+          verifying: false,
+          warn: null,
+          tip: 'no health check',
+        },
+        upToDate: {
+          grey: false,
+          verifying: false,
+          warn: null,
+          tip: 'Up to date · checked 5 s ago',
+        },
+        stale: {
+          grey: true,
+          verifying: false,
+          warn: null,
+          tip: 'May be out of date · last checked 41 min ago',
+        },
+        checking: {
+          grey: true,
+          verifying: true,
+          warn: null,
+          tip: 'May be out of date · checking audit now…',
+        },
         failed: {
           grey: true,
           verifying: false,
           warn: "couldn't check · from 41 min ago",
+          tip: "Couldn't check audit · showing the value from 41 min ago",
         },
       })
     } finally {

@@ -64,14 +64,14 @@ function freshnessOf(
     grey: now - Date.parse(f.checkedAt) >= upToDateMs,
     reading,
     failedSince,
-    tip: [
-      `checked ${checkedAgo(f.checkedAt, now)}`,
-      reading.length > 0 && `checking ${reading.join(', ')} now…`,
-      failedSince &&
-        `couldn't check: ${failedSince.source} failed ${checkedAgo(failedSince.at, now)}`,
-    ]
-      .filter(Boolean)
-      .join(' · '),
+    // The tooltip's first line, in plain words: is what the line shows confirmed?
+    tip: failedSince
+      ? `Couldn't check ${failedSince.source} · showing the value from ${checkedAgo(f.checkedAt, now)}`
+      : reading.length > 0
+        ? `May be out of date · checking ${reading.join(', ')} now…`
+        : now - Date.parse(f.checkedAt) >= upToDateMs
+          ? `May be out of date · last checked ${checkedAgo(f.checkedAt, now)}`
+          : `Up to date · checked ${checkedAgo(f.checkedAt, now)}`,
   }
 }
 
@@ -690,6 +690,12 @@ export function DeployedVersions({
           </span>
         )}
         <span className="eh-deployed-tip" role="tooltip">
+          {fresh.tip && (
+            <>
+              {fresh.tip}
+              <br />
+            </>
+          )}
           {lead ? (
             <>
               {data.components.length > 1 && `${leadComponent.displayName}: `}
@@ -709,12 +715,6 @@ export function DeployedVersions({
               <br />* {o}
             </span>
           ))}
-          {fresh.tip && (
-            <>
-              <br />
-              {fresh.tip}
-            </>
-          )}
         </span>
       </span>
       {shownAttempt && (

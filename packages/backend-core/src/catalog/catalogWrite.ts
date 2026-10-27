@@ -129,6 +129,7 @@ const deployedRow = (r: Row, previous?: unknown): HistoryRow => ({
   deployedAt: date(r['deployedAt']),
   deployedBy: str(r['deployedBy']),
   source: str(r['source']),
+  eventAt: date(r['deployedAt']),
 })
 
 /**
@@ -150,8 +151,11 @@ function deploymentChanges({ created, updated, deleted }: Changed) {
         componentSlug: r['componentSlug'] as string,
         targetSlug: r['targetSlug'] as string,
         kind: 'removed',
-        previous: str(r['version']),
+        version: str(r['version']),
         source: str(r['source']),
+        // The removed Deployment's own time: a second writer of the same
+        // removal writes the same row.
+        eventAt: date(r['deployedAt']),
       }),
     ),
   ]
@@ -175,6 +179,10 @@ function attemptChanges({ created, updated }: Changed) {
       version: str(r['version']),
       status: str(r['status']),
       deployedBy: str(r['startedBy']),
+      eventAt:
+        r['status'] === 'running'
+          ? date(r['startedAt'])
+          : (date(r['endedAt']) ?? date(r['startedAt'])),
     }),
   )
 }
@@ -194,7 +202,10 @@ async function recordHistory(db: Tx, rows: Array<HistoryRow>) {
   ])
   const appOf = new Map(components.map((c) => [c.slug, c.appSlug]))
   const envOf = new Map(targets.map((t) => [t.slug, t.environmentSlug]))
+  // ON CONFLICT DO NOTHING on the event's unique index: two pods writing the
+  // same change (a rollout's overlap) write it once.
   await db.deploymentHistory.createMany({
+    skipDuplicates: true,
     data: rows.map((r) => ({
       ...r,
       appSlug: appOf.get(r.componentSlug) ?? null,

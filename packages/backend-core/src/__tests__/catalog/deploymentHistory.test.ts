@@ -90,8 +90,9 @@ describe.skipIf(!prisma)('deployment history', () => {
           appSlug: 'shop',
           envSlug: 'qa',
           kind: 'removed',
-          previous: 'main-10',
+          version: 'main-10',
           source: 'k8s',
+          eventAt: '2026-01-01T09:00:00.000Z',
         },
         {
           componentSlug: 'shop-api',
@@ -104,6 +105,7 @@ describe.skipIf(!prisma)('deployment history', () => {
           deployedAt: '2026-01-02T10:00:00.000Z',
           deployedBy: 'ann',
           source: 'k8s',
+          eventAt: '2026-01-02T10:00:00.000Z',
         },
         {
           componentSlug: 'shop-api',
@@ -124,6 +126,7 @@ describe.skipIf(!prisma)('deployment history', () => {
           deployedAt: '2026-01-01T09:00:00.000Z',
           deployedBy: 'ann',
           source: 'k8s',
+          eventAt: '2026-01-01T09:00:00.000Z',
         },
         {
           componentSlug: 'shop-api',
@@ -135,9 +138,36 @@ describe.skipIf(!prisma)('deployment history', () => {
           deployedAt: '2026-01-01T10:00:00.000Z',
           deployedBy: 'ann',
           source: 'k8s',
+          eventAt: '2026-01-01T10:00:00.000Z',
         },
       ],
       prodOnly: ['deployed main-11', 'attempt main-11', 'deployed main-10'],
     })
+  })
+
+  it('a second writer of the same change, one that read the catalog before the first wrote, adds no row', async () => {
+    await givenShopOnProdAndQa()
+    await catalog!.syncDeployments('ci', [
+      on('k8s:prod/shop', 'main-10', '2026-01-01T10:00:00Z'),
+    ])
+    const deploy11 = on('k8s:prod/shop', 'main-11', '2026-01-02T10:00:00Z')
+    await catalog!.syncDeployments('ci', [deploy11])
+    // The second pod still saw main-10: it writes the same change again.
+    await prisma!.catalogDeployment.updateMany({
+      where: { targetSlug: 'k8s:prod/shop' },
+      data: {
+        version: 'main-10',
+        deployedAt: new Date('2026-01-01T10:00:00Z'),
+      },
+    })
+    await catalog!.syncDeployments('ci', [deploy11])
+
+    const history = await createCatalog(prisma!).getDeploymentHistory({
+      app: 'shop',
+    })
+    expect(history.map((h) => `${h.kind} ${h.version} ${h.eventAt}`)).toEqual([
+      'deployed main-11 2026-01-02T10:00:00.000Z',
+      'deployed main-10 2026-01-01T10:00:00.000Z',
+    ])
   })
 })

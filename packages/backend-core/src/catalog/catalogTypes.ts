@@ -161,7 +161,13 @@ export interface UserEventInput {
   envSlug: string
   resourceJump?: string
   url?: string
+  /** The browser's id for this event: sent twice, it is kept once. */
+  eventId?: string
+  /** When the User did it, by the browser; absent: when it arrived. */
+  at?: Date
 }
 
 /** A User's event as kept; `userId`: the account its EhUser is linked to, if any. */
-export type UserEventView = UserEventInput & { at: Date }
+export type UserEventView = Omit<UserEventInput, 'eventId' | 'at'> & {
+  at: Date
+}

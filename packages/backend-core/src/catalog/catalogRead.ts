@@ -169,6 +169,8 @@ export interface DeploymentHistoryEntry {
   deployedAt?: string
   deployedBy?: string
   source?: string
+  /** When it happened, by the Source's clock. */
+  eventAt?: string
   observedAt: string
 }
 
@@ -690,16 +692,24 @@ export function createCatalogReads(prisma: PrismaClient) {
         orderBy: { id: 'desc' },
         take: HISTORY_LIMIT,
       })
-      return rows.map(({ id: _, observedAt, deployedAt, kind, ...r }) => ({
-        ...(Object.fromEntries(
-          Object.entries(r).filter(([, v]) => v !== null),
-        ) as Pick<DeploymentHistoryEntry, 'componentSlug' | 'targetSlug'>),
-        kind: kind as DeploymentHistoryEntry['kind'],
-        ...(deployedAt && { deployedAt: deployedAt.toISOString() }),
-        observedAt: observedAt.toISOString(),
-      }))
+      return rows.map(
+        ({ id: _, observedAt, deployedAt, eventAt, kind, ...r }) => ({
+          ...(Object.fromEntries(
+            Object.entries(r).filter(([, v]) => v !== null),
+          ) as Pick<DeploymentHistoryEntry, 'componentSlug' | 'targetSlug'>),
+          kind: kind as DeploymentHistoryEntry['kind'],
+          ...(deployedAt && { deployedAt: deployedAt.toISOString() }),
+          ...(eventAt && { eventAt: eventAt.toISOString() }),
+          observedAt: observedAt.toISOString(),
+        }),
+      )
     },
-    async recordUserEvent({ ehUserId, userId, ...event }: UserEventInput) {
+    async recordUserEvent({
+      ehUserId,
+      userId,
+      at: told,
+      ...event
+    }: UserEventInput) {
       const at = new Date()
       await prisma.ehUser.upsert({
         where: { id: ehUserId },
@@ -718,8 +728,10 @@ export function createCatalogReads(prisma: PrismaClient) {
           data: { userId },
         })
       }
-      await prisma.userEvent.create({
-        data: { userId: ehUserId, ...event, at },
+      // ON CONFLICT (eventId) DO NOTHING: a retried send is kept once.
+      await prisma.userEvent.createMany({
+        skipDuplicates: true,
+        data: [{ userId: ehUserId, ...event, at: told ?? at, receivedAt: at }],
       })
     },
     async getUserEvents(since: Date, filter: { userId?: string } = {}) {

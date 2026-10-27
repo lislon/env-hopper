@@ -314,7 +314,11 @@ model UserEvent {
   envSlug      String
   resourceJump String?
   url          String?
+  // When the User did it, by the browser; `receivedAt` is the server's.
   at           DateTime @default(now())
+  // The browser's id for the event: sent twice, it is kept once.
+  eventId      String?  @unique
+  receivedAt   DateTime @default(now())
   user         EhUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, at])
@@ -342,6 +346,12 @@ model DeploymentHistory {
   deployedBy    String?
   // The Source that decided it; none for an attempt.
   source        String?
+  // When it happened, by the Source's clock: a deploy's or removed
+  // Deployment's deployedAt, an attempt's start or end. Never a pod's clock:
+  // with it, two pods writing one change write one row. Unique with
+  // (componentSlug, targetSlug, kind, version) through an expression index
+  // in the migration (NULLs folded), which Prisma cannot declare.
+  eventAt       DateTime?
   observedAt    DateTime  @default(now())
 
   @@index([appSlug, envSlug, observedAt])

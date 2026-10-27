@@ -30,7 +30,13 @@ export function useRecordUsage() {
       const meta = client.getDefaultOptions().mutations?.meta
       const legacy = legacyUserId()
       meta?.trpcClient.usage.record
-        .mutate({ ...input, ...(legacy && { legacyUserId: legacy }) })
+        .mutate({
+          ...input,
+          // Its own id and time: a retried send is kept once, at this time.
+          eventId: crypto.randomUUID(),
+          at: new Date().toISOString(),
+          ...(legacy && { legacyUserId: legacy }),
+        })
         .catch(() => undefined)
     },
     [client],

@@ -165,16 +165,21 @@ export function createTrpcRouter(auth?: BetterAuth) {
             url: z.string().max(2000).optional(),
             /** The id the previous UI kept for this browser: the first record names the browser by it. */
             legacyUserId: z.string().max(64).optional(),
+            /** The browser's id for this event: a retried send is kept once. */
+            eventId: z.string().uuid().optional(),
+            /** When the User did it, by the browser. */
+            at: z.string().datetime().optional(),
           }),
         )
         .mutation(async ({ input, ctx }) => {
-          const { legacyUserId, ...event } = input
+          const { legacyUserId, at, ...event } = input
           if (event.kind === 'jump') warm(ctx, event, 'jump')
           if (!ctx.ehUser || !ctx.catalog) return
           await ctx.catalog.recordUserEvent({
             ehUserId: ctx.ehUser.name(legacyUserId),
             ...(ctx.user && { userId: ctx.user.id }),
             ...event,
+            ...(at && { at: clampEventTime(new Date(at)) }),
           })
         }),
     }),
@@ -182,6 +187,13 @@ export function createTrpcRouter(auth?: BetterAuth) {
     // Auth routes (requires auth instance)
     auth: createAuthRouter(t, auth),
   })
+}
+
+/** A browser's clock may be off: an event time is kept within a day before and 5 minutes after now. */
+function clampEventTime(at: Date, now = new Date()): Date {
+  const earliest = now.getTime() - 24 * 3_600_000
+  const latest = now.getTime() + 5 * 60_000
+  return new Date(Math.min(Math.max(at.getTime(), earliest), latest))
 }
 
 /** Tells the deployment's backend someone looks at the AppEnv; never fails the call. */

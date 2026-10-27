@@ -184,6 +184,22 @@ describe.skipIf(!prisma)('usage.record', () => {
     })
   })
 
+  it('an event sent twice is kept once, at the time the browser says it happened', async () => {
+    const browser = givenBrowser()
+    const event = {
+      ...open(),
+      eventId: '7f3c2a10-1b2c-4d5e-8f90-123456789abc',
+      at: new Date(Date.now() - 60_000).toISOString(),
+    }
+    await browser.record(event)
+    await browser.record(event)
+
+    const events = await createCatalog(prisma!).getUserEvents(new Date(0))
+    expect(
+      events.map(({ at, ...e }) => ({ ...e, at: at.toISOString() })),
+    ).toEqual([{ ehUserId: idOf(browser), ...open(), at: event.at }])
+  })
+
   it('a pair asked for is warmed: someone looks at it', async () => {
     // As `httpBatchStreamLink` asks for it.
     const input = { 0: { appSlug: 'shop', envSlug: 'qa' } }

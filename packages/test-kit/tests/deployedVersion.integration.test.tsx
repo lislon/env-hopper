@@ -111,6 +111,8 @@ describe('deployed version under the jump card', () => {
         kind: 'open',
         appSlug: 'shop',
         envSlug: 'staging',
+        eventId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+        at: expect.stringMatching(/^\d{4}-\d\d-\d\dT/),
         legacyUserId: '2b8e0b42-5d0e-4f6c-9a3e-6a1f0c7d9e11',
       })
     } finally {

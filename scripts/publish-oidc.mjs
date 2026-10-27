@@ -9,9 +9,10 @@
 //      versions inside the tarball (npm alone cannot do this), then
 //   2) `npm publish <tarball>` — the npm CLI (>=11.5.1) performs the OIDC mint.
 //
-// Idempotent: a package whose exact version already exists on the registry is
-// skipped (EPUBLISHCONFLICT / "cannot publish over"), so partial-failure reruns
-// are safe.
+// Idempotent: a package whose exact version is already on the registry is
+// skipped before publishing (asked with `npm view`), so partial-failure reruns
+// are safe. npm's own "cannot publish over" error can't be matched here: with
+// stdio 'inherit' its text goes to the terminal, not to the caught error.
 //
 // Usage: node scripts/publish-oidc.mjs --tag <dist-tag>
 import { execFileSync } from 'node:child_process'
@@ -40,12 +41,29 @@ console.log(
   `Publishing ${pkgs.length} package(s) with tag "${tag}" via npm OIDC`,
 )
 
+/** True when this exact name@version is already published. */
+function onRegistry(spec) {
+  try {
+    const out = execFileSync('npm', ['view', spec, 'version'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+    return out.trim() !== ''
+  } catch {
+    return false // E404: not published yet
+  }
+}
+
 const packDir = mkdtempSync(join(tmpdir(), 'oidc-pack-'))
 let failed = false
 
 for (const dir of pkgs) {
   const meta = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'))
   const label = `${meta.name}@${meta.version}`
+  if (onRegistry(label)) {
+    console.log(`↷ skip ${label} (already on registry)`)
+    continue
+  }
   try {
     // pnpm pack resolves workspace:* -> concrete versions in the tarball
     execFileSync('pnpm', ['pack', '--pack-destination', packDir], {

@@ -1,5 +1,57 @@
 # @env-hopper/test-kit
 
+## 2.1.0
+
+### Minor Changes
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - A change request is one line: its Work Items, each linked to its page when the bootstrap's `ui.workItemUrl` (a template with `{{key}}`) says where they live, then its title, linked to the change request. Its description is no longer shown. The details dialog has a "Read from" row (the Source each Version came from) and a footer naming each Source the AppEnv is read from and when (`AppEnvFreshness.sources`, a new nullable column). The test kit's fixture takes `ui`.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - `FixtureDeployments.changeRequestDescriptions` (by `<componentSlug>/<id>`)
+  answers `changeRequestDetails` in the mock backend.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Start the first load at once. `startFirstLoad` asks `bootstrap` on every page
+  and, on a deep link, the open pair and the slices around it, before the first
+  render. The jumps load once per page through the query cache. Plain queries go
+  out one request each, so `bootstrap` and the jumps never wait for each other;
+  `pair` and `slices` share one streamed batch.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Two writers of one change write one row. A DeploymentHistory row carries `eventAt`, the Source's time of the change (a deploy's or removed Deployment's `deployedAt`, an attempt's start or end), and is unique by Component, Target, kind, version and `eventAt`; it is inserted with ON CONFLICT DO NOTHING. A removal names the version that went away in `version`. `usage.record` takes the browser's `eventId` (a UUID) and `at` (kept within a day before and 5 minutes after the server's clock); an event sent twice is kept once, and `receivedAt` keeps the server's time.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Stream an App's details on an Environment by facet: `pair` and `slices`.
+  - `pair({ appSlug, envSlug })` streams one pair's jumps and deployment, each
+    chunk as soon as its source answers. `slices({ appSlugs?, envSlugs? })`
+    streams every App on each Environment and every Environment each App is
+    deployed on, at most 50 of each, without jumps.
+  - A stream sends what its pairs share once: each App's Components, with the
+    pipeline URL its links fit, so rows carry pipeline ids; the Health run time;
+    and, from `pair` only, the deployers' profiles. `slices` names deployers by
+    username, and the new `users({ usernames })` query answers their profiles.
+  - The catalog reads a pair's Deployments with `getPairDeployments` and each
+    App's Components with `getComponents`. A Component's pipeline URL depends on
+    the Component alone, so the same input gives the same chunks.
+  - The client keeps each pair's facets in its own cache entry, never fetches a
+    pair a slice already loaded, asks the profiles missing in one tick in one
+    `users` call, and shows the deployed version under the jump card.
+  - Credentials stay in `bootstrap`; the streams do not repeat them.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Remove the `availabilityMatrix` endpoint, which always returned an empty matrix.
+
+  A company backend no longer implements `getAvailabilityMatrix`, and the
+  `AvailabilityMatrixData` and `AvailabilityVariant` types are gone. The frontend
+  helpers that read the matrix, `findBestMatchByUrl` and `availabilityMatrixUtils`,
+  had no callers and are removed with it. Which Versions run where now comes from
+  the deployment facet of `pair` and `slices`.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - A browser keeps the id the previous UI gave it: `usage.record` takes an optional `legacyUserId`, and a browser with no `eh_uid` cookie is named by it when it is a UUID (else by a new one). The cookie is set by the first `usage.record`, not by any request. Signing in links the browser to the account for good: `EhUser.userId` is set at its first sign-in and never changed; one account may own several browsers. `getUserEvents(since, { userId })` returns a User's history across every browser linked to the same account, and each event names its `ehUserId` and, once linked, its `userId`. The context takes `ehUser: ehUserOf(req, res)`.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - What a User does is kept: `usage.record` stores each `open` of an AppEnv and each `jump` from it as a `UserEvent`, under an `EhUser` named by an httpOnly `eh_uid` cookie (and the login, once signed in). The Catalog reads them back with `getUserEvents(since)`. A deployment's backend may implement `warm(appEnvs, reason)`: it is told which AppEnvs someone looks at now, to read what they show again: each `pair` asked for (`view`; the open pair is asked again while it tracks freshness) and each `jump`. The frontend records an `open` when the page shows another AppEnv, and a `jump` when a link is followed. The test kit's mock backend answers `usage.record`.
+
+### Patch Changes
+
+- Updated dependencies [[`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd), [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd)]:
+  - @env-hopper/backend-core@2.1.0
+  - @env-hopper/frontend-core@2.1.0
+
 ## 2.1.0-alpha-20261014235627
 
 ### Patch Changes

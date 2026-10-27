@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/source-k8s",
-  "version": "2.1.0-alpha-20261014235627",
+  "version": "2.1.0",
   "description": "Read workloads and ingresses from a Kubernetes cluster",
   "keywords": [
     "env-hopper",

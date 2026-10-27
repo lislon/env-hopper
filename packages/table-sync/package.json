@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/table-sync",
-  "version": "2.1.0-alpha-20261014235627",
+  "version": "2.1.0",
   "description": "Database table sync utilities for Env Hopper",
   "homepage": "https://github.com/lislon/env-hopper",
   "repository": {

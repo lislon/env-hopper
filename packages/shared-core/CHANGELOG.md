@@ -1,5 +1,16 @@
 # @env-hopper/shared-core
 
+## 2.1.0
+
+### Minor Changes
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Send `bootstrap`'s Environments packed. Per field, the rule most Environments
+  follow (a constant, or a value built from the Environment's slug) goes once in
+  the new `envDefaults`, and each Environment carries only what differs; `null`
+  removes a default. `packEnvs` and `expandEnv` (shared-core) do the two halves,
+  and the server sends explicit any Environment that would not round-trip. Every
+  other `bootstrap` key is unchanged.
+
 ## 2.1.0-alpha-20261014235627
 
 ### Patch Changes

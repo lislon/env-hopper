@@ -1,5 +1,140 @@
 # @env-hopper/frontend-core
 
+## 2.1.0
+
+### Minor Changes
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Checks follow attention. While someone is looking (the page visible and a mouse move, scroll, key, focus or touch within 2 minutes) the open pair is checked every half freshness window; a stale line with nothing checking it is asked for again within 3 seconds, and at once when the pointer moves onto it. While the User is idle or the tab hidden, the line may go stale with no ring, and the next activity checks it. `useAttention` and `IDLE_MS` say whether someone is looking.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Send `bootstrap`'s Environments packed. Per field, the rule most Environments
+  follow (a constant, or a value built from the Environment's slug) goes once in
+  the new `envDefaults`, and each Environment carries only what differs; `null`
+  removes a default. `packEnvs` and `expandEnv` (shared-core) do the two halves,
+  and the server sends explicit any Environment that would not round-trip. Every
+  other `bootstrap` key is unchanged.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - A change request is one line: its Work Items, each linked to its page when the bootstrap's `ui.workItemUrl` (a template with `{{key}}`) says where they live, then its title, linked to the change request. Its description is no longer shown. The details dialog has a "Read from" row (the Source each Version came from) and a footer naming each Source the AppEnv is read from and when (`AppEnvFreshness.sources`, a new nullable column). The test kit's fixture takes `ui`.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - The version details and the Deploy Attempt dialogs show a `Change request`
+  row: `!id` linking to the change request (after "merged via" when the build is
+  of the branch it merged into), its Work Items and title, and its description,
+  asked of `changeRequestDetails` only once the dialog opens. A row without one
+  says `n/a`.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - - An Artifact stores the commit it was built from (`commitSha`), and a
+  Component the page of a commit of its code (`commitUrl`, with `{{sha}}`).
+  A pair's row carries `commitSha` and its Component `commitUrl`; the
+  deployed-version details show a Commit column with the short sha linked to
+  that page, and link the Version to its build pipeline.
+  - A GitLab deployment record names who ran its deploy job (`jobUser`) beside
+    `user`, who created the record.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - The deployed-version line shows the newest deploy that has not succeeded as a
+  chip after the Version: `↻ deploying <version>`, `✕ <version> failed · 5 min
+ago` or `⊘ <version> canceled · 5 min ago`. The chip opens the attempt beside
+  the current stable Version. When a running attempt succeeds, the new Version
+  takes the old one's place with a short animation (a crossfade under reduced
+  motion). Every relative time on the line reads one shared clock, so they move
+  together.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - - The deployed-version slot under the jump card is always one line high and
+  never empty: a pale placeholder while loading, "⚠ version unavailable" with
+  the failed call, its message and the retry count on hover or focus, and
+  "no version info" for an App with no catalog Components. It shows as soon
+  as an App and an Environment are picked, before the URL is complete.
+  - A `pair` load whose facet has not arrived within 10 s fails; a failed pair
+    facet is retried every 30 s and on window focus. A loaded one is not
+    refetched on focus.
+  - The line shows the Version with its aliases and how long ago it was
+    deployed; the details show the build pipeline and deploy job by id, and
+    "n/a" where a value is unknown.
+  - The jump card sits right under the Application field however tall the side
+    panel is.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - A pair's Deployment row names where a cluster runs it: `cluster`, `namespace`
+  and `kubeContext`, from its Target's `meta` of the same names. The deployed
+  version's tooltip and details show `cluster/namespace`, and the kubernetes
+  commands beside the form use the context and namespace of the selected app's
+  lead Component when the catalog knows them, else the environment's own.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - A diagnostics panel for staging and previews: where the bootstrap's `ui.diagnostics` is on, `?debug=1` or Ctrl+Shift+D opens it under the Version line. It shows attention (attentive or idle, last activity), each `pair` fetch, answer and `pairsWatch` push the pair got with its freshness, and the backend's recent checks (`diagnostics`, from the deployment's `getDiagnostics`). "Copy diagnostics" copies them as JSON with secret-named keys dropped and credentials in strings replaced. The `diagnostics` query is NOT_FOUND (404) unless `ui.diagnostics` is on, and serves each event's detail made safe for a browser.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Start the first load at once. `startFirstLoad` asks `bootstrap` on every page
+  and, on a deep link, the open pair and the slices around it, before the first
+  render. The jumps load once per page through the query cache. Plain queries go
+  out one request each, so `bootstrap` and the jumps never wait for each other;
+  `pair` and `slices` share one streamed batch.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - A freshness change reaches the open page: writing an AppEnv's freshness notifies `pairsWatch` like any change, and an App-wide row (`env` `*`) is pushed to each Environment the client watches. So a check that ends clears the line's ring at once instead of at the next refetch; a `reading` the page holds 20 s with no push is asked for again. A failed check may say why: `failed.reason` (`timeout`, `unauthorized`, `unreachable`, `bad-response`) and `failed.message`, which the core stores made safe for a browser (`publicMessage`: first line only, no URLs, hosts, IPs, emails, SQL or secrets, at most 160 characters). The tooltip reads "Couldn't check audit (timed out: …) · showing the value from 41 min ago".
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Add subtle group header above Component columns in deployment details dialog. With more than one Component, shows the App display name, component count, and a bracket decoration. With one Component, no header is shown.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Two writers of one change write one row. A DeploymentHistory row carries `eventAt`, the Source's time of the change (a deploy's or removed Deployment's `deployedAt`, an attempt's start or end), and is unique by Component, Target, kind, version and `eventAt`; it is inserted with ON CONFLICT DO NOTHING. A removal names the version that went away in `version`. `usage.record` takes the browser's `eventId` (a UUID) and `at` (kept within a day before and 5 minutes after the server's clock); an event sent twice is kept once, and `receivedAt` keeps the server's time.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Stream an App's details on an Environment by facet: `pair` and `slices`.
+  - `pair({ appSlug, envSlug })` streams one pair's jumps and deployment, each
+    chunk as soon as its source answers. `slices({ appSlugs?, envSlugs? })`
+    streams every App on each Environment and every Environment each App is
+    deployed on, at most 50 of each, without jumps.
+  - A stream sends what its pairs share once: each App's Components, with the
+    pipeline URL its links fit, so rows carry pipeline ids; the Health run time;
+    and, from `pair` only, the deployers' profiles. `slices` names deployers by
+    username, and the new `users({ usernames })` query answers their profiles.
+  - The catalog reads a pair's Deployments with `getPairDeployments` and each
+    App's Components with `getComponents`. A Component's pipeline URL depends on
+    the Component alone, so the same input gives the same chunks.
+  - The client keeps each pair's facets in its own cache entry, never fetches a
+    pair a slice already loaded, asks the profiles missing in one tick in one
+    `users` call, and shows the deployed version under the jump card.
+  - Credentials stay in `bootstrap`; the streams do not repeat them.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Keep the pair cache current: the app subscribes to `pairsWatch` for the slices
+  it preloaded plus every pair opened since (through `httpSubscriptionLink`), and
+  merges each push into the per-pair cache, so the deployed version line updates
+  without a reload.
+  A subscription that ends in an error (a proxy answering for a restarting
+  server, say) is opened again with a backoff from the last event seen, so the
+  server resends what was missed.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - Remove the `availabilityMatrix` endpoint, which always returned an empty matrix.
+
+  A company backend no longer implements `getAvailabilityMatrix`, and the
+  `AvailabilityMatrixData` and `AvailabilityVariant` types are gone. The frontend
+  helpers that read the matrix, `findBestMatchByUrl` and `availabilityMatrixUtils`,
+  had no callers and are removed with it. Which Versions run where now comes from
+  the deployment facet of `pair` and `slices`.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - An app deep link whose slug no jump has asks the backend's rename rules
+  (`tryFindRenameRule`) and redirects to the new slug, keeping the environment
+  and the value, so links to a renamed app keep working.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - While the backend is being replaced, a 5xx answer that is not the API's own (a load balancer's HTML page) says "env-hopper is restarting Â· retrying" and is retried quietly, instead of showing the raw parse error. The API's fetch (`apiFetch`) turns such an answer into a `ServerRestartingError`; `errorText` and `isServerRestarting` read it.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - - Stored favourites, jump history and the last-used app follow app renames:
+  once the apps are known, each stored id no app has is looked up with
+  `tryFindRenameRule` and moved to the new name.
+  - The deployed-version details list the lead Component first.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - The deployed-version details show fields as rows and Components as columns, the main Component first with a `main` tag and its hint. A Version other than the main Component's is highlighted, each Component's Endpoints show as links by host, and past three Components the columns scroll while the row labels stay.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - A browser keeps the id the previous UI gave it: `usage.record` takes an optional `legacyUserId`, and a browser with no `eh_uid` cookie is named by it when it is a UUID (else by a new one). The cookie is set by the first `usage.record`, not by any request. Signing in links the browser to the account for good: `EhUser.userId` is set at its first sign-in and never changed; one account may own several browsers. `getUserEvents(since, { userId })` returns a User's history across every browser linked to the same account, and each event names its `ehUserId` and, once linked, its `userId`. The context takes `ehUser: ehUserOf(req, res)`.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - What a User does is kept: `usage.record` stores each `open` of an AppEnv and each `jump` from it as a `UserEvent`, under an `EhUser` named by an httpOnly `eh_uid` cookie (and the login, once signed in). The Catalog reads them back with `getUserEvents(since)`. A deployment's backend may implement `warm(appEnvs, reason)`: it is told which AppEnvs someone looks at now, to read what they show again: each `pair` asked for (`view`; the open pair is asked again while it tracks freshness) and each `jump`. The frontend records an `open` when the page shows another AppEnv, and a `jump` when a link is followed. The test kit's mock backend answers `usage.record`.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - The Version line shows its freshness quietly: a Version older than `ui.upToDateFreshnessMs` (default 30 s) greys, a faint ring turns while it is read again, and a check that failed since says "couldn't check"; the tooltip says when it was checked. The pair on screen is read again twice per that interval while its Entity Provider tracks freshness. A "Deployed version" label sits above the line, and a Deploy Attempt is a second line: a progress bar while it runs, then ✓, ✕ or ⊘, with a link to its job. An attempt that succeeds turns green while the Versions swap.
+
+### Patch Changes
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - A change request whose title starts with its Work Item shows the key once. Under the previous UI's jump card, the Version slot starts at the card's left edge.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - The Version line says who deployed it: "· deployed 15 min ago by Jo Doe".
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - The star's tooltip starts with what it means: "Not every component of this app runs this version:", then each one that differs. Under the previous UI's jump card, the card's row keeps room below for the Version slot (and its attempt line), so the next section never sits on it.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - The Version line's tooltip starts with its freshness in plain words: "Up to date · checked 12 s ago", "May be out of date · last confirmed 5 min ago", "May be out of date (last confirmed 5 min ago) · checking audit, gitlab now…", or "Couldn't check audit · showing the value from 41 min ago"; then health and where it was deployed.
+
+- [#410](https://github.com/lislon/env-hopper/pull/410) [`21722da`](https://github.com/lislon/env-hopper/commit/21722dad6658c44d123dfc01b19ece2b2dfc19fd) Thanks [@lislon](https://github.com/lislon)! - The Version slot sits at the left, under the card's edge, its label above it. A lead Component not deployed on the Environment says "not deployed" with no dot: only a Health problem draws one.
+
 ## 2.1.0-alpha-20261014235627
 
 ### Patch Changes

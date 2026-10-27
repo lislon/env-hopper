@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/source-gitlab",
-  "version": "2.1.0-alpha-20261014235627",
+  "version": "2.1.0",
   "description": "Read deployments, environments and releases from a GitLab instance",
   "keywords": [
     "env-hopper",

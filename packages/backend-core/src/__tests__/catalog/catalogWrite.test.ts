@@ -553,7 +553,9 @@ describe.skipIf(!prisma)('catalog writes', () => {
     expect(listed.filter((d) => d.health?.state === 'healthy')).toHaveLength(
       2000,
     )
-  })
+    // The bound under test is the sync's own transaction timeout; vitest's 5 s
+    // default only measures the CI runner's speed.
+  }, 60_000)
 
   it('a run whose deployment sync fails leaves the artifacts as they were', async () => {
     await givenOneComponentOnTwoTargets()

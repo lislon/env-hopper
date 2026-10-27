@@ -211,13 +211,13 @@ describe('DeployedVersions details', () => {
           grey: true,
           verifying: false,
           warn: null,
-          tip: 'May be out of date · last checked 41 min ago',
+          tip: 'May be out of date · last confirmed 41 min ago',
         },
         checking: {
           grey: true,
           verifying: true,
           warn: null,
-          tip: 'May be out of date · checking audit now…',
+          tip: 'May be out of date (last confirmed 41 min ago) · checking audit now…',
         },
         failed: {
           grey: true,

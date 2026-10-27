@@ -68,9 +68,9 @@ function freshnessOf(
     tip: failedSince
       ? `Couldn't check ${failedSince.source} · showing the value from ${checkedAgo(f.checkedAt, now)}`
       : reading.length > 0
-        ? `May be out of date · checking ${reading.join(', ')} now…`
+        ? `May be out of date (last confirmed ${checkedAgo(f.checkedAt, now)}) · checking ${reading.join(', ')} now…`
         : now - Date.parse(f.checkedAt) >= upToDateMs
-          ? `May be out of date · last checked ${checkedAgo(f.checkedAt, now)}`
+          ? `May be out of date · last confirmed ${checkedAgo(f.checkedAt, now)}`
           : `Up to date · checked ${checkedAgo(f.checkedAt, now)}`,
   }
 }

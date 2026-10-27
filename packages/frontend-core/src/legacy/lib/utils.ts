@@ -46,7 +46,7 @@ export function hasUnresolvedSubstitution(str: string) {
   return str.includes('{{')
 }
 
-export type EhAppForInterpolate = Pick<EhApp, 'meta'>
+export type EhAppForInterpolate = Pick<EhApp, 'meta' | 'appTitle'>
 
 /**
  * The selected app as it is on the selected environment.
@@ -90,6 +90,9 @@ function resolveWidgetPlaceholder(
 ): string | undefined {
   if (placeholder === 'env.id') {
     return env?.id
+  }
+  if (placeholder === 'app.displayName') {
+    return app?.appTitle
   }
   const qualified =
     env?.templateParams?.[placeholder] ?? env?.meta?.[placeholder]

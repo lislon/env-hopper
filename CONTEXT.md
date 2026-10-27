@@ -29,7 +29,7 @@ A Deployment Target being moved away from, still reported while the move lasts. 
 
 **Artifact**:
 One built version of a Component, identified by its Version.
-_Avoid_: Image, build, tag
+_Avoid_: Image (a Build produces Artifacts)
 
 **Version**:
 The exact, human-readable name of one Artifact, unique within its Component (e.g. `main-1234`). The Entity Provider derives it from whatever its Sources report, such as a pipeline id or a file name.
@@ -46,6 +46,34 @@ _Avoid_: Version (for this meaning)
 **Deployment**:
 The Artifact a Component last deployed successfully to a Deployment Target, and so is running there now. Only the current state exists; there is one Deployment per Component per Deployment Target.
 _Avoid_: Rollout, install
+
+**Repository**:
+Where a Component's code is kept, identified by its Source's id (e.g. `gitlab:42`). Repository, Commit, Build, Tag, Change Request, Work Item and Declared Version are delivery facts: written once, never changed by a sync (ADR 0007).
+_Avoid_: Project, repo
+
+**Commit**:
+One state of a Repository's code, identified by its sha.
+_Avoid_: Revision, changeset
+
+**Build**:
+One CI run that may produce Artifacts, from one Commit of a branch, a Tag or a Change Request.
+_Avoid_: Pipeline, workflow run, job
+
+**Tag**:
+A name on a Commit, maybe published as a release with a title.
+_Avoid_: Label, Version Alias
+
+**Change Request**:
+A proposed change merged into a branch, with its title, branches and the Commit that merged it.
+_Avoid_: Merge request, pull request, MR, PR
+
+**Work Item**:
+A tracker ticket a Change Request names (e.g. `jira:SHOP-7`). Kept as last read: a newer read replaces it.
+_Avoid_: Issue, ticket, story
+
+**Declared Version**:
+A version a Commit declares about itself, one per type (e.g. `maven`, `npm`), or that it declares none.
+_Avoid_: Version file
 
 **User**:
 A person a Source names, such as whoever deployed a Deployment, identified by username. A User is not an account that signs in to Env Hopper.
@@ -79,6 +107,12 @@ erDiagram
   DEPLOYMENT ||--o{ ENDPOINT : "is reached at"
   DEPLOYMENT ||--o| HEALTH : "is observed as"
   COMPONENT ||--o{ HEALTH_CHECK : "is checked by"
+  BUILD ||--o{ ARTIFACT : "produces"
+  COMMIT ||--o{ BUILD : "is built by"
+  COMMIT ||--o{ TAG : "is named by"
+  COMMIT |o--o| CHANGE_REQUEST : "was merged by"
+  CHANGE_REQUEST }o--o{ WORK_ITEM : "names"
+  COMMIT ||--o{ DECLARED_VERSION : "declares"
 ```
 
 - A Deployment is unique per Component and Deployment Target. Which Environment it is in follows from its Deployment Target; a Deployment Target in no Environment is never offered to the user.

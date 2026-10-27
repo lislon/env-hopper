@@ -55,6 +55,11 @@ export interface TableSyncParamsPrisma<
     db: Prisma.TransactionClient,
     rows: Array<Row>,
   ) => Promise<void>
+  /**
+   * Max fraction of stored rows one sync may delete (0..1). When set and
+   * existing >= 5 and toDelete/existing > maxDeleteShare, no deletes happen.
+   */
+  maxDeleteShare?: number
 }
 
 type Row = Record<string, unknown>
@@ -183,8 +188,10 @@ export function tableSyncPrisma<
           ? incoming.map((r) => params.prepare!(r, stored.get(keyOf(r))))
           : incoming
 
+        let refusedDeletes: number | undefined
+
         // @ts-ignore maybe someday later (never)
-        return tableSync<Row, ReadonlyArray<string>, string>({
+        const result = await tableSync<Row, ReadonlyArray<string>, string>({
           id: idColumn as string | undefined,
           uniqColumns: uniq,
           readAll: () => Promise.resolve(existing),
@@ -204,18 +211,28 @@ export function tableSyncPrisma<
             }
 
             if (upsertOnly !== true && deleteRows.length > 0) {
-              await params.beforeDelete?.(tx, deleteRows)
-              if (idColumn !== undefined) {
-                for (const part of chunks(deleteIds)) {
-                  await txOps.deleteMany({
-                    where: { [idColumn]: { in: part } },
-                  })
-                }
+              const existingCount = existing.length
+              const refuseDelete =
+                params.maxDeleteShare !== undefined &&
+                existingCount >= 5 &&
+                deleteRows.length / existingCount > params.maxDeleteShare
+
+              if (refuseDelete) {
+                refusedDeletes = deleteRows.length
               } else {
-                for (const part of chunks(deleteRows)) {
-                  await txOps.deleteMany({
-                    where: { OR: part.map((r) => pick(r, uniq)) },
-                  })
+                await params.beforeDelete?.(tx, deleteRows)
+                if (idColumn !== undefined) {
+                  for (const part of chunks(deleteIds)) {
+                    await txOps.deleteMany({
+                      where: { [idColumn]: { in: part } },
+                    })
+                  }
+                } else {
+                  for (const part of chunks(deleteRows)) {
+                    await txOps.deleteMany({
+                      where: { OR: part.map((r) => pick(r, uniq)) },
+                    })
+                  }
                 }
               }
             }
@@ -244,6 +261,10 @@ export function tableSyncPrisma<
             return results
           },
         }).sync(prepared)
+
+        return refusedDeletes !== undefined
+          ? { ...result, counts: { ...result.counts, refusedDeletes } }
+          : result
       })
     },
   }

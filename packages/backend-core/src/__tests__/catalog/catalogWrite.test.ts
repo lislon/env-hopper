@@ -714,4 +714,91 @@ describe.skipIf(!prisma)('catalog writes', () => {
       }).toEqual({ attempts: 0, heard: [[{ app: 'shop', env: 'prod' }]] })
     })
   })
+
+  describe('maxDeleteShare guard', () => {
+    async function givenTenEnvironments() {
+      if (!catalog) throw new Error('catalog not ready')
+      const envs = Array.from({ length: 10 }, (_, i) => ({
+        slug: `env-${i}`,
+        displayName: `Environment ${i}`,
+      }))
+      await catalog.syncEnvironments('ci', envs)
+    }
+
+    it('refuses mass delete when toDelete/existing > maxDeleteShare', async () => {
+      await givenTenEnvironments()
+
+      const counts = await catalog!.syncEnvironments(
+        'ci',
+        [
+          { slug: 'env-0', displayName: 'Environment 0' },
+          { slug: 'env-1', displayName: 'Environment 1' },
+        ],
+        { maxDeleteShare: 0.2 },
+      )
+
+      expect(counts).toEqual({
+        created: 0,
+        updated: 0,
+        deleted: 0,
+        unchanged: 2,
+        refusedDeletes: 8,
+      })
+      expect(await prisma!.catalogEnvironment.count()).toBe(10)
+    })
+
+    it('deletes normally without maxDeleteShare option', async () => {
+      await givenTenEnvironments()
+
+      const counts = await catalog!.syncEnvironments('ci', [
+        { slug: 'env-0', displayName: 'Environment 0' },
+        { slug: 'env-1', displayName: 'Environment 1' },
+      ])
+
+      expect(counts).toEqual({
+        created: 0,
+        updated: 0,
+        deleted: 8,
+        unchanged: 2,
+      })
+      expect(await prisma!.catalogEnvironment.count()).toBe(2)
+    })
+
+    it('allows delete when share equals maxDeleteShare', async () => {
+      await givenTenEnvironments()
+
+      const counts = await catalog!.syncEnvironments(
+        'ci',
+        Array.from({ length: 8 }, (_, i) => ({
+          slug: `env-${i}`,
+          displayName: `Environment ${i}`,
+        })),
+        { maxDeleteShare: 0.2 },
+      )
+
+      expect(counts.deleted).toBe(2)
+      expect(counts.refusedDeletes).toBeUndefined()
+      expect(await prisma!.catalogEnvironment.count()).toBe(8)
+    })
+
+    it('does not guard when existing count is below 5', async () => {
+      if (!catalog) throw new Error('catalog not ready')
+      await catalog.syncEnvironments('ci', [
+        { slug: 'env-0', displayName: 'Environment 0' },
+        { slug: 'env-1', displayName: 'Environment 1' },
+        { slug: 'env-2', displayName: 'Environment 2' },
+        { slug: 'env-3', displayName: 'Environment 3' },
+      ])
+
+      const counts = await catalog.syncEnvironments(
+        'ci',
+        [{ slug: 'env-0', displayName: 'Environment 0' }],
+        { maxDeleteShare: 0.2 },
+      )
+
+      expect(counts.deleted).toBe(3)
+      expect(counts.refusedDeletes).toBeUndefined()
+      expect(await prisma!.catalogEnvironment.count()).toBe(1)
+    })
+  })
 })

@@ -15,6 +15,8 @@ import type {
   CatalogReleaseInput,
   CatalogUserInput,
   ChangeRequestRef,
+  DeliveryFactsInput,
+  DeliveryFactsView,
   DeployAttemptStatus,
   EndpointKind,
   FailureReason,
@@ -148,6 +150,28 @@ export interface Catalog {
     from?: Date
     to?: Date
   }) => Promise<Array<DeploymentHistoryEntry>>
+  /**
+   * Delivery facts (ADR 0007), insert-if-absent; a NULL column is filled
+   * once; a stored value never changes. Work Items are replaced (snapshots).
+   * Its own transaction; tells no listener.
+   */
+  writeFacts: (facts: DeliveryFactsInput) => Promise<void>
+  /**
+   * builds: by key. commits: by key, plus each read build's commit.
+   * tags: at those commits, plus tags of a queried build's repository whose name ends with its buildId.
+   * changeRequests: by key, plus those the read commits name (changeRequestNumber).
+   * declaredVersions: at the read commits.
+   */
+  readFacts: (q: {
+    builds?: Array<{ repositoryKey: string; buildId: string }>
+    commits?: Array<{ repositoryKey: string; sha: string }>
+    changeRequests?: Array<{ repositoryKey: string; number: string }>
+  }) => Promise<DeliveryFactsView>
+  /** The newest stored Tag (by createdAt), with `released` only one with a releaseTitle: where an incremental list stops. */
+  newestTagName: (
+    repositoryKey: string,
+    opts?: { released?: boolean },
+  ) => Promise<string | null>
   /** Keeps what a User did, forever (ADR 0006): who uses what, and when. */
   recordUserEvent: (event: UserEventInput) => Promise<void>
   /** Every User's events since `since`, oldest first. */
@@ -381,8 +405,150 @@ export function chunks<T>(list: Array<T>, size = 1000): Array<Array<T>> {
   return out
 }
 
+/**
+ * A stored fact as read: NULL columns left out but `keepNull`, and `createdAt`
+ * (when the row was stored, not a fact) unless `withCreatedAt`.
+ */
+function present<T>(
+  row: object,
+  { keepNull = [] as Array<string>, withCreatedAt = false } = {},
+): T {
+  return Object.fromEntries(
+    Object.entries(row).filter(
+      ([k, v]) =>
+        (v !== null || keepNull.includes(k)) &&
+        (withCreatedAt || k !== 'createdAt'),
+    ),
+  ) as T
+}
+
+/** Rows found by a list of keys, one query per chunk. */
+async function byKeys<TKey, TRow>(
+  keys: Array<TKey>,
+  find: (part: Array<TKey>) => Promise<Array<TRow>>,
+): Promise<Array<TRow>> {
+  return (await Promise.all(chunks(keys).map(find))).flat()
+}
+
+const uniqueBy = <T>(list: Array<T>, key: (t: T) => string) => [
+  ...new Map(list.map((t) => [key(t), t])).values(),
+]
+
 export function createCatalogReads(prisma: PrismaClient) {
   const reads = {
+    async readFacts(q: {
+      builds?: Array<{ repositoryKey: string; buildId: string }>
+      commits?: Array<{ repositoryKey: string; sha: string }>
+      changeRequests?: Array<{ repositoryKey: string; number: string }>
+    }): Promise<DeliveryFactsView> {
+      const builds = await byKeys(q.builds ?? [], (part) =>
+        prisma.catalogBuild.findMany({
+          where: {
+            OR: part.map(({ repositoryKey, buildId }) => ({
+              repositoryKey,
+              buildId,
+            })),
+          },
+          orderBy: [{ repositoryKey: 'asc' }, { buildId: 'asc' }],
+        }),
+      )
+      const commitKeys = uniqueBy(
+        [...(q.commits ?? []), ...builds].map(({ repositoryKey, sha }) => ({
+          repositoryKey,
+          sha,
+        })),
+        (c) => `${c.repositoryKey}\0${c.sha}`,
+      )
+      const atCommits = (part: typeof commitKeys) => ({ OR: part })
+      const [commits, tags, declaredVersions] = await Promise.all([
+        byKeys(commitKeys, (part) =>
+          prisma.catalogCommit.findMany({ where: atCommits(part) }),
+        ),
+        byKeys(
+          [
+            ...commitKeys,
+            ...(q.builds ?? []).map(({ repositoryKey, buildId }) => ({
+              repositoryKey,
+              name: { endsWith: buildId },
+            })),
+          ],
+          (part) => prisma.catalogTag.findMany({ where: { OR: part } }),
+        ),
+        byKeys(commitKeys, (part) =>
+          prisma.catalogDeclaredVersion.findMany({
+            where: atCommits(part),
+            orderBy: { type: 'asc' },
+          }),
+        ),
+      ])
+      const crKeys = uniqueBy(
+        [
+          ...(q.changeRequests ?? []),
+          ...commits.flatMap((c) =>
+            c.changeRequestNumber
+              ? [
+                  {
+                    repositoryKey: c.repositoryKey,
+                    number: c.changeRequestNumber,
+                  },
+                ]
+              : [],
+          ),
+        ],
+        (k) => `${k.repositoryKey}\0${k.number}`,
+      )
+      const [changeRequests, links] = await Promise.all([
+        byKeys(crKeys, (part) =>
+          prisma.catalogChangeRequest.findMany({
+            where: { OR: part },
+            orderBy: [{ repositoryKey: 'asc' }, { number: 'asc' }],
+          }),
+        ),
+        byKeys(crKeys, (part) =>
+          prisma.catalogChangeRequestWorkItem.findMany({
+            where: { OR: part },
+            orderBy: { position: 'asc' },
+          }),
+        ),
+      ])
+      const workItemsOf = (r: { repositoryKey: string; number: string }) =>
+        links
+          .filter(
+            (l) => l.repositoryKey === r.repositoryKey && l.number === r.number,
+          )
+          .map((l) => l.workItemKey)
+      return {
+        commits: commits.map((c) => present(c)),
+        builds: builds.map((b) => present(b)),
+        tags: uniqueBy(tags, (t) => `${t.repositoryKey}\0${t.name}`)
+          .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+          .map((t) => present(t, { withCreatedAt: true })),
+        changeRequests: changeRequests.map((r) => {
+          const workItems = workItemsOf(r)
+          return present({ ...r, ...(workItems.length > 0 && { workItems }) })
+        }),
+        declaredVersions: declaredVersions.map((d) =>
+          present(d, { keepNull: ['value'] }),
+        ),
+      }
+    },
+    async newestTagName(
+      repositoryKey: string,
+      opts: { released?: boolean } = {},
+    ) {
+      const tag = await prisma.catalogTag.findFirst({
+        where: {
+          repositoryKey,
+          ...(opts.released && { releaseTitle: { not: null } }),
+        },
+        orderBy: [
+          { createdAt: { sort: 'desc', nulls: 'last' } },
+          { name: 'desc' },
+        ],
+        select: { name: true },
+      })
+      return tag?.name ?? null
+    },
     async listDeployments(
       filter: {
         appSlugs?: Array<string>

@@ -20,6 +20,7 @@ import type {
   CatalogHealthInput,
   CatalogReleaseInput,
   CatalogUserInput,
+  DeliveryFactsInput,
 } from './catalogTypes'
 import { sanitizeUrl } from './healthCheck'
 
@@ -266,6 +267,109 @@ const sameHealth = (row: Row, was: Row) =>
   row['checker'] === was['checker'] &&
   (row['detail'] ?? null) === (was['detail'] ?? null)
 
+/** The two calls `insertFacts` makes on a fact table's Prisma delegate. */
+interface FactTable {
+  createMany: (args: {
+    data: Array<Row>
+    skipDuplicates: boolean
+  }) => Promise<unknown>
+  updateMany: (args: { where: Row; data: Row }) => Promise<unknown>
+}
+
+/**
+ * Inserts the rows not stored yet, then fills each `fill` column still NULL
+ * with the row's value: a stored value never changes.
+ */
+async function insertFacts(
+  table: unknown,
+  rows: Array<Row>,
+  key: Array<string>,
+  fill: Array<string> = [],
+) {
+  if (rows.length === 0) return
+  const t = table as FactTable
+  await t.createMany({ data: rows, skipDuplicates: true })
+  // ponytail: one update per filled column; batch with UNNEST if fact batches grow past a few hundred.
+  for (const row of rows) {
+    for (const col of fill) {
+      if (row[col] === undefined || row[col] === null) continue
+      await t.updateMany({
+        where: {
+          ...Object.fromEntries(key.map((k) => [k, row[k]])),
+          [col]: null,
+        },
+        data: { [col]: row[col] },
+      })
+    }
+  }
+}
+
+/** Facts bypass `tableSyncPrisma` on purpose: insert-only, never scope-synced. */
+async function writeFactsIn(tx: Tx, f: DeliveryFactsInput) {
+  const repo = ['repositoryKey']
+  await insertFacts(
+    tx.catalogRepository,
+    (f.repositories ?? []).map((r) => ({ ...r })),
+    ['key'],
+  )
+  await insertFacts(
+    tx.catalogCommit,
+    (f.commits ?? []).map((c) => ({ ...c })),
+    [...repo, 'sha'],
+    ['committedAt', 'author', 'changeRequestNumber'],
+  )
+  await insertFacts(
+    tx.catalogBuild,
+    (f.builds ?? []).map((b) => ({ ...b })),
+    [...repo, 'buildId'],
+    ['outcome', 'finishedAt', 'triggeredBy'],
+  )
+  await insertFacts(
+    tx.catalogTag,
+    (f.tags ?? []).map((t) => ({ ...t })),
+    [...repo, 'name'],
+    ['releaseTitle', 'createdAt', 'createdBy'],
+  )
+  const changeRequests = f.changeRequests ?? []
+  await insertFacts(
+    tx.catalogChangeRequest,
+    changeRequests.map(({ workItems: _, ...cr }) => cr),
+    [...repo, 'number'],
+    ['mergeSha', 'mergedAt', 'mergedBy'],
+  )
+  await insertFacts(
+    tx.catalogChangeRequestWorkItem,
+    changeRequests.flatMap(({ repositoryKey, number, workItems = [] }) =>
+      workItems.map((workItemKey, position) => ({
+        repositoryKey,
+        number,
+        workItemKey,
+        position,
+      })),
+    ),
+    [...repo, 'number', 'workItemKey'],
+  )
+  await insertFacts(
+    tx.catalogDeclaredVersion,
+    (f.declaredVersions ?? []).map((d) => ({ ...d })),
+    [...repo, 'sha', 'type'],
+  )
+  // Work Items are snapshots: the newer read replaces the stored one.
+  for (const { key, ...item } of f.workItems ?? []) {
+    const data = {
+      title: item.title ?? null,
+      type: item.type ?? null,
+      url: item.url ?? null,
+      readAt: item.readAt,
+    }
+    await tx.catalogWorkItem.upsert({
+      where: { key },
+      create: { key, ...data },
+      update: data,
+    })
+  }
+}
+
 export function createCatalog(prisma: PrismaClient): Catalog {
   // ponytail: in-process listeners, so only this pod's readers hear its
   // writes; with more than one pod serving, carry them over Postgres
@@ -319,6 +423,12 @@ export function createCatalog(prisma: PrismaClient): Catalog {
     },
 
     lastChangeId: () => lastChangeId,
+
+    writeFacts: (facts) =>
+      prisma.$transaction((tx) => writeFactsIn(tx, facts), {
+        timeout: DEFAULT_TIMEOUT_MS,
+        maxWait: 10_000,
+      }),
 
     syncEnvironments: async (
       tx,
@@ -488,6 +598,8 @@ export function createCatalog(prisma: PrismaClient): Catalog {
             releaseKey: a.releaseKey ?? null,
             buildUrl: a.buildUrl ?? null,
             commitSha: a.commitSha ?? null,
+            buildRepositoryKey: a.build?.repositoryKey ?? null,
+            buildId: a.build?.buildId ?? null,
             // Only defined keys: the stored JSON compares equal to the next run's.
             changeRequest: a.changeRequest
               ? JSON.parse(JSON.stringify(a.changeRequest))

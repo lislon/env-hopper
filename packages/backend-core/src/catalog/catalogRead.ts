@@ -45,6 +45,8 @@ export interface CatalogSyncCounts {
   updated: number
   deleted: number
   unchanged: number
+  /** When maxDeleteShare refused a mass delete, the count it would have deleted. */
+  refusedDeletes?: number
 }
 
 export interface CatalogSyncOptions {
@@ -53,6 +55,11 @@ export interface CatalogSyncOptions {
    * only part of the scope.
    */
   upsertOnly?: boolean
+  /**
+   * Max fraction of stored rows one sync may delete (0..1). When set and
+   * existing >= 5 and toDelete/existing > maxDeleteShare, no deletes happen.
+   */
+  maxDeleteShare?: number
 }
 
 type Sync<TInput> = (

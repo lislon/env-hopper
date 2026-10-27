@@ -333,6 +333,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           uniqColumns: ['slug'],
           scope,
           upsertOnly: opts.upsertOnly,
+          maxDeleteShare: opts.maxDeleteShare,
         }).sync(
           list.map((e) => ({
             slug: e.slug,
@@ -351,6 +352,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           uniqColumns: ['slug'],
           scope,
           upsertOnly: opts.upsertOnly,
+          maxDeleteShare: opts.maxDeleteShare,
         }).sync(
           list.map((a) => ({
             slug: a.slug,
@@ -373,6 +375,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           uniqColumns: ['slug'],
           scope,
           upsertOnly: opts.upsertOnly,
+          maxDeleteShare: opts.maxDeleteShare,
           beforeDelete: cascadeHealth(tx, (r) => ({
             componentSlug: r['slug'],
           })),
@@ -400,6 +403,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           uniqColumns: ['slug'],
           scope,
           upsertOnly: opts.upsertOnly,
+          maxDeleteShare: opts.maxDeleteShare,
           beforeDelete: cascadeHealth(tx, (r) => ({ targetSlug: r['slug'] })),
         }).sync(
           list.map((t) => ({
@@ -419,6 +423,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           uniqColumns: ['username'],
           scope,
           upsertOnly: opts.upsertOnly,
+          maxDeleteShare: opts.maxDeleteShare,
         }).sync(
           [...new Map(list.map((u) => [u.username, u])).values()].map((u) => ({
             username: u.username,
@@ -444,6 +449,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           uniqColumns: ['key'],
           scope,
           upsertOnly: opts.upsertOnly,
+          maxDeleteShare: opts.maxDeleteShare,
         }).sync(
           list.map((r) => ({
             key: r.key,
@@ -468,6 +474,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
           uniqColumns: ['componentSlug', 'version'],
           scope,
           upsertOnly: opts.upsertOnly,
+          maxDeleteShare: opts.maxDeleteShare,
           prepare: earliestBuiltAt,
           beforeDelete: cascadeHealth(tx, (r) => ({
             componentSlug: r['componentSlug'],
@@ -544,6 +551,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         uniqColumns: ['componentSlug', 'targetSlug'],
         scope,
         upsertOnly: opts.upsertOnly,
+        maxDeleteShare: opts.maxDeleteShare,
         beforeDelete: (t, deleted) =>
           deleteHealthOf(t, deleted as unknown as Array<Pair>),
       }).sync(
@@ -589,6 +597,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         uniqColumns: ['componentSlug', 'targetSlug'],
         scope,
         upsertOnly: opts.upsertOnly,
+        maxDeleteShare: opts.maxDeleteShare,
       }).sync(
         lastPerPair(list).map((h) => ({
           componentSlug: h.componentSlug,
@@ -615,6 +624,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         uniqColumns: ['appSlug', 'envSlug'],
         scope,
         upsertOnly: opts.upsertOnly,
+        maxDeleteShare: opts.maxDeleteShare,
       }).sync(
         [
           ...new Map(
@@ -663,6 +673,7 @@ export function createCatalog(prisma: PrismaClient): Catalog {
         uniqColumns: ['componentSlug', 'targetSlug'],
         scope,
         upsertOnly: opts.upsertOnly,
+        maxDeleteShare: opts.maxDeleteShare,
       }).sync(
         lastPerPair(list).map((a) => ({
           componentSlug: a.componentSlug,

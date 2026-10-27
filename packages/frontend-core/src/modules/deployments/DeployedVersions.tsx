@@ -16,6 +16,7 @@ import { appSlugFromJumpSlug } from '~/util/route-utils'
 import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { useNow } from '~/util/useNow'
 import { useRecordOpen } from '~/modules/usage/recordUsage'
+import { useAttention } from '~/util/useAttention'
 import { AttemptDialog, AttemptLine } from './DeployAttempt'
 import { ChangeRequestCell } from './ChangeRequest'
 import type { Attempt } from './DeployAttempt'
@@ -60,6 +61,9 @@ const failureWords = ({ reason, message }: NonNullable<Freshness['failed']>) =>
  * asked for again: what the line shows never waits on a lost push.
  */
 const READING_RECHECK_MS = 20_000
+
+/** A stale line someone is looking at, and nothing checking it: asked again this soon. */
+const STALE_RECHECK_MS = 3_000
 
 /** How long a Version counts as up to date without `ui.upToDateFreshnessMs`. */
 const UP_TO_DATE_MS = 30_000
@@ -516,6 +520,9 @@ export function DeployedVersions({
   const bootstrap = useBootstrapConfig()
   useRecordOpen(appSlug || undefined, envSlug)
   const upToDateMs = bootstrap.ui?.upToDateFreshnessMs ?? UP_TO_DATE_MS
+  // Checks follow attention: while the User is idle (or the tab hidden) the
+  // line may go stale with no ring; the next activity checks it again.
+  const attentive = useAttention()
   const { data, error, failureCount, failureReason, refetch } = useQuery({
     ...pairFacetQuery(appSlug, envSlug ?? '', 'deployment'),
     enabled: appSlug !== '' && envSlug !== undefined,
@@ -526,7 +533,7 @@ export function DeployedVersions({
     refetchInterval: (q) =>
       q.state.status === 'error'
         ? FAILED_RETRY_MS
-        : q.state.data?.freshness
+        : q.state.data?.freshness && attentive
           ? upToDateMs / 2
           : false,
   })
@@ -546,6 +553,16 @@ export function DeployedVersions({
   const attemptRef = useRef<HTMLButtonElement>(null)
   const users = useProfiles(data, opened)
   const now = useNow()
+  // Stale, someone looking, and nothing being checked: a check is asked for
+  // within seconds, never left to the next interval.
+  const checkedAt = data?.freshness?.checkedAt
+  const staleUnchecked =
+    !!checkedAt && !readingKey && now - Date.parse(checkedAt) >= upToDateMs
+  useEffect(() => {
+    if (!attentive || !staleUnchecked) return
+    const t = setTimeout(() => void refetch(), STALE_RECHECK_MS)
+    return () => clearTimeout(t)
+  }, [attentive, staleUnchecked, checkedAt, refetch])
   const leadComponent =
     data?.components.find((c) => c.lead) ?? data?.components[0]
   const appDisplayName = bootstrap.apps[appSlug]?.displayName ?? appSlug
@@ -661,6 +678,10 @@ export function DeployedVersions({
           onClick={() => {
             setDetailsOpened(true)
             dialogRef.current?.showModal()
+          }}
+          // Hovering a stale line is the strongest sign someone wants it now.
+          onMouseEnter={() => {
+            if (staleUnchecked) void refetch()
           }}
           title={fullVersionText}
         >

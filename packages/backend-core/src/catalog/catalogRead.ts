@@ -467,10 +467,11 @@ export function createCatalogReads(prisma: PrismaClient) {
         byKeys(
           [
             ...commitKeys,
-            ...(q.builds ?? []).map(({ repositoryKey, buildId }) => ({
-              repositoryKey,
-              name: { endsWith: buildId },
-            })),
+            // A tag named after a build: `<anything>-<id>`, or the id alone.
+            ...(q.builds ?? []).flatMap(({ repositoryKey, buildId }) => [
+              { repositoryKey, name: { endsWith: `-${buildId}` } },
+              { repositoryKey, name: buildId },
+            ]),
           ],
           (part) => prisma.catalogTag.findMany({ where: { OR: part } }),
         ),

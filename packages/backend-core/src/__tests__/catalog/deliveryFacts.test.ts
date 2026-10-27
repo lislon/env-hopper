@@ -79,6 +79,49 @@ describe.skipIf(!prisma)('delivery facts', () => {
     expect(builds).toEqual([{ ...build10, outcome: 'succeeded', finishedAt }])
   })
 
+  it('a change request read while open gets its merge filled once it is merged', async () => {
+    const open = {
+      repositoryKey: repo,
+      number: '14',
+      title: 'Add cart',
+      sourceBranch: 'SHOP-7-cart',
+    }
+    const mergedAt = new Date('2026-01-02T09:00:00Z')
+    await catalog!.writeFacts({ changeRequests: [open] })
+    await catalog!.writeFacts({
+      changeRequests: [
+        {
+          ...open,
+          title: 'Renamed later',
+          mergeSha: 'm1',
+          mergedAt,
+          mergedBy: 'alice',
+        },
+      ],
+    })
+
+    const { changeRequests } = await catalog!.readFacts({
+      changeRequests: [{ repositoryKey: repo, number: '14' }],
+    })
+    expect(changeRequests).toEqual([
+      { ...open, mergeSha: 'm1', mergedAt, mergedBy: 'alice' },
+    ])
+  })
+
+  it('a tag named after a build matches its whole id, not a longer one ending in it', async () => {
+    await catalog!.writeFacts({
+      tags: [
+        { repositoryKey: repo, name: 'main-10', sha: 'c9' },
+        { repositoryKey: repo, name: 'x-110', sha: 'c8' },
+        { repositoryKey: repo, name: 'v1.10', sha: 'c7' },
+      ],
+    })
+    const { tags } = await catalog!.readFacts({
+      builds: [{ repositoryKey: repo, buildId: '10' }],
+    })
+    expect(tags.map((t) => t.name)).toEqual(['main-10'])
+  })
+
   it('reads a build with its commit, tags at it or named after it, its change request and declared versions', async () => {
     await catalog!.writeFacts({
       repositories: [{ key: repo }],

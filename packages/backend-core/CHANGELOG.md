@@ -1,5 +1,17 @@
 # @env-hopper/backend-core
 
+## 2.3.0
+
+### Minor Changes
+
+- [#415](https://github.com/lislon/env-hopper/pull/415) [`8068539`](https://github.com/lislon/env-hopper/commit/80685396aab7b2f67c3356500369425aa418c2e2) Thanks [@lislon](https://github.com/lislon)! - Delivery facts: Repository, Commit, Build, Tag, Change Request, Work Item and Declared Version, written once by an Entity Provider (`writeFacts`) and read back (`readFacts`), and the Build an Artifact was made by. source-gitlab maps pipelines, tags, releases and merge requests onto them and lists tags and releases incrementally.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @env-hopper/shared-core@2.3.0
+  - @env-hopper/table-sync@2.3.0
+
 ## 2.2.0
 
 ### Minor Changes

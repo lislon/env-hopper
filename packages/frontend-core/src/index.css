@@ -874,3 +874,21 @@
   font-size: 11.5px;
   opacity: 0.6;
 }
+
+/* The diagnostics panel (staging and previews only). */
+.eh-diagnostics {
+  margin-top: 12px;
+  max-width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  opacity: 0.85;
+}
+.eh-diagnostics button {
+  margin-left: 8px;
+  text-decoration: underline;
+}
+.eh-diagnostics ol {
+  margin: 4px 0 8px;
+}

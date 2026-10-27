@@ -242,6 +242,8 @@ export function createBackend(fixture: Fixture): MockBackend {
       lateResolvableParams: [],
     },
     authConfig: { adminGroups: ['env_hopper_ui_super_admins'] },
+    // The diagnostics panel's backend checks: none in a fixture.
+    diagnostics: [],
   }
   const streamed = streamedQueries(
     { bootstrap, resourceJumps: resourceJumpsData },

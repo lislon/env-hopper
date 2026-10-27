@@ -15,6 +15,8 @@ import { pairsWatch } from './pairsWatch'
 import type { TrackedData } from '@trpc/server/unstable-core-do-not-import'
 import type { PairChunk } from './pairDetails'
 import { publicProcedure, router, t } from './trpcSetup'
+import { TRPCError } from '@trpc/server'
+import { publicMessage } from '../catalog/publicMessage'
 import type { EhTrpcContext } from './ehTrpcContext'
 
 /**
@@ -152,6 +154,18 @@ export function createTrpcRouter(auth?: BetterAuth) {
               : description,
         }
       }),
+
+    /**
+     * The backend's recent checks for the diagnostics panel; NOT_FOUND
+     * (404) unless the bootstrap's `ui.diagnostics` is on.
+     */
+    diagnostics: publicProcedure.query(async ({ ctx }) => {
+      const backend = ctx.companySpecificBackend
+      const bootstrap = await backend.getBootstrapData()
+      if (!bootstrap.ui?.diagnostics) throw new TRPCError({ code: 'NOT_FOUND' })
+      const events = (await backend.getDiagnostics?.()) ?? []
+      return events.map((e) => ({ ...e, detail: publicMessage(e.detail) }))
+    }),
 
     /** What a User does, kept, and the AppEnv it shows warmed (ADR 0006). */
     usage: router({

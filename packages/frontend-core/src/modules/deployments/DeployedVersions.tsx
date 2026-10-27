@@ -17,6 +17,7 @@ import { useBootstrapConfig } from '~/modules/config/BootstrapConfigContext'
 import { useNow } from '~/util/useNow'
 import { useRecordOpen } from '~/modules/usage/recordUsage'
 import { useAttention } from '~/util/useAttention'
+import { DiagnosticsPanel } from '~/modules/diagnostics/DiagnosticsPanel'
 import { AttemptDialog, AttemptLine } from './DeployAttempt'
 import { ChangeRequestCell } from './ChangeRequest'
 import type { Attempt } from './DeployAttempt'
@@ -792,6 +793,7 @@ export function DeployedVersions({
         freshness={data.freshness}
         now={now}
       />
+      <DiagnosticsPanel app={appSlug} env={envSlug} />
       {lead && attempt && (
         <AttemptDialog
           dialogRef={attemptDialogRef}

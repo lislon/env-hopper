@@ -32,4 +32,18 @@ export interface EhBackendCompanySpecificBackend {
     appEnvs: Array<{ appSlug: string; envSlug: string }>,
     reason: string,
   ) => void
+  /**
+   * What the backend did lately for the diagnostics panel: checks asked,
+   * run, run beside a full run, or failed, and why. Served only while the
+   * bootstrap's `ui.diagnostics` is on.
+   */
+  getDiagnostics?: () => Promise<Array<DiagnosticEvent>>
+}
+
+/** One thing the backend did, for the diagnostics panel. */
+export interface DiagnosticEvent {
+  at: string
+  kind: string
+  /** Made safe for a browser before it is served. */
+  detail: string
 }

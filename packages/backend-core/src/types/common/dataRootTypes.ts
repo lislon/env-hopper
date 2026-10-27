@@ -37,6 +37,8 @@ export interface BootstrapConfigData {
     upToDateFreshnessMs?: number
     /** A Work Item's page, with `{{key}}` where its key goes (e.g. an issue tracker's). */
     workItemUrl?: string
+    /** A diagnostics panel may open (`?debug=1`, Ctrl+Shift+D); off unless the deployment turns it on. */
+    diagnostics?: boolean
   }
 }
 

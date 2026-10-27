@@ -10,6 +10,7 @@ import type {
 } from '@env-hopper/backend-core'
 import type { TRPCClient } from '@trpc/client'
 import { getTrpcFromMeta } from '~/util/reactQueryUtils'
+import { recordPageEvent } from '~/modules/diagnostics/diagnosticsLog'
 
 /** What the cache holds per pair facet: the deployment expanded, as the UI reads it. */
 interface PairFacets {
@@ -94,7 +95,13 @@ async function intoCache(
   {
     signal,
     keepCached = false,
-  }: { signal?: AbortSignal; keepCached?: boolean } = {},
+    origin = 'pair',
+  }: {
+    signal?: AbortSignal
+    keepCached?: boolean
+    /** Where the stream came from, for the diagnostics panel. */
+    origin?: 'pair' | 'slices' | 'push'
+  } = {},
 ): Promise<Set<string>> {
   const failed = new Set<string>()
   const components = new Map<string, Array<WireComponent>>()
@@ -116,6 +123,11 @@ async function intoCache(
     } else if (c.facet === 'meta') meta = c.data
     else if (c.facet === 'components') components.set(c.app, c.data)
     else if (c.facet === 'deployment') {
+      recordPageEvent(`${origin}-deployment`, {
+        app: c.app,
+        env: c.env,
+        freshness: c.data.freshness ?? null,
+      })
       put(
         pairFacetKey(c.app, c.env, 'deployment'),
         expandDeployment(c.data, components.get(c.app) ?? [], users, meta),
@@ -173,6 +185,7 @@ export function pairFacetQuery<TFacet extends PairFacetName>(
         }, PAIR_FACET_TIMEOUT_MS)
       })
       try {
+        recordPageEvent('pair-fetch', { app, env, facet })
         const load = (async () => {
           const stream = await getTrpcFromMeta(ctx).pair.query(
             { appSlug: app, envSlug: env },
@@ -208,6 +221,7 @@ export async function loadSlices(
   await intoCache(client, await trpc.slices.query(input, { signal }), {
     signal,
     keepCached: true,
+    origin: 'slices',
   })
 }
 
@@ -216,7 +230,7 @@ export async function loadSlices(
  * cached, so it replaces each pair facet it carries.
  */
 export async function applyPush(client: QueryClient, chunks: Array<object>) {
-  await intoCache(client, chunks)
+  await intoCache(client, chunks, { origin: 'push' })
 }
 
 type Profile = PairDeployment['users'][string]

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { recordPageEvent } from '~/modules/diagnostics/diagnosticsLog'
 
 /** No activity for this long: the User is idle, and on-screen checks pause. */
 export const IDLE_MS = 2 * 60_000
@@ -24,6 +25,10 @@ const visible = () =>
 function set(next: boolean) {
   if (next === active) return
   active = next
+  recordPageEvent('attention', {
+    active,
+    lastActivity: new Date(lastActivity).toISOString(),
+  })
   for (const l of listeners) l()
 }
 

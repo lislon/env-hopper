@@ -263,7 +263,12 @@ export function tableSyncPrisma<
         }).sync(prepared)
 
         return refusedDeletes !== undefined
-          ? { ...result, counts: { ...result.counts, refusedDeletes } }
+          ? // Nothing was deleted: no count, and no removal for the history.
+            {
+              ...result,
+              deleted: [],
+              counts: { ...result.counts, deleted: 0, refusedDeletes },
+            }
           : result
       })
     },

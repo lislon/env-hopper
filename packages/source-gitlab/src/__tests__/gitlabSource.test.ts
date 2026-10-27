@@ -141,7 +141,26 @@ const mergeRequest14 = {
   web_url: 'https://git.example.com/g/p/-/merge_requests/14',
   merge_commit_sha: 'cm14',
   squash_commit_sha: null,
+  merged_at: '2026-01-05T10:00:00Z',
+  author: { username: 'jdoe', name: 'Jo Doe' },
+  merged_by: { username: 'asmith', name: 'Al Smith' },
 }
+
+// Five tags and their releases, newest first, served two per page.
+const tags8 = ['t5', 't4', 't3', 't2', 't1'].map((name, i) => ({
+  name,
+  commit: { id: `c-${name}`, created_at: `2026-01-0${5 - i}T00:00:00Z` },
+  // Only an annotated tag has a time of its own.
+  created_at: name === 't5' ? '2026-01-06T00:00:00Z' : null,
+}))
+const releases8 = tags8.map((t) => ({
+  name: `Shop ${t.name}`,
+  tag_name: t.name,
+  commit: { id: t.commit.id },
+  released_at: t.commit.created_at,
+}))
+/** The query strings each paged list of project 8 was asked with. */
+const seen8: Record<string, Array<URLSearchParams>> = {}
 
 let base = ''
 let sawToken = ''
@@ -165,6 +184,19 @@ const server = createServer((req, res) => {
     if (page === 1 && data === successDeployments)
       res.setHeader('x-next-page', '2')
     res.end(JSON.stringify(slice))
+    return
+  }
+
+  const list8 = {
+    '/api/v4/projects/8/repository/tags': tags8,
+    '/api/v4/projects/8/releases': releases8,
+  }[url.pathname]
+  if (list8) {
+    ;(seen8[url.pathname] ??= []).push(url.searchParams)
+    const page = Number(url.searchParams.get('page'))
+    const per = Number(url.searchParams.get('per_page'))
+    if (page * per < list8.length) res.setHeader('x-next-page', `${page + 1}`)
+    res.end(JSON.stringify(list8.slice((page - 1) * per, page * per)))
     return
   }
 
@@ -198,8 +230,11 @@ const server = createServer((req, res) => {
         tag: true,
         sha: '6230d905aa',
         source: 'api',
+        status: 'success',
         created_at: '2026-10-12T12:09:00Z',
+        finished_at: '2026-10-12T12:30:00Z',
         web_url: 'https://git.example.com/g/p/-/pipelines/3553947',
+        user: { username: 'jdoe', name: 'Jo Doe' },
       }),
     )
     return
@@ -603,7 +638,22 @@ describe('gitlab source single environment', () => {
       webUrl: 'https://git.example.com/g/p/-/merge_requests/14',
       mergeCommitSha: 'cm14',
       squashCommitSha: null,
+      mergedAt: '2026-01-05T10:00:00Z',
+      author: 'jdoe',
+      mergedBy: 'asmith',
     }
+
+    it('merge requests carry mergedAt, author and mergedBy', async () => {
+      const { mergedAt, author, mergedBy } = (await src().getMergeRequest(
+        7,
+        14,
+      ))!
+      expect({ mergedAt, author, mergedBy }).toEqual({
+        mergedAt: '2026-01-05T10:00:00Z',
+        author: 'jdoe',
+        mergedBy: 'asmith',
+      })
+    })
 
     it('reads one merge request; one GitLab does not know is null', async () => {
       expect({
@@ -642,10 +692,23 @@ describe('gitlab source pipeline', () => {
         tag: true,
         sha: '6230d905aa',
         source: 'api',
+        status: 'success',
         createdAt: '2026-10-12T12:09:00Z',
+        finishedAt: '2026-10-12T12:30:00Z',
         webUrl: 'https://git.example.com/g/p/-/pipelines/3553947',
+        user: 'jdoe',
       },
       missing: null,
+    })
+  })
+
+  it('getPipeline carries status, finishedAt and user', async () => {
+    const src = createGitlabSource({ baseUrl: base, token: 't' })
+    const { status, finishedAt, user } = (await src.getPipeline(7, 3553947))!
+    expect({ status, finishedAt, user }).toEqual({
+      status: 'success',
+      finishedAt: '2026-10-12T12:30:00Z',
+      user: 'jdoe',
     })
   })
 
@@ -660,6 +723,67 @@ describe('gitlab source pipeline', () => {
       tags: [{ name: 'release-shop-1.68.0-1234567', commitSha: 'c9' }],
       file: '<project><version>1.68.0</version></project>',
       missing: null,
+    })
+  })
+})
+
+describe('gitlab source incremental tag and release lists', () => {
+  const src = () =>
+    createGitlabSource({ baseUrl: base, token: 't', perPage: 2 })
+  const tagsPath = '/api/v4/projects/8/repository/tags'
+  const releasesPath = '/api/v4/projects/8/releases'
+  const pagesRead = (path: string) =>
+    (seen8[path] ?? []).map((q) => q.get('page'))
+
+  it('listTags stops before the stored name, newest first', async () => {
+    seen8[tagsPath] = []
+    const tags = await src().listTags(8, { stopAt: 't3' })
+
+    expect({ tags, pages: pagesRead(tagsPath) }).toEqual({
+      tags: [
+        {
+          projectId: 8,
+          name: 't5',
+          commitSha: 'c-t5',
+          createdAt: '2026-01-06T00:00:00Z',
+        },
+        {
+          projectId: 8,
+          name: 't4',
+          commitSha: 'c-t4',
+          createdAt: '2026-01-04T00:00:00Z',
+        },
+      ],
+      pages: ['1', '2'],
+    })
+    expect(seen8[tagsPath][0]!.get('order_by')).toBe('updated')
+    expect(seen8[tagsPath][0]!.get('sort')).toBe('desc')
+  })
+
+  it('listTags reads at most maxPages without stopAt', async () => {
+    seen8[tagsPath] = []
+    const tags = await src().listTags(8, { maxPages: 2 })
+
+    expect({
+      names: tags.map((t) => t.name),
+      pages: pagesRead(tagsPath),
+    }).toEqual({ names: ['t5', 't4', 't3', 't2'], pages: ['1', '2'] })
+  })
+
+  it('listReleases with stopAt pages by released_at until the stored tag', async () => {
+    seen8[releasesPath] = []
+    const releases = await src().listReleases(8, { stopAt: 't2' })
+
+    expect({
+      tags: releases.map((r) => r.tagName),
+      pages: pagesRead(releasesPath),
+      order: seen8[releasesPath].map(
+        (q) => `${q.get('order_by')} ${q.get('sort')}`,
+      ),
+    }).toEqual({
+      tags: ['t5', 't4', 't3'],
+      pages: ['1', '2'],
+      order: ['released_at desc', 'released_at desc'],
     })
   })
 })

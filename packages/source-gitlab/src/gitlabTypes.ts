@@ -78,6 +78,18 @@ export interface GitlabMergeRequestRecord {
   /** The merge commit it made on the target branch; null when none (yet, or fast-forward). */
   mergeCommitSha: string | null
   squashCommitSha: string | null
+  mergedAt: string | null
+  /** Usernames. */
+  author: string | null
+  mergedBy: string | null
+}
+
+export interface GitlabTagRecord {
+  projectId: number
+  name: string
+  commitSha: string
+  /** The tag's own time, else its commit's. */
+  createdAt: string | null
 }
 
 export interface GitlabCommitRecord {
@@ -95,8 +107,14 @@ export interface GitlabPipelineRecord {
   sha: string
   /** What started it: `push`, `merge_request_event`, `api`, `parent_pipeline`, … */
   source: string
+  /** `running`, `success`, `failed`, `canceled`, … */
+  status: string
   createdAt: string | null
+  /** null while it runs. */
+  finishedAt: string | null
   webUrl: string | null
+  /** The username of who started it. */
+  user: string | null
 }
 
 export interface RawPipeline {
@@ -105,8 +123,17 @@ export interface RawPipeline {
   tag?: boolean
   sha: string
   source?: string
+  status?: string
   created_at?: string
+  finished_at?: string | null
   web_url?: string
+  user?: RawUser | null
+}
+
+export interface RawTag {
+  name: string
+  commit?: { id: string; created_at?: string | null }
+  created_at?: string | null
 }
 
 export interface GitlabSource {
@@ -136,10 +163,20 @@ export interface GitlabSource {
     environment: GitlabEnvironmentRecord
     lastDeployment: GitlabDeploymentRecord | null
   }>
+  /**
+   * Without `stopAt`: one request of at most `limit`. With it: newest
+   * released first, stopping before the release of tag `stopAt`; at most
+   * `maxPages` (default 3) pages.
+   */
   listReleases: (
     projectId: number,
-    opts?: { limit?: number },
+    opts?: { limit?: number; stopAt?: string; maxPages?: number },
   ) => Promise<Array<GitlabReleaseRecord>>
+  /** Newest first (order_by=updated), stopping before `stopAt`; at most `maxPages` (default 3) pages. */
+  listTags: (
+    projectId: number,
+    opts?: { stopAt?: string; maxPages?: number },
+  ) => Promise<Array<GitlabTagRecord>>
   /**
    * The tags whose name matches `search` (GitLab's syntax: `^x` begins,
    * `x$` ends), newest first.
@@ -231,6 +268,9 @@ export interface RawMergeRequest {
   web_url: string
   merge_commit_sha?: string | null
   squash_commit_sha?: string | null
+  merged_at?: string | null
+  author?: RawUser | null
+  merged_by?: RawUser | null
 }
 
 export interface RawCommit {

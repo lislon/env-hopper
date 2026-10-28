@@ -26,6 +26,26 @@ export interface EhAppLinkType {
   urlDecoded: string
 }
 
+/**
+ * What the credentials slot shows on an environment that shares no login — one
+ * whose app override marks `credentials` unavailable: where to get your own
+ * access instead.
+ *
+ * Every text is a template over the same placeholders as `EhAppLinkType`, plus
+ * `{{app.displayName}}`. The card is not rendered while `urlDecoded` still has
+ * an unresolved placeholder, so an app without the value the url names gets no
+ * card, the same rule the link list follows.
+ */
+export interface EhAccessRequestCard {
+  /** Matches `EhIconSvg.iconId`. An unknown id renders the card without an icon. */
+  iconId: string
+  title: string
+  subtitle?: string
+  /** The call to action under the title, e.g. `How to request access →`. */
+  cta: string
+  urlDecoded: string
+}
+
 /** An inline SVG, injected as markup so it inherits the surrounding colour. */
 export interface EhIconSvg {
   iconId: string
@@ -67,5 +87,7 @@ export interface EhCustomizationData {
   /** Extra about-dialog slides, raw HTML, appended after the built-in ones. */
   slidesHtml?: Array<string>
   appLinkTypes?: Array<EhAppLinkType>
+  /** Replaces the credentials widget where the environment shares no login. */
+  accessRequestCard?: EhAccessRequestCard
   icons?: Array<EhIconSvg>
 }

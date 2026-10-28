@@ -43,7 +43,10 @@ const backend = (deployments?: Record<string, FixtureDeployments>) =>
           username: 'booking_ro',
           password: 'pw-db',
         },
-        meta: { git: 'https://git.example.test/booking' },
+        meta: {
+          git: 'https://git.example.test/booking',
+          accessSlug: 'booking',
+        },
       },
       { slug: 'parts-inventory', resourceJumps: '1-pager' },
     ],
@@ -83,6 +86,13 @@ const backend = (deployments?: Record<string, FixtureDeployments>) =>
           urlDecoded: '{{app.meta.git}}',
         },
       ],
+      accessRequestCard: {
+        iconId: 'git',
+        title: 'Need access to {{app.displayName}}?',
+        subtitle: 'Roles and approver',
+        cta: 'How to request access',
+        urlDecoded: 'https://access.example.test/{{app.meta.accessSlug}}',
+      },
       icons: [{ iconId: 'git', svg: '<svg />' }],
     },
   })
@@ -125,6 +135,16 @@ const appLinks = (app: AppHandle) =>
   ).map(
     (a) => [a.textContent.trim(), a.getAttribute('href')] as [string, string],
   )
+
+/** The access-request card as `[text, href]`, or null when it is not shown. */
+const accessCard = (app: AppHandle) => {
+  const card = app.container.querySelector<HTMLAnchorElement>(
+    '[data-testid="widgets-panel"] [data-testid="access-request-card"]',
+  )
+  return card
+    ? ([card.textContent.trim(), card.getAttribute('href')] as const)
+    : null
+}
 
 const panelTabs = (app: AppHandle) =>
   Array.from(
@@ -374,6 +394,45 @@ describe('the widgets beside the form', () => {
     expect(panelFields(app)).not.toContain('text|booking-eu@example.test')
     expect(panelFields(app).some((f) => f.includes('jdbc:'))).toBe(false)
     expect(panelTabs(app)).toEqual(['pods', 'deployments', 'ns'])
+  })
+
+  /*
+   * The access-request card stands in for the shared login where an environment
+   * shares none. Asserted in both directions, like the link list: where it must
+   * show, and the two ways it must stay away.
+   */
+  test('offers a way to request access where the environment shares no login', async () => {
+    const app = await renderApp({ server, backend: backend() })
+
+    await choose(app, 'Environment', 'prod')
+    await choose(app, 'Application', 'Service Booking')
+
+    expect(accessCard(app)).toEqual([
+      'Need access to Service Booking?Roles and approverHow to request access',
+      'https://access.example.test/booking',
+    ])
+    expect(
+      app.container.querySelector('[data-testid="access-request-card"]'),
+    ).toHaveAttribute('target', '_blank')
+  })
+
+  test('shows the shared login, not the access card, where the environment has one', async () => {
+    const app = await renderApp({ server, backend: backend() })
+
+    await choose(app, 'Environment', 'dev')
+    await choose(app, 'Application', 'Service Booking')
+
+    expect(panelFields(app)).toContain('text|booking-eu@example.test')
+    expect(accessCard(app)).toBeNull()
+  })
+
+  test('leaves the access card out when its url names something the app lacks', async () => {
+    const app = await renderApp({ server, backend: backend() })
+
+    await choose(app, 'Environment', 'prod')
+    await choose(app, 'Application', 'Parts Inventory')
+
+    expect(accessCard(app)).toBeNull()
   })
 
   test('uses the app meta an environment restates, not the app default', async () => {

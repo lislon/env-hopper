@@ -27,6 +27,15 @@ describe('interpolateWidgetStr', () => {
     ).toBe('Hello Alice, your ID is 123 and link is http://example.com.')
   })
 
+  it('resolves the app display name', () => {
+    const env: EhEnv = { id: '123' }
+    const app = { meta: {}, appTitle: 'Service Booking' }
+
+    expect(
+      interpolateWidgetStr('Need access to {{app.displayName}}?', env, app),
+    ).toBe('Need access to Service Booking?')
+  })
+
   it('leaves an unresolved placeholder intact', () => {
     const env: EhEnv = { id: '123', meta: { name: 'Alice' } }
     const app = { meta: { url: 'http://example.com' } }

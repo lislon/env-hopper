@@ -1,5 +1,17 @@
 # @env-hopper/backend-core
 
+## 2.4.0
+
+### Minor Changes
+
+- [#416](https://github.com/lislon/env-hopper/pull/416) [`da3bd99`](https://github.com/lislon/env-hopper/commit/da3bd9969a96af16a72547d23f0f7db43641f7e9) Thanks [@lislon](https://github.com/lislon)! - Add an optional access-request card: on an environment that shares no login, the credentials slot shows where to request your own access, configured by `customization.accessRequestCard`. Widget and link templates can use `{{app.displayName}}`.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @env-hopper/shared-core@2.4.0
+  - @env-hopper/table-sync@2.4.0
+
 ## 2.3.0
 
 ### Minor Changes

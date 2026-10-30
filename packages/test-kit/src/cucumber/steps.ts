@@ -17,13 +17,15 @@
 import { waitFor } from '@testing-library/react'
 import { setupServer } from 'msw/node'
 import { Given, Then, When } from 'quickpickle'
+import type { DataTable } from 'quickpickle'
 import { expect } from 'vitest'
 import { setUiSkin } from '@env-hopper/frontend-core'
 import { renderApp } from '../harness/renderApp'
 import { createBackend } from '../mock-backend/createBackend'
 import { magazine } from '../mock-backend/magazines'
 import type { AppHandle } from '../harness/renderApp'
-import type { Fixture } from '../mock-backend/createBackend'
+import type { Fixture, FixtureDeployments } from '../mock-backend/createBackend'
+import type { ReleaseDate, ReleaseTrain } from '@env-hopper/backend-core'
 import type { EhSkin } from '@env-hopper/frontend-core'
 import type { SetupServer } from 'msw/node'
 
@@ -61,6 +63,7 @@ function ensureServer(): SetupServer {
 // One scenario at a time: vitest isolates per file and quickpickle runs a
 // feature's scenarios sequentially, so a module-level handle is enough.
 let current: AppHandle | null = null
+let scenarioFixture: Fixture | null = null
 
 function app(): AppHandle {
   if (!current) throw new Error('App not rendered — missing a Given step?')
@@ -92,9 +95,16 @@ async function open(
     )
   }
   setUiSkin(skin)
+  // A scenario's own copy: steps that add release trains or deployments after
+  // the app renders must not leak into the next scenario's catalog.
+  scenarioFixture = {
+    ...fixture,
+    deployments: { ...fixture.deployments },
+    releaseTrains: { ...fixture.releaseTrains },
+  }
   current = await renderApp({
     server: ensureServer(),
-    backend: createBackend(fixture),
+    backend: createBackend(scenarioFixture),
     initialLink,
   })
 }
@@ -243,3 +253,177 @@ Then(
     })
   },
 )
+
+/* Release trains beside the form. */
+
+const appSlugOf = (name: string) => name.toLowerCase().replace(/ /g, '-')
+const trainsOf = (appName: string) => {
+  const trains = scenarioFixture?.releaseTrains?.[appSlugOf(appName)]
+  if (!trains || trains === 'unreadable') {
+    throw new Error(`no release trains given for ${appName}`)
+  }
+  return trains.trains
+}
+const shownTrains = () => form().releaseTrains() ?? []
+const shownTrain = (name: string) => {
+  const train = shownTrains().find((t) => t.name === name)
+  if (!train) throw new Error(`release train ${name} is not on screen`)
+  return train
+}
+let hovered: string | null = null
+
+Given(
+  'the {string} release trains are:',
+  (_world, appName: string, table: DataTable) => {
+    const trains: Array<ReleaseTrain> = table.hashes().map((row) => {
+      const name = row['train'] ?? ''
+      const dates: Array<ReleaseDate> = [
+        row['ticket time'] && {
+          sourceName: 'Ticket',
+          date: row['ticket time'],
+        },
+        row['tracker day'] && {
+          sourceName: 'Tracker',
+          date: row['tracker day'],
+        },
+        row['notes day'] && { sourceName: 'Notes', date: row['notes day'] },
+      ].filter((d): d is ReleaseDate => !!d)
+      return {
+        id: `tracker:${name}`,
+        fullName: `${appName} ${name}`,
+        shortName: name,
+        isReleased: row['status'] === 'released',
+        releaseSystemName: 'Tracker',
+        releasePageUrl: `https://tracker.example.test/releases/${name}`,
+        releaseDates: dates,
+        instructionsTickets: row['ticket']
+          ? [
+              {
+                key: row['ticket'],
+                title: `${name} release`,
+                url: `https://tracker.example.test/browse/${row['ticket']}`,
+              },
+            ]
+          : [],
+        ...(row['notes url'] && { releaseNotesUrl: row['notes url'] }),
+      }
+    })
+    scenarioFixture!.releaseTrains![appSlugOf(appName)] = {
+      displayTimeZone: 'America/Los_Angeles',
+      trains,
+    }
+  },
+)
+
+Given(
+  'the release trains for {string} cannot be read',
+  (_world, appName: string) => {
+    scenarioFixture!.releaseTrains![appSlugOf(appName)] = 'unreadable'
+  },
+)
+
+Given(
+  '{string} of {string} already runs on {string}',
+  (_world, trainName: string, appName: string, envs: string) => {
+    const slug = appSlugOf(appName)
+    const train = trainsOf(appName).find((t) => t.shortName === trainName)
+    if (!train) throw new Error(`no release train ${trainName}`)
+    train.artifactVersion = `${trainName}-build`
+    scenarioFixture!.deployments![slug] = {
+      components: [{ slug, displayName: appName }],
+      rows: envs.split(' / ').map((env) => ({
+        env,
+        componentSlug: slug,
+        targetSlug: env,
+        version: `${trainName}-build`,
+        aliases: [],
+        source: 'ci',
+        buildUrl: `https://ci.example.test/builds/${trainName}`,
+      })) as FixtureDeployments['rows'],
+    }
+  },
+)
+
+When('I hover the {string} release train', async (_world, name: string) => {
+  await waitFor(() => shownTrain(name))
+  await form().hoverReleaseTrain(name)
+  hovered = name
+})
+
+Then('the release trains shown are {string}', async (_world, names: string) => {
+  await waitFor(() => {
+    expect(shownTrains().map((t) => t.name)).toEqual(names.split(' / '))
+  })
+})
+
+Then(
+  '{string} is marked {string}',
+  async (_world, name: string, tag: string) => {
+    await waitFor(() => expect(shownTrain(name).tags).toContain(tag))
+  },
+)
+
+Then('no train is marked {string}', async (_world, tag: string) => {
+  await waitFor(() => expect(shownTrains().length).toBeGreaterThan(0))
+  expect(shownTrains().flatMap((t) => t.tags)).not.toContain(tag)
+})
+
+Then(
+  'the "now" line sits between {string} and {string}',
+  async (_world, before: string, after: string) => {
+    await waitFor(() => {
+      const names = shownTrains().map((t) => t.name)
+      expect(names.indexOf(after)).toBe(names.indexOf(before) + 1)
+      expect(shownTrain(after).nowLineBefore).toBe(true)
+    })
+  },
+)
+
+Then(
+  '{string} goes out {string}',
+  async (_world, name: string, date: string) => {
+    await waitFor(() => expect(shownTrain(name).date).toBe(date))
+  },
+)
+
+Then(
+  '{string} is flagged {string}',
+  async (_world, name: string, _why: string) => {
+    await waitFor(() => expect(shownTrain(name).flagged).toBe(true))
+  },
+)
+
+Then('{string} is not flagged', async (_world, name: string) => {
+  await waitFor(() => expect(shownTrain(name).flagged).toBe(false))
+})
+
+Then('I am shown no release trains at all', async (_world) => {
+  // The rest of the panel has rendered, so an absent widget is a real answer.
+  await waitFor(() => expect(form().links().length).toBeGreaterThan(0))
+  expect(form().releaseTrains()).toBeNull()
+})
+
+Then('its card says {string}', async (_world, text: string) => {
+  await waitFor(() => expect(shownTrain(hovered!).cardText).toContain(text))
+})
+
+Then(
+  'its card links {string} to {string}',
+  async (_world, title: string, url: string) => {
+    await waitFor(() =>
+      expect(shownTrain(hovered!).cardLinks).toContainEqual({ title, url }),
+    )
+  },
+)
+
+Then('its card says it runs on {string}', async (_world, lines: string) => {
+  await waitFor(() =>
+    expect(shownTrain(hovered!).cardRunningOn).toEqual(lines.split(' / ')),
+  )
+})
+
+Then('its card highlights {string}', async (_world, env: string) => {
+  await waitFor(() =>
+    expect(shownTrain(hovered!).cardHighlighted).toEqual([env]),
+  )
+})

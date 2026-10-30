@@ -17,6 +17,7 @@ import type {
   EhEnvType,
   EhMetaDictionary,
   PairDeployment,
+  ReleaseTrains,
   ResourceJump,
   ResourceJumpGroup,
   ResourceJumpsData,
@@ -51,6 +52,7 @@ type StreamedKeys =
   | 'slices'
   | 'users'
   | 'changeRequestDetails'
+  | 'releaseTrains'
   | 'pairsWatch'
 
 export type BackendData = {
@@ -126,6 +128,8 @@ export interface Fixture {
   ui?: BootstrapConfigData['ui']
   /** What the deployment catalog knows, per App slug; absent means nothing. */
   deployments?: Record<string, FixtureDeployments>
+  /** Each App's Release Trains as its trackers say; read on every request. */
+  releaseTrains?: Record<string, ReleaseTrains | 'unreadable'>
 }
 
 /** An App's Components and where each runs, a row per Environment. */
@@ -248,6 +252,7 @@ export function createBackend(fixture: Fixture): MockBackend {
   const streamed = streamedQueries(
     { bootstrap, resourceJumps: resourceJumpsData },
     fixture.deployments ?? {},
+    fixture,
   )
 
   let overrideBackendNetworkFn: OverrideBackendNetworkFn | null = null
@@ -302,11 +307,12 @@ export function createBackend(fixture: Fixture): MockBackend {
  * one path, `pair,slices`.
  */
 /** The procedures the real router answers here; a batch joins them with `,`. */
-const STREAMED = 'pair|slices|users|changeRequestDetails'
+const STREAMED = 'pair|slices|users|changeRequestDetails|releaseTrains'
 
 function streamedQueries(
   config: { bootstrap: BootstrapConfigData; resourceJumps: ResourceJumpsData },
   deployments: Record<string, FixtureDeployments>,
+  fixture: Pick<Fixture, 'releaseTrains'>,
 ) {
   const catalog = {
     getPairDeployments: ({ appSlugs, envSlugs }) => {
@@ -364,6 +370,12 @@ function streamedQueries(
           `${componentSlug}/${id}`
         ]
       return Promise.resolve(description === undefined ? null : { description })
+    },
+    getReleaseTrains: ({ appSlug }) => {
+      const trains = fixture.releaseTrains?.[appSlug]
+      return trains === 'unreadable'
+        ? Promise.reject(new Error('tracker unreachable'))
+        : Promise.resolve(trains ?? null)
     },
   } as EhBackendCompanySpecificBackend
   const router = createTrpcRouter()

@@ -4,6 +4,7 @@ import type {
   ResourceJumpsExtendedData,
 } from '../common/dataRootTypes'
 import type { RenameRule, RenameRuleParams } from './api'
+import type { ReleaseTrains } from './releaseTrains'
 
 /**
  * Every request asks again, and `pair` and `slices` ask too: return the same
@@ -24,6 +25,13 @@ export interface EhBackendCompanySpecificBackend {
     componentSlug: string
     id: string
   }) => Promise<{ description: string } | null>
+  /**
+   * The App's Release Trains as its trackers say, every Release Date kept even
+   * when Sources disagree. Null: the App has none configured.
+   */
+  getReleaseTrains?: (input: {
+    appSlug: string
+  }) => Promise<ReleaseTrains | null>
   /**
    * Someone looks at these AppEnvs now (`reason`: what they did): read what
    * they show again, if it is older than current. Never awaited.

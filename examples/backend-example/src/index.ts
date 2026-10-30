@@ -21,6 +21,7 @@ import {
   getAuthProviders,
   validateAuthConfig,
 } from './config/authProviders.js'
+import { exampleReleaseTrains } from './exampleReleaseTrains.js'
 
 loadEnv()
 
@@ -79,6 +80,8 @@ const companySpecificBackend: EhBackendCompanySpecificBackend = {
   async getResourceJumpsExtended() {
     return (await loadStaticData()).resourceJumpsDataExtended
   },
+  getReleaseTrains: ({ appSlug }) =>
+    Promise.resolve(exampleReleaseTrains(appSlug)),
 }
 
 // Create the middleware with all configuration

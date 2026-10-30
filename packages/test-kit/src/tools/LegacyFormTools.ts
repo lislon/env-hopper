@@ -13,6 +13,20 @@ export interface PanelLink {
   url: string
 }
 
+/** One release train row as a person reads it, with its hover card. */
+export interface ShownTrain {
+  name: string
+  date: string | null
+  tags: Array<string>
+  flagged: boolean
+  nowLineBefore: boolean
+  cardText: string
+  cardLinks: Array<PanelLink>
+  cardHighlighted: Array<string>
+  /** "env: build" per line of the card's "deployed on" list. */
+  cardRunningOn: Array<string>
+}
+
 /**
  * Page objects for the shipped UI: the two pickers, and the panel of widgets
  * beside them.
@@ -88,6 +102,55 @@ export function createLegacyFormUi(user: UserEvent) {
       Array.from(panel()?.querySelectorAll('[role="tab"]') ?? []).map((tab) =>
         (tab.textContent || '').trim(),
       ),
+
+    /** The release trains beside the form, or `null` when that widget is absent. */
+    releaseTrains: (): Array<ShownTrain> | null => {
+      const root = widget('widget-release-trains')
+      if (!root) return null
+      return Array.from(
+        root.querySelectorAll<HTMLElement>('li[data-train]'),
+      ).map((li) => {
+        const card = li.querySelector<HTMLElement>(
+          '[data-testid="release-train-card"]',
+        )
+        return {
+          name: li.dataset['train'] ?? '',
+          date:
+            li.querySelector('[data-testid="release-train-date"]')
+              ?.textContent ?? null,
+          tags: Array.from(li.querySelectorAll('.eh-rt-tag')).map(
+            (t) => t.textContent,
+          ),
+          flagged: !!li.querySelector('[data-testid="release-train-conflict"]'),
+          nowLineBefore:
+            li.previousElementSibling?.classList.contains('eh-rt-now') ?? false,
+          cardText: (card?.textContent ?? '').replace(/\s+/g, ' '),
+          cardLinks: Array.from(card?.querySelectorAll('a') ?? []).map((a) => ({
+            title: (
+              a.querySelector('.eh-rt-label')?.textContent ?? a.textContent
+            ).trim(),
+            url: a.getAttribute('href') ?? '',
+          })),
+          cardRunningOn: Array.from(
+            card?.querySelectorAll<HTMLElement>('.eh-rt-running > li') ?? [],
+          ).map(
+            (l) =>
+              `${l.dataset['env'] ?? ''}: ${(l.querySelector('.eh-rt-label, .eh-rt-sub')?.textContent ?? '').trim()}`,
+          ),
+          cardHighlighted: Array.from(
+            card?.querySelectorAll('.eh-rt-here') ?? [],
+          ).map((e) => e.textContent),
+        }
+      })
+    },
+
+    hoverReleaseTrain: async (name: string) => {
+      const row = widget('widget-release-trains')?.querySelector<HTMLElement>(
+        `li[data-train="${name}"] .eh-rt-row`,
+      )
+      if (!row) throw new Error(`no release train ${name} on screen`)
+      await user.hover(row)
+    },
 
     /** The per-app links, in render order. */
     links: (): Array<PanelLink> => {

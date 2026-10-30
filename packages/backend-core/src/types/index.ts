@@ -14,6 +14,7 @@ export * from './backend/api.js'
 export * from './backend/common.js'
 // Data source types
 export * from './backend/dataSources.js'
+export * from './backend/releaseTrains.js'
 // Company specific backend types
 export * from './backend/companySpecificBackend.js'
 

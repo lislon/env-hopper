@@ -1,5 +1,11 @@
 # @env-hopper/frontend-core
 
+## 2.5.0
+
+### Minor Changes
+
+- [#417](https://github.com/lislon/env-hopper/pull/417) [`33855b2`](https://github.com/lislon/env-hopper/commit/33855b21e522967a84efeda4d56da65ee2cba479) Thanks [@lislon](https://github.com/lislon)! - The access-request card now sits inside the credentials widget's own gutter and rule, as a quiet link with no box until hover or focus. `EhAccessRequestCard.cta` is optional, and the new optional `iconLabel` puts the icon on the second line, right before that label.
+
 ## 2.4.0
 
 ### Minor Changes

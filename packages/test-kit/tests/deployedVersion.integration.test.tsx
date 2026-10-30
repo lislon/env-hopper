@@ -451,6 +451,22 @@ describe('deployed version under the jump card', () => {
     expect(line!.querySelector('.eh-deployed-dot')).toBeNull()
   })
 
+  test('the lead not deployed draws no star, whatever its siblings run', async () => {
+    const app = await open('/env/staging/app/shop', {
+      shop: {
+        components: [shopApi, shopUi],
+        users,
+        rows: [row({ componentSlug: 'shop-api', version: 'main-9' })],
+      },
+    })
+    await waitFor(() => expect(lines(app.container)).toHaveLength(1))
+    const [line] = lines(app.container)
+    expect({
+      says: line!.textContent.includes('not deployed'),
+      star: line!.querySelector('.eh-deployed-star'),
+    }).toEqual({ says: true, star: null })
+  })
+
   describe('a Deploy Attempt beside the Version', () => {
     const minAgo = (m: number) =>
       new Date(Date.now() - m * 60_000).toISOString()

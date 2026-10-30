@@ -85,18 +85,22 @@ function freshnessOf(
       ? f.failed
       : undefined
   const reading = f.reading ?? []
+  const grey = now - Date.parse(f.checkedAt) >= upToDateMs
+  const checking =
+    reading.length > 0 ? ` · checking ${reading.join(', ')} now…` : ''
   return {
-    grey: now - Date.parse(f.checkedAt) >= upToDateMs,
+    grey,
     reading,
     failedSince,
     // The tooltip's first line, in plain words: is what the line shows confirmed?
+    // A check under way does not make a fresh value doubtful; age alone does.
     tip: failedSince
       ? `Couldn't check ${failedSince.source}${failureWords(failedSince)} · showing the value from ${checkedAgo(f.checkedAt, now)}`
-      : reading.length > 0
-        ? `May be out of date (last confirmed ${checkedAgo(f.checkedAt, now)}) · checking ${reading.join(', ')} now…`
-        : now - Date.parse(f.checkedAt) >= upToDateMs
-          ? `May be out of date · last confirmed ${checkedAgo(f.checkedAt, now)}`
-          : `Up to date · checked ${checkedAgo(f.checkedAt, now)}`,
+      : grey
+        ? checking
+          ? `May be out of date (last confirmed ${checkedAgo(f.checkedAt, now)})${checking}`
+          : `May be out of date · last confirmed ${checkedAgo(f.checkedAt, now)}`
+        : `Up to date · checked ${checkedAgo(f.checkedAt, now)}${checking}`,
   }
 }
 
@@ -639,9 +643,10 @@ export function DeployedVersions({
   const here = data.rows
   const of = (slug: string) => here.find((d) => d.componentSlug === slug)
   const lead = of(leadComponent.slug)
+  // Siblings differ from the lead's Version; with no lead deployed there is none to differ from.
   const others = data.components.flatMap((c) => {
     const d = c === leadComponent ? undefined : of(c.slug)
-    return d && d.version !== lead?.version
+    return lead && d && d.version !== lead.version
       ? [`${c.displayName} runs ${d.version}`]
       : []
   })

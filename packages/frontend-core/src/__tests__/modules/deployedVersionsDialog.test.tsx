@@ -190,6 +190,7 @@ describe('DeployedVersions details', () => {
         upToDate: seen({ checkedAt: ago(5) }),
         stale: seen({ checkedAt: ago(41 * 60) }),
         checking: seen({ checkedAt: ago(41 * 60), reading: ['audit'] }),
+        checkingWhileFresh: seen({ checkedAt: ago(5), reading: ['audit'] }),
         failed: seen({
           checkedAt: ago(41 * 60),
           failed: { source: 'audit', at: ago(10) },
@@ -227,6 +228,12 @@ describe('DeployedVersions details', () => {
           verifying: true,
           warn: null,
           tip: 'May be out of date (last confirmed 41 min ago) · checking audit now…',
+        },
+        checkingWhileFresh: {
+          grey: false,
+          verifying: true,
+          warn: null,
+          tip: 'Up to date · checked 5 s ago · checking audit now…',
         },
         failed: {
           grey: true,

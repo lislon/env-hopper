@@ -40,9 +40,12 @@ export interface EhAccessRequestCard {
   /** Matches `EhIconSvg.iconId`. An unknown id renders the card without an icon. */
   iconId: string
   title: string
+  /** The second line, before the icon. */
   subtitle?: string
-  /** The call to action under the title, e.g. `How to request access →`. */
-  cta: string
+  /** Text after the icon on the second line, e.g. the name of the target site. */
+  iconLabel?: string
+  /** An optional third line under the title, e.g. `How to request access →`. */
+  cta?: string
   urlDecoded: string
 }
 

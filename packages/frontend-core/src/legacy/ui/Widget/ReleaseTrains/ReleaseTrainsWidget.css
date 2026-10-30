@@ -1,0 +1,295 @@
+/* Rail: solid line + filled dot = released; dotted line + hollow circle = planned.
+   It sits on the gutter edge, where the other widgets draw their grey border. */
+.eh-legacy .eh-rt {
+  /* Neutral on purpose: the rail is context, not an alert. */
+  --rt-ok: oklch(var(--bc) / 0.7);
+  --rt-up: oklch(var(--bc) / 0.55);
+  --rt-fg: oklch(var(--bc));
+  --rt-mut: oklch(var(--bc) / 0.55);
+  --rt-bg: oklch(var(--b1));
+  --rt-rail: oklch(var(--bc) / 0.2);
+  --rt-line: oklch(var(--bc) / 0.1);
+  --rt-hover: oklch(var(--bc) / 0.05);
+  --rt-warn: #b45309;
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  font-size: 13px;
+}
+.dark .eh-legacy .eh-rt {
+  --rt-hover: oklch(var(--bc) / 0.08);
+  --rt-warn: #fbbf24;
+}
+.eh-legacy .eh-rt-gutter {
+  width: 1.5rem;
+  flex: none;
+}
+.eh-legacy .eh-rt-body {
+  width: 100%;
+  min-width: 0;
+}
+.eh-legacy .eh-rt-title {
+  padding: 0 0 2px 12px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rt-fg);
+  opacity: 0.75;
+}
+
+.eh-legacy .eh-rt-rail > li {
+  position: relative;
+  padding: 0 0 3px 12px;
+  line-height: 19px;
+}
+.eh-legacy .eh-rt-rail > li:last-child {
+  padding-bottom: 0;
+}
+.eh-legacy .eh-rt-rail > li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-left: 2px solid var(--rt-rail);
+}
+.eh-legacy .eh-rt-rail > li:first-child::before {
+  top: 9px;
+}
+.eh-legacy .eh-rt-rail > li:last-child::before {
+  bottom: calc(100% - 9px);
+}
+.eh-legacy .eh-rt-rail > li.is-planned::before {
+  border-left: 2px dotted var(--rt-up);
+  opacity: 0.75;
+}
+.eh-legacy .eh-rt-train::after {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.eh-legacy .eh-rt-train.is-released::after {
+  background: var(--rt-ok);
+}
+.eh-legacy .eh-rt-train.is-planned::after {
+  background: var(--rt-bg);
+  border: 1.5px solid var(--rt-up);
+}
+
+.eh-legacy .eh-rt-rail > li.eh-rt-now {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 0 2px;
+  font-size: 9px;
+  line-height: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--rt-ok);
+}
+.eh-legacy .eh-rt-rail > li.eh-rt-now::before {
+  position: static;
+  border: 0;
+  width: 12px;
+  height: 1.5px;
+  background: var(--rt-ok);
+}
+.eh-legacy .eh-rt-rail > li.eh-rt-now::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rt-ok);
+  opacity: 0.6;
+}
+
+.eh-legacy .eh-rt-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  border-radius: 3px;
+  margin-left: -4px;
+  padding: 0 4px;
+}
+.eh-legacy .eh-rt-train:hover > .eh-rt-row,
+.eh-legacy .eh-rt-train:focus-within > .eh-rt-row {
+  background: var(--rt-hover);
+}
+.eh-legacy .eh-rt-name {
+  font-weight: 600;
+}
+.eh-legacy .eh-rt-date {
+  font-size: 12px;
+}
+.eh-legacy .eh-rt-train.is-next .eh-rt-date {
+  color: var(--rt-fg);
+  font-weight: 600;
+}
+.eh-legacy .eh-rt-tag {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  line-height: 13px;
+  padding: 0 3px;
+  border-radius: 3px;
+}
+.eh-legacy .eh-rt-tag.is-prod {
+  color: var(--rt-fg);
+  background: oklch(var(--bc) / 0.08);
+}
+.eh-legacy .eh-rt-tag.is-next {
+  color: var(--rt-mut);
+  border: 1px solid var(--rt-rail);
+}
+
+/* Card: opens after the pointer rests 120 ms, closes 250 ms after it leaves; a
+   bridge spans the gap so the pointer can travel from the row into the card. */
+.eh-legacy .eh-rt-card {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: -6px;
+  z-index: 40;
+  width: 300px;
+  padding: 14px 16px;
+  white-space: normal;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--rt-fg);
+  background: var(--rt-bg);
+  border: 1px solid var(--rt-line);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.1);
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.12s ease 0.25s,
+    visibility 0s linear 0.37s;
+}
+.eh-legacy .eh-rt-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 100%;
+  width: 12px;
+}
+.eh-legacy .eh-rt-train:hover > .eh-rt-card,
+.eh-legacy .eh-rt-train:focus-within > .eh-rt-card {
+  visibility: visible;
+  opacity: 1;
+  z-index: 41;
+  transition:
+    opacity 0.12s ease 0.12s,
+    visibility 0s linear 0.12s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .eh-legacy .eh-rt-card {
+    transition: none;
+  }
+}
+.eh-legacy .eh-rt-card-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+.eh-legacy .eh-rt-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.eh-legacy .eh-rt-caption {
+  margin-top: 8px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--rt-mut);
+}
+.eh-legacy .eh-rt-card-when {
+  font-weight: 600;
+  font-size: 15px;
+}
+.eh-legacy .eh-rt-sub {
+  font-size: 11.5px;
+  color: var(--rt-mut);
+}
+.eh-legacy .eh-rt-conflict {
+  font-size: 11.5px;
+  color: var(--rt-warn);
+}
+.eh-legacy .eh-rt-envs {
+  margin-top: 12px;
+}
+.eh-legacy .eh-rt-here {
+  color: var(--rt-fg);
+  font-weight: 600;
+}
+.eh-legacy .eh-rt-envs > span:not(.eh-rt-sub) {
+  white-space: nowrap;
+}
+.eh-legacy .eh-rt-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin: 12px -16px 0;
+  padding: 10px 16px 0;
+  border-top: 1px solid var(--rt-line);
+}
+.eh-legacy .eh-rt-link {
+  color: var(--rt-fg);
+  text-decoration: none;
+  border-bottom: 1px solid oklch(var(--bc) / 0.15);
+}
+.eh-legacy .eh-rt-link:hover {
+  border-bottom-color: var(--rt-fg);
+}
+.eh-legacy .eh-rt-open {
+  margin-left: auto;
+  color: var(--rt-fg);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.eh-legacy .eh-rt-open:hover {
+  text-decoration: underline;
+}
+.eh-legacy .eh-rt-link,
+.eh-legacy .eh-rt-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.eh-legacy .eh-rt-ext {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  opacity: 0.55;
+}
+.eh-legacy .eh-rt-sysicon {
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+.eh-legacy .eh-rt-sysicon > svg {
+  width: 100%;
+  height: 100%;
+}
+.eh-legacy .eh-rt-running {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1px 10px;
+  margin-top: 2px;
+}
+.eh-legacy .eh-rt-running > li {
+  display: contents;
+}
+.eh-legacy .eh-rt-build {
+  justify-self: start;
+  font-size: 11px;
+}

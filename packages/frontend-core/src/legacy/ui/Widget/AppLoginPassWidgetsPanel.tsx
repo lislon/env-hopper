@@ -6,6 +6,7 @@ import { AccessRequestCard } from './AccessRequestCard/AccessRequestCard'
 import { DbCredentialsWidget } from './DbCredentials/DbCredentialsWidget'
 import { K8sCliWidget } from './K8sCliWidget/K8sCliWidget'
 import { UnstableCustomWidget } from './UnstableCustomWidget/UnstableCustomWidget'
+import { ReleaseTrainsWidget } from './ReleaseTrains/ReleaseTrainsWidget'
 
 export interface AppLoginPassWidgetsPanelProps {
   className?: string
@@ -38,6 +39,9 @@ export function AppLoginPassWidgetsPanel({
         </ErrorBoundary>
         <ErrorBoundary fallback={<div>Something went wrong</div>}>
           <K8sCliWidget />
+        </ErrorBoundary>
+        <ErrorBoundary fallback={null}>
+          <ReleaseTrainsWidget />
         </ErrorBoundary>
 
         <div className={cn('flex flex-col gap-4 items-start')}>

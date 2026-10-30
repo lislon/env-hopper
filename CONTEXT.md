@@ -43,6 +43,14 @@ _Avoid_: Tag, label, nickname
 Where an Artifact came from: the tag, commit, author and date that produced it. One Release may produce Artifacts of several Components; an Artifact may have none.
 _Avoid_: Version (for this meaning)
 
+**Release Train**:
+A named, dated delivery an App's work is planned into (e.g. `Maintenance 271`), read from a tracker. It is released or planned, and its date may be read from several Sources that disagree; every Release Date is kept.
+_Avoid_: Release (that is where an Artifact came from), milestone
+
+**Release Date**:
+When one Source says a Release Train goes out: a day (`2026-10-27`), or a day and time with offset (`2026-10-27T18:00:00-07:00`) when that Source knows the time.
+_Avoid_: Deploy date
+
 **Deployment**:
 The Artifact a Component last deployed successfully to a Deployment Target, and so is running there now. Only the current state exists; there is one Deployment per Component per Deployment Target.
 _Avoid_: Rollout, install

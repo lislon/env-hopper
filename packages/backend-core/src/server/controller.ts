@@ -11,6 +11,8 @@ import type { BetterAuth } from '../modules/auth/auth'
 import { createAuthRouter } from '../modules/auth/authRouter.js'
 import { MAX_SLICE_SLUGS, MAX_USERS, pairDetails } from './pairDetails'
 import { pairsWatch } from './pairsWatch'
+import { pickProdAndNext, toShown } from './releaseTrains'
+import type { ShownReleaseTrains } from '../types/backend/releaseTrains'
 // Named here so the router's declaration can name a `pairsWatch` event.
 import type { TrackedData } from '@trpc/server/unstable-core-do-not-import'
 import type { PairChunk } from './pairDetails'
@@ -152,6 +154,26 @@ export function createTrpcRouter(auth?: BetterAuth) {
             description.length > CHANGE_REQUEST_DESCRIPTION_MAX
               ? `${description.slice(0, CHANGE_REQUEST_DESCRIPTION_MAX)}…`
               : description,
+        }
+      }),
+
+    /**
+     * The App's Release Trains for the widget beside the form: the last
+     * released one and the next two. Null: the App has none.
+     */
+    releaseTrains: publicProcedure
+      .input(z.object({ appSlug: z.string() }))
+      .query(async ({ input, ctx }): Promise<ShownReleaseTrains | null> => {
+        const all = await ctx.companySpecificBackend.getReleaseTrains?.(input)
+        if (!all) return null
+        const deployments = ctx.catalog
+          ? await ctx.catalog.getPairDeployments({ appSlugs: [input.appSlug] })
+          : { pairs: [] }
+        return {
+          displayTimeZone: all.displayTimeZone,
+          trains: pickProdAndNext(all.trains, 2).map((train) =>
+            toShown(train, deployments),
+          ),
         }
       }),
 

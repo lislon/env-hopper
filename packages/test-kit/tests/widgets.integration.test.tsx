@@ -88,9 +88,9 @@ const backend = (deployments?: Record<string, FixtureDeployments>) =>
       ],
       accessRequestCard: {
         iconId: 'git',
-        title: 'Need access to {{app.displayName}}?',
-        subtitle: 'Roles and approver',
-        cta: 'How to request access',
+        title: 'How to request access?',
+        subtitle: '{{app.displayName}} ·',
+        iconLabel: 'Directory',
         urlDecoded: 'https://access.example.test/{{app.meta.accessSlug}}',
       },
       icons: [{ iconId: 'git', svg: '<svg />' }],
@@ -408,12 +408,22 @@ describe('the widgets beside the form', () => {
     await choose(app, 'Application', 'Service Booking')
 
     expect(accessCard(app)).toEqual([
-      'Need access to Service Booking?Roles and approverHow to request access',
+      'How to request access?Service Booking ·Directory↗',
       'https://access.example.test/booking',
     ])
+    const card = app.container.querySelector(
+      '[data-testid="access-request-card"]',
+    )
+    expect(card).toHaveAttribute('target', '_blank')
+    // The icon sits between the subtitle and its label, not before the title.
+    const second = card?.querySelector('.eh-access-sub')
     expect(
-      app.container.querySelector('[data-testid="access-request-card"]'),
-    ).toHaveAttribute('target', '_blank')
+      Array.from(second?.childNodes ?? []).map((n) =>
+        n.nodeType === Node.TEXT_NODE ? n.textContent : 'icon',
+      ),
+    ).toEqual(['Service Booking ·', 'icon', 'Directory'])
+    // Same gutter as the credentials widget, so the slot keeps its shape.
+    expect(card?.closest('.border-l-2')).not.toBeNull()
   })
 
   test('shows the shared login, not the access card, where the environment has one', async () => {

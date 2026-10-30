@@ -1,3 +1,5 @@
+import UiCredsIcon from '../UiCredentials/ui-creds.svg?react'
+import { WidgetLeftBorder } from '../WidgetLeftBorder'
 import { useMainAppFormContext } from '../../../context/MainFormContextProvider'
 import { useLegacyCustomization } from '../../../adapter/legacyApi'
 import {
@@ -13,6 +15,12 @@ import {
  * that never had a login. Such an environment shares no login with anyone, so
  * the useful thing to say there is how to get one, whether or not the app has a
  * shared login on the other environments.
+ *
+ * Keeps the credentials widget's gutter and rule, so the slot reads as the same
+ * widget on every environment; only its content changes. The row is a quiet
+ * link with no box at rest. Its styling is plain rules in `index.css`
+ * (`eh-access-*`), because a utility introduced in published source is never
+ * compiled downstream.
  *
  * Every text comes from the deployment's `accessRequestCard`; with none
  * configured, or with a url that still names a value this app lacks, nothing
@@ -30,35 +38,49 @@ export function AccessRequestCard() {
     return null
   }
   const iconRaw = icons?.find((icon) => icon.iconId === card.iconId)?.svg
+  const text = (template: string | undefined) =>
+    template ? interpolateWidgetStr(template, env, app) : undefined
+  const subtitle = text(card.subtitle)
+  const iconLabel = text(card.iconLabel)
+  const cta = text(card.cta)
 
   return (
-    <a
-      href={encodeURI(url)}
-      target="_blank"
-      rel="noopener noreferrer"
-      data-testid="access-request-card"
-      className="flex items-center gap-3 w-full rounded-lg border border-orange-200 bg-orange-50 px-3.5 py-3 text-inherit no-underline transition hover:border-orange-700 hover:shadow-md focus-visible:border-orange-700 focus-visible:shadow-md focus-visible:outline-none dark:border-orange-900 dark:bg-orange-950/40 dark:hover:border-orange-500 dark:focus-visible:border-orange-500"
-    >
-      {iconRaw && (
-        <div
-          className="w-10 h-10 shrink-0 [&>svg]:w-full [&>svg]:h-full"
-          aria-hidden="true"
-          dangerouslySetInnerHTML={{ __html: iconRaw }}
-        />
-      )}
-      <div className="min-w-0">
-        <div className="text-sm font-semibold leading-tight">
-          {interpolateWidgetStr(card.title, env, app)}
+    <div className="flex items-start w-full">
+      <WidgetLeftBorder>
+        <div className="w-4 h-4">
+          <UiCredsIcon />
         </div>
-        {card.subtitle && (
-          <div className="text-xs opacity-70 mt-0.5">
-            {interpolateWidgetStr(card.subtitle, env, app)}
-          </div>
-        )}
-        <div className="text-sm font-semibold mt-1 text-orange-700 dark:text-orange-400">
-          {interpolateWidgetStr(card.cta, env, app)}
-        </div>
+      </WidgetLeftBorder>
+      <div className="border-l-2 border-gray-300 dark:border-gray-500 pl-2 w-full">
+        <a
+          href={encodeURI(url)}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="access-request-card"
+          className="eh-access-row"
+        >
+          <span className="eh-access-text">
+            <span className="eh-access-title">{text(card.title)}</span>
+            {(subtitle || iconLabel) && (
+              <span className="eh-access-sub">
+                {subtitle}
+                {iconRaw && (
+                  <span
+                    className="eh-access-icon"
+                    aria-hidden="true"
+                    dangerouslySetInnerHTML={{ __html: iconRaw }}
+                  />
+                )}
+                {iconLabel}
+              </span>
+            )}
+            {cta && <span className="eh-access-cta">{cta}</span>}
+          </span>
+          <span className="eh-access-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </a>
       </div>
-    </a>
+    </div>
   )
 }

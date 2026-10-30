@@ -1,5 +1,17 @@
 # @env-hopper/backend-core
 
+## 2.6.0
+
+### Minor Changes
+
+- [#418](https://github.com/lislon/env-hopper/pull/418) [`d5bdc27`](https://github.com/lislon/env-hopper/commit/d5bdc2794b7869b63fabacc6bb47ff92a5aa01a1) Thanks [@lislon](https://github.com/lislon)! - Release trains beside the form: the release production runs and the next two, each with its date and, when a source knows it, its time in the deployment's zone. A card on hover shows every source's date (disagreements flagged, never resolved), the instructions tickets, release notes, and the environments running the train with the build there. A deployment supplies them through the new optional `getReleaseTrains` on `EhBackendCompanySpecificBackend`; the `releaseTrains` procedure picks the trains and joins the deployments.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @env-hopper/shared-core@2.6.0
+  - @env-hopper/table-sync@2.6.0
+
 ## 2.5.0
 
 ### Minor Changes

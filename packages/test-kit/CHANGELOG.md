@@ -1,5 +1,15 @@
 # @env-hopper/test-kit
 
+## 2.6.1
+
+### Patch Changes
+
+- [#420](https://github.com/lislon/env-hopper/pull/420) [`f6ce3df`](https://github.com/lislon/env-hopper/commit/f6ce3df9a3bd3b3811b58b7eea3321e703c8dc98) Thanks [@lislon](https://github.com/lislon)! - The release-train card fits real deployment lists: the environment being looked at comes first, then production ones, the rest after six behind a "+N more" toggle; environment names no longer wrap; a build whose Source has no icon takes the one its link's host names (`gitlab.natera.com` → `gitlab`); and the card grows with its content between 300 and 460 px.
+
+- Updated dependencies [[`f6ce3df`](https://github.com/lislon/env-hopper/commit/f6ce3df9a3bd3b3811b58b7eea3321e703c8dc98)]:
+  - @env-hopper/frontend-core@2.6.1
+  - @env-hopper/backend-core@2.6.1
+
 ## 2.6.0
 
 ### Minor Changes

@@ -48,6 +48,7 @@ export function pickProdAndNext(
 export function runningOnOf(
   artifactVersion: string | undefined,
   deployments: PairDeployments,
+  commitUrlOf: (componentSlug: string) => string | undefined = () => undefined,
 ): Array<ReleaseTrainRunningOn> {
   if (!artifactVersion) return []
   return deployments.pairs.flatMap((p) => {
@@ -63,6 +64,13 @@ export function runningOnOf(
             source: row.source,
             ...(row.buildUrl && { buildUrl: row.buildUrl }),
             ...(row.commitSha && { commitSha: row.commitSha }),
+            ...(row.commitSha &&
+              commitUrlOf(row.componentSlug) && {
+                commitUrl: commitUrlOf(row.componentSlug)!.replace(
+                  '{{sha}}',
+                  row.commitSha,
+                ),
+              }),
           },
         ]
       : []
@@ -72,12 +80,13 @@ export function runningOnOf(
 export function toShown(
   train: ReleaseTrain,
   deployments: PairDeployments,
+  commitUrlOf?: (componentSlug: string) => string | undefined,
 ): ShownReleaseTrain {
   const shownDate = pickShownDate(train.releaseDates)
   return {
     ...train,
     shownDate,
     conflictingDates: findConflictingDates(train.releaseDates, shownDate),
-    runningOn: runningOnOf(train.artifactVersion, deployments),
+    runningOn: runningOnOf(train.artifactVersion, deployments, commitUrlOf),
   }
 }

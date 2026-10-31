@@ -23,7 +23,7 @@ export interface ShownTrain {
   cardText: string
   cardLinks: Array<PanelLink>
   cardHighlighted: Array<string>
-  /** "env: build" per line of the card's "deployed on" list. */
+  /** "build: env, env" per build in the card's "deployed on" list. */
   cardRunningOn: Array<string>
   /** The "+N more" toggle of the card's environment list, or null when all are shown. */
   cardMore: string | null
@@ -135,10 +135,16 @@ export function createLegacyFormUi(user: UserEvent) {
           })),
           cardRunningOn: Array.from(
             card?.querySelectorAll<HTMLElement>('.eh-rt-running > li') ?? [],
-          ).map(
-            (l) =>
-              `${l.dataset['env'] ?? ''}: ${(l.querySelector('.eh-rt-label, .eh-rt-sub')?.textContent ?? '').trim()}`,
-          ),
+          ).map((group) => {
+            const build = (
+              group.querySelector('.eh-rt-build .eh-rt-label, .eh-rt-build')
+                ?.textContent ?? ''
+            ).trim()
+            const envs = Array.from(
+              group.querySelectorAll<HTMLElement>('[data-env]'),
+            ).map((e) => e.dataset['env'] ?? '')
+            return `${build}: ${envs.join(', ')}`
+          }),
           cardMore:
             card?.querySelector('.eh-rt-more')?.textContent.trim() ?? null,
           cardHighlighted: Array.from(

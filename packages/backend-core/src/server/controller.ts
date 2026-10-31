@@ -166,13 +166,18 @@ export function createTrpcRouter(auth?: BetterAuth) {
       .query(async ({ input, ctx }): Promise<ShownReleaseTrains | null> => {
         const all = await ctx.companySpecificBackend.getReleaseTrains?.(input)
         if (!all) return null
-        const deployments = ctx.catalog
-          ? await ctx.catalog.getPairDeployments({ appSlugs: [input.appSlug] })
-          : { pairs: [] }
+        const [deployments, components] = ctx.catalog
+          ? await Promise.all([
+              ctx.catalog.getPairDeployments({ appSlugs: [input.appSlug] }),
+              ctx.catalog.getComponents({ appSlugs: [input.appSlug] }),
+            ])
+          : [{ pairs: [] }, {}]
+        const commitUrlOf = (slug: string) =>
+          components[input.appSlug]?.find((c) => c.slug === slug)?.commitUrl
         return {
           displayTimeZone: all.displayTimeZone,
           trains: pickProdAndNext(all.trains, 2).map((train) =>
-            toShown(train, deployments),
+            toShown(train, deployments, commitUrlOf),
           ),
         }
       }),

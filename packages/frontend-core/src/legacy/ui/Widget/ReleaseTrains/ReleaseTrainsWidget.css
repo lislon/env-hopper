@@ -283,22 +283,6 @@
   width: 100%;
   height: 100%;
 }
-.eh-legacy .eh-rt-running {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 1px 10px;
-  margin-top: 2px;
-}
-.eh-legacy .eh-rt-running > li {
-  display: contents;
-}
-.eh-legacy .eh-rt-build {
-  justify-self: start;
-  font-size: 11px;
-}
-.eh-legacy .eh-rt-running > li > span {
-  white-space: nowrap;
-}
 .eh-legacy .eh-rt-more {
   margin-top: 2px;
   padding: 0;
@@ -312,4 +296,50 @@
 .eh-legacy .eh-rt-more:focus-visible {
   color: var(--rt-fg);
   text-decoration: underline;
+}
+/* "Deployed on": a build once, then the environments running it. */
+.eh-legacy .eh-rt-running {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 2px;
+}
+.eh-legacy .eh-rt-build-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-size: 11px;
+}
+/* A long build name ends in "…" (full name on hover) instead of leaving the card. */
+.eh-legacy .eh-rt-build {
+  min-width: 0;
+  overflow: hidden;
+}
+.eh-legacy .eh-rt-build .eh-rt-label,
+.eh-legacy span.eh-rt-build {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.eh-legacy .eh-rt-commit {
+  flex: none;
+}
+.eh-legacy .eh-rt-group-envs {
+  padding-left: 16px;
+}
+.eh-legacy .eh-rt-group-envs > span {
+  white-space: nowrap;
+}
+/* A release row opens its card on hover, and a click pins it (the row takes focus). */
+.eh-legacy .eh-rt-row {
+  cursor: pointer;
+}
+.eh-legacy .eh-rt-row:focus-visible {
+  outline: 2px solid oklch(var(--bc) / 0.4);
+  outline-offset: 1px;
+}
+.eh-legacy .eh-rt-branch {
+  margin-top: 12px;
+  font-size: 11px;
 }

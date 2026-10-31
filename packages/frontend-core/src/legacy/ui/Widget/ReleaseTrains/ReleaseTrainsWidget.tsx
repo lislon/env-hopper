@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query'
 import { ExternalLink } from 'lucide-react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import type {
   ReleaseTrainRunningOn,
@@ -18,6 +19,29 @@ import {
 import './ReleaseTrainsWidget.css'
 
 /** The build a person recognises: its Version, plus the short commit when the Version does not carry one. */
+/** Environments shown before the "+N more" toggle. */
+const ENVS_AT_FIRST = 6
+
+/** The environment being looked at, then production ones, then the rest as they came. */
+function orderedRunningOn(
+  runningOn: Array<ReleaseTrainRunningOn>,
+  hereEnvSlug: string | undefined,
+  prodEnvSlugs: ReadonlySet<string>,
+): Array<ReleaseTrainRunningOn> {
+  const rank = (r: ReleaseTrainRunningOn) =>
+    r.envSlug === hereEnvSlug ? 0 : prodEnvSlugs.has(r.envSlug) ? 1 : 2
+  return [...runningOn].sort((a, b) => rank(a) - rank(b))
+}
+
+/** The icon id a build link's host suggests: `gitlab.natera.com` → `gitlab`. */
+function hostIconId(url: string | undefined): string | undefined {
+  try {
+    return url ? new URL(url).hostname.split('.')[0] : undefined
+  } catch {
+    return undefined
+  }
+}
+
 function buildLabel(r: ReleaseTrainRunningOn): string {
   return r.commitSha && !r.version.includes(r.commitSha.slice(0, 7))
     ? `${r.version} · ${r.commitSha.slice(0, 7)}`
@@ -160,6 +184,15 @@ function TrainCard({
 }) {
   const { shownDate } = train
   const otherZones = shownDate && formatOtherZones(shownDate)
+  const { listEnvs } = useMainAppFormContext()
+  const [showAllEnvs, setShowAllEnvs] = useState(false)
+  const running = orderedRunningOn(
+    train.runningOn,
+    hereEnvSlug,
+    new Set(listEnvs.filter((e) => e.envType === 'prod').map((e) => e.id)),
+  )
+  const shownRunning = showAllEnvs ? running : running.slice(0, ENVS_AT_FIRST)
+  const hiddenCount = running.length - shownRunning.length
   const { icons } = useLegacyCustomization()
   const iconOf = (iconId: string | undefined) =>
     icons?.find((i) => i.iconId === iconId)?.svg
@@ -207,7 +240,7 @@ function TrainCard({
               {train.isReleased ? 'Deployed on' : 'Already on'}
             </div>
             <ul className="eh-rt-running">
-              {train.runningOn.map((r) => (
+              {shownRunning.map((r) => (
                 <li key={r.envSlug} data-env={r.envSlug}>
                   <span
                     className={r.envSlug === hereEnvSlug ? 'eh-rt-here' : ''}
@@ -219,7 +252,9 @@ function TrainCard({
                       className="eh-rt-link eh-rt-mono eh-rt-build"
                       href={r.buildUrl}
                       title={r.commitSha ? `commit ${r.commitSha}` : undefined}
-                      iconSvg={iconOf(r.source)}
+                      iconSvg={
+                        iconOf(r.source) ?? iconOf(hostIconId(r.buildUrl))
+                      }
                     >
                       {buildLabel(r)}
                     </ExtLink>
@@ -231,6 +266,15 @@ function TrainCard({
                 </li>
               ))}
             </ul>
+            {hiddenCount > 0 && (
+              <button
+                type="button"
+                className="eh-rt-more"
+                onClick={() => setShowAllEnvs(true)}
+              >
+                +{hiddenCount} more
+              </button>
+            )}
           </>
         )}
       </div>

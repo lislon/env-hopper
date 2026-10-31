@@ -25,6 +25,8 @@ export interface ShownTrain {
   cardHighlighted: Array<string>
   /** "env: build" per line of the card's "deployed on" list. */
   cardRunningOn: Array<string>
+  /** The "+N more" toggle of the card's environment list, or null when all are shown. */
+  cardMore: string | null
 }
 
 /**
@@ -137,11 +139,22 @@ export function createLegacyFormUi(user: UserEvent) {
             (l) =>
               `${l.dataset['env'] ?? ''}: ${(l.querySelector('.eh-rt-label, .eh-rt-sub')?.textContent ?? '').trim()}`,
           ),
+          cardMore:
+            card?.querySelector('.eh-rt-more')?.textContent.trim() ?? null,
           cardHighlighted: Array.from(
             card?.querySelectorAll('.eh-rt-here') ?? [],
           ).map((e) => e.textContent),
         }
       })
+    },
+
+    showAllEnvsOfReleaseTrain: async (name: string) => {
+      const more = widget('widget-release-trains')?.querySelector<HTMLElement>(
+        `li[data-train="${name}"] .eh-rt-more`,
+      )
+      if (!more)
+        throw new Error(`release train ${name} offers no more environments`)
+      await user.click(more)
     },
 
     hoverReleaseTrain: async (name: string) => {

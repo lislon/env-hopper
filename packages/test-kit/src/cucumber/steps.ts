@@ -422,6 +422,14 @@ Then('its card says it runs on {string}', async (_world, lines: string) => {
   )
 })
 
+Then('its card offers {string}', async (_world, label: string) => {
+  await waitFor(() => expect(shownTrain(hovered!).cardMore).toBe(label))
+})
+
+When('I show every environment on its card', async () => {
+  await form().showAllEnvsOfReleaseTrain(hovered!)
+})
+
 Then('its card highlights {string}', async (_world, env: string) => {
   await waitFor(() =>
     expect(shownTrain(hovered!).cardHighlighted).toEqual([env]),

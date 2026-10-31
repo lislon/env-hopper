@@ -156,7 +156,10 @@
   right: calc(100% + 8px);
   top: -6px;
   z-index: 40;
-  width: 300px;
+  /* As wide as its content asks, within reason: long build names stay on one line. */
+  width: max-content;
+  min-width: 300px;
+  max-width: 460px;
   padding: 14px 16px;
   white-space: normal;
   font-size: 12.5px;
@@ -292,4 +295,21 @@
 .eh-legacy .eh-rt-build {
   justify-self: start;
   font-size: 11px;
+}
+.eh-legacy .eh-rt-running > li > span {
+  white-space: nowrap;
+}
+.eh-legacy .eh-rt-more {
+  margin-top: 2px;
+  padding: 0;
+  font-size: 11px;
+  color: var(--rt-mut);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.eh-legacy .eh-rt-more:hover,
+.eh-legacy .eh-rt-more:focus-visible {
+  color: var(--rt-fg);
+  text-decoration: underline;
 }

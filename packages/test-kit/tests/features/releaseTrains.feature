@@ -125,3 +125,17 @@ Feature: Release trains beside the form
     And I pick the "Appointments" application
     And I hover the "A269" release train
     Then its card highlights "staging"
+
+  Scenario: A train on many environments shows the ones that matter first
+    # The current environment, then production, then the rest; the tail waits behind a toggle.
+    Given the "Appointments" release trains are:
+      | train | status   | tracker day |
+      | A269  | released | 2026-10-13  |
+    And "A269" of "Appointments" already runs on "qa-1 / qa-2 / qa-3 / production / qa-4 / staging / qa-5 / qa-6"
+    When I pick the "staging" environment
+    And I pick the "Appointments" application
+    And I hover the "A269" release train
+    Then its card says it runs on "staging: A269-build / production: A269-build / qa-1: A269-build / qa-2: A269-build / qa-3: A269-build / qa-4: A269-build"
+    And its card offers "+2 more"
+    When I show every environment on its card
+    Then its card says it runs on "staging: A269-build / production: A269-build / qa-1: A269-build / qa-2: A269-build / qa-3: A269-build / qa-4: A269-build / qa-5: A269-build / qa-6: A269-build"

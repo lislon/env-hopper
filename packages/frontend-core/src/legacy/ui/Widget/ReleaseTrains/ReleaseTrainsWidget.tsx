@@ -1,6 +1,6 @@
-import { queryOptions, useQuery } from '@tanstack/react-query'
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ExternalLink } from 'lucide-react'
-import { useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type {
   ReleaseTrainRunningOn,
@@ -10,6 +10,8 @@ import { getTrpcFromMeta } from '~/util/reactQueryUtils'
 import { appSlugFromJumpSlug } from '~/util/route-utils'
 import { useMainAppFormContext } from '../../../context/MainFormContextProvider'
 import { useLegacyCustomization } from '../../../adapter/legacyApi'
+import { useEhContext } from '../../../context/EhContext'
+import { recall, remember } from './releaseTrainsMemory'
 import {
   formatCardDate,
   formatDay,
@@ -18,7 +20,6 @@ import {
 } from './releaseDateFormat'
 import './ReleaseTrainsWidget.css'
 
-/** The build a person recognises: its Version, plus the short commit when the Version does not carry one. */
 /** Environments shown before the "+N more" toggle. */
 const ENVS_AT_FIRST = 6
 
@@ -42,19 +43,66 @@ function hostIconId(url: string | undefined): string | undefined {
   }
 }
 
-function buildLabel(r: ReleaseTrainRunningOn): string {
-  return r.commitSha && !r.version.includes(r.commitSha.slice(0, 7))
-    ? `${r.version} · ${r.commitSha.slice(0, 7)}`
-    : r.version
+/** One build and the environments running it, in the order they were ranked. */
+interface BuildGroup {
+  key: string
+  first: ReleaseTrainRunningOn
+  envSlugs: Array<string>
 }
 
+function groupByBuild(
+  running: Array<ReleaseTrainRunningOn>,
+): Array<BuildGroup> {
+  const groups = new Map<string, BuildGroup>()
+  for (const r of running) {
+    const key = `${r.version} ${r.commitSha ?? ''} ${r.buildUrl ?? ''}`
+    const group = groups.get(key) ?? { key, first: r, envSlugs: [] }
+    group.envSlugs.push(r.envSlug)
+    groups.set(key, group)
+  }
+  return [...groups.values()]
+}
+
+/** Starts from what this device saw last (no layout shift on revisit), then refreshes. */
 export function releaseTrainsQuery(appSlug: string) {
+  const seen = recall(appSlug)
   return queryOptions({
     queryKey: ['releaseTrains', appSlug] as const,
     staleTime: 5 * 60_000,
     retry: 1,
-    queryFn: (ctx) => getTrpcFromMeta(ctx).releaseTrains.query({ appSlug }),
+    ...(seen && { initialData: seen.data, initialDataUpdatedAt: seen.at }),
+    queryFn: async (ctx) => {
+      const data = await getTrpcFromMeta(ctx).releaseTrains.query({ appSlug })
+      remember(appSlug, data)
+      return data
+    },
   })
+}
+
+/** How many favourite and recent Apps are asked for ahead of being picked. */
+const PRELOAD_APPS = 10
+
+/**
+ * Asks for the favourite and recently used Apps' release trains in the
+ * background, so picking one shows its widget at once instead of shifting the
+ * panel when the answer lands.
+ */
+export function usePreloadReleaseTrains(): void {
+  const queryClient = useQueryClient()
+  const { listFavoriteApps, recentJumps } = useEhContext()
+  const slugs = [
+    ...new Set(
+      [...listFavoriteApps, ...recentJumps.map((j) => j.app)]
+        .filter((id): id is string => !!id)
+        .map(appSlugFromJumpSlug),
+    ),
+  ].slice(0, PRELOAD_APPS)
+  const key = slugs.join(' ')
+  useEffect(() => {
+    for (const slug of key.split(' ').filter(Boolean)) {
+      void queryClient.prefetchQuery(releaseTrainsQuery(slug))
+    }
+  }, [key, queryClient])
 }
 
 /** An external link: opens in a new tab, says so with a small icon after the text. */
@@ -151,7 +199,8 @@ function TrainRow({
         className={`eh-rt-train ${train.isReleased ? 'is-released' : 'is-planned'} ${isNext ? 'is-next' : ''}`}
         data-train={name}
       >
-        <div className="eh-rt-row">
+        {/* Focusable: a click or tap pins the card open (:focus-within), not only hover. */}
+        <div className="eh-rt-row" tabIndex={0}>
           <span className="eh-rt-name">{name}</span>
           {shownDate && (
             <span className="eh-rt-date" data-testid="release-train-date">
@@ -193,6 +242,7 @@ function TrainCard({
   )
   const shownRunning = showAllEnvs ? running : running.slice(0, ENVS_AT_FIRST)
   const hiddenCount = running.length - shownRunning.length
+  const groups = groupByBuild(shownRunning)
   const { icons } = useLegacyCustomization()
   const iconOf = (iconId: string | undefined) =>
     icons?.find((i) => i.iconId === iconId)?.svg
@@ -200,15 +250,11 @@ function TrainCard({
   return (
     <div className="eh-rt-card" role="tooltip" data-testid="release-train-card">
       <div className="eh-rt-card-title">{train.fullName}</div>
-      <div className="eh-rt-sub">
-        {train.releaseSystemName} release
-        {train.artifactVersion && (
-          <>
-            {' · version '}
-            <span className="eh-rt-mono">{train.artifactVersion}</span>
-          </>
-        )}
-      </div>
+      {train.artifactVersion && (
+        <div className="eh-rt-sub" title={`${train.releaseSystemName} release`}>
+          version <span className="eh-rt-mono">{train.artifactVersion}</span>
+        </div>
+      )}
       <div className="eh-rt-caption">
         {train.isReleased ? 'Was deployed' : 'Planned to deploy'}
       </div>
@@ -227,6 +273,19 @@ function TrainCard({
           ⚠ {d.sourceName} says {formatDay(d)}
         </div>
       ))}
+      {train.releaseBranch && (
+        <div className="eh-rt-branch">
+          <div className="eh-rt-caption">Release branch</div>
+          <ExtLink
+            className="eh-rt-link eh-rt-mono eh-rt-build"
+            href={train.releaseBranch.url}
+            title={train.releaseBranch.name}
+            iconSvg={iconOf(hostIconId(train.releaseBranch.url))}
+          >
+            {train.releaseBranch.name}
+          </ExtLink>
+        </div>
+      )}
       <div className="eh-rt-envs">
         {train.runningOn.length === 0 ? (
           <span className="eh-rt-sub">
@@ -240,29 +299,56 @@ function TrainCard({
               {train.isReleased ? 'Deployed on' : 'Already on'}
             </div>
             <ul className="eh-rt-running">
-              {shownRunning.map((r) => (
-                <li key={r.envSlug} data-env={r.envSlug}>
-                  <span
-                    className={r.envSlug === hereEnvSlug ? 'eh-rt-here' : ''}
-                  >
-                    {r.envSlug}
-                  </span>
-                  {r.buildUrl ? (
-                    <ExtLink
-                      className="eh-rt-link eh-rt-mono eh-rt-build"
-                      href={r.buildUrl}
-                      title={r.commitSha ? `commit ${r.commitSha}` : undefined}
-                      iconSvg={
-                        iconOf(r.source) ?? iconOf(hostIconId(r.buildUrl))
-                      }
-                    >
-                      {buildLabel(r)}
-                    </ExtLink>
-                  ) : (
-                    <span className="eh-rt-mono eh-rt-sub">
-                      {buildLabel(r)}
-                    </span>
-                  )}
+              {groups.map(({ key, first: b, envSlugs }) => (
+                <li key={key}>
+                  <div className="eh-rt-build-line">
+                    {b.buildUrl ? (
+                      <ExtLink
+                        className="eh-rt-link eh-rt-mono eh-rt-build"
+                        href={b.buildUrl}
+                        title={b.version}
+                        iconSvg={
+                          iconOf(b.source) ?? iconOf(hostIconId(b.buildUrl))
+                        }
+                      >
+                        {b.version}
+                      </ExtLink>
+                    ) : (
+                      <span
+                        className="eh-rt-mono eh-rt-build"
+                        title={b.version}
+                      >
+                        {b.version}
+                      </span>
+                    )}
+                    {b.commitSha &&
+                      (b.commitUrl ? (
+                        <ExtLink
+                          className="eh-rt-link eh-rt-mono eh-rt-commit"
+                          href={b.commitUrl}
+                          title={`commit ${b.commitSha}`}
+                        >
+                          {b.commitSha.slice(0, 7)}
+                        </ExtLink>
+                      ) : (
+                        <span className="eh-rt-mono eh-rt-sub">
+                          {b.commitSha.slice(0, 7)}
+                        </span>
+                      ))}
+                  </div>
+                  <div className="eh-rt-group-envs">
+                    {envSlugs.map((slug, i) => (
+                      <Fragment key={slug}>
+                        {i > 0 && ', '}
+                        <span
+                          data-env={slug}
+                          className={slug === hereEnvSlug ? 'eh-rt-here' : ''}
+                        >
+                          {slug}
+                        </span>
+                      </Fragment>
+                    ))}
+                  </div>
                 </li>
               ))}
             </ul>

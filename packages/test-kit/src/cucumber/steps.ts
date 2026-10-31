@@ -306,6 +306,12 @@ Given(
             ]
           : [],
         ...(row['notes url'] && { releaseNotesUrl: row['notes url'] }),
+        ...(row['branch'] && {
+          releaseBranch: {
+            name: row['branch'],
+            url: `https://git.example.test/vet/appointments/-/tree/${row['branch']}`,
+          },
+        }),
       }
     })
     scenarioFixture!.releaseTrains![appSlugOf(appName)] = {
@@ -342,6 +348,55 @@ Given(
       })) as FixtureDeployments['rows'],
     }
   },
+)
+
+/** Rows of `build` for the train's Artifact, on each env; `also` keeps the rows given before. */
+function runAs(
+  trainName: string,
+  appName: string,
+  build: string,
+  envs: string,
+  also: boolean,
+) {
+  const slug = appSlugOf(appName)
+  const train = trainsOf(appName).find((t) => t.shortName === trainName)
+  if (!train) throw new Error(`no release train ${trainName}`)
+  train.artifactVersion ??= `${trainName}-artifact`
+  const before = also ? (scenarioFixture!.deployments![slug]?.rows ?? []) : []
+  scenarioFixture!.deployments![slug] = {
+    components: [
+      {
+        slug,
+        displayName: appName,
+        commitUrl: 'https://git.example.test/-/commit/{{sha}}',
+      },
+    ],
+    rows: [
+      ...before,
+      ...envs.split(' / ').map((env) => ({
+        env,
+        componentSlug: slug,
+        targetSlug: env,
+        version: build,
+        aliases: [train.artifactVersion!],
+        commitSha: '0123456789abcdef',
+        source: 'ci',
+        buildUrl: `https://ci.example.test/builds/${build}`,
+      })),
+    ] as FixtureDeployments['rows'],
+  }
+}
+
+Given(
+  '{string} of {string} runs as {string} on {string}',
+  (_world, train: string, appName: string, build: string, envs: string) =>
+    runAs(train, appName, build, envs, false),
+)
+
+Given(
+  '{string} of {string} also runs as {string} on {string}',
+  (_world, train: string, appName: string, build: string, envs: string) =>
+    runAs(train, appName, build, envs, true),
 )
 
 When('I hover the {string} release train', async (_world, name: string) => {

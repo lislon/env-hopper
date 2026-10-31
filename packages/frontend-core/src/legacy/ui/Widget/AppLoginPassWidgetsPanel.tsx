@@ -6,7 +6,10 @@ import { AccessRequestCard } from './AccessRequestCard/AccessRequestCard'
 import { DbCredentialsWidget } from './DbCredentials/DbCredentialsWidget'
 import { K8sCliWidget } from './K8sCliWidget/K8sCliWidget'
 import { UnstableCustomWidget } from './UnstableCustomWidget/UnstableCustomWidget'
-import { ReleaseTrainsWidget } from './ReleaseTrains/ReleaseTrainsWidget'
+import {
+  ReleaseTrainsWidget,
+  usePreloadReleaseTrains,
+} from './ReleaseTrains/ReleaseTrainsWidget'
 
 export interface AppLoginPassWidgetsPanelProps {
   className?: string
@@ -24,6 +27,7 @@ export interface AppLoginPassWidgetsPanelProps {
 export function AppLoginPassWidgetsPanel({
   className,
 }: AppLoginPassWidgetsPanelProps) {
+  usePreloadReleaseTrains()
   return (
     <div
       className={cn('flex justify-center', className)}

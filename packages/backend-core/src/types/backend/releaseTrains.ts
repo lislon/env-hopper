@@ -23,6 +23,8 @@ export interface ReleaseTrain {
   /** Most trusted first. */
   releaseDates: Array<ReleaseDate>
   instructionsTickets: Array<{ key: string; title: string; url: string }>
+  /** The branch the release is cut to, once it exists (e.g. `release/maintenance_272`). */
+  releaseBranch?: { name: string; url: string }
   releaseNotesUrl?: string
 }
 
@@ -40,6 +42,8 @@ export interface ReleaseTrainRunningOn {
   source: string
   buildUrl?: string
   commitSha?: string
+  /** The commit's page, from its Component's `commitUrl` template. */
+  commitUrl?: string
 }
 
 export interface ShownReleaseTrain extends ReleaseTrain {

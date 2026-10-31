@@ -43,6 +43,16 @@ function given(
   }> = [],
 ) {
   const catalog = {
+    getComponents: () =>
+      Promise.resolve({
+        appointments: [
+          {
+            slug: 'appointments',
+            displayName: 'Appointments',
+            commitUrl: 'https://git.example.test/-/commit/{{sha}}',
+          },
+        ],
+      }),
     getPairDeployments: () =>
       Promise.resolve({
         pairs: running.map((r) => ({
@@ -50,6 +60,7 @@ function given(
           env: r.env,
           rows: [
             {
+              componentSlug: 'appointments',
               version: r.version,
               aliases: r.aliases ?? [],
               source: 'gitlab',
@@ -175,6 +186,7 @@ describe('releaseTrains', () => {
             source: 'gitlab',
             buildUrl: 'https://git.example.test/-/pipelines/901',
             commitSha: '0123456789abcdef',
+            commitUrl: 'https://git.example.test/-/commit/0123456789abcdef',
           },
         ],
       ],

@@ -110,7 +110,7 @@ Feature: Release trains beside the form
     And I pick the "Appointments" application
     And I hover the "A270" release train
     Then its card says "Tue, Oct 27 · 6:00 PM PDT"
-    And its card says it runs on "staging: A270-build / qa-2: A270-build"
+    And its card says it runs on "A270-build: staging, qa-2"
     And its card links "A270-build" to "https://ci.example.test/builds/A270"
     And its card links "VET-901" to "https://tracker.example.test/browse/VET-901"
     And its card links "Release notes" to "https://wiki.example.test/A270"
@@ -135,7 +135,31 @@ Feature: Release trains beside the form
     When I pick the "staging" environment
     And I pick the "Appointments" application
     And I hover the "A269" release train
-    Then its card says it runs on "staging: A269-build / production: A269-build / qa-1: A269-build / qa-2: A269-build / qa-3: A269-build / qa-4: A269-build"
+    Then its card says it runs on "A269-build: staging, production, qa-1, qa-2, qa-3, qa-4"
     And its card offers "+2 more"
     When I show every environment on its card
-    Then its card says it runs on "staging: A269-build / production: A269-build / qa-1: A269-build / qa-2: A269-build / qa-3: A269-build / qa-4: A269-build / qa-5: A269-build / qa-6: A269-build"
+    Then its card says it runs on "A269-build: staging, production, qa-1, qa-2, qa-3, qa-4, qa-5, qa-6"
+
+  Scenario: Each build is named once, with the environments that run it
+    # Four environments on one build used to repeat that build four times.
+    Given the "Appointments" release trains are:
+      | train | status   | tracker day |
+      | A269  | released | 2026-10-13  |
+    And "A269" of "Appointments" runs as "main-901" on "production / qa-1"
+    And "A269" of "Appointments" also runs as "hotfix-905" on "staging"
+    When I pick the "staging" environment
+    And I pick the "Appointments" application
+    And I hover the "A269" release train
+    Then its card says it runs on "hotfix-905: staging / main-901: production, qa-1"
+    And its card links "main-901" to "https://ci.example.test/builds/main-901"
+    And its card links "0123456" to "https://git.example.test/-/commit/0123456789abcdef"
+
+  Scenario: An upcoming train links the branch it is cut to
+    Given the "Appointments" release trains are:
+      | train | status   | tracker day | branch                  |
+      | A269  | released | 2026-10-13  |                         |
+      | A270  | planned  | 2026-10-27  | release/maintenance_270 |
+    When I pick the "staging" environment
+    And I pick the "Appointments" application
+    And I hover the "A270" release train
+    Then its card links "release/maintenance_270" to "https://git.example.test/vet/appointments/-/tree/release/maintenance_270"

@@ -1,5 +1,12 @@
 # @env-hopper/source-gitlab
 
+## 2.7.0
+
+### Patch Changes
+
+- Updated dependencies [[`6b93896`](https://github.com/lislon/env-hopper/commit/6b938962588e5f9cde89c1a188dad607f7c5fbb9)]:
+  - @env-hopper/backend-core@2.7.0
+
 ## 2.6.1
 
 ### Patch Changes

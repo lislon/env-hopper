@@ -1,5 +1,11 @@
 # @env-hopper/frontend-core
 
+## 2.7.0
+
+### Minor Changes
+
+- [#421](https://github.com/lislon/env-hopper/pull/421) [`6b93896`](https://github.com/lislon/env-hopper/commit/6b938962588e5f9cde89c1a188dad607f7c5fbb9) Thanks [@lislon](https://github.com/lislon)! - Release-train card: each build is named once with the environments running it, plus a link to its commit (from the Component's `commitUrl`); a long build name ends in "…" instead of leaving the card; an upcoming train can link its release branch (`ReleaseTrain.releaseBranch`); dates outside this year show the year; "your time" drops UTC; the row shows a pointer and a click pins the card. No layout shift on revisit: each App's last answer is kept per device and favourite and recent Apps are prefetched (ADR 0008).
+
 ## 2.6.1
 
 ### Patch Changes

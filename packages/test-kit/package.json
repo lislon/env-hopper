@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/test-kit",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "description": "Integration test harness for Env Hopper: mock backend, mock network and page objects",
   "homepage": "https://github.com/lislon/env-hopper",
   "repository": {

@@ -1,5 +1,7 @@
 # @env-hopper/table-sync
 
+## 2.7.0
+
 ## 2.6.1
 
 ## 2.6.0

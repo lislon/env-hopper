@@ -8,6 +8,7 @@ import type {
   EhBackendCompanySpecificBackend,
   ReleaseDate,
   ReleaseTrain,
+  ShownReleaseTrains,
 } from '../../types'
 
 function train(
@@ -42,6 +43,7 @@ function given(
     commitSha?: string
   }> = [],
   commitsBehind?: Record<string, Record<string, number>>,
+  releaseLines?: EhBackendCompanySpecificBackend['getReleaseLines'],
 ) {
   const catalog = {
     getComponents: () =>
@@ -82,9 +84,10 @@ function given(
               trains && { displayTimeZone: 'America/Los_Angeles', trains },
             ),
         }),
+        ...(releaseLines && { getReleaseLines: releaseLines }),
         ...(commitsBehind && {
-          getCommitsBehind: ({ branch }: { branch: string }) =>
-            Promise.resolve(commitsBehind[branch] ?? {}),
+          getCommitsBehind: ({ ref }: { ref: string }) =>
+            Promise.resolve(commitsBehind[ref] ?? {}),
         }),
       } as EhBackendCompanySpecificBackend,
       adminGroups: [],
@@ -93,18 +96,29 @@ function given(
   )
 }
 
+/** Every snapshot the stream sends, in order. */
+async function snapshots(api: ReturnType<typeof given>) {
+  const all: Array<Awaited<ReturnType<typeof last>>> = []
+  for await (const s of await api.releaseTrains({ appSlug: 'appointments' }))
+    all.push(s)
+  return all
+}
+/** The whole answer: the stream's last snapshot. */
+async function last(api: ReturnType<typeof given>) {
+  let final: ShownReleaseTrains | null = null
+  for await (const s of await api.releaseTrains({ appSlug: 'appointments' }))
+    final = s
+  return final
+}
+
 const shown = async (api: ReturnType<typeof given>) =>
-  (await api.releaseTrains({ appSlug: 'appointments' }))?.trains.map(
-    (t) => t.shortName,
-  )
+  (await last(api))?.trains.map((t) => t.shortName)
 
 describe('releaseTrains', () => {
   it('an app without release trains gets none', async () => {
     expect({
-      noSource: await given().releaseTrains({ appSlug: 'appointments' }),
-      notConfigured: await given(null).releaseTrains({
-        appSlug: 'appointments',
-      }),
+      noSource: await last(given()),
+      notConfigured: await last(given(null)),
     }).toEqual({ noSource: null, notConfigured: null })
   })
 
@@ -135,8 +149,7 @@ describe('releaseTrains', () => {
     const notes = { sourceName: 'Notes', date: '2026-10-28' }
     const api = given([train('A270', false, [tracker, ticket, notes])])
 
-    const [a270] = (await api.releaseTrains({ appSlug: 'appointments' }))!
-      .trains
+    const [a270] = (await last(api))!.trains
 
     expect({
       shownDate: a270?.shownDate,
@@ -147,8 +160,7 @@ describe('releaseTrains', () => {
   it('a train with no date at all is shown without one', async () => {
     const api = given([train('A270', false, [])])
 
-    const [a270] = (await api.releaseTrains({ appSlug: 'appointments' }))!
-      .trains
+    const [a270] = (await last(api))!.trains
 
     expect({
       shownDate: a270?.shownDate,
@@ -178,8 +190,7 @@ describe('releaseTrains', () => {
       ],
     )
 
-    const trains = (await api.releaseTrains({ appSlug: 'appointments' }))!
-      .trains
+    const trains = (await last(api))!.trains
 
     expect(trains.map((t) => [t.shortName, t.runningOn])).toEqual([
       [
@@ -241,8 +252,7 @@ describe('releaseTrains', () => {
       ],
     )
 
-    const [a270] = (await api.releaseTrains({ appSlug: 'appointments' }))!
-      .trains
+    const [a270] = (await last(api))!.trains
 
     expect(a270?.runningOn.map((r) => [r.envSlug, r.version])).toEqual([
       ['staging', 'RC3-7001'],
@@ -297,8 +307,7 @@ describe('releaseTrains', () => {
       },
     )
 
-    const trains = (await api.releaseTrains({ appSlug: 'appointments' }))!
-      .trains
+    const trains = (await last(api))!.trains
 
     expect(
       trains.map((t) => ({
@@ -321,6 +330,118 @@ describe('releaseTrains', () => {
         ],
         missingFrom: undefined,
       },
+    ])
+  })
+
+  it('shows the trains at once, then adds their lines, then the build distances', async () => {
+    const line = {
+      name: 'release/maintenance_272',
+      url: 'https://git.example.test/-/tree/release/maintenance_272',
+      kind: 'release' as const,
+    }
+    const api = given(
+      [train('A272', false, ['2026-11-10'])],
+      [
+        {
+          env: 'qa-1',
+          version: 'release-maintenance-272-8001',
+          commitSha: 'rc1',
+        },
+      ],
+      { 'release/maintenance_272': { rc1: 3 } },
+      ({ trains }) =>
+        Promise.resolve({
+          [trains[0]!.id]: {
+            releaseLine: line,
+            tip: { version: 'release-maintenance-272-8004', commitSha: 'rc4' },
+          },
+        }),
+    )
+
+    const steps = (await snapshots(api)).map((s) => ({
+      pending: s?.pending,
+      line: s?.trains[0]?.releaseLine?.name,
+      running: s?.trains[0]?.runningOn.map((r) => [r.envSlug, r.behindTip]),
+    }))
+
+    expect(steps).toEqual([
+      { pending: ['lines', 'distances'], line: undefined, running: [] },
+      {
+        pending: ['distances'],
+        line: 'release/maintenance_272',
+        running: [['qa-1', undefined]],
+      },
+      {
+        pending: undefined,
+        line: 'release/maintenance_272',
+        running: [['qa-1', 3]],
+      },
+    ])
+  })
+
+  it('a train on the main line keeps only the environments ahead of what production runs', async () => {
+    const develop = {
+      name: 'develop',
+      url: 'https://git.example.test/-/tree/develop',
+      kind: 'integration' as const,
+    }
+    const api = given(
+      [
+        train('A271', true, ['2026-10-27'], { artifactVersion: '3.139.0.0' }),
+        train('A272', false, ['2026-11-10'], {
+          releaseLine: develop,
+          tip: { version: 'develop-9010', commitSha: 'd10' },
+        }),
+      ],
+      [
+        {
+          env: 'production',
+          version: 'master-8000',
+          aliases: ['3.139.0.0'],
+          commitSha: 'p1',
+        },
+        { env: 'qa-old', version: 'develop-7990', commitSha: 'd0' },
+        { env: 'qa-new', version: 'develop-9005', commitSha: 'd5' },
+      ],
+      {
+        // Commits each build has that production's p1 lacks: d0 is released code.
+        d0: { p1: 0 },
+        d5: { p1: 4 },
+        develop: { d5: 5 },
+      },
+    )
+
+    const a272 = (await last(api))!.trains[1]
+
+    expect(a272?.runningOn.map((r) => [r.envSlug, r.behindTip])).toEqual([
+      ['qa-new', 5],
+    ])
+  })
+
+  it('an App released from its main line runs the build its release ticket names', async () => {
+    const api = given(
+      [
+        train('A1023', true, ['2026-10-26'], {
+          artifactVersion: '10.23',
+          buildIds: ['3675878'],
+        }),
+      ],
+      [
+        { env: 'production', version: 'master-3675878', commitSha: 'p' },
+        { env: 'qa-1', version: 'master-3468475', commitSha: 'q' },
+        {
+          env: 'qa-2',
+          version: 'v-x',
+          buildUrl: 'https://git.example.test/-/pipelines/3675878',
+        },
+      ],
+    )
+
+    const [a1023] = (await last(api))!.trains
+
+    expect(a1023?.runningOn.map((r) => r.envSlug)).toEqual([
+      'production',
+      'qa-2',
     ])
   })
 })

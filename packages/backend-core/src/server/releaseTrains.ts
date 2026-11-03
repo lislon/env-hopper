@@ -72,23 +72,36 @@ export function isBuildOf(lineName: string, name: string): boolean {
  * matches, or the build came from its Release Line.
  */
 export function runningOnOf(
-  train: Pick<ReleaseTrain, 'artifactVersion' | 'releaseLine'>,
+  train: Pick<ReleaseTrain, 'artifactVersion' | 'releaseLine' | 'buildIds'>,
   deployments: PairDeployments,
   commitUrlOf: (componentSlug: string) => string | undefined = () => undefined,
 ): Array<ReleaseTrainRunningOn> {
-  const { artifactVersion, releaseLine } = train
-  if (!artifactVersion && !releaseLine) return []
+  const { artifactVersion, releaseLine, buildIds = [] } = train
   const names = (r: { version: string; aliases: Array<string> }) => [
     r.version,
     ...r.aliases,
   ]
+  if (!artifactVersion && !releaseLine && buildIds.length === 0) return []
+  /** `master-3675878`, or a build page ending in `/pipelines/3675878`. */
+  const isNamedBuild = (r: {
+    version: string
+    aliases: Array<string>
+    buildUrl?: string
+  }) =>
+    buildIds.some(
+      (id) =>
+        names(r).some((n) => n.endsWith(`-${id}`)) ||
+        (r.buildUrl?.replace(/\/+$/, '').endsWith(`/${id}`) ?? false),
+    )
   return deployments.pairs.flatMap((p) => {
-    const row = p.rows.find((r) =>
-      names(r).some(
-        (n) =>
-          n === artifactVersion ||
-          (releaseLine !== undefined && isBuildOf(releaseLine.name, n)),
-      ),
+    const row = p.rows.find(
+      (r) =>
+        isNamedBuild(r) ||
+        names(r).some(
+          (n) =>
+            n === artifactVersion ||
+            (releaseLine !== undefined && isBuildOf(releaseLine.name, n)),
+        ),
     )
     return row
       ? [
@@ -141,26 +154,44 @@ export function withBehindTip(
 }
 
 type CommitsBehind = (
-  branch: string,
+  ref: string,
   commitShas: Array<string>,
 ) => Promise<Record<string, number>> | undefined
 
 /**
  * How far each running build is behind its line's tip, and for a hotfix how
- * many of its commits the next train's line still lacks. A read that fails or
- * is not offered leaves the train as it was: the distance is a detail.
+ * many of its commits the next train's line still lacks. A train on the main
+ * line keeps only the builds ahead of what production runs: an older main-line
+ * build is released code, not this train's. A read that fails or is not
+ * offered leaves the train as it was: these are details.
  */
 export async function withLineDistances(
   trains: Array<ShownReleaseTrain>,
   commitsBehind: CommitsBehind,
 ): Promise<Array<ShownReleaseTrain>> {
-  const read = async (branch: string, shas: Array<string>) => {
+  const read = async (ref: string, shas: Array<string>) => {
     if (shas.length === 0) return {}
     try {
-      return (await commitsBehind(branch, shas)) ?? {}
+      return (await commitsBehind(ref, shas)) ?? {}
     } catch {
       return {}
     }
+  }
+  const shasOf = (t: ShownReleaseTrain) => [
+    ...new Set(t.runningOn.flatMap((r) => (r.commitSha ? [r.commitSha] : []))),
+  ]
+  const onProd = trains.filter((t) => t.isReleased).at(-1)
+  const prodShas = onProd ? shasOf(onProd) : []
+  /** The builds with commits production's build lacks: one read per build. */
+  const aheadOfProd = async (shas: Array<string>) => {
+    const ahead = await Promise.all(
+      shas.map(async (sha) => {
+        const lacks = await read(sha, prodShas)
+        // Unknown counts as ahead: the filter only removes what it is sure of.
+        return prodShas.some((p) => lacks[p] !== 0) ? [sha] : []
+      }),
+    )
+    return new Set(ahead.flat())
   }
   const nextTrain = trains.find(
     (t) => !t.isReleased && !isHotfix(t) && t.releaseLine && t.tip?.commitSha,
@@ -168,10 +199,14 @@ export async function withLineDistances(
   return Promise.all(
     trains.map(async (t) => {
       if (!t.releaseLine) return t
+      const onMainLine =
+        t.releaseLine.kind === 'integration' && prodShas.length > 0
+      const keep = onMainLine ? await aheadOfProd(shasOf(t)) : undefined
+      const running = keep
+        ? t.runningOn.filter((r) => !r.commitSha || keep.has(r.commitSha))
+        : t.runningOn
       const shas = [
-        ...new Set(
-          t.runningOn.flatMap((r) => (r.commitSha ? [r.commitSha] : [])),
-        ),
+        ...new Set(running.flatMap((r) => (r.commitSha ? [r.commitSha] : []))),
       ]
       const intoSha =
         isHotfix(t) && t !== nextTrain ? nextTrain?.tip?.commitSha : undefined
@@ -181,7 +216,7 @@ export async function withLineDistances(
       )
       const missing = intoSha === undefined ? undefined : behind[intoSha]
       return {
-        ...withBehindTip(t, behind),
+        ...withBehindTip({ ...t, runningOn: running }, behind),
         ...(missing !== undefined &&
           missing > 0 &&
           nextTrain?.releaseLine && {

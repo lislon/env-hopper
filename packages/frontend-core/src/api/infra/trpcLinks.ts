@@ -9,7 +9,7 @@ import type { TRPCLink } from '@trpc/client'
 import { apiFetch } from '~/util/error-utils'
 
 /** The queries that answer with a stream of chunks. */
-const STREAMED = new Set(['pair', 'slices'])
+const STREAMED = new Set(['pair', 'slices', 'releaseTrains'])
 
 /**
  * Subscriptions (`pairsWatch`) are server-sent events. The streamed queries go

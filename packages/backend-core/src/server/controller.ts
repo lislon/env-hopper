@@ -12,7 +12,12 @@ import { createAuthRouter } from '../modules/auth/authRouter.js'
 import { MAX_SLICE_SLUGS, MAX_USERS, pairDetails } from './pairDetails'
 import { pairsWatch } from './pairsWatch'
 import { pickShownTrains, toShown, withLineDistances } from './releaseTrains'
-import type { ShownReleaseTrains } from '../types/backend/releaseTrains'
+import type {
+  ReleaseTrain,
+  ReleaseTrainsPending,
+  ShownReleaseTrain,
+  ShownReleaseTrains,
+} from '../types/backend/releaseTrains'
 // Named here so the router's declaration can name a `pairsWatch` event.
 import type { TrackedData } from '@trpc/server/unstable-core-do-not-import'
 import type { PairChunk } from './pairDetails'
@@ -158,14 +163,24 @@ export function createTrpcRouter(auth?: BetterAuth) {
       }),
 
     /**
-     * The App's Release Trains for the widget beside the form: the last
-     * released one and the next two. Null: the App has none.
+     * The App's Release Trains for the widget beside the form: the train on
+     * prod and the hotfixes since, then the next two. Streamed as whole
+     * snapshots, so the rows show as soon as the trackers answer: first the
+     * trains, then with their lines and tips, then with build distances; each
+     * says what it still waits for. Null: the App has none.
      */
     releaseTrains: publicProcedure
       .input(z.object({ appSlug: z.string() }))
-      .query(async ({ input, ctx }): Promise<ShownReleaseTrains | null> => {
-        const all = await ctx.companySpecificBackend.getReleaseTrains?.(input)
-        if (!all) return null
+      .query(async function* ({
+        input,
+        ctx,
+      }): AsyncGenerator<ShownReleaseTrains | null> {
+        const backend = ctx.companySpecificBackend
+        const all = await backend.getReleaseTrains?.(input)
+        if (!all) {
+          yield null
+          return
+        }
         const [deployments, components] = ctx.catalog
           ? await Promise.all([
               ctx.catalog.getPairDeployments({ appSlugs: [input.appSlug] }),
@@ -174,19 +189,48 @@ export function createTrpcRouter(auth?: BetterAuth) {
           : [{ pairs: [] }, {}]
         const commitUrlOf = (slug: string) =>
           components[input.appSlug]?.find((c) => c.slug === slug)?.commitUrl
-        const shown = pickShownTrains(all.trains, 2).map((train) =>
-          toShown(train, deployments, commitUrlOf),
-        )
-        return {
+        const picked = pickShownTrains(all.trains, 2)
+        const snapshot = (
+          trains: Array<ShownReleaseTrain>,
+          pending: Array<ReleaseTrainsPending>,
+        ): ShownReleaseTrains => ({
           displayTimeZone: all.displayTimeZone,
-          trains: await withLineDistances(shown, (branch, commitShas) =>
-            ctx.companySpecificBackend.getCommitsBehind?.({
+          trains,
+          ...(pending.length > 0 && { pending }),
+        })
+        const shown = (trains: Array<ReleaseTrain>) =>
+          trains.map((train) => toShown(train, deployments, commitUrlOf))
+        const asksLines = backend.getReleaseLines !== undefined
+        const asksDistances = backend.getCommitsBehind !== undefined
+        let trains = shown(picked)
+        yield snapshot(trains, [
+          ...(asksLines ? (['lines'] as const) : []),
+          ...(asksDistances ? (['distances'] as const) : []),
+        ])
+        if (asksLines) {
+          const lines = await backend.getReleaseLines!({
+            appSlug: input.appSlug,
+            trains: picked,
+          }).catch(() => ({}) as Record<string, never>)
+          trains = shown(
+            picked.map((train) => ({ ...train, ...lines[train.id] })),
+          )
+          if (asksDistances) yield snapshot(trains, ['distances'])
+        }
+        if (!asksDistances) {
+          if (asksLines) yield snapshot(trains, [])
+          return
+        }
+        yield snapshot(
+          await withLineDistances(trains, (ref, commitShas) =>
+            backend.getCommitsBehind!({
               appSlug: input.appSlug,
-              branch,
+              ref,
               commitShas,
             }),
           ),
-        }
+          [],
+        )
       }),
 
     /**

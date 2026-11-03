@@ -4,7 +4,12 @@ import type {
   ResourceJumpsExtendedData,
 } from '../common/dataRootTypes'
 import type { RenameRule, RenameRuleParams } from './api'
-import type { ReleaseTrains } from './releaseTrains'
+import type {
+  ReleaseLine,
+  ReleaseTrain,
+  ReleaseTrainBuild,
+  ReleaseTrains,
+} from './releaseTrains'
 
 /**
  * Every request asks again, and `pair` and `slices` ask too: return the same
@@ -33,12 +38,24 @@ export interface EhBackendCompanySpecificBackend {
     appSlug: string
   }) => Promise<ReleaseTrains | null>
   /**
-   * For each commit, how many commits the tip of the App's `branch` has that
-   * it lacks (0: it is the tip). A commit the backend cannot place is left out.
+   * Where each planned train's code is built from now, and that line's newest
+   * build, by train id; a train left out has none. Asked after the trains are
+   * shown: it may read slow sources (a CI server) that the trains need not wait for.
+   */
+  getReleaseLines?: (input: {
+    appSlug: string
+    trains: Array<ReleaseTrain>
+  }) => Promise<
+    Record<string, { releaseLine: ReleaseLine; tip?: ReleaseTrainBuild }>
+  >
+  /**
+   * For each commit, how many commits `ref` (a branch's tip, or a commit)
+   * has that it lacks (0: it has all of them). A commit the backend cannot
+   * place is left out.
    */
   getCommitsBehind?: (input: {
     appSlug: string
-    branch: string
+    ref: string
     commitShas: Array<string>
   }) => Promise<Record<string, number>>
   /**

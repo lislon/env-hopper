@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type {
   ReleaseTrainRunningOn,
+  ReleaseTrainsPending,
   ShownReleaseTrain,
+  ShownReleaseTrains,
 } from '@env-hopper/backend-core'
 import { getTrpcFromMeta } from '~/util/reactQueryUtils'
 import { appSlugFromJumpSlug, getEhToOptions } from '~/util/route-utils'
@@ -90,8 +92,24 @@ export function releaseTrainsQuery(appSlug: string) {
     staleTime: 5 * 60_000,
     retry: 1,
     ...(seen && { initialData: seen.data, initialDataUpdatedAt: seen.at }),
+    // The answer streams as whole snapshots: trains, then their lines and
+    // tips, then build distances. A first visit shows each as it lands; a
+    // revisit keeps what this device saw last until the new answer is whole,
+    // so nothing it showed disappears and comes back.
     queryFn: async (ctx) => {
-      const data = await getTrpcFromMeta(ctx).releaseTrains.query({ appSlug })
+      const key = ['releaseTrains', appSlug] as const
+      let data: ShownReleaseTrains | null = null
+      const stream = await getTrpcFromMeta(ctx).releaseTrains.query(
+        { appSlug },
+        { signal: ctx.signal },
+      )
+      for await (const snapshot of stream) {
+        data = snapshot
+        const shown = ctx.client.getQueryData<ShownReleaseTrains | null>(key)
+        if (snapshot?.pending?.length && (!shown || shown.pending?.length)) {
+          ctx.client.setQueryData(key, snapshot)
+        }
+      }
       remember(appSlug, data)
       return data
     },
@@ -168,7 +186,7 @@ function ExtLink({
 export function ReleaseTrainsWidget() {
   const { app, env } = useMainAppFormContext()
   const appSlug = app ? appSlugFromJumpSlug(app.id) : ''
-  const { data } = useQuery({
+  const { data, isFetching } = useQuery({
     ...releaseTrainsQuery(appSlug),
     enabled: appSlug !== '',
     // Builds and branch tips move while someone watches; a background tab is not watching.
@@ -186,7 +204,17 @@ export function ReleaseTrainsWidget() {
     <div className="eh-rt" data-testid="widget-release-trains">
       <div className="eh-rt-gutter" />
       <div className="eh-rt-body">
-        <div className="eh-rt-title">Releases</div>
+        <div className="eh-rt-title">
+          Releases
+          {(isFetching || !!data.pending?.length) && (
+            <span
+              className="eh-rt-checking"
+              data-testid="release-trains-checking"
+            >
+              checking…
+            </span>
+          )}
+        </div>
         <ol className="eh-rt-rail">
           {data.trains.map((train) => (
             <TrainRow
@@ -194,6 +222,7 @@ export function ReleaseTrainsWidget() {
               train={train}
               afterNow={train === firstPlanned}
               isOnProd={train === onProd}
+              pending={data.pending ?? []}
               appId={app.id}
               hereEnvSlug={env?.id}
               displayTimeZone={data.displayTimeZone}
@@ -223,6 +252,7 @@ function TrainRow({
   train,
   afterNow,
   isOnProd,
+  pending,
   appId,
   hereEnvSlug,
   displayTimeZone,
@@ -230,6 +260,7 @@ function TrainRow({
   train: ShownReleaseTrain
   afterNow: boolean
   isOnProd: boolean
+  pending: Array<ReleaseTrainsPending>
   appId: string
   hereEnvSlug: string | undefined
   displayTimeZone: string
@@ -253,12 +284,22 @@ function TrainRow({
           )}
           {isOnProd ? (
             <span className="eh-rt-tag is-prod">on prod</span>
+          ) : !train.isReleased &&
+            train.kind !== 'hotfix' &&
+            pending.includes('lines') ? (
+            <span
+              className="eh-rt-tag is-pending"
+              aria-label="checking its branch"
+            >
+              ···
+            </span>
           ) : (
             stageTag(train)
           )}
         </div>
         <TrainCard
           train={train}
+          pending={pending}
           appId={appId}
           hereEnvSlug={hereEnvSlug}
           displayTimeZone={displayTimeZone}
@@ -284,16 +325,20 @@ function Behind({ n }: { n: number | undefined }) {
 
 function TrainCard({
   train,
+  pending,
   appId,
   hereEnvSlug,
   displayTimeZone,
 }: {
   train: ShownReleaseTrain
+  pending: Array<ReleaseTrainsPending>
   appId: string
   hereEnvSlug: string | undefined
   displayTimeZone: string
 }) {
   const { shownDate, releaseLine, tip } = train
+  const linesPending = !train.isReleased && pending.includes('lines')
+  const distancesPending = pending.includes('distances')
   const otherZones = shownDate && formatOtherZones(shownDate)
   const { listEnvs } = useMainAppFormContext()
   const { listFavoriteEnvs, recentJumps } = useEhContext()
@@ -307,7 +352,11 @@ function TrainCard({
     favorites: new Set(listFavoriteEnvs),
     recent: [...new Set(recentJumps.flatMap((j) => (j.env ? [j.env] : [])))],
   }
-  const rows = orderRunningOn(train.runningOn, order, (e) => envRank(e, mine))
+  // Production never runs an unreleased train: a main-line build there is the released one's.
+  const running = train.isReleased
+    ? train.runningOn
+    : train.runningOn.filter((r) => !mine.prod.has(r.envSlug))
+  const rows = orderRunningOn(running, order, (e) => envRank(e, mine))
   const shown = showAll
     ? rows
     : order === 'env'
@@ -390,6 +439,14 @@ function TrainCard({
           </ExtLink>
         </div>
       )}
+      {linesPending && (
+        <div
+          className="eh-rt-tiphead is-pending"
+          data-testid="release-train-line-pending"
+        >
+          <span className="eh-rt-k">Finding its branch and newest build…</span>
+        </div>
+      )}
       {train.missingFrom && (
         <div className="eh-rt-conflict" data-testid="release-train-missing">
           ⚠ Not in {train.missingFrom.lineName} yet: {train.missingFrom.commits}{' '}
@@ -397,7 +454,7 @@ function TrainCard({
         </div>
       )}
       <div className="eh-rt-envs">
-        {train.runningOn.length === 0 ? (
+        {running.length === 0 ? (
           <span className="eh-rt-sub">
             {train.isReleased
               ? 'Not running on any environment'
@@ -407,8 +464,8 @@ function TrainCard({
           <>
             <div className="eh-rt-caprow">
               <div className="eh-rt-caption">
-                Running in {train.runningOn.length} environment
-                {train.runningOn.length === 1 ? '' : 's'}
+                Running in {running.length} environment
+                {running.length === 1 ? '' : 's'}
               </div>
               <span className="eh-rt-sorter">
                 {(['env', 'build'] as const).map((o, i) => (
@@ -428,15 +485,13 @@ function TrainCard({
             <table className="eh-rt-tbl" data-testid="release-train-envs">
               <tbody>
                 {shown.map((r, i) => {
-                  const sameAsAbove =
-                    order === 'build' && shown[i - 1]?.version === r.version
+                  // The row above says it already: "⁚" instead of the same build again.
+                  const sameAsAbove = shown[i - 1]?.version === r.version
                   return (
                     <tr
                       key={r.envSlug}
                       data-env={r.envSlug}
-                      className={
-                        order === 'build' ? (sameAsAbove ? 'in' : 'grp') : ''
-                      }
+                      className={sameAsAbove ? 'in' : 'grp'}
                     >
                       <td>
                         <Link
@@ -451,7 +506,13 @@ function TrainCard({
                       </td>
                       <td className="eh-rt-mono">
                         {sameAsAbove ? (
-                          <span className="eh-rt-sub">〃</span>
+                          <span
+                            className="eh-rt-ditto"
+                            title={r.version}
+                            aria-label={`same: ${r.version}`}
+                          >
+                            ⁚
+                          </span>
                         ) : r.buildUrl ? (
                           <ExtLink
                             className="eh-rt-link eh-rt-build"
@@ -480,7 +541,19 @@ function TrainCard({
                         ) : null}
                       </td>
                       <td className="eh-rt-r">
-                        {!sameAsAbove && <Behind n={r.behindTip} />}
+                        {!sameAsAbove &&
+                          (r.behindTip === undefined &&
+                          distancesPending &&
+                          releaseLine ? (
+                            <span
+                              className="eh-rt-stale is-pending"
+                              title="counting commits"
+                            >
+                              …
+                            </span>
+                          ) : (
+                            <Behind n={r.behindTip} />
+                          ))}
                       </td>
                     </tr>
                   )

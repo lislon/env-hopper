@@ -136,7 +136,7 @@ export function createLegacyFormUi(user: UserEvent) {
             url: a.getAttribute('href') ?? '',
           })),
           // One line per row as shown: `env: build`, plus `(−n)` or `(tip)` when known;
-          // a row under the same build ("〃") names that build again.
+          // a row under the same build ("⁚") names that build again.
           cardRunningOn: (() => {
             let build = ''
             return Array.from(
@@ -148,7 +148,7 @@ export function createLegacyFormUi(user: UserEvent) {
                 cells[1]?.textContent ??
                 ''
               ).trim()
-              if (shownBuild !== '〃') build = shownBuild
+              if (shownBuild !== '⁚') build = shownBuild
               const behind = tr.querySelector('.eh-rt-stale')?.textContent
               return `${tr.dataset['env']}: ${build}${behind ? ` (${behind})` : ''}`
             })

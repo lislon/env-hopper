@@ -130,7 +130,7 @@ export interface Fixture {
   deployments?: Record<string, FixtureDeployments>
   /** Each App's Release Trains as its trackers say; read on every request. */
   releaseTrains?: Record<string, ReleaseTrains | 'unreadable'>
-  /** Per App, per branch: how many commits each commit is behind the branch tip. */
+  /** Per App, per ref (branch or commit): how many commits each commit lacks of it. */
   commitsBehind?: Record<string, Record<string, Record<string, number>>>
 }
 
@@ -379,8 +379,8 @@ function streamedQueries(
         ? Promise.reject(new Error('tracker unreachable'))
         : Promise.resolve(trains ?? null)
     },
-    getCommitsBehind: ({ appSlug, branch, commitShas }) => {
-      const known = fixture.commitsBehind?.[appSlug]?.[branch] ?? {}
+    getCommitsBehind: ({ appSlug, ref, commitShas }) => {
+      const known = fixture.commitsBehind?.[appSlug]?.[ref] ?? {}
       return Promise.resolve(
         Object.fromEntries(
           commitShas.flatMap((sha) =>

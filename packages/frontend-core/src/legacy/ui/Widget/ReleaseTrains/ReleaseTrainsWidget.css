@@ -29,6 +29,7 @@
   min-width: 0;
 }
 .eh-legacy .eh-rt-title {
+  position: relative;
   padding: 0 0 2px 12px;
   font-size: 9px;
   font-weight: 600;
@@ -409,6 +410,12 @@
 .eh-legacy .eh-rt-tbl .eh-rt-build {
   max-width: 240px;
 }
+.eh-legacy .eh-rt-ditto {
+  padding-left: 2px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--rt-mut);
+}
 .eh-legacy .eh-rt-r {
   text-align: right;
 }
@@ -442,4 +449,37 @@
 .eh-legacy .eh-rt-row:focus-visible {
   outline: 2px solid oklch(var(--bc) / 0.4);
   outline-offset: 1px;
+}
+/* Still reading: placeholders the size of what replaces them, so nothing moves when it lands. */
+.eh-legacy .eh-rt-checking {
+  position: absolute;
+  right: 0;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--rt-mut);
+  animation: eh-rt-pulse 1.4s ease-in-out infinite;
+}
+.eh-legacy .eh-rt-tag.is-pending,
+.eh-legacy .eh-rt-stale.is-pending,
+.eh-legacy .eh-rt-tiphead.is-pending .eh-rt-k {
+  color: var(--rt-mut);
+  border: 1px dashed var(--rt-rail);
+  animation: eh-rt-pulse 1.4s ease-in-out infinite;
+}
+.eh-legacy .eh-rt-tiphead.is-pending .eh-rt-k {
+  border: 0;
+}
+@keyframes eh-rt-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eh-legacy .eh-rt-checking,
+  .eh-legacy .eh-rt-tag.is-pending,
+  .eh-legacy .eh-rt-stale.is-pending,
+  .eh-legacy .eh-rt-tiphead.is-pending .eh-rt-k {
+    animation: none;
+  }
 }

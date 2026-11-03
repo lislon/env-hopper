@@ -53,6 +53,12 @@ export interface ReleaseTrain {
   releaseLine?: ReleaseLine
   /** The newest Build of its Release Line. */
   tip?: ReleaseTrainBuild
+  /**
+   * The Builds its release tickets name as the one to deploy (CI pipeline
+   * ids): an App released from its main line has no other way to tell its
+   * build from the next one.
+   */
+  buildIds?: Array<string>
   releaseNotesUrl?: string
 }
 
@@ -85,8 +91,13 @@ export interface ShownReleaseTrain extends ReleaseTrain {
   missingFrom?: { lineName: string; commits: number }
 }
 
+/** What a snapshot of the trains still waits for: their lines and tips, then build distances. */
+export type ReleaseTrainsPending = 'lines' | 'distances'
+
 export interface ShownReleaseTrains {
   displayTimeZone: string
+  /** Absent or empty: this snapshot is the whole answer. */
+  pending?: Array<ReleaseTrainsPending>
   /** The train on prod and the hotfixes since, then the next planned ones, by date. */
   trains: Array<ShownReleaseTrain>
 }

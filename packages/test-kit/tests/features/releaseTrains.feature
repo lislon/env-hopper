@@ -235,3 +235,18 @@ Feature: Release trains beside the form
     And I pick the "Appointments" application
     And I hover the "HF168" release train
     Then its card says "Not in release/maintenance_272 yet: 2 commits to merge forward"
+
+  Scenario: Production never runs an unreleased train, even on the main line it is built from
+    # An App released from master: production's master build belongs to the train already out.
+    Given the "Appointments" release trains are:
+      | train | status   | tracker day | line   | line kind   |
+      | A271  | released | 2026-10-27  |        |             |
+      | A272  | planned  | 2026-11-10  | master | integration |
+    And the "Appointments" builds running are:
+      | env        | build       | commit |
+      | production | master-6001 | m1     |
+      | staging    | master-6005 | m5     |
+    When I pick the "staging" environment
+    And I pick the "Appointments" application
+    And I hover the "A272" release train
+    Then its card says it runs on "staging: master-6005"

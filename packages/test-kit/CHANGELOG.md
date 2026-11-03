@@ -1,5 +1,15 @@
 # @env-hopper/test-kit
 
+## 2.8.3
+
+### Patch Changes
+
+- [#427](https://github.com/lislon/env-hopper/pull/427) [`d02058b`](https://github.com/lislon/env-hopper/commit/d02058b662bcd8c6e994610cf42dfe95c140eff9) Thanks [@lislon](https://github.com/lislon)! - A link inside the app to another environment or application (an environment in a release train's card, the FAQ's example, Back and Forward) now moves the form there. The form used to push its own selection back into the URL whenever the two differed, which undid every such link.
+
+- Updated dependencies [[`d02058b`](https://github.com/lislon/env-hopper/commit/d02058b662bcd8c6e994610cf42dfe95c140eff9)]:
+  - @env-hopper/frontend-core@2.8.3
+  - @env-hopper/backend-core@2.8.3
+
 ## 2.8.1
 
 ### Patch Changes

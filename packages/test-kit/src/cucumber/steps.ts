@@ -467,6 +467,22 @@ Then(
   },
 )
 
+Given(
+  '{string} of {string} is the build {string} its ticket names',
+  (_world, trainName: string, appName: string, buildId: string) => {
+    const train = trainsOf(appName).find((t) => t.shortName === trainName)
+    if (!train) throw new Error(`no release train ${trainName}`)
+    train.buildIds = [...(train.buildIds ?? []), buildId]
+  },
+)
+
+Then(
+  '{string} is not marked {string}',
+  async (_world, name: string, tag: string) => {
+    await waitFor(() => expect(shownTrain(name).tags).not.toContain(tag))
+  },
+)
+
 When('I hover the {string} release train', async (_world, name: string) => {
   await waitFor(() => shownTrain(name))
   await form().hoverReleaseTrain(name)

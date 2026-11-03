@@ -196,7 +196,7 @@ function hasUncounted(data: ShownReleaseTrains | null | undefined): boolean {
  * card on hover or keyboard focus.
  */
 export function ReleaseTrainsWidget() {
-  const { app, env } = useMainAppFormContext()
+  const { app, env, listEnvs } = useMainAppFormContext()
   const appSlug = app ? appSlugFromJumpSlug(app.id) : ''
   const { data } = useQuery({
     ...releaseTrainsQuery(appSlug),
@@ -210,8 +210,22 @@ export function ReleaseTrainsWidget() {
   if (!data?.trains.length || !app) {
     return null
   }
-  const firstPlanned = data.trains.find((t) => !t.isReleased)
-  const onProd = data.trains.filter((t) => t.isReleased).at(-1)
+  // Production is the truth: a train it runs went out, whatever the tracker
+  // still says (an ENR left "New" after the deploy). Not a main-line build:
+  // production runs one of those as the train already released.
+  const prodEnvs = new Set(
+    listEnvs.filter((e) => e.envType === 'prod').map((e) => e.id),
+  )
+  const runsOnProd = (t: ShownReleaseTrain) =>
+    t.releaseLine?.kind !== 'integration' &&
+    t.runningOn.some((r) => prodEnvs.has(r.envSlug))
+  const trains = data.trains.map((t) =>
+    !t.isReleased && runsOnProd(t) ? { ...t, isReleased: true } : t,
+  )
+  const firstPlanned = trains.find((t) => !t.isReleased)
+  const onProd =
+    trains.filter(runsOnProd).at(-1) ??
+    trains.filter((t) => t.isReleased).at(-1)
 
   return (
     <div className="eh-rt" data-testid="widget-release-trains">
@@ -219,7 +233,7 @@ export function ReleaseTrainsWidget() {
       <div className="eh-rt-body">
         <div className="eh-rt-title">Releases</div>
         <ol className="eh-rt-rail">
-          {data.trains.map((train) => (
+          {trains.map((train) => (
             <TrainRow
               key={train.id}
               train={train}

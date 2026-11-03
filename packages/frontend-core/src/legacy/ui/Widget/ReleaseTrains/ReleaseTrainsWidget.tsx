@@ -485,7 +485,7 @@ function TrainCard({
             <table className="eh-rt-tbl" data-testid="release-train-envs">
               <tbody>
                 {shown.map((r, i) => {
-                  // The row above says it already: "⁚" instead of the same build again.
+                  // The row above says it already: "〃" instead of the same build again.
                   const sameAsAbove = shown[i - 1]?.version === r.version
                   return (
                     <tr
@@ -511,7 +511,7 @@ function TrainCard({
                             title={r.version}
                             aria-label={`same: ${r.version}`}
                           >
-                            ⁚
+                            〃
                           </span>
                         ) : r.buildUrl ? (
                           <ExtLink

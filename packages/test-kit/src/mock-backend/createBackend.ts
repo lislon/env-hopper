@@ -130,6 +130,8 @@ export interface Fixture {
   deployments?: Record<string, FixtureDeployments>
   /** Each App's Release Trains as its trackers say; read on every request. */
   releaseTrains?: Record<string, ReleaseTrains | 'unreadable'>
+  /** Per App, per branch: how many commits each commit is behind the branch tip. */
+  commitsBehind?: Record<string, Record<string, Record<string, number>>>
 }
 
 /** An App's Components and where each runs, a row per Environment. */
@@ -312,7 +314,7 @@ const STREAMED = 'pair|slices|users|changeRequestDetails|releaseTrains'
 function streamedQueries(
   config: { bootstrap: BootstrapConfigData; resourceJumps: ResourceJumpsData },
   deployments: Record<string, FixtureDeployments>,
-  fixture: Pick<Fixture, 'releaseTrains'>,
+  fixture: Pick<Fixture, 'releaseTrains' | 'commitsBehind'>,
 ) {
   const catalog = {
     getPairDeployments: ({ appSlugs, envSlugs }) => {
@@ -376,6 +378,16 @@ function streamedQueries(
       return trains === 'unreadable'
         ? Promise.reject(new Error('tracker unreachable'))
         : Promise.resolve(trains ?? null)
+    },
+    getCommitsBehind: ({ appSlug, branch, commitShas }) => {
+      const known = fixture.commitsBehind?.[appSlug]?.[branch] ?? {}
+      return Promise.resolve(
+        Object.fromEntries(
+          commitShas.flatMap((sha) =>
+            known[sha] === undefined ? [] : [[sha, known[sha]]],
+          ),
+        ),
+      )
     },
   } as EhBackendCompanySpecificBackend
   const router = createTrpcRouter()

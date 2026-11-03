@@ -41,6 +41,7 @@ function given(
     buildUrl?: string
     commitSha?: string
   }> = [],
+  commitsBehind?: Record<string, Record<string, number>>,
 ) {
   const catalog = {
     getComponents: () =>
@@ -80,6 +81,10 @@ function given(
             Promise.resolve(
               trains && { displayTimeZone: 'America/Los_Angeles', trains },
             ),
+        }),
+        ...(commitsBehind && {
+          getCommitsBehind: ({ branch }: { branch: string }) =>
+            Promise.resolve(commitsBehind[branch] ?? {}),
         }),
       } as EhBackendCompanySpecificBackend,
       adminGroups: [],
@@ -197,6 +202,125 @@ describe('releaseTrains', () => {
           { envSlug: 'qa-2', version: '3.139.0.0', source: 'gitlab' },
         ],
       ],
+    ])
+  })
+
+  it('shows the hotfixes since the train on prod, and the planned ones before the last shown train', async () => {
+    const hotfix = (n: string, released: boolean, date: string) =>
+      train(n, released, [date], { kind: 'hotfix' })
+    const api = given([
+      train('A269', true, ['2026-10-13']),
+      hotfix('HF41', true, '2026-10-01'),
+      hotfix('HF42', true, '2026-10-20'),
+      train('A270', false, ['2026-10-27']),
+      hotfix('HF43', false, '2026-10-22'),
+      train('A271', false, ['2026-11-10']),
+      hotfix('HF44', false, '2026-11-20'),
+    ])
+
+    expect(await shown(api)).toEqual(['A269', 'HF42', 'HF43', 'A270', 'A271'])
+  })
+
+  it("counts a build of the train's release line as running it, however the version spells the branch", async () => {
+    const line = {
+      name: 'release/1.22.0',
+      url: 'https://git.example.test/-/tree/release/1.22.0',
+      kind: 'release' as const,
+    }
+    const api = given(
+      [train('A270', false, ['2026-10-27'], { releaseLine: line })],
+      [
+        {
+          env: 'staging',
+          version: 'RC3-7001',
+          aliases: ['release/1.22.0-7001'],
+        },
+        { env: 'qa-2', version: 'release-1-22-0-7002' },
+        { env: 'qa-3', version: 'release-1-22-0-hotfix-7003' },
+        { env: 'qa-4', version: 'release/1.22.01-7004' },
+      ],
+    )
+
+    const [a270] = (await api.releaseTrains({ appSlug: 'appointments' }))!
+      .trains
+
+    expect(a270?.runningOn.map((r) => [r.envSlug, r.version])).toEqual([
+      ['staging', 'RC3-7001'],
+      ['qa-2', 'release-1-22-0-7002'],
+    ])
+  })
+
+  it("says how far each build is behind its line's tip, and what a hotfix's commits the next line lacks", async () => {
+    const release = {
+      name: 'release/maintenance_272',
+      url: 'https://git.example.test/-/tree/release/maintenance_272',
+      kind: 'release' as const,
+    }
+    const hotfixLine = {
+      name: 'release/hotfix-168',
+      url: 'https://git.example.test/-/tree/release/hotfix-168',
+      kind: 'hotfix' as const,
+    }
+    const api = given(
+      [
+        train('A271', true, ['2026-10-27']),
+        train('HF168', false, ['2026-11-05'], {
+          kind: 'hotfix',
+          releaseLine: hotfixLine,
+          tip: { version: 'release-hotfix-168-9002', commitSha: 'hf-tip' },
+        }),
+        train('A272', false, ['2026-11-10'], {
+          releaseLine: release,
+          tip: { version: 'release-maintenance-272-8004', commitSha: 'rc4' },
+        }),
+      ],
+      [
+        {
+          env: 'staging',
+          version: 'release-maintenance-272-8004',
+          commitSha: 'rc4',
+        },
+        {
+          env: 'qa-2',
+          version: 'release-maintenance-272-8001',
+          commitSha: 'rc1',
+        },
+        {
+          env: 'preprod',
+          version: 'release-hotfix-168-9002',
+          commitSha: 'hf-tip',
+        },
+      ],
+      {
+        'release/maintenance_272': { rc4: 0, rc1: 6 },
+        'release/hotfix-168': { 'hf-tip': 0, rc4: 2 },
+      },
+    )
+
+    const trains = (await api.releaseTrains({ appSlug: 'appointments' }))!
+      .trains
+
+    expect(
+      trains.map((t) => ({
+        name: t.shortName,
+        behind: t.runningOn.map((r) => [r.envSlug, r.behindTip]),
+        missingFrom: t.missingFrom,
+      })),
+    ).toEqual([
+      { name: 'A271', behind: [], missingFrom: undefined },
+      {
+        name: 'HF168',
+        behind: [['preprod', 0]],
+        missingFrom: { lineName: 'release/maintenance_272', commits: 2 },
+      },
+      {
+        name: 'A272',
+        behind: [
+          ['staging', 0],
+          ['qa-2', 6],
+        ],
+        missingFrom: undefined,
+      },
     ])
   })
 })

@@ -1,13 +1,14 @@
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { ExternalLink } from 'lucide-react'
-import { Fragment, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type {
   ReleaseTrainRunningOn,
   ShownReleaseTrain,
 } from '@env-hopper/backend-core'
 import { getTrpcFromMeta } from '~/util/reactQueryUtils'
-import { appSlugFromJumpSlug } from '~/util/route-utils'
+import { appSlugFromJumpSlug, getEhToOptions } from '~/util/route-utils'
 import { useMainAppFormContext } from '../../../context/MainFormContextProvider'
 import { useLegacyCustomization } from '../../../adapter/legacyApi'
 import { useEhContext } from '../../../context/EhContext'
@@ -20,18 +21,56 @@ import {
 } from './releaseDateFormat'
 import './ReleaseTrainsWidget.css'
 
-/** Environments shown before the "+N more" toggle. */
-const ENVS_AT_FIRST = 6
+/** Rows shown "By env" before "+N more"; "By build" shows every build with this many envs each. */
+const ENV_ROWS = 7
+const ENVS_PER_BUILD = 3
+/** A build this many commits behind its line's tip is called out. */
+const FAR_BEHIND = 5
 
-/** The environment being looked at, then production ones, then the rest as they came. */
-function orderedRunningOn(
-  runningOn: Array<ReleaseTrainRunningOn>,
-  hereEnvSlug: string | undefined,
-  prodEnvSlugs: ReadonlySet<string>,
+/** How close an environment is to this person: here, prod, favourite, recent, the rest. */
+export function envRank(
+  envSlug: string,
+  mine: {
+    here?: string
+    prod: ReadonlySet<string>
+    favorites: ReadonlySet<string>
+    recent: ReadonlyArray<string>
+  },
+): number {
+  if (envSlug === mine.here) return 0
+  if (mine.prod.has(envSlug)) return 1
+  if (mine.favorites.has(envSlug)) return 2
+  const r = mine.recent.indexOf(envSlug)
+  return r === -1 ? 1000 : 3 + r
+}
+
+export type EnvOrder = 'env' | 'build'
+
+/** A row per environment, closest first; or by build, freshest (fewest behind) first. */
+export function orderRunningOn(
+  running: Array<ReleaseTrainRunningOn>,
+  order: EnvOrder,
+  rank: (envSlug: string) => number,
 ): Array<ReleaseTrainRunningOn> {
-  const rank = (r: ReleaseTrainRunningOn) =>
-    r.envSlug === hereEnvSlug ? 0 : prodEnvSlugs.has(r.envSlug) ? 1 : 2
-  return [...runningOn].sort((a, b) => rank(a) - rank(b))
+  const byEnv = (a: ReleaseTrainRunningOn, b: ReleaseTrainRunningOn) =>
+    rank(a.envSlug) - rank(b.envSlug) || a.envSlug.localeCompare(b.envSlug)
+  if (order === 'env') return [...running].sort(byEnv)
+  const behind = (r: ReleaseTrainRunningOn) => r.behindTip ?? Infinity
+  const closest = new Map<string, number>()
+  for (const r of running) {
+    closest.set(
+      r.version,
+      Math.min(closest.get(r.version) ?? Infinity, rank(r.envSlug)),
+    )
+  }
+  const near = (r: ReleaseTrainRunningOn) => closest.get(r.version) ?? Infinity
+  return [...running].sort(
+    (a, b) =>
+      behind(a) - behind(b) ||
+      near(a) - near(b) ||
+      a.version.localeCompare(b.version) ||
+      byEnv(a, b),
+  )
 }
 
 /** The icon id a build link's host suggests: `gitlab.natera.com` → `gitlab`. */
@@ -41,26 +80,6 @@ function hostIconId(url: string | undefined): string | undefined {
   } catch {
     return undefined
   }
-}
-
-/** One build and the environments running it, in the order they were ranked. */
-interface BuildGroup {
-  key: string
-  first: ReleaseTrainRunningOn
-  envSlugs: Array<string>
-}
-
-function groupByBuild(
-  running: Array<ReleaseTrainRunningOn>,
-): Array<BuildGroup> {
-  const groups = new Map<string, BuildGroup>()
-  for (const r of running) {
-    const key = `${r.version} ${r.commitSha ?? ''} ${r.buildUrl ?? ''}`
-    const group = groups.get(key) ?? { key, first: r, envSlugs: [] }
-    group.envSlugs.push(r.envSlug)
-    groups.set(key, group)
-  }
-  return [...groups.values()]
 }
 
 /** Starts from what this device saw last (no layout shift on revisit), then refreshes. */
@@ -142,8 +161,9 @@ function ExtLink({
 }
 
 /**
- * The selected app's release trains: the one production runs and the next
- * two. Details open in a card on hover or keyboard focus.
+ * The selected app's release trains: the one production runs and the hotfixes
+ * since, then the next two and the hotfixes before them. Details open in a
+ * card on hover or keyboard focus.
  */
 export function ReleaseTrainsWidget() {
   const { app, env } = useMainAppFormContext()
@@ -151,12 +171,16 @@ export function ReleaseTrainsWidget() {
   const { data } = useQuery({
     ...releaseTrainsQuery(appSlug),
     enabled: appSlug !== '',
+    // Builds and branch tips move while someone watches; a background tab is not watching.
+    refetchInterval: 5 * 60_000,
+    refetchIntervalInBackground: false,
   })
 
-  if (!data?.trains.length) {
+  if (!data?.trains.length || !app) {
     return null
   }
-  const next = data.trains.find((t) => !t.isReleased)
+  const firstPlanned = data.trains.find((t) => !t.isReleased)
+  const onProd = data.trains.filter((t) => t.isReleased).at(-1)
 
   return (
     <div className="eh-rt" data-testid="widget-release-trains">
@@ -168,7 +192,9 @@ export function ReleaseTrainsWidget() {
             <TrainRow
               key={train.id}
               train={train}
-              isNext={train === next}
+              afterNow={train === firstPlanned}
+              isOnProd={train === onProd}
+              appId={app.id}
               hereEnvSlug={env?.id}
               displayTimeZone={data.displayTimeZone}
             />
@@ -179,14 +205,32 @@ export function ReleaseTrainsWidget() {
   )
 }
 
+/** What an upcoming train's code is now: a release candidate once cut, else the main line it is on. */
+function stageTag(train: ShownReleaseTrain): ReactNode {
+  if (train.kind === 'hotfix') {
+    return <span className="eh-rt-tag is-hf">hotfix</span>
+  }
+  const line = train.releaseLine
+  if (train.isReleased || !line) return null
+  return line.kind === 'integration' ? (
+    <span className="eh-rt-tag is-stage">{line.name}</span>
+  ) : (
+    <span className="eh-rt-tag is-rc">rc</span>
+  )
+}
+
 function TrainRow({
   train,
-  isNext,
+  afterNow,
+  isOnProd,
+  appId,
   hereEnvSlug,
   displayTimeZone,
 }: {
   train: ShownReleaseTrain
-  isNext: boolean
+  afterNow: boolean
+  isOnProd: boolean
+  appId: string
   hereEnvSlug: string | undefined
   displayTimeZone: string
 }) {
@@ -194,9 +238,9 @@ function TrainRow({
   const { shownDate } = train
   return (
     <>
-      {isNext && <li className="eh-rt-now">now</li>}
+      {afterNow && <li className="eh-rt-now">now</li>}
       <li
-        className={`eh-rt-train ${train.isReleased ? 'is-released' : 'is-planned'} ${isNext ? 'is-next' : ''}`}
+        className={`eh-rt-train ${train.isReleased ? 'is-released' : 'is-planned'} ${train.kind === 'hotfix' ? 'is-hotfix' : ''}`}
         data-train={name}
       >
         {/* Focusable: a click or tap pins the card open (:focus-within), not only hover. */}
@@ -207,13 +251,15 @@ function TrainRow({
               {formatRowDate(shownDate, displayTimeZone)}
             </span>
           )}
-          {train.isReleased && (
+          {isOnProd ? (
             <span className="eh-rt-tag is-prod">on prod</span>
+          ) : (
+            stageTag(train)
           )}
-          {isNext && <span className="eh-rt-tag is-next">next</span>}
         </div>
         <TrainCard
           train={train}
+          appId={appId}
           hereEnvSlug={hereEnvSlug}
           displayTimeZone={displayTimeZone}
         />
@@ -222,37 +268,72 @@ function TrainRow({
   )
 }
 
+function Behind({ n }: { n: number | undefined }) {
+  if (n === undefined) return null
+  return n === 0 ? (
+    <span className="eh-rt-stale is-tip">tip</span>
+  ) : (
+    <span
+      className={`eh-rt-stale ${n >= FAR_BEHIND ? 'is-far' : ''}`}
+      title={`${n} commit${n === 1 ? '' : 's'} behind the tip`}
+    >
+      −{n}
+    </span>
+  )
+}
+
 function TrainCard({
   train,
+  appId,
   hereEnvSlug,
   displayTimeZone,
 }: {
   train: ShownReleaseTrain
+  appId: string
   hereEnvSlug: string | undefined
   displayTimeZone: string
 }) {
-  const { shownDate } = train
+  const { shownDate, releaseLine, tip } = train
   const otherZones = shownDate && formatOtherZones(shownDate)
   const { listEnvs } = useMainAppFormContext()
-  const [showAllEnvs, setShowAllEnvs] = useState(false)
-  const running = orderedRunningOn(
-    train.runningOn,
-    hereEnvSlug,
-    new Set(listEnvs.filter((e) => e.envType === 'prod').map((e) => e.id)),
-  )
-  const shownRunning = showAllEnvs ? running : running.slice(0, ENVS_AT_FIRST)
-  const hiddenCount = running.length - shownRunning.length
-  const groups = groupByBuild(shownRunning)
+  const { listFavoriteEnvs, recentJumps } = useEhContext()
+  const [order, setOrder] = useState<EnvOrder>('env')
+  const [showAll, setShowAll] = useState(false)
+  const mine = {
+    here: hereEnvSlug,
+    prod: new Set(
+      listEnvs.filter((e) => e.envType === 'prod').map((e) => e.id),
+    ),
+    favorites: new Set(listFavoriteEnvs),
+    recent: [...new Set(recentJumps.flatMap((j) => (j.env ? [j.env] : [])))],
+  }
+  const rows = orderRunningOn(train.runningOn, order, (e) => envRank(e, mine))
+  const shown = showAll
+    ? rows
+    : order === 'env'
+      ? rows.slice(0, ENV_ROWS)
+      : rows.filter(
+          (r, i) =>
+            rows.slice(0, i).filter((p) => p.version === r.version).length <
+            ENVS_PER_BUILD,
+        )
+  const hiddenCount = rows.length - shown.length
   const { icons } = useLegacyCustomization()
   const iconOf = (iconId: string | undefined) =>
     icons?.find((i) => i.iconId === iconId)?.svg
   const releasePageIcon = iconOf(train.releasePageIconId)
+  const isCut = releaseLine && releaseLine.kind !== 'integration'
   return (
     <div className="eh-rt-card" role="tooltip" data-testid="release-train-card">
       <div className="eh-rt-card-title">{train.fullName}</div>
       {train.artifactVersion && (
         <div className="eh-rt-sub" title={`${train.releaseSystemName} release`}>
           version <span className="eh-rt-mono">{train.artifactVersion}</span>
+        </div>
+      )}
+      {train.patches && (
+        <div className="eh-rt-sub">
+          on top of <b>{train.patches}</b>
         </div>
       )}
       <div className="eh-rt-caption">
@@ -273,17 +354,46 @@ function TrainCard({
           ⚠ {d.sourceName} says {formatDay(d)}
         </div>
       ))}
-      {train.releaseBranch && (
-        <div className="eh-rt-branch">
-          <div className="eh-rt-caption">Release branch</div>
+      {!train.isReleased && releaseLine && train.kind !== 'hotfix' && (
+        <div className="eh-rt-steps" data-testid="release-train-stage">
+          <span className={isCut ? '' : 'is-on'}>Planned</span>
+          <span className="eh-rt-sep">›</span>
+          <span className={isCut ? 'is-on' : ''}>RC</span>
+          <span className="eh-rt-sep">›</span>
+          <span>Released</span>
+        </div>
+      )}
+      {releaseLine && (
+        <div className="eh-rt-tiphead" data-testid="release-train-line">
+          <span className="eh-rt-k">{tip ? 'Tip' : 'Code on'}</span>
+          {tip &&
+            (tip.buildUrl ? (
+              <ExtLink
+                className="eh-rt-link eh-rt-mono eh-rt-build"
+                href={tip.buildUrl}
+                title={tip.version}
+                iconSvg={iconOf(hostIconId(tip.buildUrl))}
+              >
+                {tip.version}
+              </ExtLink>
+            ) : (
+              <span className="eh-rt-mono eh-rt-build">{tip.version}</span>
+            ))}
+          {tip && <span className="eh-rt-k">of</span>}
           <ExtLink
             className="eh-rt-link eh-rt-mono eh-rt-build"
-            href={train.releaseBranch.url}
-            title={train.releaseBranch.name}
-            iconSvg={iconOf(hostIconId(train.releaseBranch.url))}
+            href={releaseLine.url}
+            title={releaseLine.name}
+            iconSvg={tip ? undefined : iconOf(hostIconId(releaseLine.url))}
           >
-            {train.releaseBranch.name}
+            {releaseLine.name}
           </ExtLink>
+        </div>
+      )}
+      {train.missingFrom && (
+        <div className="eh-rt-conflict" data-testid="release-train-missing">
+          ⚠ Not in {train.missingFrom.lineName} yet: {train.missingFrom.commits}{' '}
+          commit{train.missingFrom.commits === 1 ? '' : 's'} to merge forward
         </div>
       )}
       <div className="eh-rt-envs">
@@ -295,68 +405,93 @@ function TrainCard({
           </span>
         ) : (
           <>
-            <div className="eh-rt-caption">
-              {train.isReleased ? 'Deployed on' : 'Already on'}
+            <div className="eh-rt-caprow">
+              <div className="eh-rt-caption">
+                Running in {train.runningOn.length} environment
+                {train.runningOn.length === 1 ? '' : 's'}
+              </div>
+              <span className="eh-rt-sorter">
+                {(['env', 'build'] as const).map((o, i) => (
+                  <span key={o}>
+                    {i > 0 && <span className="eh-rt-bar">|</span>}
+                    <button
+                      type="button"
+                      aria-pressed={order === o}
+                      onClick={() => setOrder(o)}
+                    >
+                      {o === 'env' ? 'By env' : 'By build'}
+                    </button>
+                  </span>
+                ))}
+              </span>
             </div>
-            <ul className="eh-rt-running">
-              {groups.map(({ key, first: b, envSlugs }) => (
-                <li key={key}>
-                  <div className="eh-rt-build-line">
-                    {b.buildUrl ? (
-                      <ExtLink
-                        className="eh-rt-link eh-rt-mono eh-rt-build"
-                        href={b.buildUrl}
-                        title={b.version}
-                        iconSvg={
-                          iconOf(b.source) ?? iconOf(hostIconId(b.buildUrl))
-                        }
-                      >
-                        {b.version}
-                      </ExtLink>
-                    ) : (
-                      <span
-                        className="eh-rt-mono eh-rt-build"
-                        title={b.version}
-                      >
-                        {b.version}
-                      </span>
-                    )}
-                    {b.commitSha &&
-                      (b.commitUrl ? (
-                        <ExtLink
-                          className="eh-rt-link eh-rt-mono eh-rt-commit"
-                          href={b.commitUrl}
-                          title={`commit ${b.commitSha}`}
+            <table className="eh-rt-tbl" data-testid="release-train-envs">
+              <tbody>
+                {shown.map((r, i) => {
+                  const sameAsAbove =
+                    order === 'build' && shown[i - 1]?.version === r.version
+                  return (
+                    <tr
+                      key={r.envSlug}
+                      data-env={r.envSlug}
+                      className={
+                        order === 'build' ? (sameAsAbove ? 'in' : 'grp') : ''
+                      }
+                    >
+                      <td>
+                        <Link
+                          {...getEhToOptions({ appId, envId: r.envSlug })}
+                          className={`eh-rt-link ${r.envSlug === hereEnvSlug ? 'eh-rt-here' : ''}`}
                         >
-                          {b.commitSha.slice(0, 7)}
-                        </ExtLink>
-                      ) : (
-                        <span className="eh-rt-mono eh-rt-sub">
-                          {b.commitSha.slice(0, 7)}
-                        </span>
-                      ))}
-                  </div>
-                  <div className="eh-rt-group-envs">
-                    {envSlugs.map((slug, i) => (
-                      <Fragment key={slug}>
-                        {i > 0 && ', '}
-                        <span
-                          data-env={slug}
-                          className={slug === hereEnvSlug ? 'eh-rt-here' : ''}
-                        >
-                          {slug}
-                        </span>
-                      </Fragment>
-                    ))}
-                  </div>
-                </li>
-              ))}
-            </ul>
+                          {r.envSlug}
+                        </Link>
+                        {mine.favorites.has(r.envSlug) && (
+                          <span className="eh-rt-why">★</span>
+                        )}
+                      </td>
+                      <td className="eh-rt-mono">
+                        {sameAsAbove ? (
+                          <span className="eh-rt-sub">〃</span>
+                        ) : r.buildUrl ? (
+                          <ExtLink
+                            className="eh-rt-link eh-rt-build"
+                            href={r.buildUrl}
+                            title={r.version}
+                          >
+                            {r.version}
+                          </ExtLink>
+                        ) : (
+                          <span className="eh-rt-build" title={r.version}>
+                            {r.version}
+                          </span>
+                        )}
+                      </td>
+                      <td className="eh-rt-r">
+                        {sameAsAbove ? null : r.commitUrl ? (
+                          <a
+                            className="eh-rt-link eh-rt-mono eh-rt-commit"
+                            href={r.commitUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            title={`commit ${r.commitSha}`}
+                          >
+                            {r.commitSha?.slice(0, 7)}
+                          </a>
+                        ) : null}
+                      </td>
+                      <td className="eh-rt-r">
+                        {!sameAsAbove && <Behind n={r.behindTip} />}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
             {hiddenCount > 0 && (
               <button
                 type="button"
                 className="eh-rt-more"
-                onClick={() => setShowAllEnvs(true)}
+                onClick={() => setShowAll(true)}
               >
                 +{hiddenCount} more
               </button>

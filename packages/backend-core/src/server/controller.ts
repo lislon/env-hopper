@@ -11,7 +11,7 @@ import type { BetterAuth } from '../modules/auth/auth'
 import { createAuthRouter } from '../modules/auth/authRouter.js'
 import { MAX_SLICE_SLUGS, MAX_USERS, pairDetails } from './pairDetails'
 import { pairsWatch } from './pairsWatch'
-import { pickProdAndNext, toShown } from './releaseTrains'
+import { pickShownTrains, toShown, withLineDistances } from './releaseTrains'
 import type { ShownReleaseTrains } from '../types/backend/releaseTrains'
 // Named here so the router's declaration can name a `pairsWatch` event.
 import type { TrackedData } from '@trpc/server/unstable-core-do-not-import'
@@ -174,10 +174,17 @@ export function createTrpcRouter(auth?: BetterAuth) {
           : [{ pairs: [] }, {}]
         const commitUrlOf = (slug: string) =>
           components[input.appSlug]?.find((c) => c.slug === slug)?.commitUrl
+        const shown = pickShownTrains(all.trains, 2).map((train) =>
+          toShown(train, deployments, commitUrlOf),
+        )
         return {
           displayTimeZone: all.displayTimeZone,
-          trains: pickProdAndNext(all.trains, 2).map((train) =>
-            toShown(train, deployments, commitUrlOf),
+          trains: await withLineDistances(shown, (branch, commitShas) =>
+            ctx.companySpecificBackend.getCommitsBehind?.({
+              appSlug: input.appSlug,
+              branch,
+              commitShas,
+            }),
           ),
         }
       }),

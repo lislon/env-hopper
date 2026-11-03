@@ -28,7 +28,6 @@ Feature: Release trains beside the form
     And I pick the "Appointments" application
     Then the release trains shown are "A269 / A270 / A271"
     And "A269" is marked "on prod"
-    And "A270" is marked "next"
     And the "now" line sits between "A269" and "A270"
 
   Scenario: A train with a ticket shows its time and zone
@@ -110,7 +109,7 @@ Feature: Release trains beside the form
     And I pick the "Appointments" application
     And I hover the "A270" release train
     Then its card says "Tue, Oct 27 · 6:00 PM PDT"
-    And its card says it runs on "A270-build: staging, qa-2"
+    And its card says it runs on "staging: A270-build / qa-2: A270-build"
     And its card links "A270-build" to "https://ci.example.test/builds/A270"
     And its card links "VET-901" to "https://tracker.example.test/browse/VET-901"
     And its card links "Release notes" to "https://wiki.example.test/A270"
@@ -135,13 +134,12 @@ Feature: Release trains beside the form
     When I pick the "staging" environment
     And I pick the "Appointments" application
     And I hover the "A269" release train
-    Then its card says it runs on "A269-build: staging, production, qa-1, qa-2, qa-3, qa-4"
-    And its card offers "+2 more"
+    Then its card says it runs on "staging: A269-build / production: A269-build / qa-1: A269-build / qa-2: A269-build / qa-3: A269-build / qa-4: A269-build / qa-5: A269-build"
+    And its card offers "+1 more"
     When I show every environment on its card
-    Then its card says it runs on "A269-build: staging, production, qa-1, qa-2, qa-3, qa-4, qa-5, qa-6"
+    Then its card says it runs on "staging: A269-build / production: A269-build / qa-1: A269-build / qa-2: A269-build / qa-3: A269-build / qa-4: A269-build / qa-5: A269-build / qa-6: A269-build"
 
-  Scenario: Each build is named once, with the environments that run it
-    # Four environments on one build used to repeat that build four times.
+  Scenario: Sorted by build, each build is named once above the environments running it
     Given the "Appointments" release trains are:
       | train | status   | tracker day |
       | A269  | released | 2026-10-13  |
@@ -150,16 +148,90 @@ Feature: Release trains beside the form
     When I pick the "staging" environment
     And I pick the "Appointments" application
     And I hover the "A269" release train
-    Then its card says it runs on "hotfix-905: staging / main-901: production, qa-1"
+    And I sort the card's environments "By build"
+    Then its card says it runs on "staging: hotfix-905 / production: main-901 / qa-1: main-901"
     And its card links "main-901" to "https://ci.example.test/builds/main-901"
     And its card links "0123456" to "https://git.example.test/-/commit/0123456789abcdef"
 
-  Scenario: An upcoming train links the branch it is cut to
+  Scenario: An upcoming train is a release candidate once its branch is cut, else on the main line
     Given the "Appointments" release trains are:
-      | train | status   | tracker day | branch                  |
-      | A269  | released | 2026-10-13  |                         |
-      | A270  | planned  | 2026-10-27  | release/maintenance_270 |
+      | train | status   | tracker day | line                    | line kind   |
+      | A269  | released | 2026-10-13  |                         |             |
+      | A270  | planned  | 2026-10-27  | release/maintenance_270 | release     |
+      | A271  | planned  | 2026-11-10  | develop                 | integration |
     When I pick the "staging" environment
     And I pick the "Appointments" application
-    And I hover the "A270" release train
+    Then "A270" is marked "rc"
+    And "A271" is marked "develop"
+    When I hover the "A270" release train
     Then its card links "release/maintenance_270" to "https://git.example.test/vet/appointments/-/tree/release/maintenance_270"
+
+  Scenario: A build of the train's branch runs the train, whatever version it is called
+    # The tracker's version (3.140.0.0) is on none of them; their branch is.
+    Given the "Appointments" release trains are:
+      | train | status  | tracker day | line                    |
+      | A272  | planned | 2026-11-10  | release/maintenance_272 |
+    And the "Appointments" builds running are:
+      | env     | build                | aliases                         | commit |
+      | staging | RC3-7003             | release/maintenance_272-7003    | c3     |
+      | qa-1    | release-maintenance-272-7001 |                         | c1     |
+      | qa-2    | develop-6999         |                                 | c0     |
+    When I pick the "staging" environment
+    And I pick the "Appointments" application
+    And I hover the "A272" release train
+    Then its card says it runs on "staging: RC3-7003 / qa-1: release-maintenance-272-7001"
+
+  Scenario: Each environment shows how far its build is behind the tip of the train's branch
+    Given the "Appointments" release trains are:
+      | train | status  | tracker day | line                    | tip                          | tip commit |
+      | A272  | planned | 2026-11-10  | release/maintenance_272 | release-maintenance-272-7004 | c4         |
+    And the "Appointments" builds running are:
+      | env     | build                        | commit |
+      | qa-1    | release-maintenance-272-7001 | c1     |
+      | staging | release-maintenance-272-7003 | c3     |
+      | qa-2    | release-maintenance-272-7004 | c4     |
+      | qa-3    | release-maintenance-272-7003 | c3     |
+    And on "release/maintenance_272" of "Appointments", commits are behind its tip by:
+      | commit | behind |
+      | c4     | 0      |
+      | c3     | 2      |
+      | c1     | 6      |
+    When I pick the "staging" environment
+    And I pick the "Appointments" application
+    And I hover the "A272" release train
+    Then its card links "release-maintenance-272-7004" to "https://ci.example.test/builds/release-maintenance-272-7004"
+    And its card says it runs on "staging: release-maintenance-272-7003 (−2) / qa-1: release-maintenance-272-7001 (−6) / qa-2: release-maintenance-272-7004 (tip) / qa-3: release-maintenance-272-7003 (−2)"
+    And its card calls out "qa-1" as far behind
+    When I sort the card's environments "By build"
+    Then its card says it runs on "qa-2: release-maintenance-272-7004 (tip) / staging: release-maintenance-272-7003 (−2) / qa-3: release-maintenance-272-7003 / qa-1: release-maintenance-272-7001 (−6)"
+
+  Scenario: A hotfix is a row of its own, and is on prod once deployed
+    Given the "Appointments" release trains are:
+      | train | status   | tracker day | kind   | patches |
+      | A271  | released | 2026-10-27  |        |         |
+      | HF167 | released | 2026-10-30  | hotfix | A271    |
+      | HF168 | planned  | 2026-11-05  | hotfix | A271    |
+      | A272  | planned  | 2026-11-10  |        |         |
+      | A273  | planned  | 2026-11-24  |        |         |
+    When I pick the "staging" environment
+    And I pick the "Appointments" application
+    Then the release trains shown are "A271 / HF167 / HF168 / A272 / A273"
+    And "HF167" is marked "on prod"
+    And "HF168" is marked "hotfix"
+    And the "now" line sits between "HF167" and "HF168"
+    When I hover the "HF168" release train
+    Then its card says "on top of A271"
+
+  Scenario: An upcoming hotfix warns while the next train's branch lacks its commits
+    Given the "Appointments" release trains are:
+      | train | status   | tracker day | kind   | line                    | line kind | tip       | tip commit |
+      | A271  | released | 2026-10-27  |        |                         |           |           |            |
+      | HF168 | planned  | 2026-11-05  | hotfix | release/hotfix-168      | hotfix    | hf-168-2  | h2         |
+      | A272  | planned  | 2026-11-10  |        | release/maintenance_272 | release   | rc-272-4  | c4         |
+    And on "release/hotfix-168" of "Appointments", commits are behind its tip by:
+      | commit | behind |
+      | c4     | 2      |
+    When I pick the "staging" environment
+    And I pick the "Appointments" application
+    And I hover the "HF168" release train
+    Then its card says "Not in release/maintenance_272 yet: 2 commits to merge forward"

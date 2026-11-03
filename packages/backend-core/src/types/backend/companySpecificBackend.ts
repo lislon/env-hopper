@@ -33,6 +33,15 @@ export interface EhBackendCompanySpecificBackend {
     appSlug: string
   }) => Promise<ReleaseTrains | null>
   /**
+   * For each commit, how many commits the tip of the App's `branch` has that
+   * it lacks (0: it is the tip). A commit the backend cannot place is left out.
+   */
+  getCommitsBehind?: (input: {
+    appSlug: string
+    branch: string
+    commitShas: Array<string>
+  }) => Promise<Record<string, number>>
+  /**
    * Someone looks at these AppEnvs now (`reason`: what they did): read what
    * they show again, if it is older than current. Never awaited.
    */

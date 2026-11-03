@@ -25,7 +25,11 @@ import { createBackend } from '../mock-backend/createBackend'
 import { magazine } from '../mock-backend/magazines'
 import type { AppHandle } from '../harness/renderApp'
 import type { Fixture, FixtureDeployments } from '../mock-backend/createBackend'
-import type { ReleaseDate, ReleaseTrain } from '@env-hopper/backend-core'
+import type {
+  ReleaseDate,
+  ReleaseLine,
+  ReleaseTrain,
+} from '@env-hopper/backend-core'
 import type { EhSkin } from '@env-hopper/frontend-core'
 import type { SetupServer } from 'msw/node'
 
@@ -101,6 +105,7 @@ async function open(
     ...fixture,
     deployments: { ...fixture.deployments },
     releaseTrains: { ...fixture.releaseTrains },
+    commitsBehind: { ...fixture.commitsBehind },
   }
   current = await renderApp({
     server: ensureServer(),
@@ -306,10 +311,20 @@ Given(
             ]
           : [],
         ...(row['notes url'] && { releaseNotesUrl: row['notes url'] }),
-        ...(row['branch'] && {
-          releaseBranch: {
-            name: row['branch'],
-            url: `https://git.example.test/vet/appointments/-/tree/${row['branch']}`,
+        ...(row['kind'] === 'hotfix' && { kind: 'hotfix' as const }),
+        ...(row['patches'] && { patches: row['patches'] }),
+        ...(row['line'] && {
+          releaseLine: {
+            name: row['line'],
+            url: `https://git.example.test/vet/appointments/-/tree/${row['line']}`,
+            kind: (row['line kind'] || 'release') as ReleaseLine['kind'],
+          },
+        }),
+        ...(row['tip'] && {
+          tip: {
+            version: row['tip'],
+            buildUrl: `https://ci.example.test/builds/${row['tip']}`,
+            ...(row['tip commit'] && { commitSha: row['tip commit'] }),
           },
         }),
       }
@@ -397,6 +412,59 @@ Given(
   '{string} of {string} also runs as {string} on {string}',
   (_world, train: string, appName: string, build: string, envs: string) =>
     runAs(train, appName, build, envs, true),
+)
+
+Given(
+  'the {string} builds running are:',
+  (_world, appName: string, table: DataTable) => {
+    const slug = appSlugOf(appName)
+    scenarioFixture!.deployments![slug] = {
+      components: [
+        {
+          slug,
+          displayName: appName,
+          commitUrl: 'https://git.example.test/-/commit/{{sha}}',
+        },
+      ],
+      rows: table.hashes().map((row) => ({
+        env: row['env'],
+        componentSlug: slug,
+        targetSlug: row['env'],
+        version: row['build'],
+        aliases: (row['aliases'] ?? '').split(' / ').filter(Boolean),
+        ...(row['commit'] && { commitSha: row['commit'] }),
+        source: 'ci',
+        buildUrl: `https://ci.example.test/builds/${row['build']}`,
+      })) as FixtureDeployments['rows'],
+    }
+  },
+)
+
+Given(
+  'on {string} of {string}, commits are behind its tip by:',
+  (_world, branch: string, appName: string, table: DataTable) => {
+    const slug = appSlugOf(appName)
+    const branches = (scenarioFixture!.commitsBehind![slug] ??= {})
+    branches[branch] = Object.fromEntries(
+      table.hashes().map((row) => [row['commit'], Number(row['behind'])]),
+    )
+  },
+)
+
+When(
+  "I sort the card's environments {string}",
+  async (_world, label: string) => {
+    await form().sortReleaseTrainEnvs(hovered!, label)
+  },
+)
+
+Then(
+  'its card calls out {string} as far behind',
+  async (_world, envs: string) => {
+    await waitFor(() =>
+      expect(shownTrain(hovered!).cardFarBehind).toEqual(envs.split(' / ')),
+    )
+  },
 )
 
 When('I hover the {string} release train', async (_world, name: string) => {

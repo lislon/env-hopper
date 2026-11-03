@@ -404,10 +404,9 @@ describe('releaseTrains', () => {
         { env: 'qa-new', version: 'develop-9005', commitSha: 'd5' },
       ],
       {
-        // Commits each build has that production's p1 lacks: d0 is released code.
-        d0: { p1: 0 },
-        d5: { p1: 4 },
-        develop: { d5: 5 },
+        // All on develop's line: production's p1 forked 8 back, so d0 (12
+        // back) is released code and d5 (5 back) is this train's.
+        develop: { d0: 12, d5: 5, p1: 8 },
       },
     )
 

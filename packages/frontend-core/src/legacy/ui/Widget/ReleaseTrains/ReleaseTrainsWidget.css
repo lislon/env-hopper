@@ -264,9 +264,17 @@
 .eh-legacy .eh-rt-link,
 .eh-legacy .eh-rt-open {
   display: inline-flex;
-  align-items: center;
+  /* Baseline, not center: the text lines up with plain text beside it, and
+     the icons, which have no baseline of their own, are centred on the line. */
+  align-items: baseline;
   gap: 3px;
   white-space: nowrap;
+}
+.eh-legacy .eh-rt-link > .eh-rt-sysicon,
+.eh-legacy .eh-rt-link > .eh-rt-ext,
+.eh-legacy .eh-rt-open > .eh-rt-sysicon,
+.eh-legacy .eh-rt-open > .eh-rt-ext {
+  align-self: center;
 }
 .eh-legacy .eh-rt-ext {
   width: 11px;
@@ -383,7 +391,8 @@
   margin: 0 4px;
   opacity: 0.4;
 }
-/* One row per environment: env, build, commit, distance to the tip. */
+/* One row per environment: env, build, commit, distance to the tip. No rules
+   between rows: a gap above each new build is the only grouping. */
 .eh-legacy .eh-rt-tbl {
   width: 100%;
   margin-top: 4px;
@@ -398,14 +407,15 @@
 .eh-legacy .eh-rt-tbl td:last-child {
   padding-right: 0;
 }
-.eh-legacy .eh-rt-tbl tr + tr td {
-  border-top: 1px solid var(--rt-line);
+/* In the table an underline per cell reads as a rule under every row. */
+.eh-legacy .eh-rt-tbl .eh-rt-link {
+  border-bottom-color: transparent;
+}
+.eh-legacy .eh-rt-tbl .eh-rt-link:hover {
+  border-bottom-color: var(--rt-fg);
 }
 .eh-legacy .eh-rt-tbl tr.grp td {
   padding-top: 6px;
-}
-.eh-legacy .eh-rt-tbl tr.in td {
-  border-top: 0;
 }
 .eh-legacy .eh-rt-tbl .eh-rt-build {
   max-width: 240px;
@@ -415,6 +425,14 @@
   font-size: 13px;
   line-height: 1;
   color: var(--rt-mut);
+  text-decoration: none;
+}
+.eh-legacy .eh-rt-ditto:hover,
+.eh-legacy .eh-rt-ditto:focus-visible {
+  color: var(--rt-fg);
+}
+.eh-legacy .eh-rt-now {
+  cursor: help;
 }
 .eh-legacy .eh-rt-r {
   text-align: right;
@@ -451,14 +469,9 @@
   outline-offset: 1px;
 }
 /* Still reading: placeholders the size of what replaces them, so nothing moves when it lands. */
-.eh-legacy .eh-rt-checking {
-  position: absolute;
-  right: 0;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  text-transform: none;
-  color: var(--rt-mut);
-  animation: eh-rt-pulse 1.4s ease-in-out infinite;
+.eh-legacy .eh-rt-title .eh-rt-checking {
+  vertical-align: -1px;
+  cursor: help;
 }
 .eh-legacy .eh-rt-tag.is-pending,
 .eh-legacy .eh-rt-stale.is-pending,
@@ -476,7 +489,6 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .eh-legacy .eh-rt-checking,
   .eh-legacy .eh-rt-tag.is-pending,
   .eh-legacy .eh-rt-stale.is-pending,
   .eh-legacy .eh-rt-tiphead.is-pending .eh-rt-k {

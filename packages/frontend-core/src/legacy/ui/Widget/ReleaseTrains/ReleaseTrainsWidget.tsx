@@ -10,6 +10,7 @@ import type {
   ShownReleaseTrains,
 } from '@env-hopper/backend-core'
 import { getTrpcFromMeta } from '~/util/reactQueryUtils'
+import { CheckingSpinner } from '~/ui/CheckingSpinner'
 import { appSlugFromJumpSlug, getEhToOptions } from '~/util/route-utils'
 import { useMainAppFormContext } from '../../../context/MainFormContextProvider'
 import { useLegacyCustomization } from '../../../adapter/legacyApi'
@@ -178,6 +179,21 @@ function ExtLink({
   )
 }
 
+/** What the spinner beside the title is reading, and that only this widget waits for it. */
+function checkingTitle(pending: Array<ReleaseTrainsPending>): string {
+  const what = [
+    ...(pending.includes('lines')
+      ? ['each upcoming release’s branch and newest build']
+      : []),
+    ...(pending.includes('distances')
+      ? ['how many commits each environment’s build is behind']
+      : []),
+  ]
+  return what.length > 0
+    ? `Checking ${what.join(', then ')}. The rows are already right; this fills in their tags and cards.`
+    : 'Checking for newer release data. What is shown stays until the new answer is complete.'
+}
+
 /**
  * The selected app's release trains: the one production runs and the hotfixes
  * since, then the next two and the hotfixes before them. Details open in a
@@ -207,12 +223,10 @@ export function ReleaseTrainsWidget() {
         <div className="eh-rt-title">
           Releases
           {(isFetching || !!data.pending?.length) && (
-            <span
+            <CheckingSpinner
               className="eh-rt-checking"
-              data-testid="release-trains-checking"
-            >
-              checking…
-            </span>
+              title={checkingTitle(data.pending ?? [])}
+            />
           )}
         </div>
         <ol className="eh-rt-rail">
@@ -269,7 +283,17 @@ function TrainRow({
   const { shownDate } = train
   return (
     <>
-      {afterNow && <li className="eh-rt-now">now</li>}
+      {afterNow && (
+        <li
+          className="eh-rt-now"
+          title={formatRowDate(
+            { sourceName: 'now', date: new Date().toISOString() },
+            displayTimeZone,
+          )}
+        >
+          now
+        </li>
+      )}
       <li
         className={`eh-rt-train ${train.isReleased ? 'is-released' : 'is-planned'} ${train.kind === 'hotfix' ? 'is-hotfix' : ''}`}
         data-train={name}
@@ -309,14 +333,34 @@ function TrainRow({
   )
 }
 
-function Behind({ n }: { n: number | undefined }) {
-  if (n === undefined) return null
+/** How far a build is behind its line's tip; "?" once the count is done without it. */
+function Behind({
+  n,
+  lineName,
+  counted,
+}: {
+  n: number | undefined
+  lineName: string
+  counted: boolean
+}) {
+  if (n === undefined) {
+    return counted ? (
+      <span
+        className="eh-rt-stale"
+        title={`Couldn't place this build on ${lineName}: the CI server did not answer`}
+      >
+        ?
+      </span>
+    ) : null
+  }
   return n === 0 ? (
-    <span className="eh-rt-stale is-tip">tip</span>
+    <span className="eh-rt-stale is-tip" title={`The tip of ${lineName}`}>
+      tip
+    </span>
   ) : (
     <span
       className={`eh-rt-stale ${n >= FAR_BEHIND ? 'is-far' : ''}`}
-      title={`${n} commit${n === 1 ? '' : 's'} behind the tip`}
+      title={`${n} merge${n === 1 ? '' : 's'} behind the tip of ${lineName}`}
     >
       −{n}
     </span>
@@ -476,7 +520,7 @@ function TrainCard({
                       aria-pressed={order === o}
                       onClick={() => setOrder(o)}
                     >
-                      {o === 'env' ? 'By env' : 'By build'}
+                      {o === 'env' ? 'By env' : 'By build freshness'}
                     </button>
                   </span>
                 ))}
@@ -506,13 +550,16 @@ function TrainCard({
                       </td>
                       <td className="eh-rt-mono">
                         {sameAsAbove ? (
-                          <span
+                          <a
                             className="eh-rt-ditto"
-                            title={r.version}
-                            aria-label={`same: ${r.version}`}
+                            href={r.buildUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            title={`Same build as the row above: ${r.version}${r.commitSha ? ` (commit ${r.commitSha.slice(0, 7)})` : ''}`}
+                            aria-label={`same build: ${r.version}`}
                           >
                             〃
-                          </span>
+                          </a>
                         ) : r.buildUrl ? (
                           <ExtLink
                             className="eh-rt-link eh-rt-build"
@@ -552,7 +599,13 @@ function TrainCard({
                               …
                             </span>
                           ) : (
-                            <Behind n={r.behindTip} />
+                            releaseLine && (
+                              <Behind
+                                n={r.behindTip}
+                                lineName={releaseLine.name}
+                                counted={!distancesPending}
+                              />
+                            )
                           ))}
                       </td>
                     </tr>

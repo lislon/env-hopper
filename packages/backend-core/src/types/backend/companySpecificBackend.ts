@@ -49,9 +49,11 @@ export interface EhBackendCompanySpecificBackend {
     Record<string, { releaseLine: ReleaseLine; tip?: ReleaseTrainBuild }>
   >
   /**
-   * For each commit, how many commits `ref` (a branch's tip, or a commit)
-   * has that it lacks (0: it has all of them). A commit the backend cannot
-   * place is left out.
+   * For each commit, how far it is behind the tip of `ref` (a branch, or a
+   * commit), as the backend counts it (e.g. merges on the branch's main line
+   * since): 0 is the tip. A commit off the branch counts from where it forked.
+   * One answer per call, however many commits: one read per row would not
+   * survive a CI server's rate limit. A commit it cannot place is left out.
    */
   getCommitsBehind?: (input: {
     appSlug: string

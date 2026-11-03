@@ -182,38 +182,33 @@ export async function withLineDistances(
   ]
   const onProd = trains.filter((t) => t.isReleased).at(-1)
   const prodShas = onProd ? shasOf(onProd) : []
-  /** The builds with commits production's build lacks: one read per build. */
-  const aheadOfProd = async (shas: Array<string>) => {
-    const ahead = await Promise.all(
-      shas.map(async (sha) => {
-        const lacks = await read(sha, prodShas)
-        // Unknown counts as ahead: the filter only removes what it is sure of.
-        return prodShas.some((p) => lacks[p] !== 0) ? [sha] : []
-      }),
-    )
-    return new Set(ahead.flat())
-  }
   const nextTrain = trains.find(
     (t) => !t.isReleased && !isHotfix(t) && t.releaseLine && t.tip?.commitSha,
   )
   return Promise.all(
     trains.map(async (t) => {
       if (!t.releaseLine) return t
-      const onMainLine =
-        t.releaseLine.kind === 'integration' && prodShas.length > 0
-      const keep = onMainLine ? await aheadOfProd(shasOf(t)) : undefined
-      const running = keep
-        ? t.runningOn.filter((r) => !r.commitSha || keep.has(r.commitSha))
-        : t.runningOn
-      const shas = [
-        ...new Set(running.flatMap((r) => (r.commitSha ? [r.commitSha] : []))),
-      ]
       const intoSha =
         isHotfix(t) && t !== nextTrain ? nextTrain?.tip?.commitSha : undefined
-      const behind = await read(
-        t.releaseLine.name,
-        intoSha ? [...shas, intoSha] : shas,
-      )
+      const onMainLine =
+        t.releaseLine.kind === 'integration' && prodShas.length > 0
+      // One read for the whole train: its builds, and production's build,
+      // placed on the same line, so "ahead of prod" is "closer to the tip".
+      const behind = await read(t.releaseLine.name, [
+        ...shasOf(t),
+        ...(onMainLine ? prodShas : []),
+        ...(intoSha ? [intoSha] : []),
+      ])
+      const prodAt = onMainLine
+        ? Math.min(...prodShas.map((p) => behind[p] ?? Infinity))
+        : Infinity
+      const running = Number.isFinite(prodAt)
+        ? t.runningOn.filter((r) => {
+            const at =
+              r.commitSha === undefined ? undefined : behind[r.commitSha]
+            return at === undefined || at < prodAt
+          })
+        : t.runningOn
       const missing = intoSha === undefined ? undefined : behind[intoSha]
       return {
         ...withBehindTip({ ...t, runningOn: running }, behind),

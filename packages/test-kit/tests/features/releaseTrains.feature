@@ -148,7 +148,7 @@ Feature: Release trains beside the form
     When I pick the "staging" environment
     And I pick the "Appointments" application
     And I hover the "A269" release train
-    And I sort the card's environments "By build"
+    And I sort the card's environments "By build freshness"
     Then its card says it runs on "staging: hotfix-905 / production: main-901 / qa-1: main-901"
     And its card links "main-901" to "https://ci.example.test/builds/main-901"
     And its card links "0123456" to "https://git.example.test/-/commit/0123456789abcdef"
@@ -179,7 +179,7 @@ Feature: Release trains beside the form
     When I pick the "staging" environment
     And I pick the "Appointments" application
     And I hover the "A272" release train
-    Then its card says it runs on "staging: RC3-7003 / qa-1: release-maintenance-272-7001"
+    Then its card says it runs on "staging: RC3-7003 (?) / qa-1: release-maintenance-272-7001 (?)"
 
   Scenario: Each environment shows how far its build is behind the tip of the train's branch
     Given the "Appointments" release trains are:
@@ -202,7 +202,7 @@ Feature: Release trains beside the form
     Then its card links "release-maintenance-272-7004" to "https://ci.example.test/builds/release-maintenance-272-7004"
     And its card says it runs on "staging: release-maintenance-272-7003 (−2) / qa-1: release-maintenance-272-7001 (−6) / qa-2: release-maintenance-272-7004 (tip) / qa-3: release-maintenance-272-7003 (−2)"
     And its card calls out "qa-1" as far behind
-    When I sort the card's environments "By build"
+    When I sort the card's environments "By build freshness"
     Then its card says it runs on "qa-2: release-maintenance-272-7004 (tip) / staging: release-maintenance-272-7003 (−2) / qa-3: release-maintenance-272-7003 / qa-1: release-maintenance-272-7001 (−6)"
 
   Scenario: A hotfix is a row of its own, and is on prod once deployed
@@ -249,4 +249,4 @@ Feature: Release trains beside the form
     When I pick the "staging" environment
     And I pick the "Appointments" application
     And I hover the "A272" release train
-    Then its card says it runs on "staging: master-6005"
+    Then its card says it runs on "staging: master-6005 (?)"

@@ -250,3 +250,22 @@ Feature: Release trains beside the form
     And I pick the "Appointments" application
     And I hover the "A272" release train
     Then its card says it runs on "staging: master-6005"
+
+  Scenario: A train production runs is on prod, even while its ticket still says planned
+    # Signatera 10.23.1: deployed, ENR left "New", Jira release not marked released.
+    Given the "Appointments" release trains are:
+      | train | status   | tracker day |
+      | A1023 | released | 2026-10-26  |
+      | A1024 | planned  | 2026-11-02  |
+    And the "Appointments" builds running are:
+      | env        | build       | commit |
+      | production | master-7002 | p2     |
+      | staging    | master-7001 | p1     |
+    And "A1024" of "Appointments" is the build "7002" its ticket names
+    And "A1023" of "Appointments" is the build "7001" its ticket names
+    When I pick the "staging" environment
+    And I pick the "Appointments" application
+    Then "A1024" is marked "on prod"
+    And "A1023" is not marked "on prod"
+    When I hover the "A1024" release train
+    Then its card says it runs on "production: master-7002"

@@ -468,30 +468,11 @@
   outline: 2px solid oklch(var(--bc) / 0.4);
   outline-offset: 1px;
 }
-/* Still reading: placeholders the size of what replaces them, so nothing moves when it lands. */
-.eh-legacy .eh-rt-title .eh-rt-checking {
+/* Still reading, inside the card only: the panel itself never waits on these. */
+.eh-legacy .eh-rt-tiphead.is-pending .eh-deployed-verify {
+  margin-left: 0;
+}
+.eh-legacy .eh-rt-tbl .eh-deployed-verify {
+  margin-left: 0;
   vertical-align: -1px;
-  cursor: help;
-}
-.eh-legacy .eh-rt-tag.is-pending,
-.eh-legacy .eh-rt-stale.is-pending,
-.eh-legacy .eh-rt-tiphead.is-pending .eh-rt-k {
-  color: var(--rt-mut);
-  border: 1px dashed var(--rt-rail);
-  animation: eh-rt-pulse 1.4s ease-in-out infinite;
-}
-.eh-legacy .eh-rt-tiphead.is-pending .eh-rt-k {
-  border: 0;
-}
-@keyframes eh-rt-pulse {
-  50% {
-    opacity: 0.45;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .eh-legacy .eh-rt-tag.is-pending,
-  .eh-legacy .eh-rt-stale.is-pending,
-  .eh-legacy .eh-rt-tiphead.is-pending .eh-rt-k {
-    animation: none;
-  }
 }

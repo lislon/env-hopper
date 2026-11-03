@@ -179,19 +179,15 @@ function ExtLink({
   )
 }
 
-/** What the spinner beside the title is reading, and that only this widget waits for it. */
-function checkingTitle(pending: Array<ReleaseTrainsPending>): string {
-  const what = [
-    ...(pending.includes('lines')
-      ? ['each upcoming release’s branch and newest build']
-      : []),
-    ...(pending.includes('distances')
-      ? ['how many commits each environment’s build is behind']
-      : []),
-  ]
-  return what.length > 0
-    ? `Checking ${what.join(', then ')}. The rows are already right; this fills in their tags and cards.`
-    : 'Checking for newer release data. What is shown stays until the new answer is complete.'
+/** A build on a train's line whose distance to the tip is not known yet. */
+function hasUncounted(data: ShownReleaseTrains | null | undefined): boolean {
+  return (
+    data?.trains.some(
+      (t) =>
+        t.releaseLine !== undefined &&
+        t.runningOn.some((r) => r.commitSha && r.behindTip === undefined),
+    ) ?? false
+  )
 }
 
 /**
@@ -202,11 +198,12 @@ function checkingTitle(pending: Array<ReleaseTrainsPending>): string {
 export function ReleaseTrainsWidget() {
   const { app, env } = useMainAppFormContext()
   const appSlug = app ? appSlugFromJumpSlug(app.id) : ''
-  const { data, isFetching } = useQuery({
+  const { data } = useQuery({
     ...releaseTrainsQuery(appSlug),
     enabled: appSlug !== '',
-    // Builds and branch tips move while someone watches; a background tab is not watching.
-    refetchInterval: 5 * 60_000,
+    // Builds and branch tips move while someone watches; a background tab is
+    // not watching. A distance the CI server did not give is asked again soon.
+    refetchInterval: (q) => (hasUncounted(q.state.data) ? 60_000 : 5 * 60_000),
     refetchIntervalInBackground: false,
   })
 
@@ -220,15 +217,7 @@ export function ReleaseTrainsWidget() {
     <div className="eh-rt" data-testid="widget-release-trains">
       <div className="eh-rt-gutter" />
       <div className="eh-rt-body">
-        <div className="eh-rt-title">
-          Releases
-          {(isFetching || !!data.pending?.length) && (
-            <CheckingSpinner
-              className="eh-rt-checking"
-              title={checkingTitle(data.pending ?? [])}
-            />
-          )}
-        </div>
+        <div className="eh-rt-title">Releases</div>
         <ol className="eh-rt-rail">
           {data.trains.map((train) => (
             <TrainRow
@@ -308,15 +297,6 @@ function TrainRow({
           )}
           {isOnProd ? (
             <span className="eh-rt-tag is-prod">on prod</span>
-          ) : !train.isReleased &&
-            train.kind !== 'hotfix' &&
-            pending.includes('lines') ? (
-            <span
-              className="eh-rt-tag is-pending"
-              aria-label="checking its branch"
-            >
-              ···
-            </span>
           ) : (
             stageTag(train)
           )}
@@ -333,26 +313,8 @@ function TrainRow({
   )
 }
 
-/** How far a build is behind its line's tip; "?" once the count is done without it. */
-function Behind({
-  n,
-  lineName,
-  counted,
-}: {
-  n: number | undefined
-  lineName: string
-  counted: boolean
-}) {
-  if (n === undefined) {
-    return counted ? (
-      <span
-        className="eh-rt-stale"
-        title={`Couldn't place this build on ${lineName}: the CI server did not answer`}
-      >
-        ?
-      </span>
-    ) : null
-  }
+/** How far a build is behind its line's tip. */
+function Behind({ n, lineName }: { n: number; lineName: string }) {
   return n === 0 ? (
     <span className="eh-rt-stale is-tip" title={`The tip of ${lineName}`}>
       tip
@@ -488,7 +450,8 @@ function TrainCard({
           className="eh-rt-tiphead is-pending"
           data-testid="release-train-line-pending"
         >
-          <span className="eh-rt-k">Finding its branch and newest build…</span>
+          <span className="eh-rt-k">Finding its branch and newest build</span>
+          <CheckingSpinner title="Reading its branch and newest build from the CI server" />
         </div>
       )}
       {train.missingFrom && (
@@ -589,23 +552,22 @@ function TrainCard({
                       </td>
                       <td className="eh-rt-r">
                         {!sameAsAbove &&
-                          (r.behindTip === undefined &&
-                          distancesPending &&
-                          releaseLine ? (
-                            <span
-                              className="eh-rt-stale is-pending"
-                              title="counting commits"
-                            >
-                              …
-                            </span>
-                          ) : (
-                            releaseLine && (
-                              <Behind
-                                n={r.behindTip}
-                                lineName={releaseLine.name}
-                                counted={!distancesPending}
+                          releaseLine &&
+                          (r.behindTip === undefined ? (
+                            r.commitSha && (
+                              <CheckingSpinner
+                                title={
+                                  distancesPending
+                                    ? `Counting how far this build is behind the tip of ${releaseLine.name}`
+                                    : `Not counted yet: the CI server is busy; asked again in a minute`
+                                }
                               />
                             )
+                          ) : (
+                            <Behind
+                              n={r.behindTip}
+                              lineName={releaseLine.name}
+                            />
                           ))}
                       </td>
                     </tr>

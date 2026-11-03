@@ -179,7 +179,7 @@ Feature: Release trains beside the form
     When I pick the "staging" environment
     And I pick the "Appointments" application
     And I hover the "A272" release train
-    Then its card says it runs on "staging: RC3-7003 (?) / qa-1: release-maintenance-272-7001 (?)"
+    Then its card says it runs on "staging: RC3-7003 / qa-1: release-maintenance-272-7001"
 
   Scenario: Each environment shows how far its build is behind the tip of the train's branch
     Given the "Appointments" release trains are:
@@ -249,4 +249,4 @@ Feature: Release trains beside the form
     When I pick the "staging" environment
     And I pick the "Appointments" application
     And I hover the "A272" release train
-    Then its card says it runs on "staging: master-6005 (?)"
+    Then its card says it runs on "staging: master-6005"

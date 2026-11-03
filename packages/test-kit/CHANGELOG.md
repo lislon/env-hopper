@@ -1,5 +1,17 @@
 # @env-hopper/test-kit
 
+## 2.8.0
+
+### Minor Changes
+
+- [#425](https://github.com/lislon/env-hopper/pull/425) [`f9afb92`](https://github.com/lislon/env-hopper/commit/f9afb92629b99777f3c10a7d8ac5657083377900) Thanks [@lislon](https://github.com/lislon)! - Release trains know where their code is: a train's `releaseLine` (its own release or hotfix branch once cut, else the App's main line) and its newest build (`tip`). Builds of that branch count as running the train, whatever version they carry, and each environment says how many commits it is behind the tip, through the optional `getCommitsBehind` backend hook. Hotfixes (`kind: 'hotfix'`, `patches`) are rows of their own; an upcoming one warns while the next train's branch lacks its commits. The card lists environments as a table, "By env" (this one, prod, favourites, recent) or "By build" (freshest first); each environment opens Env Hopper there. Rows tag an upcoming train RC once cut, else with its main line's name; NEXT is gone. While the tab is visible the widget refreshes every 5 minutes. Breaking: `ReleaseTrain.releaseBranch` is replaced by `releaseLine`. The widget loads in steps: `releaseTrains` streams snapshots (trains as the trackers say, then with lines and tips from the new optional `getReleaseLines` hook, then with distances), each naming what it still waits for; the rows show at once, with placeholders the size of what replaces them and "checking…" beside the title. A train on the main line lists only environments ahead of production's build. A build a release ticket names (`ReleaseTrain.buildIds`, CI pipeline ids) runs that train, which ties a main-line App's release to its build. A row repeating the build above shows "〃". `getCommitsBehind` takes a `ref` (branch or commit) and is asked once per train, production's build included, so "ahead of prod" is "closer to the tip". A count that never came shows "?". The spinner beside the title is the one deployed versions use (`CheckingSpinner`) and says what it checks; "now" shows the current time; "By build" is "By build freshness"; the env table has no row rules.
+
+### Patch Changes
+
+- Updated dependencies [[`f9afb92`](https://github.com/lislon/env-hopper/commit/f9afb92629b99777f3c10a7d8ac5657083377900)]:
+  - @env-hopper/backend-core@2.8.0
+  - @env-hopper/frontend-core@2.8.0
+
 ## 2.7.0
 
 ### Minor Changes

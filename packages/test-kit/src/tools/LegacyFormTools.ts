@@ -174,6 +174,15 @@ export function createLegacyFormUi(user: UserEvent) {
       await user.click(more)
     },
 
+    /** Clicks an environment in a release train's card, as a person would. */
+    openEnvFromReleaseTrain: async (name: string, env: string) => {
+      const link = widget('widget-release-trains')?.querySelector<HTMLElement>(
+        `li[data-train="${name}"] tr[data-env="${env}"] td:first-child a`,
+      )
+      if (!link) throw new Error(`release train ${name} lists no ${env}`)
+      await user.click(link)
+    },
+
     sortReleaseTrainEnvs: async (name: string, label: string) => {
       const button = Array.from(
         widget('widget-release-trains')?.querySelectorAll<HTMLElement>(

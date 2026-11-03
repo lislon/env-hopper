@@ -16,6 +16,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
@@ -271,11 +272,45 @@ export function MainFormContextProvider({
     }
   }, [fixUrlBasedOnSelection, initialEnvAppSubBased])
 
+  // The URL and the selection agree both ways. A URL that moves on its own (a
+  // link inside the app, Back, Forward) moves the selection; a selection that
+  // moves rewrites the URL. Only one side moved at a time, so whichever did
+  // wins; an env or app the URL names that does not exist keeps the selection.
+  const seenUrl = useRef(urlParams)
   useEffect(() => {
-    if (urlParams.envId !== env?.id || urlParams.appId !== app?.id) {
-      void fixUrlBasedOnSelection({ envId: env?.id, appId: app?.id }, true)
+    const urlMoved =
+      seenUrl.current.envId !== urlParams.envId ||
+      seenUrl.current.appId !== urlParams.appId
+    seenUrl.current = urlParams
+    if (urlParams.envId === env?.id && urlParams.appId === app?.id) return
+    if (urlMoved) {
+      // Looked up as on first load, so a URL spelled loosely still lands;
+      // the URL is then rewritten to the env's and app's own ids.
+      const nextEnv = urlParams.envId
+        ? getByIdRelaxed(doGetEnvById, urlParams.envId, listEnvs)[0]
+        : env
+      const nextApp = urlParams.appId
+        ? getByIdRelaxed(doGetAppById, urlParams.appId, listApps)[0]
+        : app
+      if (nextEnv && nextApp) {
+        setEnv(nextEnv)
+        setApp(getAppWithEnvOverrides(nextApp, nextEnv))
+        setLastUsedEnv(nextEnv.id)
+        setLastUsedApp(nextApp.id)
+        return
+      }
     }
-  }, [app, env, fixUrlBasedOnSelection, urlParams])
+    void fixUrlBasedOnSelection({ envId: env?.id, appId: app?.id }, true)
+  }, [
+    app,
+    env,
+    fixUrlBasedOnSelection,
+    listApps,
+    listEnvs,
+    setLastUsedApp,
+    setLastUsedEnv,
+    urlParams,
+  ])
 
   useEffect(() => {
     if (app && env) {

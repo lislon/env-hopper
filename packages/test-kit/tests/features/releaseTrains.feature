@@ -269,3 +269,15 @@ Feature: Release trains beside the form
     And "A1023" is not marked "on prod"
     When I hover the "A1024" release train
     Then its card says it runs on "production: master-7002"
+
+  Scenario: An environment in the card opens the same App there
+    Given the "Appointments" release trains are:
+      | train | status   | tracker day |
+      | A269  | released | 2026-10-13  |
+    And "A269" of "Appointments" already runs on "production / staging"
+    When I pick the "staging" environment
+    And I pick the "Appointments" application
+    And I hover the "A269" release train
+    And I open "production" from its card
+    Then the address bar shows "/env/production/app/appointments"
+    And the links offered are "production status page / Source Code / VET issues"

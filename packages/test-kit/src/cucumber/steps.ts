@@ -451,6 +451,10 @@ Given(
   },
 )
 
+When('I open {string} from its card', async (_world, env: string) => {
+  await form().openEnvFromReleaseTrain(hovered!, env)
+})
+
 When(
   "I sort the card's environments {string}",
   async (_world, label: string) => {

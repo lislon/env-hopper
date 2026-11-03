@@ -51,6 +51,14 @@ _Avoid_: Release (that is where an Artifact came from), milestone
 When one Source says a Release Train goes out: a day (`2026-10-27`), or a day and time with offset (`2026-10-27T18:00:00-07:00`) when that Source knows the time.
 _Avoid_: Deploy date
 
+**Release Line**:
+The branch a Release Train's code is built from now. A `release` or `hotfix` line is the train's own branch, cut from the main line: a release candidate until it ships. An `integration` line is the App's main line (develop, master), which carries the next train until that train is cut. Which branches an App uses is the App's own: a company backend names them.
+_Avoid_: Code line, release branch (that is one kind)
+
+**Hotfix**:
+A Release Train outside the schedule that patches what runs on prod, shown on its own at its date and naming the train it patches. Upcoming hotfixes have Release Lines like any train.
+_Avoid_: Patch release, emergency release
+
 **Deployment**:
 The Artifact a Component last deployed successfully to a Deployment Target, and so is running there now. Only the current state exists; there is one Deployment per Component per Deployment Target.
 _Avoid_: Rollout, install

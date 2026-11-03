@@ -29,6 +29,7 @@
   min-width: 0;
 }
 .eh-legacy .eh-rt-title {
+  position: relative;
   padding: 0 0 2px 12px;
   font-size: 9px;
   font-weight: 600;
@@ -263,9 +264,17 @@
 .eh-legacy .eh-rt-link,
 .eh-legacy .eh-rt-open {
   display: inline-flex;
-  align-items: center;
+  /* Baseline, not center: the text lines up with plain text beside it, and
+     the icons, which have no baseline of their own, are centred on the line. */
+  align-items: baseline;
   gap: 3px;
   white-space: nowrap;
+}
+.eh-legacy .eh-rt-link > .eh-rt-sysicon,
+.eh-legacy .eh-rt-link > .eh-rt-ext,
+.eh-legacy .eh-rt-open > .eh-rt-sysicon,
+.eh-legacy .eh-rt-open > .eh-rt-ext {
+  align-self: center;
 }
 .eh-legacy .eh-rt-ext {
   width: 11px;
@@ -297,39 +306,159 @@
   color: var(--rt-fg);
   text-decoration: underline;
 }
-/* "Deployed on": a build once, then the environments running it. */
-.eh-legacy .eh-rt-running {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 2px;
+/* Where an upcoming train's code is: RC once cut, else the main line's name. */
+.eh-legacy .eh-rt-tag.is-stage {
+  color: var(--rt-mut);
+  border: 1px dashed var(--rt-rail);
 }
-.eh-legacy .eh-rt-build-line {
+.eh-legacy .eh-rt-tag.is-rc,
+.eh-legacy .eh-rt-tag.is-hf {
+  color: var(--rt-fg);
+  border: 1px solid oklch(var(--bc) / 0.35);
+}
+/* A hotfix is a diamond on the rail: filled once deployed, hollow while upcoming. */
+.eh-legacy .eh-rt-train.is-hotfix::after {
+  left: -2px;
+  top: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+.eh-legacy .eh-rt-train.is-hotfix .eh-rt-name {
+  font-weight: 500;
+}
+.eh-legacy .eh-rt-steps {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--rt-mut);
+}
+.eh-legacy .eh-rt-steps .is-on {
+  color: var(--rt-fg);
+  font-weight: 600;
+}
+.eh-legacy .eh-rt-sep {
+  opacity: 0.5;
+}
+/* The line's newest build, then which branch it is the tip of. */
+.eh-legacy .eh-rt-tiphead {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px -8px 0;
+  padding: 6px 8px;
+  font-size: 11.5px;
+  border-radius: 5px;
+  background: oklch(var(--bc) / 0.04);
+}
+.eh-legacy .eh-rt-k {
+  font-size: 10.5px;
+  color: var(--rt-mut);
+}
+.eh-legacy .eh-rt-caprow {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  min-width: 0;
-  font-size: 11px;
 }
-/* A long build name ends in "…" (full name on hover) instead of leaving the card. */
-.eh-legacy .eh-rt-build {
-  min-width: 0;
-  overflow: hidden;
-}
-.eh-legacy .eh-rt-build .eh-rt-label,
-.eh-legacy span.eh-rt-build {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.eh-legacy .eh-rt-sorter {
+  margin-left: auto;
+  font-size: 10.5px;
   white-space: nowrap;
 }
-.eh-legacy .eh-rt-commit {
-  flex: none;
+.eh-legacy .eh-rt-sorter button {
+  padding: 0;
+  font: inherit;
+  color: var(--rt-mut);
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
-.eh-legacy .eh-rt-group-envs {
-  padding-left: 16px;
+.eh-legacy .eh-rt-sorter button:hover,
+.eh-legacy .eh-rt-sorter button:focus-visible {
+  color: var(--rt-fg);
+  text-decoration: underline;
 }
-.eh-legacy .eh-rt-group-envs > span {
+.eh-legacy .eh-rt-sorter button[aria-pressed='true'] {
+  color: var(--rt-fg);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: default;
+}
+.eh-legacy .eh-rt-bar {
+  margin: 0 4px;
+  opacity: 0.4;
+}
+/* One row per environment: env, build, commit, distance to the tip. No rules
+   between rows: a gap above each new build is the only grouping. */
+.eh-legacy .eh-rt-tbl {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 11.5px;
+  border-collapse: collapse;
+}
+.eh-legacy .eh-rt-tbl td {
+  padding: 2px 10px 2px 0;
   white-space: nowrap;
+  vertical-align: baseline;
+}
+.eh-legacy .eh-rt-tbl td:last-child {
+  padding-right: 0;
+}
+/* In the table an underline per cell reads as a rule under every row. */
+.eh-legacy .eh-rt-tbl .eh-rt-link {
+  border-bottom-color: transparent;
+}
+.eh-legacy .eh-rt-tbl .eh-rt-link:hover {
+  border-bottom-color: var(--rt-fg);
+}
+.eh-legacy .eh-rt-tbl tr.grp td {
+  padding-top: 6px;
+}
+.eh-legacy .eh-rt-tbl .eh-rt-build {
+  max-width: 240px;
+}
+.eh-legacy .eh-rt-ditto {
+  padding-left: 2px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--rt-mut);
+  text-decoration: none;
+}
+.eh-legacy .eh-rt-ditto:hover,
+.eh-legacy .eh-rt-ditto:focus-visible {
+  color: var(--rt-fg);
+}
+.eh-legacy .eh-rt-now {
+  cursor: help;
+}
+.eh-legacy .eh-rt-r {
+  text-align: right;
+}
+.eh-legacy .eh-rt-why {
+  margin-left: 3px;
+  font-size: 9.5px;
+  color: var(--rt-mut);
+}
+.eh-legacy .eh-rt-stale {
+  padding: 0 5px;
+  font-size: 10.5px;
+  line-height: 15px;
+  white-space: nowrap;
+  color: var(--rt-mut);
+  border: 1px solid var(--rt-line);
+  border-radius: 3px;
+}
+.eh-legacy .eh-rt-stale.is-tip {
+  color: var(--rt-fg);
+  font-weight: 600;
+  border-color: oklch(var(--bc) / 0.35);
+}
+.eh-legacy .eh-rt-stale.is-far {
+  color: var(--rt-warn);
+  border-color: currentColor;
 }
 /* A release row opens its card on hover, and a click pins it (the row takes focus). */
 .eh-legacy .eh-rt-row {
@@ -339,7 +468,11 @@
   outline: 2px solid oklch(var(--bc) / 0.4);
   outline-offset: 1px;
 }
-.eh-legacy .eh-rt-branch {
-  margin-top: 12px;
-  font-size: 11px;
+/* Still reading, inside the card only: the panel itself never waits on these. */
+.eh-legacy .eh-rt-tiphead.is-pending .eh-deployed-verify {
+  margin-left: 0;
+}
+.eh-legacy .eh-rt-tbl .eh-deployed-verify {
+  margin-left: 0;
+  vertical-align: -1px;
 }

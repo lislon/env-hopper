@@ -25,6 +25,8 @@ export interface ShownTrain {
   cardHighlighted: Array<string>
   /** "build: env, env" per build in the card's "deployed on" list. */
   cardRunningOn: Array<string>
+  /** Environments whose build is far behind its line's tip. */
+  cardFarBehind: Array<string | null | undefined>
   /** The "+N more" toggle of the card's environment list, or null when all are shown. */
   cardMore: string | null
 }
@@ -133,18 +135,27 @@ export function createLegacyFormUi(user: UserEvent) {
             ).trim(),
             url: a.getAttribute('href') ?? '',
           })),
-          cardRunningOn: Array.from(
-            card?.querySelectorAll<HTMLElement>('.eh-rt-running > li') ?? [],
-          ).map((group) => {
-            const build = (
-              group.querySelector('.eh-rt-build .eh-rt-label, .eh-rt-build')
-                ?.textContent ?? ''
-            ).trim()
-            const envs = Array.from(
-              group.querySelectorAll<HTMLElement>('[data-env]'),
-            ).map((e) => e.dataset['env'] ?? '')
-            return `${build}: ${envs.join(', ')}`
-          }),
+          // One line per row as shown: `env: build`, plus `(−n)` or `(tip)` when known;
+          // a row under the same build ("〃") names that build again.
+          cardRunningOn: (() => {
+            let build = ''
+            return Array.from(
+              card?.querySelectorAll<HTMLElement>('tr[data-env]') ?? [],
+            ).map((tr) => {
+              const cells = tr.querySelectorAll('td')
+              const shownBuild = (
+                cells[1]?.querySelector('.eh-rt-label')?.textContent ??
+                cells[1]?.textContent ??
+                ''
+              ).trim()
+              if (shownBuild !== '〃') build = shownBuild
+              const behind = tr.querySelector('.eh-rt-stale')?.textContent
+              return `${tr.dataset['env']}: ${build}${behind ? ` (${behind})` : ''}`
+            })
+          })(),
+          cardFarBehind: Array.from(
+            card?.querySelectorAll('.eh-rt-stale.is-far') ?? [],
+          ).map((e) => e.closest('tr')?.getAttribute('data-env')),
           cardMore:
             card?.querySelector('.eh-rt-more')?.textContent.trim() ?? null,
           cardHighlighted: Array.from(
@@ -161,6 +172,16 @@ export function createLegacyFormUi(user: UserEvent) {
       if (!more)
         throw new Error(`release train ${name} offers no more environments`)
       await user.click(more)
+    },
+
+    sortReleaseTrainEnvs: async (name: string, label: string) => {
+      const button = Array.from(
+        widget('widget-release-trains')?.querySelectorAll<HTMLElement>(
+          `li[data-train="${name}"] .eh-rt-sorter button`,
+        ) ?? [],
+      ).find((b) => b.textContent.trim() === label)
+      if (!button) throw new Error(`release train ${name} has no "${label}"`)
+      await user.click(button)
     },
 
     hoverReleaseTrain: async (name: string) => {

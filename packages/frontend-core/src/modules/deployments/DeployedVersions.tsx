@@ -1,3 +1,4 @@
+import { CheckingSpinner } from '~/ui/CheckingSpinner'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import {
   RESTARTING_TEXT,
@@ -712,20 +713,7 @@ export function DeployedVersions({
             </span>
           )}
           {fresh.reading.length > 0 && (
-            <span className="eh-deployed-verify" aria-label="checking">
-              <svg viewBox="0 0 12 12" aria-hidden="true">
-                <circle
-                  cx="6"
-                  cy="6"
-                  r="4.5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1"
-                  strokeDasharray="7 21.3"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>
+            <CheckingSpinner title={`checking ${fresh.reading.join(', ')}`} />
           )}
           {dot && <span className={`eh-deployed-dot eh-deployed-dot-${dot}`} />}
           {fresh.failedSince && data.freshness && (

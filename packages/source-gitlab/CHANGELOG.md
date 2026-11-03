@@ -1,5 +1,12 @@
 # @env-hopper/source-gitlab
 
+## 2.8.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @env-hopper/backend-core@2.8.1
+
 ## 2.8.0
 
 ### Patch Changes

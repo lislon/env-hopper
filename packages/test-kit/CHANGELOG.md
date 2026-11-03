@@ -1,5 +1,15 @@
 # @env-hopper/test-kit
 
+## 2.8.1
+
+### Patch Changes
+
+- [#426](https://github.com/lislon/env-hopper/pull/426) [`537e24e`](https://github.com/lislon/env-hopper/commit/537e24e3676d725dd1eb36f014f5cf042d5929dd) Thanks [@lislon](https://github.com/lislon)! - "On prod" goes to the newest train production actually runs (by its version, the build its ticket names, or its own release branch), and that train shows as released, even while its ticket still says planned (an ENR left "New" after the deploy). A main-line build on production still counts for the train already released.
+
+- Updated dependencies [[`537e24e`](https://github.com/lislon/env-hopper/commit/537e24e3676d725dd1eb36f014f5cf042d5929dd)]:
+  - @env-hopper/frontend-core@2.8.1
+  - @env-hopper/backend-core@2.8.1
+
 ## 2.8.0
 
 ### Minor Changes

@@ -42,6 +42,8 @@ jobs:
           main-branch-name: main
       - name: Self-check the release script
         run: bash scripts/release-main.test.sh
+      - name: Self-check the dist-tag guard
+        run: bash scripts/dist-tag-guard.test.sh
       - name: Check declared versions against the registry
         run: node scripts/check-registry-versions.mjs
       - name: Run Checks

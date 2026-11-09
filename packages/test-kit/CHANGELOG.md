@@ -1,5 +1,13 @@
 # @env-hopper/test-kit
 
+## 2.9.0
+
+### Patch Changes
+
+- Updated dependencies [[`db49a8a`](https://github.com/lislon/env-hopper/commit/db49a8aea3c24218284470b359effb8e16241786)]:
+  - @env-hopper/backend-core@2.9.0
+  - @env-hopper/frontend-core@2.9.0
+
 ## 2.8.3
 
 ### Patch Changes

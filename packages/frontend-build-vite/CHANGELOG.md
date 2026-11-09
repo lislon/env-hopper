@@ -1,5 +1,7 @@
 # @env-hopper/frontend-build-vite
 
+## 2.9.0
+
 ## 2.8.3
 
 ## 2.8.1

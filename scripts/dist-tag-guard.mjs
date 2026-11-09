@@ -95,7 +95,9 @@ function declaredPackages() {
 function served(name, tag) {
   try {
     const out = execFileSync(
-      'npm',
+      // Overridable so the self-check can use a fake npm: CI's node shim
+      // rewrites PATH, so a fake placed on PATH is not the one that runs.
+      process.env.DIST_TAG_GUARD_NPM || 'npm',
       ['view', '--prefer-online', name, `dist-tags.${tag}`],
       {
         encoding: 'utf8',

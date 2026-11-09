@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Checks that `dist-tag-guard.mjs capture` takes a never-published package
 # (npm view exits non-zero with E404) as "serves nothing", while a lookup that
-# really fails still refuses the baseline. Runs against a fake `npm` on PATH.
+# really fails still refuses the baseline. Runs against a fake `npm`.
 set -euo pipefail
 
 guard="$(cd "$(dirname "$0")" && pwd)/dist-tag-guard.mjs"
@@ -25,7 +25,7 @@ EOF
 chmod +x "$tmp/bin/npm"
 
 cd "$tmp/repo"
-PATH="$tmp/bin:$PATH" node "$guard" capture --tag latest --out "$tmp/before.json" > /dev/null \
+DIST_TAG_GUARD_NPM="$tmp/bin/npm" node "$guard" capture --tag latest --out "$tmp/before.json" > /dev/null \
   || fail 'capture refused a baseline that only lacks a never-published package'
 node -e '
   const b = require(process.argv[1]).packages

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { tokenize } from '~/modules/fuzzyMatchLogic/tokenize'
+import { tokenize } from '../../fuzzyMatchLogic/tokenize'
 
 describe('tokenize', () => {
   /**

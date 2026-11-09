@@ -1,0 +1,76 @@
+{
+  "name": "@env-hopper/mcp",
+  "version": "2.8.3",
+  "description": "MCP server that answers app links, logins and database access from Env Hopper data",
+  "keywords": [
+    "env-hopper",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "homepage": "https://github.com/lislon/env-hopper",
+  "bugs": {
+    "url": "https://github.com/lislon/env-hopper/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lislon/env-hopper.git",
+    "directory": "packages/mcp"
+  },
+  "license": "MIT",
+  "author": "Igor Golovin",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "my-custom-condition": "./src/index.ts",
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "!**/__tests__",
+    "!**/*.test.*"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "clean": "premove ./dist ./coverage ./dist-ts",
+    "compile": "tsc --build",
+    "dev": "tsx watch src/index.ts",
+    "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
+    "test:eslint": "eslint ./src",
+    "test:unit": "vitest --run",
+    "test:unit:dev": "vitest --watch"
+  },
+  "dependencies": {
+    "@env-hopper/shared-core": "workspace:*",
+    "@modelcontextprotocol/node": "^2.1.2",
+    "@modelcontextprotocol/server": "^2.4.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@env-hopper/backend-core": "workspace:^",
+    "@tanstack/vite-config": "catalog:",
+    "@types/node": "catalog:",
+    "esbuild": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@env-hopper/backend-core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

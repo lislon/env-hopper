@@ -1,7 +1,7 @@
 import { normalize } from './utils'
 import type { Id } from 'flexsearch'
 import type { FuzzySearchInputEntry } from './types'
-import { tokenize } from '~/modules/fuzzyMatchLogic/tokenize'
+import { tokenize } from './tokenize'
 
 export type FuzzySearchPostFilterRow = {
   id: Id

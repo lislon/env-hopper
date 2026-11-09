@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { makeInputEntry } from './testUtils'
-import { isTokensConsequent } from '~/modules/fuzzyMatchLogic/postFiltration'
+import { isTokensConsequent } from '../../fuzzyMatchLogic/postFiltration'
 
 describe('isTokensConsequent', () => {
   it('in order', () => {

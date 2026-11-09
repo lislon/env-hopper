@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { makeInputEntry } from './testUtils'
-import type { FuzzySearchInputEntry } from '~/modules/fuzzyMatchLogic/types'
+import type { FuzzySearchInputEntry } from '../../fuzzyMatchLogic/types'
 import {
   fuzzySearch,
   makeFuzzySearchIndex,
-} from '~/modules/fuzzyMatchLogic/autoCompleteFilter'
+} from '../../fuzzyMatchLogic/autoCompleteFilter'
 
 const randomEnvironmentNames = [
   'uat-0916',

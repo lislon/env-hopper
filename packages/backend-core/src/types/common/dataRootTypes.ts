@@ -84,6 +84,13 @@ export interface LateResolvableParam extends SlugAndDisplayable {
    * since the browser then stores it. (By default: false)
    */
   isBrowserAutocomplete?: boolean
+  /** Other words people use for this param (`case` for a case id); matched exactly. */
+  aliases?: Array<string>
+  /**
+   * The jump slug to open when several jumps take this param and nothing else
+   * tells them apart (e.g. the main view of the object).
+   */
+  defaultJump?: string
 }
 
 export interface ResourceJump extends SlugAndDisplayable {
@@ -91,6 +98,8 @@ export interface ResourceJump extends SlugAndDisplayable {
   displayName: string
   urlTemplate: DefaultWithOverridesAndTemplate
   lateResolvableParamSlugs?: Array<string>
+  /** Other names people use for this page; matched exactly. */
+  aliases?: Array<string>
 }
 
 export interface ResourceJumpGroup {

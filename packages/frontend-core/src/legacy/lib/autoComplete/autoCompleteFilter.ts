@@ -1,7 +1,4 @@
-import {
-  fuzzySearch,
-  makeFuzzySearchIndex,
-} from '~/modules/fuzzyMatchLogic/autoCompleteFilter'
+import { fuzzySearch, makeFuzzySearchIndex } from '@env-hopper/shared-core'
 import type { SourceItem } from '../../ui/AutoComplete/common'
 import type { EhAutoCompleteFilter } from '../../ui/AutoComplete/EhAutoComplete'
 
@@ -9,7 +6,7 @@ import type { EhAutoCompleteFilter } from '../../ui/AutoComplete/EhAutoComplete'
  * ADAPTER, NOT A PORT — the ranking itself is a later wave.
  *
  * The previous UI had its own matcher; a descendant of it already lives in
- * `~/modules/fuzzyMatchLogic` and is already covered by tests, so this is a
+ * `fuzzyMatchLogic` in shared-core and is already covered by tests, so this is a
  * shape converter only: the previous call signature in, that matcher out. There
  * is deliberately no second scoring implementation to keep in step.
  *

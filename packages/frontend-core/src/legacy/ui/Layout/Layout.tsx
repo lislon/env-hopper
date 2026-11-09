@@ -33,7 +33,9 @@ export function Layout({
       <div className="eh-legacy">
         <div className="flex min-h-screen flex-col sm:items-center w-full transition">
           <Header className={'z-20'} />
-          <div className="absolute top-0 left-0 right-0 p-2 flex justify-end gap-2 z-10">
+          {/* INTENTIONAL DIFF: below `sm` the buttons get a row of their own
+              above the header; overlaid there, they covered the title. */}
+          <div className="order-first w-full p-2 flex justify-end gap-2 z-10 sm:order-none sm:absolute sm:top-0 sm:left-0 sm:right-0">
             {headerButtons}
           </div>
           {children}

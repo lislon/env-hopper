@@ -31,4 +31,6 @@ export interface FuzzySearchPreliminaryResult {
 
 export interface FuzzySearchReturnItem {
   entry: FuzzySearchInputEntry
+  /** match-sorter's rank: 7 case-sensitive equal down to 1 fuzzy match. */
+  rank: number
 }

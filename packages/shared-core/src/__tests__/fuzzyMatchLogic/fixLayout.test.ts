@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fixRuLayout, isRuLayout } from '~/modules/fuzzyMatchLogic/fixLayout'
+import { fixRuLayout, isRuLayout } from '../../fuzzyMatchLogic/fixLayout'
 
 describe('ru -> en fix', () => {
   it('can detect ru layout', () => {

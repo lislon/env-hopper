@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { makeInputEntry } from '../testUtils'
-import { prefixFracAcrossTokens } from '~/modules/fuzzyMatchLogic/features/prefixFracTokenMiddles'
+import { prefixFracAcrossTokens } from '../../../fuzzyMatchLogic/features/prefixFracTokenMiddles'
 
 describe('prefixFracAcrossTokens', () => {
   it('not found', () => {

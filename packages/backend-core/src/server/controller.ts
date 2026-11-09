@@ -24,6 +24,7 @@ import type { PairChunk } from './pairDetails'
 import { publicProcedure, router, t } from './trpcSetup'
 import { TRPCError } from '@trpc/server'
 import { publicMessage } from '../catalog/publicMessage'
+import type { AppComponent } from '../catalog/catalogRead'
 import type { EhTrpcContext } from './ehTrpcContext'
 
 /**
@@ -186,7 +187,7 @@ export function createTrpcRouter(auth?: BetterAuth) {
               ctx.catalog.getPairDeployments({ appSlugs: [input.appSlug] }),
               ctx.catalog.getComponents({ appSlugs: [input.appSlug] }),
             ])
-          : [{ pairs: [] }, {}]
+          : [{ pairs: [] }, {} as Record<string, Array<AppComponent>>]
         const commitUrlOf = (slug: string) =>
           components[input.appSlug]?.find((c) => c.slug === slug)?.commitUrl
         const picked = pickShownTrains(all.trains, 2)

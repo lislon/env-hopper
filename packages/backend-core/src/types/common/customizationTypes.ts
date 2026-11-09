@@ -93,4 +93,6 @@ export interface EhCustomizationData {
   /** Replaces the credentials widget where the environment shares no login. */
   accessRequestCard?: EhAccessRequestCard
   icons?: Array<EhIconSvg>
+  /** Name the MCP page tells users to add the server under. Default `env-hopper`. */
+  mcpServerName?: string
 }

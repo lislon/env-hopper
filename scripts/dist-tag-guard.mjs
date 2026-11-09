@@ -95,17 +95,25 @@ function declaredPackages() {
 function served(name, tag) {
   try {
     const out = execFileSync(
-      'npm',
+      // Overridable so the self-check can use a fake npm: CI's node shim
+      // rewrites PATH, so a fake placed on PATH is not the one that runs.
+      process.env.DIST_TAG_GUARD_NPM || 'npm',
       ['view', '--prefer-online', name, `dist-tags.${tag}`],
       {
         encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'ignore'],
+        stdio: ['ignore', 'pipe', 'pipe'],
         timeout: LOOKUP_TIMEOUT_MS,
         killSignal: 'SIGKILL',
       },
     ).trim()
     return { version: out === '' ? null : out, error: null }
   } catch (e) {
+    // A package that was never published is a registry answer, not a failed
+    // lookup: `npm view` exits non-zero with E404 for it. Its first release
+    // must not be refused for having no baseline.
+    if (/\bE404\b/.test(String(e.stderr ?? ''))) {
+      return { version: null, error: null }
+    }
     const reason =
       e.signal === 'SIGKILL'
         ? `timed out after ${LOOKUP_TIMEOUT_MS / 1000}s`

@@ -5,7 +5,7 @@ import type { SourceItem } from '~/legacy/ui/AutoComplete/common'
 /**
  * Parity fixture for the adapter that puts the previous UI's call signature over
  * the current matcher. The matcher's own ranking is covered in
- * `../modules/fuzzyMatchLogic/autoCompleteFilter.test.ts`, including the one
+ * shared-core's `fuzzyMatchLogic/autoCompleteFilter.test.ts`, including the one
  * ranking divergence pinned there; this file covers only what the adapter is
  * responsible for — that a `SourceItem`'s favourite and recent flags still reach
  * the ranking, and that matching reads the title.

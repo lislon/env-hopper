@@ -7,7 +7,7 @@ import type { SourceItem } from '../AutoComplete/common'
 import { useAutoFocusHelper } from '../../hooks/useAutoFocusHelper'
 import { MAX_RECENTLY_USED_ITEMS_COMBO } from '../../lib/constants'
 import { HomeFavoriteButton } from '../HomeFavoriteButton'
-import { tokenize } from '~/modules/fuzzyMatchLogic/tokenize'
+import { tokenize } from '@env-hopper/shared-core'
 import cn from 'classnames'
 import {
   AUTOCOMPLETE_ATTENTION_CLASSNAME,
@@ -100,7 +100,7 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
         .map((jump) => jump.env || '')
         .filter(Boolean),
     )
-    return listEnvs.map((env) => mapToAutoCompleteItem(env, favSet, recentSet))
+    return listEnvs.map((e) => mapToAutoCompleteItem(e, favSet, recentSet))
   }, [listEnvs, listFavoriteEnvs, recentJumps])
 
   const autoFocusOn = useAutoFocusHelper()
@@ -117,7 +117,7 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
   useEffect(() => {
     if (listEnvs.length > 0 && placeHolder === '') {
       const exampleFromRecents = findGoodExample(
-        recentJumps.map((s) => s.env).filter((env) => env !== undefined),
+        recentJumps.map((s) => s.env).filter((e) => e !== undefined),
         autoCompleteFilter,
         items,
       )
@@ -152,7 +152,7 @@ export function EnvList({ onOpenChange, className }: EnvListProps) {
       onSelectedItemChange={(envId) => {
         setEnv(getEnvById(envId))
       }}
-      onFavoriteToggle={(env, isOn) => toggleFavoriteEnv(env.id, isOn)}
+      onFavoriteToggle={(item, isOn) => toggleFavoriteEnv(item.id, isOn)}
       onPrimaryAction={tryJump}
       autoFocus={autoFocusOn === 'environments'}
       favoriteButton={

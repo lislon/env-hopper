@@ -41,6 +41,9 @@
   },
   "dependencies": {
     "eta": "^3.5.0",
+    "flexsearch": "^0.8.204",
+    "match-sorter": "^8.2.0",
+    "radashi": "catalog:",
     "type-fest": "^5.4.4"
   },
   "devDependencies": {

@@ -3,14 +3,12 @@ import { matchSorter } from 'match-sorter'
 import type {
   FuzzySearchContext,
   FuzzySearchIndex,
+  FuzzySearchInputEntry,
   FuzzySearchPrepareIndexParams,
   FuzzySearchReturnItem,
 } from './types'
-import { fixRuLayout, isRuLayout } from '~/modules/fuzzyMatchLogic/fixLayout'
-import {
-  enrichTokensForIndex,
-  tokenize,
-} from '~/modules/fuzzyMatchLogic/tokenize'
+import { fixRuLayout, isRuLayout } from './fixLayout'
+import { enrichTokensForIndex, tokenize } from './tokenize'
 
 export function makeFuzzySearchIndex(
   params: FuzzySearchPrepareIndexParams,
@@ -56,9 +54,11 @@ export function fuzzySearch(
 
   const attempt = (n: string) => {
     const tokenizedNeedle = tokenize(n).join(' ')
+    const rankOf = new Map<FuzzySearchInputEntry, number>()
     const results = matchSorter(justDisplayName, tokenizedNeedle, {
       keys: [(item) => tokenize(item.displayName).join(' ')],
       sorter: (rankedItems) => {
+        rankedItems.forEach((r) => rankOf.set(r.item, r.rank))
         return rankedItems.sort((a, b) => {
           const aFirst = -1
           const bFirst = 1
@@ -92,7 +92,7 @@ export function fuzzySearch(
         // }, true)
       },
     })
-    return results.map((r) => ({ entry: r }))
+    return results.map((r) => ({ entry: r, rank: rankOf.get(r) ?? 0 }))
   }
 
   let lastAttempt = attempt(needle)

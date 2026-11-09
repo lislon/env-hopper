@@ -6,23 +6,20 @@ import type { TRPCClient } from '@trpc/client'
 import { LayoutGrid, LayoutGridIcon } from 'lucide-react'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { cn } from '~/lib/utils'
-import {
-    fuzzySearch,
-    makeFuzzySearchIndex,
-} from '~/modules/fuzzyMatchLogic/autoCompleteFilter'
+import { fuzzySearch, makeFuzzySearchIndex } from '@env-hopper/shared-core'
 import { useResourceJumpContext } from '~/modules/resourceJump/context/ResourceJumpContext'
 import { highlightText } from '~/modules/resourceJump/ui/cmdk/highlightText'
 import { formatResourceTitle } from '~/modules/resourceJump/utils/helpers'
 import {
-    Autocomplete,
-    AutocompleteClear,
-    AutocompleteEmpty,
-    AutocompleteInput,
-    AutocompleteItem,
-    AutocompleteList,
-    AutocompletePopup,
-    AutocompleteTrigger,
-    AutocompleteValue,
+  Autocomplete,
+  AutocompleteClear,
+  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteItem,
+  AutocompleteList,
+  AutocompletePopup,
+  AutocompleteTrigger,
+  AutocompleteValue,
 } from '~/ui/autocomplete'
 import { InputGroupAddon } from '~/ui/input-group'
 import type { ResourceJumpLoaderReturn } from '../../types'

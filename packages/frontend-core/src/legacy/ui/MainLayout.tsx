@@ -1,4 +1,6 @@
 import React, { Suspense } from 'react'
+import { Link } from '@tanstack/react-router'
+import { Plug } from 'lucide-react'
 import { RESTARTING_TEXT, isServerRestarting } from '../../util/error-utils'
 import { Analytics } from './Analytics'
 import { FaqButton } from './FaqButton'
@@ -34,6 +36,16 @@ function HomeWithContext({ children }: MainLayoutProps) {
       footer={<Footer />}
       headerButtons={
         <>
+          {/* Icon only below `sm`, where the word would cover the title. */}
+          <Link
+            to="/mcp"
+            className="btn"
+            aria-label="MCP: use Env Hopper from your AI agent"
+            title="Use Env Hopper from your AI agent"
+          >
+            <Plug className="w-6 h-6 sm:hidden" aria-hidden="true" />
+            <span className="hidden sm:inline">MCP</span>
+          </Link>
           {isFaqEnabled && <FaqButton onClick={openFaq} />}
           <ThemeSwitcher />
         </>

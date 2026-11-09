@@ -15,6 +15,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminChatRouteImport } from './routes/admin/chat'
+import { Route as LayoutMcpRouteImport } from './routes/_layout/mcp'
 import { Route as LayoutLoginRouteImport } from './routes/_layout/login'
 import { Route as LayoutEnvsIndexRouteImport } from './routes/_layout/envs.index'
 import { Route as LayoutDashboardIndexRouteImport } from './routes/_layout/dashboard.index'
@@ -53,6 +54,11 @@ const AdminChatRoute = AdminChatRouteImport.update({
   id: '/chat',
   path: '/chat',
   getParentRoute: () => AdminRoute,
+} as any)
+const LayoutMcpRoute = LayoutMcpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => LayoutRoute,
 } as any)
 const LayoutLoginRoute = LayoutLoginRouteImport.update({
   id: '/login',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LayoutLoginRoute
+  '/mcp': typeof LayoutMcpRoute
   '/admin/chat': typeof AdminChatRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/admin/': typeof AdminIndexRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LayoutLoginRoute
+  '/mcp': typeof LayoutMcpRoute
   '/admin/chat': typeof AdminChatRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/': typeof LayoutIndexRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/_layout': typeof LayoutRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/_layout/login': typeof LayoutLoginRoute
+  '/_layout/mcp': typeof LayoutMcpRoute
   '/admin/chat': typeof AdminChatRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_layout/': typeof LayoutIndexRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/login'
+    | '/mcp'
     | '/admin/chat'
     | '/auth/callback'
     | '/admin/'
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/mcp'
     | '/admin/chat'
     | '/auth/callback'
     | '/'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/_layout'
     | '/admin'
     | '/_layout/login'
+    | '/_layout/mcp'
     | '/admin/chat'
     | '/auth/callback'
     | '/_layout/'
@@ -253,6 +265,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/chat'
       preLoaderRoute: typeof AdminChatRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/_layout/mcp': {
+      id: '/_layout/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof LayoutMcpRouteImport
+      parentRoute: typeof LayoutRoute
     }
     '/_layout/login': {
       id: '/_layout/login'
@@ -322,6 +341,7 @@ declare module '@tanstack/react-router' {
 
 interface LayoutRouteChildren {
   LayoutLoginRoute: typeof LayoutLoginRoute
+  LayoutMcpRoute: typeof LayoutMcpRoute
   LayoutIndexRoute: typeof LayoutIndexRoute
   LayoutDashboardIndexRoute: typeof LayoutDashboardIndexRoute
   LayoutEnvsIndexRoute: typeof LayoutEnvsIndexRoute
@@ -335,6 +355,7 @@ interface LayoutRouteChildren {
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutLoginRoute: LayoutLoginRoute,
+  LayoutMcpRoute: LayoutMcpRoute,
   LayoutIndexRoute: LayoutIndexRoute,
   LayoutDashboardIndexRoute: LayoutDashboardIndexRoute,
   LayoutEnvsIndexRoute: LayoutEnvsIndexRoute,

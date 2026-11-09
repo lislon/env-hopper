@@ -8,23 +8,20 @@ import { EarthIcon } from 'lucide-react'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { cn } from '~/lib/utils'
 import { useEnvironmentContext } from '~/modules/environment/context/EnvironmentContext'
-import {
-    fuzzySearch,
-    makeFuzzySearchIndex,
-} from '~/modules/fuzzyMatchLogic/autoCompleteFilter'
+import { fuzzySearch, makeFuzzySearchIndex } from '@env-hopper/shared-core'
 import { ApiQueryMagazineResourceJump } from '~/modules/resourceJump/api/ApiQueryMagazineResourceJump'
 import { highlightText } from '~/modules/resourceJump/ui/cmdk/highlightText'
 import { useEnvStatistics } from '~/modules/resourceJump/utils/statistics/useEnvStatistics'
 import {
-    Autocomplete,
-    AutocompleteClear,
-    AutocompleteEmpty,
-    AutocompleteInput,
-    AutocompleteItem,
-    AutocompleteList,
-    AutocompletePopup,
-    AutocompleteTrigger,
-    AutocompleteValue,
+  Autocomplete,
+  AutocompleteClear,
+  AutocompleteEmpty,
+  AutocompleteInput,
+  AutocompleteItem,
+  AutocompleteList,
+  AutocompletePopup,
+  AutocompleteTrigger,
+  AutocompleteValue,
 } from '~/ui/autocomplete'
 import { InputGroupAddon } from '~/ui/input-group'
 import type { ResourceJumpLoaderReturn } from '../../types'

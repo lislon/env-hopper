@@ -1,4 +1,4 @@
-import type { FuzzySearchInputEntry } from '~/modules/fuzzyMatchLogic/types'
+import type { FuzzySearchInputEntry } from '../../fuzzyMatchLogic/types'
 
 export function makeInputEntry(
   displayName: string,

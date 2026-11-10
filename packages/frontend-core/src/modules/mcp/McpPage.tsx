@@ -117,7 +117,9 @@ function ToolCard({ tool }: { tool: McpTool }) {
         {tool.title && <span className="text-sm">{tool.title}</span>}
       </h3>
       {tool.description && (
-        <p className={`text-sm ${MUTED}`}>{tool.description}</p>
+        <p className={`text-sm whitespace-pre-line ${MUTED}`}>
+          {tool.description}
+        </p>
       )}
       {tool.parameters.length === 0 ? (
         <p className={`text-xs ${MUTED}`}>No parameters</p>

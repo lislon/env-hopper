@@ -1,7 +1,17 @@
 export { createMcpHandler } from './createMcpHandler'
 export type { CreateMcpHandlerOptions } from './createMcpHandler'
-export { buildInstructions, paramList } from './instructions'
-export type { InstructionSlots } from './instructions'
+export type { McpToolCallEvent } from './toolCallEvent'
+export {
+  buildInstructions,
+  buildToolDescriptions,
+  paramList,
+} from './instructions'
+export type {
+  InstructionSlots,
+  McpToolName,
+  PerTool,
+  WhenNames,
+} from './instructions'
 export { toMcpData } from './mcpData'
 export type { McpData } from './mcpData'
 export {

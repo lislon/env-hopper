@@ -9,7 +9,10 @@ import type {
   Catalog,
   EhBackendCompanySpecificBackend,
 } from '@env-hopper/backend-core'
-import { buildInstructions } from './instructions'
+import { buildInstructions, buildToolDescriptions } from './instructions'
+import type { McpToolName, PerTool, WhenNames } from './instructions'
+import { toolCallEvent } from './toolCallEvent'
+import type { McpToolCallEvent } from './toolCallEvent'
 import { toMcpData } from './mcpData'
 import {
   getDatabaseAccess,
@@ -23,41 +26,25 @@ export interface CreateMcpHandlerOptions {
   backend: EhBackendCompanySpecificBackend
   /** The deployment catalog, for list_envs with an app; null: deployments untracked. */
   catalog?: Catalog | null
-  /** Instruction lines: `"user words" -> tool {args}`, in this deployment's names. */
-  examples?: Array<string>
-  /** Instruction lines for anything else this deployment's agents should know. */
-  notes?: Array<string>
+  /** This deployment's env and object names, for the WHEN-only server instructions. */
+  when?: WhenNames
+  /** Per tool, `"user words" -> {args}` lines in this deployment's names. */
+  examples?: PerTool
+  /** Per tool, anything else this deployment's agents get wrong. */
+  notes?: PerTool
   /** The UI's public origin for `ehUrl`; by default the request's own. */
   publicUrl?: string
+  /** Called once per tool call, after the result is built; a throw is swallowed. */
+  onToolCall?: (event: McpToolCallEvent) => void
 }
 
-/** `title`: the one line a person reads; `description`: what the model reads. */
-const TOOLS = {
-  get_url: {
-    title: 'Link to a page in an app, for an env or env-less',
-    description:
-      'Link to a page in an app. Any subset of args works: params alone finds the jumps that take them. env/app/jump/param names fuzzy. params = {paramName: value}.',
-  },
-  get_login: {
-    title: 'Test logins for an app on an env',
-    description:
-      'UI logins for app on env: "logins" [{label, desc, username, password}] ([] = none), or "requestAccess" {url} on envs without shared logins (prod).',
-  },
-  get_database_access: {
-    title: 'DB connection for an app on an env',
-    description:
-      'DB connection for app on env: "databases" [{url, host, port, database, username, password}] ([] = none), or "requestAccess" {url}.',
-  },
-  list_apps: {
-    title: 'Apps, their pages and the ids each page takes',
-    description:
-      'Apps with their jumps (and params each jump takes), and whether login/database exist. query matches app, jump and param names.',
-  },
-  list_envs: {
-    title: 'Envs, and where an app is deployed with version',
-    description:
-      "Envs with credentials kind. With app: only envs where it is deployed, with version and health; deployedTracked:false = EH does not track this app's deployments (absent != not deployed).",
-  },
+/** The one line a person reads; the description, built per request, is what the model reads. */
+const TITLES = {
+  get_url: 'Link to a page in an app, for an env or env-less',
+  get_login: 'Test logins for an app on an env',
+  get_database_access: 'DB connection for an app on an env',
+  list_apps: 'Apps, their pages and the ids each page takes',
+  list_envs: 'Envs, and where an app is deployed with version',
 }
 
 function originOf(req: Request | undefined): string {
@@ -70,16 +57,12 @@ function originOf(req: Request | undefined): string {
   return `${proto}://${host}`
 }
 
-function reply(result: unknown) {
-  return {
-    content: [{ type: 'text' as const, text: JSON.stringify(result) }],
-  }
-}
-
 async function createServer(
   options: CreateMcpHandlerOptions,
-  origin: string,
+  req: Request | undefined,
 ): Promise<McpServer> {
+  const origin = originOf(req)
+  const client = req?.headers.get('user-agent') ?? null
   const { backend, catalog = null } = options
   const [bootstrap, jumps] = await Promise.all([
     backend.getBootstrapData(),
@@ -90,22 +73,50 @@ async function createServer(
   const server = new McpServer(
     { name: 'env-hopper', version: bootstrap.appVersion ?? '0.0.0' },
     {
-      instructions: buildInstructions({
-        params: jumps.lateResolvableParams,
-        examples: options.examples,
-        notes: options.notes,
-      }),
+      instructions: buildInstructions({ when: options.when }),
     },
   )
+  const descriptions = buildToolDescriptions({
+    params: jumps.lateResolvableParams,
+    examples: options.examples,
+    notes: options.notes,
+  })
+  const tool = (name: keyof typeof TITLES) => ({
+    title: TITLES[name],
+    description: descriptions[name],
+  })
   const appEnv = {
     app: z.string().describe('App name, fuzzy'),
     env: z.string().describe('Env name, fuzzy'),
   }
+  /** Runs a tool, reports the call to onToolCall, and replies with its JSON. */
+  const handle =
+    <TArgs extends Record<string, unknown>>(
+      name: McpToolName,
+      run: (args: TArgs) => object | Promise<object>,
+    ) =>
+    async (args: TArgs) => {
+      const started = Date.now()
+      const result = await run(args)
+      try {
+        options.onToolCall?.(
+          toolCallEvent(name, args, result, {
+            client,
+            durationMs: Date.now() - started,
+          }),
+        )
+      } catch {
+        // Telemetry never breaks the call.
+      }
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+      }
+    }
 
   server.registerTool(
     'get_url',
     {
-      ...TOOLS.get_url,
+      ...tool('get_url'),
       inputSchema: z.object({
         env: z.string().optional(),
         app: z.string().optional(),
@@ -113,42 +124,42 @@ async function createServer(
         params: z.record(z.string(), z.string()).optional(),
       }),
     },
-    (args) => reply(getUrl(data, args)),
+    handle('get_url', (args) => getUrl(data, args)),
   )
   server.registerTool(
     'get_login',
     {
-      ...TOOLS.get_login,
+      ...tool('get_login'),
       inputSchema: z.object(appEnv),
     },
-    (args) => reply(getLogin(data, args)),
+    handle('get_login', (args) => getLogin(data, args)),
   )
   server.registerTool(
     'get_database_access',
     {
-      ...TOOLS.get_database_access,
+      ...tool('get_database_access'),
       inputSchema: z.object(appEnv),
     },
-    (args) => reply(getDatabaseAccess(data, args)),
+    handle('get_database_access', (args) => getDatabaseAccess(data, args)),
   )
   server.registerTool(
     'list_apps',
     {
-      ...TOOLS.list_apps,
+      ...tool('list_apps'),
       inputSchema: z.object({ query: z.string().optional() }),
     },
-    (args) => reply(listApps(data, args)),
+    handle('list_apps', (args) => listApps(data, args)),
   )
   server.registerTool(
     'list_envs',
     {
-      ...TOOLS.list_envs,
+      ...tool('list_envs'),
       inputSchema: z.object({
         query: z.string().optional(),
         app: z.string().optional(),
       }),
     },
-    async (args) => reply(await listEnvs(data, catalog, args)),
+    handle('list_envs', (args) => listEnvs(data, catalog, args)),
   )
   return server
 }
@@ -161,9 +172,7 @@ async function createServer(
  */
 export function createMcpHandler(options: CreateMcpHandlerOptions) {
   const handler = toNodeHandler(
-    createSdkMcpHandler((ctx) =>
-      createServer(options, originOf(ctx.requestInfo)),
-    ),
+    createSdkMcpHandler((ctx) => createServer(options, ctx.requestInfo)),
   )
   return (
     req: IncomingMessage & { body?: unknown },

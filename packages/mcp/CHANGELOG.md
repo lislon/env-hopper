@@ -1,5 +1,15 @@
 # @env-hopper/mcp
 
+## 2.9.1
+
+### Patch Changes
+
+- [#431](https://github.com/lislon/env-hopper/pull/431) [`52538b4`](https://github.com/lislon/env-hopper/commit/52538b4ff04ac16a35929757fc068f05629bcc65) Thanks [@lislon](https://github.com/lislon)! - MCP server instructions now say only when to use the server; how to call each tool and read its result moved into the tool descriptions. `createMcpHandler` takes `when` (env and object names for the instructions) and per-tool `examples` and `notes` maps, and an `onToolCall` hook that receives one event per tool call: the arguments sent, the slugs they resolved to, and an outcome summary with counts only, never credential content.
+
+- Updated dependencies []:
+  - @env-hopper/backend-core@2.9.1
+  - @env-hopper/shared-core@2.9.1
+
 ## 2.9.0
 
 ### Minor Changes

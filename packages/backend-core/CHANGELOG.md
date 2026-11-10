@@ -1,5 +1,13 @@
 # @env-hopper/backend-core
 
+## 2.9.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @env-hopper/shared-core@2.9.1
+  - @env-hopper/table-sync@2.9.1
+
 ## 2.9.0
 
 ### Minor Changes

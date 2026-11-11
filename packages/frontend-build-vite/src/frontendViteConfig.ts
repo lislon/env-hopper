@@ -62,6 +62,9 @@ export function frontendViteConfig(options?: {
       selfDestroying,
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // The SPA shell answers page navigations only; a URL under /api/
+        // opened in the browser (e.g. the MCP endpoint) must reach the server.
+        navigateFallbackDenylist: [/^\/api\//],
       },
       includeAssets: [
         'favicon.ico',

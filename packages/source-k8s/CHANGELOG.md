@@ -1,5 +1,12 @@
 # @env-hopper/source-k8s
 
+## 2.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @env-hopper/backend-core@2.9.2
+
 ## 2.9.1
 
 ### Patch Changes

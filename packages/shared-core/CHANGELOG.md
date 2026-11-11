@@ -1,5 +1,7 @@
 # @env-hopper/shared-core
 
+## 2.9.2
+
 ## 2.9.1
 
 ## 2.9.0

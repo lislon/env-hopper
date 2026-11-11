@@ -1,5 +1,13 @@
 # @env-hopper/test-kit
 
+## 2.9.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @env-hopper/backend-core@2.9.2
+  - @env-hopper/frontend-core@2.9.2
+
 ## 2.9.1
 
 ### Patch Changes

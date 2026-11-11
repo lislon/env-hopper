@@ -1,5 +1,11 @@
 # @env-hopper/frontend-build-vite
 
+## 2.9.2
+
+### Patch Changes
+
+- [#432](https://github.com/lislon/env-hopper/pull/432) [`3bec249`](https://github.com/lislon/env-hopper/commit/3bec24944aa41905a7a348b9280c9560299ff1d6) Thanks [@lislon](https://github.com/lislon)! - The service worker no longer answers navigations under `/api/` with the cached app shell, so an API URL opened in the browser (such as the MCP endpoint) reaches the server.
+
 ## 2.9.1
 
 ## 2.9.0

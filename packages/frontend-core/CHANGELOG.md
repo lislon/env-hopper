@@ -1,5 +1,7 @@
 # @env-hopper/frontend-core
 
+## 2.9.2
+
 ## 2.9.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @env-hopper/frontend-core
 
+## 2.9.3
+
+### Patch Changes
+
+- [#433](https://github.com/lislon/env-hopper/pull/433) [`544cd42`](https://github.com/lislon/env-hopper/commit/544cd4221e977dd2eee17839524878e173ad40ff) Thanks [@lislon](https://github.com/lislon)! - Enhanced MCP page with detailed examples and centered installation section. The "What it does" section now shows five concrete use cases with example queries, making it easier for users to understand the MCP server's capabilities.
+
 ## 2.9.2
 
 ## 2.9.1

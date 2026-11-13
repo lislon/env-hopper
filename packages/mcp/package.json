@@ -1,6 +1,6 @@
 {
   "name": "@env-hopper/mcp",
-  "version": "2.9.2",
+  "version": "2.9.3",
   "description": "MCP server that answers app links, logins and database access from Env Hopper data",
   "keywords": [
     "env-hopper",

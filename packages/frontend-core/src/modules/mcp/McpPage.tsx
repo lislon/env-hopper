@@ -59,15 +59,49 @@ export function McpPage({ serverName }: McpPageProps) {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">What it does</h2>
         <p className="text-sm">
-          Ask your AI agent for app links, logins and database access on any
-          env, in plain words. Works with Claude Code, Cursor and any MCP
-          client.
+          Your AI agent gets Env Hopper as tools. Ask in plain words:
         </p>
+        <ul className="text-sm space-y-2 pl-6 list-disc marker:text-base-content/60">
+          <li>
+            <strong className="font-semibold">Find a page:</strong>{' '}
+            <span className={MUTED}>
+              "staging my-app case 12312" → link to case 12312 on staging
+            </span>
+          </li>
+          <li>
+            <strong className="font-semibold">Get test credentials:</strong>{' '}
+            <span className={MUTED}>
+              "my-app login on staging" → username + password
+            </span>
+          </li>
+          <li>
+            <strong className="font-semibold">
+              Check where something runs:
+            </strong>{' '}
+            <span className={MUTED}>
+              "where is my-service deployed" → list of envs with versions
+            </span>
+          </li>
+          <li>
+            <strong className="font-semibold">Database access:</strong>{' '}
+            <span className={MUTED}>
+              "my-service database on staging" → connection string + credentials
+            </span>
+          </li>
+          <li>
+            <strong className="font-semibold">Generic links (no env):</strong>{' '}
+            <span className={MUTED}>
+              "kafka topic orders" → env-hopper link (pick env there)
+            </span>
+          </li>
+        </ul>
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Installation</h2>
-        <CopyBlock label="Paste this into your agent's chat:" value={text} />
+      <section className="flex flex-col gap-3 items-center">
+        <h2 className="text-lg font-semibold self-start">Installation</h2>
+        <div className="w-full max-w-2xl">
+          <CopyBlock label="Paste this into your agent's chat:" value={text} />
+        </div>
       </section>
 
       <section className="flex flex-col gap-3" aria-busy={!data && !error}>
